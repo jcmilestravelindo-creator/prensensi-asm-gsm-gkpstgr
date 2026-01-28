@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Presensi ASM-GSM GKPS Tangerang</title>
+    <title>Presensi ASM-GSM GKPS Tangerang (Online)</title>
     
     <!-- 1. TAILWIND CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -111,11 +111,22 @@
             width: 100% !important;
             height: 100% !important;
         }
+
+        /* Loading Spinner */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #6366f1;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
         .pb-safe { padding-bottom: env(safe-area-inset-bottom, 24px); }
     </style>
 
-    <!-- 5. IMPORT MAP -->
+    <!-- 5. IMPORT MAP (UPDATED TO GOOGLE CDN FOR FIREBASE) -->
     <script type="importmap">
     {
         "imports": {
@@ -125,7 +136,10 @@
             "react-router-dom": "https://esm.sh/react-router-dom@6.22.0?deps=react@18.2.0,react-dom@18.2.0",
             "lucide-react": "https://esm.sh/lucide-react@0.344.0?deps=react@18.2.0",
             "recharts": "https://esm.sh/recharts@2.12.0?deps=react@18.2.0,react-dom@18.2.0",
-            "react-qr-code": "https://esm.sh/react-qr-code@2.0.12?deps=react@18.2.0"
+            "react-qr-code": "https://esm.sh/react-qr-code@2.0.12?deps=react@18.2.0",
+            "firebase/app": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js",
+            "firebase/firestore": "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js",
+            "firebase/analytics": "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js"
         }
     }
     </script>
@@ -142,10 +156,79 @@
             LayoutDashboard, QrCode, Users, BarChart3, LogOut, Church, CreditCard,
             CheckCircle, AlertCircle, Camera, Trash2, Download, Search, Upload,
             ChevronRight, Calendar, User, ShieldCheck, Sparkles, Zap, Plus, X, RefreshCw, BookOpen, PenTool,
-            Bell, Activity, MessageSquare, Send, Radio, TrendingUp, Briefcase, GraduationCap, Clock, FileText, CalendarDays, MapPin, Edit, BrainCircuit
+            Bell, Activity, MessageSquare, Send, Radio, TrendingUp, Briefcase, GraduationCap, Clock, FileText, CalendarDays, MapPin, Edit, BrainCircuit, Cloud, CloudOff
         } from 'lucide-react';
         import { BarChart, Bar, ResponsiveContainer, PieChart, Pie, Cell, Tooltip, XAxis, YAxis, CartesianGrid } from 'recharts';
         import QRCode from 'react-qr-code';
+
+        // --- FIREBASE INTEGRATION ---
+        import { initializeApp } from "firebase/app";
+        import { getFirestore, collection, getDocs, setDoc, doc, addDoc, updateDoc, deleteDoc } from "firebase/firestore";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyClxPWzrnQl6ZBErgOUnwOk40-bU44uH3o",
+            authDomain: "digitalsundayschoolgkpstgr.firebaseapp.com",
+            databaseURL: "https://digitalsundayschoolgkpstgr-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "digitalsundayschoolgkpstgr",
+            storageBucket: "digitalsundayschoolgkpstgr.firebasestorage.app",
+            messagingSenderId: "1020099368151",
+            appId: "1:1020099368151:web:b51c7bbc6d923a51d4cc92",
+            measurementId: "G-D66E4D3ZVG"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // --- FIREBASE HELPERS ---
+        // Helper untuk sinkronisasi data dari Firestore ke LocalStorage saat start
+        const syncFromFirestore = async () => {
+            const collections = [
+                { name: 'users', key: 'gkps_users_v3' },
+                { name: 'attendance', key: 'gkps_att_v3' },
+                { name: 'schedules', key: 'gkps_sched_v3' },
+                { name: 'materials', key: 'gkps_mat_v3' },
+                { name: 'activities', key: 'gkps_act_v3' },
+                { name: 'notifications', key: 'gkps_notif_v3' }
+            ];
+
+            let hasData = false;
+            try {
+                for (const col of collections) {
+                    const querySnapshot = await getDocs(collection(db, col.name));
+                    const data = [];
+                    querySnapshot.forEach((doc) => {
+                        data.push(doc.data());
+                    });
+                    
+                    if (data.length > 0) {
+                        localStorage.setItem(col.key, JSON.stringify(data));
+                        hasData = true;
+                    }
+                }
+                console.log("Sync complete from Firestore");
+            } catch (e) {
+                console.error("Gagal sinkronisasi data:", e);
+            }
+            return hasData;
+        };
+
+        // Helper untuk push data ke Firestore (Fire and Forget)
+        const pushToFirestore = (collectionName, data, id) => {
+            try {
+                // Menggunakan setDoc agar ID sesuai dengan yang kita generate
+                setDoc(doc(db, collectionName, String(id)), data);
+            } catch (e) {
+                console.error("Gagal push ke Firestore:", e);
+            }
+        };
+
+        const deleteFromFirestore = (collectionName, id) => {
+            try {
+                deleteDoc(doc(db, collectionName, String(id)));
+            } catch (e) {
+                console.error("Gagal hapus di Firestore:", e);
+            }
+        }
 
         // --- DATA & CONFIG ---
         const MOCK_VERSES = [
@@ -181,10 +264,15 @@
             { id: 'c4', name: 'Kelas Ester', desc: '13+ Tahun' }
         ];
 
+        const DEFAULT_SCHEDULES = [
+            { id: 's1', className: 'Kelas Daud', date: '2025-01-26', time: '08:00 - 09:30', activity: 'Ibadah Minggu', theme: 'Tuhan Yesus Baik', speaker: 'Kak Lisa', location: 'R. Daud Lt. 1', status: 'upcoming' },
+            { id: 's2', className: 'Kelas Daniel', date: '2025-01-26', time: '08:00 - 09:30', activity: 'Ibadah & Aktivitas', theme: 'Daud Melawan Goliat', speaker: 'Kak Budi', location: 'R. Daniel Lt. 1', status: 'upcoming' },
+        ];
+
         // --- GEMINI AI SERVICE ---
         const GeminiService = {
             call: async (prompt) => {
-                const apiKey = ""; // API Key akan diisi oleh environment
+                const apiKey = ""; // API Key 
                 const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
                 
                 const payload = {
@@ -216,15 +304,7 @@
             }
         };
 
-        // Jadwal Default (Updated with Date)
-        const DEFAULT_SCHEDULES = [
-            { id: 's1', className: 'Kelas Daud', date: '2025-01-26', time: '08:00 - 09:30', activity: 'Ibadah Minggu', theme: 'Tuhan Yesus Baik', speaker: 'Kak Lisa', location: 'R. Daud Lt. 1', status: 'upcoming' },
-            { id: 's2', className: 'Kelas Daniel', date: '2025-01-26', time: '08:00 - 09:30', activity: 'Ibadah & Aktivitas', theme: 'Daud Melawan Goliat', speaker: 'Kak Budi', location: 'R. Daniel Lt. 1', status: 'upcoming' },
-            { id: 's3', className: 'Kelas Paulus', date: '2025-01-26', time: '08:00 - 09:30', activity: 'Kebaktian Padang', theme: 'Alam Ciptaan Tuhan', speaker: 'Pdt. Rina', location: 'Halaman Gereja', status: 'upcoming' },
-            { id: 's4', className: 'Kelas Ester', date: '2025-01-26', time: '10:00 - 11:30', activity: 'Pendalaman Alkitab', theme: 'Menjadi Terang', speaker: 'Bang Andre', location: 'R. Ester Lt. 2', status: 'upcoming' },
-        ];
-
-        // --- SERVICES ---
+        // --- SERVICES (MODIFIED FOR FIREBASE) ---
         const DB = {
             get: (key, def) => {
                 try { return JSON.parse(localStorage.getItem(key)) || def; } catch { return def; }
@@ -237,9 +317,29 @@
                     if (index !== -1) {
                         users[index] = updatedUser;
                         DB.set(STORAGE.USERS, users);
+                        // SYNC ONLINE
+                        pushToFirestore('users', updatedUser, updatedUser.id);
                         return true;
                     }
-                    return false;
+                    // Jika user baru (via import)
+                    users.push(updatedUser);
+                    DB.set(STORAGE.USERS, users);
+                    pushToFirestore('users', updatedUser, updatedUser.id);
+                    return true;
+                },
+                add: (newUser) => {
+                    const users = DB.get(STORAGE.USERS, DEFAULT_USERS);
+                    users.push(newUser);
+                    DB.set(STORAGE.USERS, users);
+                    // SYNC ONLINE
+                    pushToFirestore('users', newUser, newUser.id);
+                },
+                delete: (id) => {
+                    const users = DB.get(STORAGE.USERS, DEFAULT_USERS);
+                    const updated = users.filter(u => u.id !== id);
+                    DB.set(STORAGE.USERS, updated);
+                    // SYNC ONLINE
+                    deleteFromFirestore('users', id);
                 }
             },
             att: {
@@ -247,6 +347,8 @@
                     const all = DB.get(STORAGE.ATTENDANCE, []);
                     if (all.some(r => r.userId === record.userId && r.date === record.date)) return false;
                     DB.set(STORAGE.ATTENDANCE, [...all, record]);
+                    // SYNC ONLINE
+                    pushToFirestore('attendance', record, record.id);
                     return true;
                 }
             },
@@ -259,6 +361,8 @@
                 save: (material) => {
                     const all = DB.get(STORAGE.MATERIALS, []);
                     DB.set(STORAGE.MATERIALS, [material, ...all]);
+                    // SYNC ONLINE
+                    pushToFirestore('materials', material, material.id);
                 }
             },
             activities: {
@@ -266,6 +370,8 @@
                     const all = DB.get(STORAGE.ACTIVITIES, []);
                     const newLog = { id: Date.now(), userName, action, timestamp: new Date().toISOString() };
                     DB.set(STORAGE.ACTIVITIES, [newLog, ...all].slice(0, 50));
+                    // SYNC ONLINE
+                    pushToFirestore('activities', newLog, newLog.id);
                 },
                 get: () => DB.get(STORAGE.ACTIVITIES, [])
             },
@@ -274,6 +380,8 @@
                     const all = DB.get(STORAGE.NOTIFICATIONS, []);
                     const newNotif = { id: Date.now(), title, message, sender, timestamp: new Date().toISOString() };
                     DB.set(STORAGE.NOTIFICATIONS, [newNotif, ...all]);
+                    // SYNC ONLINE
+                    pushToFirestore('notifications', newNotif, newNotif.id);
                 },
                 get: () => DB.get(STORAGE.NOTIFICATIONS, [])
             },
@@ -286,6 +394,8 @@
                 add: (sched) => {
                     const all = DB.get(STORAGE.SCHEDULES, DEFAULT_SCHEDULES);
                     DB.set(STORAGE.SCHEDULES, [sched, ...all]);
+                    // SYNC ONLINE
+                    pushToFirestore('schedules', sched, sched.id);
                 },
                 update: (updatedSched) => {
                     const all = DB.get(STORAGE.SCHEDULES, DEFAULT_SCHEDULES);
@@ -293,6 +403,8 @@
                     if (index !== -1) {
                         all[index] = updatedSched;
                         DB.set(STORAGE.SCHEDULES, all);
+                        // SYNC ONLINE
+                        pushToFirestore('schedules', updatedSched, updatedSched.id);
                         return true;
                     }
                     return false;
@@ -300,6 +412,8 @@
                 delete: (id) => {
                     const all = DB.get(STORAGE.SCHEDULES, DEFAULT_SCHEDULES);
                     DB.set(STORAGE.SCHEDULES, all.filter(s => s.id !== id));
+                    // SYNC ONLINE
+                    deleteFromFirestore('schedules', id);
                 }
             }
         };
@@ -347,6 +461,16 @@
                 </div>
             );
         };
+
+        const LoadingScreen = () => (
+            <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 relative overflow-hidden">
+                <Background />
+                <div className="glass-panel p-8 rounded-3xl flex flex-col items-center gap-4 animate-pop">
+                    <div className="loader"></div>
+                    <p className="text-slate-600 font-bold text-sm">Menghubungkan Database...</p>
+                </div>
+            </div>
+        );
 
         // --- MODALS & SCREENS ---
 
@@ -742,7 +866,7 @@
                         </div>
                         <div className="text-center mb-8">
                             <h1 className="text-2xl font-extrabold text-slate-800 tracking-tight mb-2 leading-tight">Presensi ASM-GSM<br/>GKPS Tangerang</h1>
-                            <p className="text-slate-500 font-medium">Digital Sunday School</p>
+                            <p className="text-slate-500 font-medium flex items-center justify-center gap-1"><Cloud size={14}/> Online Database System</p>
                         </div>
                         <div className="bg-white/50 p-1.5 rounded-2xl flex mb-6 backdrop-blur-sm">
                             {modes.map(m => (
@@ -778,7 +902,7 @@
                             <Button variant="primary">Masuk Aplikasi <Sparkles size={18} /></Button>
                         </form>
                     </div>
-                    <p className="absolute bottom-6 text-xs text-slate-400 font-medium opacity-60">GKPS Digital System v2.0</p>
+                    <p className="absolute bottom-6 text-xs text-slate-400 font-medium opacity-60">GKPS Digital System v3.0 (Firebase)</p>
                 </div>
             );
         };
@@ -805,9 +929,11 @@
                     pin: form.pin || '123456', // Default PIN 6 digit
                     qrCode: `${form.role.substring(0,1)}-${Date.now().toString().slice(-4)}`
                 };
-                const updated = [...users, newUser];
-                DB.set(STORAGE.USERS, updated);
+                DB.users.add(newUser); // Updated to allow DB add which syncs to Firestore
+                
+                const updated = DB.get(STORAGE.USERS);
                 setUsers(updated);
+                
                 DB.activities.add('Admin', `Menambah user baru: ${newUser.name} (${newUser.role})`);
                 setForm({ ...form, name: '', pin: '123456' });
                 setIsFormOpen(false);
@@ -834,7 +960,6 @@
             const processCSV = (csvText) => {
                 const lines = csvText.split('\n');
                 let successCount = 0;
-                const newUsers = [];
 
                 lines.forEach((line, index) => {
                     const [name, role, className, genderRaw] = line.split(',').map(item => item?.trim());
@@ -850,18 +975,17 @@
                              const newUser = {
                                 id: Date.now().toString() + index, 
                                 name: name, role: normalizedRole, className: finalClass, gender: finalGender,
-                                pin: '123456', // Default PIN 6 digit for import
+                                pin: '123456', 
                                 qrCode: `${normalizedRole.substring(0,1)}-${Date.now().toString().slice(-4)}-${index}`
                             };
-                            newUsers.push(newUser);
+                            DB.users.add(newUser);
                             successCount++;
                         }
                     }
                 });
 
-                if (newUsers.length > 0) {
-                    const updatedUsers = [...users, ...newUsers];
-                    DB.set(STORAGE.USERS, updatedUsers);
+                if (successCount > 0) {
+                    const updatedUsers = DB.get(STORAGE.USERS);
                     setUsers(updatedUsers);
                     DB.activities.add('Admin', `Import ${successCount} user baru via CSV`);
                     alert(`Berhasil import ${successCount} user! PIN Default: 123456`);
@@ -872,8 +996,8 @@
 
             const handleDelete = (id) => {
                 if(window.confirm('Hapus user ini?')) {
-                    const updated = users.filter(u => u.id !== id);
-                    DB.set(STORAGE.USERS, updated);
+                    DB.users.delete(id);
+                    const updated = DB.get(STORAGE.USERS);
                     setUsers(updated);
                     DB.activities.add('Admin', `Menghapus user ID: ${id}`);
                 }
@@ -1863,14 +1987,23 @@
 
         const App = () => {
             const [user, setUser] = useState(null);
+            const [isReady, setIsReady] = useState(false);
             
-            useEffect(() => { 
-                const s = DB.get(STORAGE.SESSION); 
-                if(s) {
-                    const users = DB.get(STORAGE.USERS, DEFAULT_USERS);
-                    const freshUser = users.find(u => u.id === s.id);
-                    setUser(freshUser || s);
-                } 
+            // --- SINKRONISASI DATABASE SAAT START ---
+            useEffect(() => {
+                const initApp = async () => {
+                    await syncFromFirestore(); // Tarik data dari Firebase
+                    setIsReady(true); // Aplikasi siap ditampilkan
+
+                    // Cek Session
+                    const s = DB.get(STORAGE.SESSION); 
+                    if(s) {
+                        const users = DB.get(STORAGE.USERS, DEFAULT_USERS);
+                        const freshUser = users.find(u => u.id === s.id);
+                        setUser(freshUser || s);
+                    } 
+                };
+                initApp();
             }, []);
             
             const login = (u) => { setUser(u); DB.set(STORAGE.SESSION, u); };
@@ -1878,7 +2011,6 @@
             const logout = () => { 
                 setUser(null); 
                 localStorage.removeItem(STORAGE.SESSION);
-                // --- PERBAIKAN: Reset Hash URL saat logout ---
                 window.location.hash = '/'; 
             };
             
@@ -1886,6 +2018,9 @@
                 const success = DB.users.update(updatedUser);
                 if (success) { setUser(updatedUser); DB.set(STORAGE.SESSION, updatedUser); }
             };
+
+            // Tampilkan Loading Screen saat sinkronisasi
+            if (!isReady) return <LoadingScreen />;
 
             if (!user) return <LoginScreen onLogin={login} />;
             return <HashRouter><MainApp user={user} onLogout={logout} onUpdateUser={handleUpdateUser} /></HashRouter>;
