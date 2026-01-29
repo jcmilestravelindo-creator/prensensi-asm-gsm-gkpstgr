@@ -67,7 +67,7 @@
         }
         .pill-button-main:active { transform: scale(0.95); }
         
-        #reader { border: none !important; border-radius: 1.5rem; overflow: hidden; }
+        #reader { border: none !important; border-radius: 1.5rem; overflow: hidden; background: #0f172a; }
         #reader video { object-fit: cover !important; width: 100% !important; height: 100% !important; }
         
         .stat-icon {
@@ -80,7 +80,7 @@
     <div id="root"></div>
 
     <script type="text/babel" data-type="module">
-        import React, { useState, useEffect, useRef, useMemo } from 'https://esm.sh/react@18.2.0';
+        import React, { useState, useEffect, useRef, useMemo, useCallback } from 'https://esm.sh/react@18.2.0';
         import { createRoot } from 'https://esm.sh/react-dom@18.2.0/client?deps=react@18.2.0';
         import { HashRouter, Routes, Route, useNavigate, useLocation } from 'https://esm.sh/react-router-dom@6.22.0?deps=react@18.2.0';
         
@@ -156,16 +156,15 @@
             );
         };
 
-        // --- SHARED MODALS ---
         const CardModal = ({ user, onClose }) => (
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
                 <div className="soft-card p-8 w-full max-sm relative animate-pop bg-white shadow-2xl text-center">
-                    <button onClick={onClose} className="absolute top-4 right-4 p-2 text-slate-400"><X size={24}/></button>
+                    <button onClick={onClose} className="absolute top-4 right-4 p-2 text-slate-400 hover:text-rose-500 transition-colors"><X size={24}/></button>
                     <Avatar name={user.name} size="xl" className="mb-4 mx-auto border-4 border-sky-100" />
                     <h3 className="text-2xl font-black text-slate-800 mb-1">{user.name}</h3>
                     <div className="flex justify-center gap-2 mb-6">
-                        <span className="text-[10px] font-bold bg-sky-50 text-sky-dark px-4 py-1.5 rounded-full uppercase">{user.className}</span>
-                        <span className="text-[10px] font-bold bg-pink-50 text-pink-500 px-4 py-1.5 rounded-full uppercase">{user.gender}</span>
+                        <span className="text-[10px] font-bold bg-sky-50 text-sky-dark px-4 py-1.5 rounded-full uppercase border border-sky-100">{user.className}</span>
+                        <span className="text-[10px] font-bold bg-pink-50 text-pink-500 px-4 py-1.5 rounded-full uppercase border border-pink-100">{user.gender || 'Laki-Laki'}</span>
                     </div>
                     <div className="p-4 bg-white rounded-3xl border-2 border-dashed border-sky-200 shadow-inner mb-2 flex justify-center">
                         <QRCode value={user.qrCode || user.id} size={160} fgColor="#0284c7" />
@@ -175,7 +174,6 @@
             </div>
         );
 
-        // MODAL UNTUK TAMBAH / EDIT USER
         const UserEditorModal = ({ user, onClose, onSave }) => {
             const [form, setForm] = useState(user || { 
                 name: '', role: 'STUDENT', className: 'Pagi', gender: 'Laki-Laki', pin: '123456', status: 'active' 
@@ -185,8 +183,8 @@
 
             return (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-                    <div className="soft-card p-8 w-full max-w-md relative animate-pop bg-white shadow-2xl">
-                        <button onClick={onClose} className="absolute top-4 right-4 p-2 text-slate-400"><X size={24}/></button>
+                    <div className="soft-card p-8 w-full max-w-md relative animate-pop bg-white shadow-2xl overflow-hidden">
+                        <button onClick={onClose} className="absolute top-4 right-4 p-2 text-slate-400 hover:text-rose-500 transition-colors"><X size={24}/></button>
                         <h3 className="text-2xl font-black text-sky-dark mb-6 text-left">{user?.id ? 'Edit Data User' : 'Tambah User Baru'}</h3>
                         
                         <div className="space-y-4 text-left">
@@ -198,7 +196,7 @@
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 mb-1 block">Peran (Role)</label>
-                                    <select value={form.role} onChange={e=>setForm({...form, role: e.target.value})} className="w-full p-4 rounded-2xl bg-sky-50 outline-none font-bold text-slate-700 appearance-none">
+                                    <select value={form.role} onChange={e=>setForm({...form, role: e.target.value})} className="w-full p-4 rounded-2xl bg-sky-50 outline-none font-bold text-slate-700 appearance-none cursor-pointer">
                                         <option value="STUDENT">Siswa</option>
                                         <option value="TEACHER">Guru</option>
                                         <option value="ADMIN">Admin</option>
@@ -216,7 +214,7 @@
                                     <select 
                                         value={form.className} 
                                         onChange={e=>setForm({...form, className: e.target.value})} 
-                                        className="w-full p-4 rounded-2xl bg-sky-50 outline-none font-bold text-slate-700 appearance-none"
+                                        className="w-full p-4 rounded-2xl bg-sky-50 outline-none font-bold text-slate-700 appearance-none cursor-pointer"
                                     >
                                         {classOptions.map(opt => (
                                             <option key={opt} value={opt}>{opt}</option>
@@ -228,7 +226,7 @@
                                     <select 
                                         value={form.gender} 
                                         onChange={e=>setForm({...form, gender: e.target.value})} 
-                                        className="w-full p-4 rounded-2xl bg-sky-50 outline-none font-bold text-slate-700 appearance-none"
+                                        className="w-full p-4 rounded-2xl bg-sky-50 outline-none font-bold text-slate-700 appearance-none cursor-pointer"
                                     >
                                         <option value="Laki-Laki">Laki-Laki</option>
                                         <option value="Perempuan">Perempuan</option>
@@ -247,7 +245,6 @@
 
         const Dashboard = ({ user, allUsers, attendance }) => {
             const nav = useNavigate();
-            const [aiAnalysis, setAiAnalysis] = useState(null);
             const [analyzing, setAnalyzing] = useState(false);
 
             const stats = useMemo(() => {
@@ -259,7 +256,7 @@
             const runAnalysis = async () => {
                 setAnalyzing(true);
                 const res = await GeminiService.call(`Analisa data: ${attendance.length} hadir dari ${allUsers.length} jemaat. Berikan saran bijak 1 kalimat dalam JSON: { "insight": "Komentar", "advice": "Saran" }`);
-                if(res) setAiAnalysis(res);
+                if(res) alert(`AI Insight: ${res.insight}\n\nSaran: ${res.advice}`);
                 setAnalyzing(false);
             };
 
@@ -270,7 +267,9 @@
                             <h2 className="text-3xl lg:text-5xl font-black text-sky-dark leading-tight uppercase">Selamat Beribadah! 🌼</h2>
                             <p className="text-slate-500 font-bold text-lg">Minggu, {new Date().toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'})}</p>
                             <div className="pt-4">
-                                <button onClick={() => nav('/scan')} className="pill-button-main px-14 py-4 text-sm uppercase tracking-widest">Absen Sekarang</button>
+                                <button onClick={() => nav('/scan')} className="pill-button-main px-14 py-4 text-sm uppercase tracking-widest flex items-center gap-2">
+                                    <QrCode size={18}/> Absen Sekarang
+                                </button>
                             </div>
                         </div>
                         <div className="absolute top-0 right-0 h-full w-full lg:w-2/3 pointer-events-none opacity-30 lg:opacity-100"><BannerIllustration /></div>
@@ -283,26 +282,18 @@
                         </div>
 
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-                            <div className="soft-card p-6 flex flex-col items-center justify-center border-b-4 border-emerald-400">
-                                <div className="bg-emerald-100 text-emerald-500 stat-icon mb-3"><CheckCircle size={22} fill="currentColor" stroke="white" /></div>
-                                <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Hadir</p>
-                                <h4 className="text-4xl font-black text-slate-800">{stats.hadir}</h4>
-                            </div>
-                            <div className="soft-card p-6 flex flex-col items-center justify-center border-b-4 border-amber-400">
-                                <div className="bg-amber-100 text-amber-500 stat-icon mb-3"><Clock size={22} fill="currentColor" stroke="white" /></div>
-                                <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1">Izin</p>
-                                <h4 className="text-4xl font-black text-slate-800">{stats.izin}</h4>
-                            </div>
-                            <div className="soft-card p-6 flex flex-col items-center justify-center border-b-4 border-sky-400">
-                                <div className="bg-sky-100 text-sky-500 stat-icon mb-3"><Monitor size={22} fill="currentColor" stroke="white" /></div>
-                                <p className="text-[10px] font-black text-sky-600 uppercase tracking-widest mb-1">Online</p>
-                                <h4 className="text-4xl font-black text-slate-800">{stats.online}</h4>
-                            </div>
-                            <div className="soft-card p-6 flex flex-col items-center justify-center border-b-4 border-rose-400">
-                                <div className="bg-rose-100 text-rose-500 stat-icon mb-3"><X size={22} fill="currentColor" stroke="white" /></div>
-                                <p className="text-[10px] font-black text-rose-600 uppercase tracking-widest mb-1">Tidak Hadir</p>
-                                <h4 className="text-4xl font-black text-slate-800">{stats.tidakHadir}</h4>
-                            </div>
+                            {[
+                                { label: 'Hadir', val: stats.hadir, icon: CheckCircle, color: 'emerald' },
+                                { label: 'Izin', val: stats.izin, icon: Clock, color: 'amber' },
+                                { label: 'Online', val: stats.online, icon: Monitor, color: 'sky' },
+                                { label: 'Tidak Hadir', val: stats.tidakHadir, icon: X, color: 'rose' }
+                            ].map((s, idx) => (
+                                <div key={idx} className={`soft-card p-6 flex flex-col items-center justify-center border-b-4 border-${s.color}-400`}>
+                                    <div className={`bg-${s.color}-100 text-${s.color}-500 stat-icon mb-3`}><s.icon size={22} fill="currentColor" stroke="white" /></div>
+                                    <p className={`text-[10px] font-black text-${s.color}-600 uppercase tracking-widest mb-1`}>{s.label}</p>
+                                    <h4 className="text-4xl font-black text-slate-800">{s.val}</h4>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </div>
@@ -315,33 +306,49 @@
             const [editingUser, setEditingUser] = useState(null);
             const [showEditor, setShowEditor] = useState(false);
             const fileRef = useRef(null);
-            const filtered = users.filter(u => u.name.toLowerCase().includes(search.toLowerCase()));
+            const filtered = users.filter(u => u.name.toLowerCase().includes(search.toLowerCase()) || u.className.toLowerCase().includes(search.toLowerCase()));
 
             const handleImport = (e) => {
                 const file = e.target.files[0];
                 if (!file || !fbUser) return;
+                
                 const reader = new FileReader();
                 reader.onload = async (ev) => {
-                    const lines = ev.target.result.split('\n');
-                    for (const line of lines) {
-                        // Format CSV: Nama, Role, Kelas, Gender
-                        const [name, role, className, gender] = line.split(',').map(s => s?.trim());
+                    const text = ev.target.result;
+                    const lines = text.split(/\r?\n/).filter(line => line.trim() !== "");
+                    
+                    // Deteksi baris header
+                    let startIdx = 0;
+                    if (lines[0].toLowerCase().includes("nama") || lines[0].toLowerCase().includes("role") || lines[0].toLowerCase().includes("kelas")) {
+                        startIdx = 1;
+                    }
+
+                    let count = 0;
+                    for (let i = startIdx; i < lines.length; i++) {
+                        const line = lines[i];
+                        // Support baik koma maupun titik koma (Sering terjadi di Indonesia karena setting region Excel)
+                        const separator = line.includes(';') ? ';' : ',';
+                        const [name, role, className, gender] = line.split(separator).map(s => s?.trim());
+                        
                         if (name && role) {
                             const id = Math.random().toString(36).substring(7);
                             await setDoc(getPublicDoc('users', id), { 
                                 id, 
                                 name, 
                                 role: role.toUpperCase(), 
-                                className: className || '-', 
+                                className: className || 'Pagi', 
                                 gender: gender || 'Laki-Laki',
                                 qrCode: `GKPS-${id}`, 
                                 pin: '123456', 
                                 status: 'active' 
                             });
+                            count++;
                         }
                     }
-                    alert('Data Sinkron ke Cloud! ☁️');
+                    alert(`Berhasil sinkron ${count} jemaat ke Cloud! ☁️`);
+                    e.target.value = ''; // Reset input file
                 };
+                reader.onerror = () => alert("Gagal membaca file.");
                 reader.readAsText(file);
             };
 
@@ -364,14 +371,12 @@
                 if (!fbUser) return;
                 const newStatus = u.status === 'disabled' ? 'active' : 'disabled';
                 await updateDoc(getPublicDoc('users', u.id), { status: newStatus });
-                alert(`User ${u.name} ${newStatus === 'disabled' ? 'Dinonaktifkan' : 'Diaktifkan Kembali'}`);
             };
 
             const handleDelete = async (u) => {
                 if (!fbUser) return;
                 if(confirm(`Hapus permanen ${u.name} dari database cloud?`)) {
                     await deleteDoc(getPublicDoc('users', u.id));
-                    alert("User terhapus.");
                 }
             };
 
@@ -380,27 +385,27 @@
                     <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 px-2 text-left">
                         <div>
                             <h2 className="text-3xl font-black text-sky-dark uppercase">Data Database</h2>
-                            <p className="text-sm font-bold text-slate-400 mt-1 uppercase tracking-widest">Total: {users.length} Database Cloud</p>
+                            <p className="text-sm font-bold text-slate-400 mt-1 uppercase tracking-widest">Total: {users.length} Jemaat Aktif</p>
                         </div>
                         <div className="flex gap-2 flex-wrap">
-                            <button onClick={() => { setEditingUser(null); setShowEditor(true); }} className="p-4 bg-sky-dark text-white rounded-2xl shadow-lg font-bold text-sm flex items-center gap-2 transition-transform hover:scale-105 active:scale-95">
+                            <button onClick={() => { setEditingUser(null); setShowEditor(true); }} className="p-4 bg-sky-dark text-white rounded-2xl shadow-lg font-bold text-sm flex items-center gap-2 transition-all hover:brightness-110 active:scale-95">
                                 <UserPlus size={18}/> <span>Tambah User</span>
                             </button>
-                            <button onClick={() => fileRef.current.click()} className="p-4 bg-white rounded-2xl text-sky-main border-2 border-sky-50 shadow-sm font-bold text-sm flex items-center gap-2 transition-transform hover:scale-105">
+                            <button onClick={() => fileRef.current.click()} className="p-4 bg-white rounded-2xl text-sky-main border-2 border-sky-50 shadow-sm font-bold text-sm flex items-center gap-2 transition-all hover:bg-sky-50">
                                 <Upload size={18}/> <span>Import CSV</span>
                             </button>
                             <input type="file" ref={fileRef} onChange={handleImport} className="hidden" accept=".csv" />
                         </div>
                     </div>
 
-                    <div className="relative">
-                        <Search className="absolute left-6 top-5 text-sky-main" size={24} />
-                        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari nama jemaat, ID, atau kelas..." className="w-full p-6 pl-16 soft-card border-none outline-none font-bold text-lg shadow-sm" />
+                    <div className="relative group">
+                        <Search className="absolute left-6 top-5 text-sky-main transition-transform group-focus-within:scale-110" size={24} />
+                        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari nama jemaat, ID, atau kelas..." className="w-full p-6 pl-16 soft-card border-2 border-transparent focus:border-sky-main/30 outline-none font-bold text-lg shadow-sm transition-all" />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filtered.map(u => (
-                            <div key={u.id} className={`soft-card p-6 flex items-center justify-between group transition-all hover:bg-sky-50/50 ${u.status === 'disabled' ? 'opacity-50 grayscale' : ''}`}>
+                            <div key={u.id} className={`soft-card p-6 flex items-center justify-between group transition-all hover:border-sky-200 ${u.status === 'disabled' ? 'opacity-50 grayscale' : ''}`}>
                                 <div className="flex items-center gap-4 overflow-hidden">
                                     <Avatar name={u.name} size="lg" />
                                     <div className="truncate text-left">
@@ -409,15 +414,14 @@
                                             <span className={`text-[9px] font-black px-2 py-0.5 rounded-lg border uppercase ${u.role === 'ADMIN' ? 'bg-rose-50 text-rose-500 border-rose-100' : 'bg-sky-50 text-sky-dark border-sky-100'}`}>{u.role}</span>
                                             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{u.className}</span>
                                             <span className="text-[9px] font-bold text-pink-400 uppercase tracking-widest">{u.gender || '-'}</span>
-                                            {u.status === 'disabled' && <span className="text-[9px] font-black bg-slate-800 text-white px-2 py-0.5 rounded-lg uppercase">Disabled</span>}
                                         </div>
                                     </div>
                                 </div>
                                 <div className="flex gap-1.5">
-                                    <button onClick={()=>setViewingUser(u)} className="p-2.5 bg-sky-50 text-sky-main rounded-xl hover:bg-sky-100" title="Lihat Kartu"><Eye size={16}/></button>
-                                    <button onClick={()=>{ setEditingUser(u); setShowEditor(true); }} className="p-2.5 bg-indigo-50 text-indigo-500 rounded-xl hover:bg-indigo-100" title="Edit Data"><Edit size={16}/></button>
-                                    <button onClick={()=>handleToggleDisable(u)} className={`p-2.5 rounded-xl ${u.status === 'disabled' ? 'bg-emerald-50 text-emerald-500 hover:bg-emerald-100' : 'bg-amber-50 text-amber-500 hover:bg-amber-100'}`} title={u.status === 'disabled' ? 'Aktifkan' : 'Nonaktifkan'}><Power size={16}/></button>
-                                    <button onClick={()=>handleDelete(u)} className="p-2.5 bg-rose-50 text-rose-300 hover:text-rose-500 rounded-xl" title="Hapus"><Trash2 size={16}/></button>
+                                    <button onClick={()=>setViewingUser(u)} className="p-2.5 bg-sky-50 text-sky-main rounded-xl hover:bg-sky-100 transition-colors" title="Lihat Kartu"><Eye size={16}/></button>
+                                    <button onClick={()=>{ setEditingUser(u); setShowEditor(true); }} className="p-2.5 bg-indigo-50 text-indigo-500 rounded-xl hover:bg-indigo-100 transition-colors" title="Edit Data"><Edit size={16}/></button>
+                                    <button onClick={()=>handleToggleDisable(u)} className={`p-2.5 rounded-xl transition-colors ${u.status === 'disabled' ? 'bg-emerald-50 text-emerald-500 hover:bg-emerald-100' : 'bg-amber-50 text-amber-500 hover:bg-amber-100'}`} title={u.status === 'disabled' ? 'Aktifkan' : 'Nonaktifkan'}><Power size={16}/></button>
+                                    <button onClick={()=>handleDelete(u)} className="p-2.5 bg-rose-50 text-rose-300 hover:text-rose-500 rounded-xl transition-colors" title="Hapus"><Trash2 size={16}/></button>
                                 </div>
                             </div>
                         ))}
@@ -464,42 +468,92 @@
 
         const Scanner = ({ users, fbUser }) => {
             const [status, setStatus] = useState({ type: 'idle', msg: '' });
-            const onScan = async (code) => {
+            const scannerRef = useRef(null);
+
+            const onScan = useCallback(async (code) => {
                 if (!code || !fbUser || status.type !== 'idle') return;
+                
+                // Cari user di database lokal (cache snapshot)
                 const target = users.find(u => (u.qrCode === code || u.id === code) && u.status !== 'disabled');
-                if (!target) return setStatus({ type: 'err', msg: 'User Tidak Ditemukan / Dinonaktifkan!' });
+                
+                if (!target) {
+                    setStatus({ type: 'err', msg: 'User Tidak Ditemukan!' });
+                    setTimeout(() => setStatus({ type: 'idle', msg: '' }), 2000);
+                    return;
+                }
+
                 const today = new Date().toISOString().split('T')[0];
                 const recordId = `${target.id}-${today}`;
+                
                 try {
-                    await setDoc(getPublicDoc('attendance', recordId), { id: recordId, userId: target.id, userName: target.name, className: target.className, date: today, timestamp: new Date().toISOString() });
+                    await setDoc(getPublicDoc('attendance', recordId), { 
+                        id: recordId, 
+                        userId: target.id, 
+                        userName: target.name, 
+                        className: target.className, 
+                        date: today, 
+                        timestamp: new Date().toISOString() 
+                    });
                     setStatus({ type: 'ok', msg: `${target.name} Berhasil Absen!` });
-                } catch (e) { setStatus({ type: 'err', msg: 'Maaf, Gagal Cloud Sync' }); }
-                setTimeout(() => setStatus({ type: 'idle', msg: '' }), 2500);
-            };
+                } catch (e) { 
+                    setStatus({ type: 'err', msg: 'Gagal Cloud Sync. Coba lagi.' }); 
+                }
+                
+                setTimeout(() => setStatus({ type: 'idle', msg: '' }), 3000);
+            }, [fbUser, users, status.type]);
 
             useEffect(() => {
                 if (!fbUser) return;
-                const scanner = new Html5Qrcode("reader");
-                const start = async () => {
-                    try { await scanner.start({ facingMode: "environment" }, { fps: 15, qrbox: 280 }, onScan); } catch (err) {
-                        try { await scanner.start({ facingMode: "user" }, { fps: 15, qrbox: 280 }, onScan); } catch (e) {}
+                
+                const startScanner = async () => {
+                    // Beri waktu sebentar untuk render DOM agar id="reader" tersedia
+                    await new Promise(r => setTimeout(r, 300));
+                    
+                    const html5QrCode = new Html5Qrcode("reader");
+                    scannerRef.current = html5QrCode;
+                    
+                    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+                    
+                    try {
+                        // Coba kamera belakang dahulu
+                        await html5QrCode.start({ facingMode: "environment" }, config, onScan);
+                    } catch (err) {
+                        console.warn("Kamera belakang gagal, mencoba kamera depan...");
+                        try {
+                            await html5QrCode.start({ facingMode: "user" }, config, onScan);
+                        } catch (e) {
+                            setStatus({ type: 'err', msg: 'Kamera tidak ditemukan atau ditolak.' });
+                        }
                     }
                 };
-                start();
-                return () => { if (scanner.isScanning) scanner.stop(); };
-            }, [fbUser]);
+
+                startScanner();
+
+                return () => {
+                    if (scannerRef.current && scannerRef.current.isScanning) {
+                        scannerRef.current.stop().catch(e => console.error("Scanner stop error:", e));
+                    }
+                };
+            }, [fbUser, onScan]);
 
             return (
                 <div className="p-6 lg:p-12 animate-slide-up flex flex-col items-center">
-                    <h2 className="text-4xl font-black text-sky-dark leading-tight mb-10 uppercase tracking-tighter">Pindai Kode QR</h2>
+                    <h2 className="text-4xl font-black text-sky-dark leading-tight mb-4 uppercase tracking-tighter">Pindai Kode QR</h2>
+                    <p className="text-slate-400 font-bold mb-10 text-sm">Posisikan kode QR jemaat di tengah kotak</p>
+                    
                     <div className="relative w-full max-w-lg">
-                        <div className="soft-card p-6 bg-white relative z-10 border-8 border-sky-100 shadow-2xl">
-                            <div id="reader" className="w-full aspect-square bg-slate-900 rounded-[2rem] overflow-hidden shadow-inner border-4 border-slate-800"></div>
+                        <div className="soft-card p-6 bg-white relative z-10 border-8 border-sky-100 shadow-2xl overflow-hidden">
+                            <div id="reader" className="w-full aspect-square rounded-3xl overflow-hidden shadow-inner"></div>
+                            {/* Overlay Sederhana */}
+                            <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                                <div className="w-64 h-64 border-2 border-dashed border-white/40 rounded-3xl"></div>
+                            </div>
                         </div>
+                        
                         {status.type !== 'idle' && (
-                            <div className="absolute inset-0 z-50 flex items-center justify-center backdrop-blur-md rounded-[2.5rem] bg-white/40 animate-pop">
-                                <div className="soft-card p-12 text-center space-y-4 border-4 border-sky-200">
-                                    {status.type === 'ok' ? <Smile size={80} className="text-emerald-500 mx-auto" /> : <AlertCircle size={80} className="text-rose-500 mx-auto" />}
+                            <div className="absolute inset-0 z-50 flex items-center justify-center backdrop-blur-md rounded-[2.5rem] bg-white/40 animate-pop p-6">
+                                <div className="soft-card p-10 text-center space-y-4 border-4 border-white shadow-2xl w-full">
+                                    {status.type === 'ok' ? <CheckCircle size={80} className="text-emerald-500 mx-auto" /> : <AlertCircle size={80} className="text-rose-500 mx-auto" />}
                                     <p className="font-black text-slate-800 text-2xl leading-tight">{status.msg}</p>
                                 </div>
                             </div>
@@ -531,7 +585,10 @@
                 const initAuth = async () => {
                     try {
                         await signInAnonymously(auth);
-                        onAuthStateChanged(auth, u => setFbUser(u));
+                        onAuthStateChanged(auth, u => {
+                            setFbUser(u);
+                            if(!u) setIsLoading(false);
+                        });
                     } catch(e) { setIsLoading(false); }
                 };
                 initAuth();
@@ -542,6 +599,7 @@
                 const unsubUsers = onSnapshot(getPublicCol('users'), snap => {
                     const data = snap.docs.map(d => d.data());
                     setAllUsers(data);
+                    
                     const saved = localStorage.getItem('gkps_sess_v7');
                     if (saved) {
                         try {
@@ -551,11 +609,16 @@
                         } catch(e) {}
                     }
                     setIsLoading(false);
-                }, () => setIsLoading(false));
+                }, (err) => {
+                    console.error("Firestore error:", err);
+                    setIsLoading(false);
+                });
+
                 const unsubAtt = onSnapshot(getPublicCol('attendance'), snap => {
                     const today = new Date().toISOString().split('T')[0];
                     setAttendance(snap.docs.map(d => d.data()).filter(a => a.date === today));
                 });
+
                 return () => { unsubUsers(); unsubAtt(); };
             }, [fbUser]);
 
@@ -581,7 +644,13 @@
                 } else alert('Nama atau PIN salah!');
             };
 
-            if (isLoading || !fbUser) return <div className="h-screen flex items-center justify-center bg-sky-light text-center"><div className="w-16 h-16 border-4 border-sky-main border-t-transparent rounded-full animate-spin mx-auto mb-4"></div><p className="font-bold text-sky-dark">Menyambungkan Cloud...</p></div>;
+            if (isLoading) return (
+                <div className="h-screen flex flex-col items-center justify-center bg-sky-light text-center p-6">
+                    <div className="w-16 h-16 border-4 border-sky-main border-t-transparent rounded-full animate-spin mb-6"></div>
+                    <h3 className="text-xl font-black text-sky-dark uppercase tracking-widest">Sinkronisasi Cloud...</h3>
+                    <p className="text-slate-400 font-bold mt-2 text-xs uppercase tracking-[0.3em]">GKPS Tangerang Online</p>
+                </div>
+            );
 
             if (!user) return (
                 <div className="min-h-screen flex items-center justify-center p-6 relative overflow-hidden bg-sky-light text-center">
@@ -599,9 +668,9 @@
                             {loginRole === 'ADMIN' ? (
                                 <input type="text" placeholder="Nama Admin..." value={adminNameInput} onChange={e => setAdminNameInput(e.target.value)} className="w-full p-5 rounded-3xl border-2 border-sky-50 bg-slate-50 outline-none font-bold text-slate-700" />
                             ) : (
-                                <select id="select-user" className="w-full p-5 rounded-3xl border-2 border-sky-50 bg-slate-50 outline-none font-bold text-slate-700 appearance-none">
+                                <select id="select-user" className="w-full p-5 rounded-3xl border-2 border-sky-50 bg-slate-50 outline-none font-bold text-slate-700 appearance-none cursor-pointer">
                                     <option value="">Pilih Nama...</option>
-                                    {allUsers.filter(u => u.role === loginRole).map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+                                    {allUsers.filter(u => u.role === loginRole).sort((a,b) => a.name.localeCompare(b.name)).map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
                                 </select>
                             )}
                             <input type="password" placeholder="PIN Keamanan" value={pw} onChange={e => setPw(e.target.value)} className="w-full p-5 rounded-3xl border-2 border-sky-50 bg-slate-50 outline-none font-bold text-center tracking-[0.5em] placeholder:tracking-normal" />
@@ -615,7 +684,7 @@
                 <div className="h-screen flex flex-row w-full bg-sky-light relative overflow-hidden">
                     <aside className="hidden lg:flex flex-col w-80 sidebar-gradient p-8 text-white z-50 shadow-2xl relative overflow-hidden text-left">
                         <div className="flex flex-col items-center mb-12 relative z-10">
-                            <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mb-4 border-4 border-sky-light/20"><Church className="text-sky-main" size={32} /></div>
+                            <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mb-4 border-4 border-sky-light/20 shadow-lg"><Church className="text-sky-main" size={32} /></div>
                             <h2 className="text-2xl font-black text-center leading-tight uppercase tracking-tight">Presensi Kasih</h2>
                             <span className="text-[9px] font-bold opacity-60 tracking-[0.3em] mt-1 uppercase">GKPS Tangerang</span>
                         </div>
@@ -623,20 +692,19 @@
                             {[
                                 { path: '/', icon: LayoutDashboard, label: 'Dashboard', roles: ['ADMIN', 'TEACHER', 'STUDENT'] },
                                 { path: '/scan', icon: QrCode, label: 'Scan Absensi', roles: ['ADMIN', 'TEACHER'] },
-                                { path: isAdmin ? '/users' : '/', icon: isAdmin ? Users : CreditCard, label: isAdmin ? 'Data Database' : 'Informasi', roles: ['ADMIN', 'TEACHER', 'STUDENT'] },
+                                { path: isAdmin ? '/users' : '/', icon: isAdmin ? Users : CreditCard, label: isAdmin ? 'Data Database' : 'Kartu Digital', roles: ['ADMIN', 'TEACHER', 'STUDENT'] },
                             ].filter(m => m.roles.includes(user.role)).map((m, i) => (
                                 <button key={i} onClick={() => nav(m.path)} className={`w-full p-5 rounded-[1.75rem] flex items-center gap-4 transition-all font-black text-sm ${loc.pathname === m.path ? 'bg-white text-sky-dark shadow-xl scale-105' : 'hover:bg-white/10 text-white/80'}`}>
                                     <m.icon size={22} /><span>{m.label}</span>
                                 </button>
                             ))}
                         </nav>
-                        <button onClick={() => { localStorage.removeItem('gkps_sess_v7'); setUser(null); }} className="p-4 rounded-2xl bg-white/10 text-white font-black text-xs uppercase flex items-center justify-center gap-2 hover:bg-white/20 transition-all"><LogOut size={18}/> Logout</button>
+                        <button onClick={() => { localStorage.removeItem('gkps_sess_v7'); setUser(null); }} className="p-4 rounded-2xl bg-white/10 text-white font-black text-xs uppercase flex items-center justify-center gap-2 hover:bg-white/20 transition-all mt-auto"><LogOut size={18}/> Logout</button>
                     </aside>
 
                     <div className="flex-1 flex flex-col relative h-full overflow-hidden bg-white/40 backdrop-blur-sm">
                         <header className="p-6 lg:px-10 flex justify-end items-center gap-4 border-b border-sky-100 lg:border-none bg-white lg:bg-transparent z-40">
-                             <div className="p-3 bg-white rounded-2xl shadow-sm border border-sky-50 text-sky-main"><Bell size={20}/></div>
-                            <div className="flex items-center gap-3 ml-4 p-1 pr-4 bg-white rounded-full shadow-sm border border-sky-50">
+                            <div className="flex items-center gap-3 p-1 pr-4 bg-white rounded-full shadow-sm border border-sky-50">
                                 <Avatar name={user.name} size="md" className="border-2 border-sky-main" />
                                 <div className="leading-tight text-left">
                                     <p className="text-[11px] font-black text-slate-800 uppercase leading-none">{user.name.split(' ')[0]}</p>
@@ -645,7 +713,7 @@
                             </div>
                         </header>
 
-                        <div className="flex-1 overflow-y-auto no-scrollbar scroll-smooth">
+                        <div className="flex-1 overflow-y-auto no-scrollbar scroll-smooth pb-24 lg:pb-0">
                             <Routes>
                                 <Route path="/" element={isStudent ? <StudentDashboard user={user} /> : <Dashboard user={user} allUsers={allUsers} attendance={attendance} />} />
                                 <Route path="/scan" element={<Scanner users={allUsers} fbUser={fbUser} />} />
