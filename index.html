@@ -3,19 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Absensi Kasih PRO</title>
+
+<title>Absensi Kasih</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-
-<script src="https://unpkg.com/html5-qrcode"></script>
 
 <style>
 body{
     margin:0;
     font-family:Poppins,sans-serif;
     background:linear-gradient(#87CEEB,#E0F7FF);
+    color:#0c4a6e;
 }
 
+/* HEADER */
 .header{
     text-align:center;
     padding:15px;
@@ -25,6 +26,7 @@ body{
     color:white;
 }
 
+/* CARD */
 .card{
     background:white;
     margin:15px;
@@ -34,17 +36,39 @@ body{
     text-align:center;
 }
 
+/* BUTTON */
 .btn{
     background:#0EA5E9;
     color:white;
     border:none;
-    padding:14px;
-    border-radius:12px;
-    width:100%;
+    padding:14px 20px;
+    border-radius:14px;
     font-size:16px;
+    cursor:pointer;
+    width:100%;
     margin-top:10px;
 }
 
+.btn:active{
+    transform:scale(0.97);
+}
+
+/* STATUS BOX */
+.status{
+    display:flex;
+    justify-content:space-around;
+    margin-top:10px;
+}
+
+.status div{
+    background:#E0F2FE;
+    padding:10px;
+    border-radius:12px;
+    width:22%;
+    font-size:14px;
+}
+
+/* NAVIGATION */
 .nav{
     position:fixed;
     bottom:0;
@@ -53,132 +77,140 @@ body{
     display:flex;
     justify-content:space-around;
     padding:10px 0;
+    box-shadow:0 -3px 10px rgba(0,0,0,0.1);
 }
 
+.nav button{
+    background:none;
+    border:none;
+    font-size:14px;
+}
+
+/* SCREENS */
 .screen{display:none;}
 .active{display:block;}
 
-#reader{
-    width:100%;
+/* QR BOX */
+.qrbox{
+    border:4px dashed #0EA5E9;
+    padding:40px;
+    border-radius:20px;
+    font-size:20px;
+    margin-top:20px;
 }
 
-ul{
+/* LIST */
+.list{
     text-align:left;
 }
 
+.person{
+    display:flex;
+    justify-content:space-between;
+    margin:10px 0;
+}
+
+.hadir{
+    background:#22C55E;
+    color:white;
+    border:none;
+    padding:6px 12px;
+    border-radius:10px;
+}
+
+/* DESKTOP */
 @media(min-width:768px){
-.container{max-width:500px;margin:auto;}
+    .container{
+        max-width:500px;
+        margin:auto;
+    }
 }
 </style>
 </head>
 
 <body>
 
-<div class="header">🙏 Absensi Kasih PRO</div>
+<div class="header">🙏 Absensi Kasih</div>
 
 <div class="container">
 
 <!-- HOME -->
 <div id="home" class="screen active">
-<div class="card">
-<h2>Selamat Datang 🙏</h2>
-<p id="tanggal"></p>
+    <div class="card">
+        <h2>Selamat Datang 🙏</h2>
+        <p id="tanggal"></p>
 
-<button class="btn" onclick="manualAbsen()">Absen Manual</button>
+        <button class="btn" onclick="absen()">Absen Sekarang</button>
 
-<p>Total Hadir:</p>
-<h1 id="count">0</h1>
-</div>
+        <div class="status">
+            <div>🟢<br>Hadir<br><span id="hadirCount">0</span></div>
+            <div>🟡<br>Izin<br>0</div>
+            <div>🔵<br>Online<br>0</div>
+            <div>🔴<br>Tidak<br>0</div>
+        </div>
+    </div>
 </div>
 
 <!-- SCAN -->
 <div id="scan" class="screen">
-<div class="card">
-<h3>Scan QR Absensi</h3>
-<div id="reader"></div>
-</div>
+    <div class="card">
+        <h2>📷 Scan QR</h2>
+        <div class="qrbox">
+            Arahkan QR di sini
+        </div>
+        <button class="btn" onclick="fakeScan()">Simulasi Scan</button>
+    </div>
 </div>
 
 <!-- RIWAYAT -->
 <div id="history" class="screen">
-<div class="card">
-<h3>Riwayat Absensi</h3>
-<ul id="log"></ul>
-<button class="btn" onclick="clearData()">Hapus Data</button>
+    <div class="card">
+        <h2>📅 Riwayat</h2>
+        <ul id="log"></ul>
+    </div>
 </div>
+
+<!-- PROFIL -->
+<div id="profile" class="screen">
+    <div class="card">
+        <h2>👤 Profil</h2>
+        <p>Nama: Jemaat</p>
+        <p>Tuhan Memberkati 🙏</p>
+    </div>
 </div>
 
 </div>
 
-<!-- NAV -->
+<!-- NAVIGATION -->
 <div class="nav">
-<button onclick="show('home')">Home</button>
-<button onclick="startScan()">Scan</button>
-<button onclick="show('history');loadLog()">Riwayat</button>
+    <button onclick="show('home')">🏠<br>Home</button>
+    <button onclick="show('scan')">📷<br>Scan</button>
+    <button onclick="show('history')">📅<br>Riwayat</button>
+    <button onclick="show('profile')">👤<br>Profil</button>
 </div>
 
 <script>
-let data = JSON.parse(localStorage.getItem("absensi")||"[]");
-
-function save(){
-localStorage.setItem("absensi",JSON.stringify(data));
-document.getElementById("count").innerText=data.length;
-}
-
-save();
+let hadir=0;
 
 function show(id){
-document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-document.getElementById(id).classList.add('active');
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
 }
 
-function addData(name){
-let item={
-nama:name,
-waktu:new Date().toLocaleString()
-};
-data.push(item);
-save();
-alert("Absensi masuk: "+name+" 🙏");
+function absen(){
+    hadir++;
+    document.getElementById("hadirCount").innerText=hadir;
+
+    let li=document.createElement("li");
+    li.innerText="Hadir - "+new Date().toLocaleString();
+    document.getElementById("log").appendChild(li);
+
+    alert("✅ Absensi berhasil! Tuhan memberkati 🙏");
 }
 
-function manualAbsen(){
-let nama=prompt("Nama:");
-if(nama) addData(nama);
-}
-
-function loadLog(){
-let ul=document.getElementById("log");
-ul.innerHTML="";
-data.forEach(d=>{
-let li=document.createElement("li");
-li.innerText=d.nama+" - "+d.waktu;
-ul.appendChild(li);
-});
-}
-
-function clearData(){
-localStorage.clear();
-data=[];
-save();
-loadLog();
-}
-
-function startScan(){
-show('scan');
-
-const qr=new Html5Qrcode("reader");
-
-qr.start(
-{facingMode:"environment"},
-{fps:10,qrbox:250},
-(decodedText)=>{
-addData(decodedText);
-qr.stop();
-show('home');
-},
-()=>{}
-);
+function fakeScan(){
+    alert("QR berhasil discan ✅");
+    absen();
 }
 
 document.getElementById("tanggal").innerText=
