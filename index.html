@@ -99,6 +99,7 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .pb-safe { padding-bottom: env(safe-area-inset-bottom, 24px); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 
     <script type="importmap">
@@ -134,7 +135,7 @@
         import { BarChart, Bar, ResponsiveContainer, PieChart, Pie, Cell, Tooltip, XAxis, YAxis, CartesianGrid } from 'recharts';
         import QRCode from 'react-qr-code';
         
-        [cite_start]// --- FIREBASE INTEGRATION --- [cite: 35-39]
+        // --- FIREBASE INTEGRATION --- [cite: 35-39]
         import { initializeApp } from "firebase/app";
         import { getFirestore, collection, getDocs, setDoc, doc, addDoc, updateDoc, deleteDoc } from "firebase/firestore";
 
@@ -152,7 +153,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        [cite_start]// --- FIREBASE HELPERS --- [cite: 39-51]
+        // --- FIREBASE HELPERS --- [cite: 39-51]
         const syncFromFirestore = async () => {
             const collections = [
                 { name: 'users', key: 'gkps_users_v3' },
@@ -173,22 +174,21 @@
                         hasData = true;
                     }
                 }
-                console.log("Sync complete from Firestore");
-            } catch (e) { console.error("Gagal sinkronisasi data:", e); }
+            } catch (e) { console.error("Sync error:", e); }
             return hasData;
         };
 
         const pushToFirestore = (collectionName, data, id) => {
             try { setDoc(doc(db, collectionName, String(id)), data); } 
-            catch (e) { console.error("Gagal push ke Firestore:", e); }
+            catch (e) { console.error("Push error:", e); }
         };
 
         const deleteFromFirestore = (collectionName, id) => {
             try { deleteDoc(doc(db, collectionName, String(id))); } 
-            catch (e) { console.error("Gagal hapus di Firestore:", e); }
+            catch (e) { console.error("Delete error:", e); }
         }
 
-        [cite_start]// --- DATA & CONFIG --- [cite: 52-58]
+        // --- DATA & CONFIG --- [cite: 52-61]
         const MOCK_VERSES = [
             "Amsal 1:7 - Takut akan TUHAN adalah permulaan pengetahuan.",
             "Filipi 4:13 - Segala perkara dapat kutanggung di dalam Dia.",
@@ -197,20 +197,13 @@
         ];
         
         const UserRole = { ADMIN: 'ADMIN', TEACHER: 'TEACHER', STUDENT: 'STUDENT' };
-        const STORAGE = { 
-            USERS: 'gkps_users_v3', 
-            ATTENDANCE: 'gkps_att_v3', 
-            CLASSES: 'gkps_cls_v3', 
-            SESSION: 'gkps_sess_v3',
-            MATERIALS: 'gkps_mat_v3',
-            ACTIVITIES: 'gkps_act_v3', 
-            NOTIFICATIONS: 'gkps_notif_v3',
-            SCHEDULES: 'gkps_sched_v3' 
-        };
-
+        const STORAGE = { USERS: 'gkps_users_v3', ATTENDANCE: 'gkps_att_v3', CLASSES: 'gkps_cls_v3', SESSION: 'gkps_sess_v3', MATERIALS: 'gkps_mat_v3', ACTIVITIES: 'gkps_act_v3', NOTIFICATIONS: 'gkps_notif_v3', SCHEDULES: 'gkps_sched_v3' };
+        
         const DEFAULT_USERS = [
             { id: '1', name: 'Admin Utama', role: 'ADMIN', qrCode: 'ADMIN-001', gender: 'Laki-Laki', pin: 'admin123' },
-            { id: '2', name: 'Guru Sekolah Minggu', role: 'TEACHER', className: 'Kelas Daud', qrCode: 'GURU-001', gender: 'Perempuan', pin: '123456' }
+            { id: '2', name: 'Guru Sekolah Minggu', role: 'TEACHER', className: 'Kelas Daud', qrCode: 'GURU-001', gender: 'Perempuan', pin: '123456' },
+            { id: '3', name: 'Timothy Simanjuntak', role: 'STUDENT', className: 'Kelas Daud', qrCode: 'S-001', gender: 'Laki-Laki', pin: '123456' },
+            { id: '4', name: 'Sarah Damanik', role: 'STUDENT', className: 'Kelas Ester', qrCode: 'S-002', gender: 'Perempuan', pin: '123456' }
         ];
 
         const DEFAULT_CLASSES = [
@@ -221,13 +214,14 @@
         ];
 
         const DEFAULT_SCHEDULES = [
-            { id: 's1', className: 'Kelas Daud', date: '2025-01-26', time: '08:00 - 09:30', activity: 'Ibadah Minggu', theme: 'Tuhan Yesus Baik', speaker: 'Kak Lisa', location: 'R. Daud Lt. 1', status: 'upcoming' }
+            { id: 's1', className: 'Kelas Daud', date: '2025-01-26', time: '08:00 - 09:30', activity: 'Ibadah Minggu', theme: 'Tuhan Yesus Baik', speaker: 'Kak Lisa', location: 'R. Daud Lt. 1', status: 'upcoming' },
+            { id: 's2', className: 'Kelas Daniel', date: '2025-01-26', time: '08:00 - 09:30', activity: 'Ibadah & Aktivitas', theme: 'Daud Melawan Goliat', speaker: 'Kak Budi', location: 'R. Daniel Lt. 1', status: 'upcoming' }
         ];
 
-        [cite_start]// --- GEMINI AI SERVICE --- [cite: 62-70]
+        // --- GEMINI AI SERVICE --- [cite: 62-70]
         const GeminiService = {
             call: async (prompt) => {
-                const apiKey = ""; // Masukkan API Key Anda di sini
+                const apiKey = ""; // Kunci API Gemini Anda
                 const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
                 const payload = { contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json" } };
                 try {
@@ -239,7 +233,7 @@
             }
         };
 
-        [cite_start]// --- SERVICES (MODIFIED FOR FIREBASE) --- [cite: 71-104]
+        // --- SERVICES --- [cite: 71-104]
         const DB = {
             get: (key, def) => { try { return JSON.parse(localStorage.getItem(key)) || def; } catch { return def; } },
             set: (key, val) => localStorage.setItem(key, JSON.stringify(val)),
@@ -252,9 +246,9 @@
                 },
                 update: (updatedUser) => {
                     const users = DB.get(STORAGE.USERS, DEFAULT_USERS);
-                    const index = users.findIndex(u => u.id === updatedUser.id);
-                    if (index !== -1) {
-                        users[index] = updatedUser;
+                    const idx = users.findIndex(u => u.id === updatedUser.id);
+                    if (idx !== -1) {
+                        users[idx] = updatedUser;
                         DB.set(STORAGE.USERS, users);
                         pushToFirestore('users', updatedUser, updatedUser.id);
                         return true;
@@ -277,14 +271,14 @@
                 }
             },
             materials: {
-                getLatest: (className) => {
-                    const all = DB.get(STORAGE.MATERIALS, []);
-                    return all.filter(m => m.className === className).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
-                },
                 save: (material) => {
                     const all = DB.get(STORAGE.MATERIALS, []);
                     DB.set(STORAGE.MATERIALS, [material, ...all]);
                     pushToFirestore('materials', material, material.id);
+                },
+                getLatest: (className) => {
+                    const all = DB.get(STORAGE.MATERIALS, []);
+                    return all.filter(m => m.className === className).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
                 }
             },
             activities: {
@@ -308,7 +302,8 @@
             schedules: {
                 get: (className) => {
                     const all = DB.get(STORAGE.SCHEDULES, DEFAULT_SCHEDULES);
-                    return (!className || className === 'ALL') ? all : all.filter(s => s.className === className);
+                    if (!className || className === 'ALL') return all;
+                    return all.filter(s => s.className === className);
                 },
                 add: (sched) => {
                     const all = DB.get(STORAGE.SCHEDULES, DEFAULT_SCHEDULES);
@@ -317,9 +312,9 @@
                 },
                 update: (updatedSched) => {
                     const all = DB.get(STORAGE.SCHEDULES, DEFAULT_SCHEDULES);
-                    const index = all.findIndex(s => s.id === updatedSched.id);
-                    if (index !== -1) {
-                        all[index] = updatedSched;
+                    const idx = all.findIndex(s => s.id === updatedSched.id);
+                    if (idx !== -1) {
+                        all[idx] = updatedSched;
                         DB.set(STORAGE.SCHEDULES, all);
                         pushToFirestore('schedules', updatedSched, updatedSched.id);
                         return true;
@@ -338,7 +333,7 @@
             return new Date(dateStr).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
         };
 
-        [cite_start]// --- UI COMPONENTS --- [cite: 107-117]
+        // --- COMPONENTS --- [cite: 107-117]
         const Background = () => (
             <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10 bg-[#f3f4f6]">
                 <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-indigo-50/50 via-purple-50/50 to-pink-50/50"></div>
@@ -350,7 +345,7 @@
 
         const Button = ({ children, onClick, variant = 'primary', className = '' }) => {
             const styles = {
-                primary: "bg-gradient-to-r from-indigo-600 to-pink-500 text-white shadow-lg shadow-indigo-500/30 border-0",
+                primary: "bg-gradient-to-r from-indigo-600 to-pink-500 text-white shadow-lg",
                 secondary: "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50",
                 glass: "bg-white/40 backdrop-blur-md border border-white/60 text-indigo-700 hover:bg-white/60",
                 danger: "bg-red-50 text-red-600 border border-red-100 hover:bg-red-100"
@@ -383,31 +378,27 @@
             </div>
         );
 
-        [cite_start]// --- MODALS & SCREENS --- [cite: 118-214]
+        // --- FULL MODALS --- [cite: 118-214]
         const ScheduleManagerModal = ({ user, onClose }) => {
             const [schedules, setSchedules] = useState([]);
-            const [form, setForm] = useState({
-                className: user.role === 'TEACHER' ? user.className : DEFAULT_CLASSES[0].name,
-                date: new Date().toISOString().split('T')[0], 
-                time: '', activity: '', theme: '', speaker: '', location: ''
-            });
+            const [form, setForm] = useState({ className: user.role === 'TEACHER' ? user.className : DEFAULT_CLASSES[0].name, date: new Date().toISOString().split('T')[0], time: '', activity: '', theme: '', speaker: '', location: '' });
             const [filterClass, setFilterClass] = useState(user.role === 'TEACHER' ? user.className : 'ALL');
             const [editingId, setEditingId] = useState(null);
 
             useEffect(() => { setSchedules(DB.schedules.get(filterClass).sort((a,b) => new Date(b.date) - new Date(a.date))); }, [filterClass]);
 
             const handleSubmit = () => {
-                if(!form.activity || !form.time || !form.date) return alert("Mohon lengkapi data");
+                if(!form.activity || !form.time || !form.date) return alert("Mohon lengkapi data!");
                 if (editingId) DB.schedules.update({ ...form, id: editingId, status: 'upcoming' });
                 else DB.schedules.add({ ...form, id: Date.now().toString(), status: 'upcoming' });
-                setSchedules(DB.schedules.get(filterClass).sort((a, b) => new Date(b.date) - new Date(a.date)));
+                setSchedules(DB.schedules.get(filterClass).sort((a,b) => new Date(b.date) - new Date(a.date)));
                 onClose();
             };
 
             return (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose}></div>
-                    <div className="bg-white rounded-[2rem] p-6 w-full max-w-md relative z-10 shadow-2xl animate-pop h-[80vh] flex flex-col">
+                    <div className="bg-white rounded-[2rem] p-6 w-full max-w-md relative z-10 shadow-2xl h-[80vh] flex flex-col">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2"><CalendarDays size={20} className="text-indigo-500"/> Kelola Jadwal</h3>
                             <button onClick={onClose}><X size={20}/></button>
@@ -415,8 +406,8 @@
                         <div className="space-y-3 mb-6 bg-slate-50 p-4 rounded-2xl border border-slate-100">
                             <input type="date" value={form.date} onChange={e=>setForm({...form, date: e.target.value})} className="w-full p-2 rounded-xl border text-sm font-semibold"/>
                             <input value={form.activity} onChange={e=>setForm({...form, activity: e.target.value})} placeholder="Nama Kegiatan" className="w-full p-2 rounded-xl border text-sm"/>
-                            <input value={form.time} onChange={e=>setForm({...form, time: e.target.value})} placeholder="Waktu (08:00 - 10:00)" className="w-full p-2 rounded-xl border text-sm"/>
-                            <Button onClick={handleSubmit} className="py-2 text-sm">Tambah Jadwal</Button>
+                            <input value={form.time} onChange={e=>setForm({...form, time: e.target.value})} placeholder="Waktu" className="w-full p-2 rounded-xl border text-sm"/>
+                            <Button onClick={handleSubmit} className="py-2 text-sm">Simpan Jadwal</Button>
                         </div>
                         <div className="flex-1 overflow-y-auto space-y-3">
                             {schedules.map(s => (
@@ -441,7 +432,7 @@
             return (
                 <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose}></div>
-                    <div className="bg-white rounded-[2rem] p-6 w-full max-w-sm relative z-10 shadow-2xl animate-pop h-[60vh] flex flex-col">
+                    <div className="bg-white rounded-[2rem] p-6 w-full max-w-sm relative z-10 shadow-2xl h-[60vh] flex flex-col">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2"><Bell size={20} className="text-indigo-500"/> Notifikasi</h3>
                             <button onClick={onClose}><X size={20}/></button>
@@ -471,9 +462,9 @@
             return (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose}></div>
-                    <div className="bg-white rounded-[2rem] p-6 w-full max-w-sm relative z-10 shadow-2xl animate-pop">
-                        <button onClick={onClose} className="absolute top-4 right-4 text-slate-400"><X/></button>
-                        <div className="text-center mb-6"><h3 className="text-xl font-bold">Edit Profil</h3></div>
+                    <div className="bg-white rounded-[2rem] p-6 w-full max-w-sm relative z-10 shadow-2xl animate-pop text-center">
+                        <button onClick={onClose} className="absolute top-4 right-4 text-slate-400"><X size={24}/></button>
+                        <h3 className="text-xl font-bold text-slate-800 mb-6">Edit Profil</h3>
                         <div className="flex justify-center mb-6">
                             <div className="relative">
                                 <Avatar name={user.name} seed={seed} size="xl" className="border-4 border-white shadow-xl" />
@@ -481,8 +472,8 @@
                             </div>
                         </div>
                         <div className="space-y-4 mb-6">
-                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">PIN Keamanan (6 Digit)</label>
-                            <input type="text" maxLength="6" value={newPin} onChange={e => setNewPin(e.target.value.replace(/\D/g, ''))} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-center font-bold text-slate-700 tracking-[0.5em] focus:ring-2 focus:ring-indigo-500 outline-none text-lg" />
+                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Ganti PIN (6 Digit)</label>
+                            <input type="text" maxLength="6" value={newPin} onChange={e => setNewPin(e.target.value.replace(/\D/g, ''))} className="w-full p-4 bg-slate-50 border rounded-2xl text-center font-bold text-slate-700 tracking-[0.5em] focus:ring-2 focus:ring-indigo-500 outline-none text-lg" />
                         </div>
                         <Button onClick={handleSave}>Simpan Perubahan</Button>
                     </div>
@@ -507,6 +498,7 @@
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose}></div>
                     <div className="bg-white rounded-[2rem] p-6 w-full max-w-sm relative z-10 shadow-2xl animate-pop">
+                        <button onClick={onClose} className="absolute top-4 right-4 text-slate-400"><X size={24}/></button>
                         <h3 className="text-xl font-bold text-center mb-6">Materi Minggu Ini</h3>
                         <div className="bg-indigo-50 p-4 rounded-2xl mb-4 border border-indigo-100">
                             <label className="block text-[10px] font-bold text-indigo-500 mb-1 uppercase tracking-wider flex items-center gap-1"><Sparkles size={12}/> AI Assistant</label>
@@ -519,7 +511,7 @@
                         </div>
                         <input value={theme} onChange={e=>setTheme(e.target.value)} placeholder="Tema Pengajaran" className="w-full p-3 bg-slate-50 border rounded-xl mb-3 font-semibold" />
                         <textarea value={verse} onChange={e=>setVerse(e.target.value)} rows="3" placeholder="Ayat Hafalan" className="w-full p-3 bg-slate-50 border rounded-xl mb-4 text-sm" />
-                        <Button onClick={() => { if(!theme||!verse) return; DB.materials.save({ id: Date.now().toString(), className: user.className, teacherName: user.name, theme, verse, createdAt: new Date().toISOString() }); alert("Materi Dipublikasi!"); onClose(); }}>Publikasikan</Button>
+                        <Button onClick={() => { if(!theme||!verse) return; DB.materials.save({ id: Date.now().toString(), className: user.className, teacherName: user.name, theme, verse, createdAt: new Date().toISOString() }); alert("Materi Berhasil Disimpan!"); onClose(); }}>Publikasikan</Button>
                     </div>
                 </div>
             );
@@ -539,7 +531,7 @@
                 else {
                     const u = users.find(x => x.id === selected);
                     if (u && u.pin === pw) onLogin(u);
-                    else alert("PIN Salah!");
+                    else alert("PIN Salah atau Pengguna Belum Dipilih!");
                 }
             };
             const modes = showAdmin ? ['TEACHER', 'STUDENT', 'ADMIN'] : ['TEACHER', 'STUDENT'];
@@ -548,10 +540,10 @@
                     <Background />
                     <div className="glass-panel p-8 rounded-[2.5rem] w-full max-w-sm animate-slide-up relative z-10">
                         <div className="flex justify-center mb-6">
-                            <button onClick={() => { const c = secretCount + 1; setSecretCount(c); if(c>=5) { setShowAdmin(true); setMode('ADMIN'); } }} className="w-20 h-20 bg-indigo-500 rounded-3xl flex items-center justify-center shadow-xl animate-float"><Church className="text-white w-10 h-10" /></button>
+                            <button onClick={() => { const c = secretCount + 1; setSecretCount(c); if(c>=5) { setShowAdmin(true); setMode('ADMIN'); } }} className="w-20 h-20 bg-indigo-500 rounded-3xl flex items-center justify-center text-white shadow-xl animate-float"><Church size={40}/></button>
                         </div>
-                        <div className="text-center mb-8"><h1 className="text-2xl font-extrabold text-slate-800 tracking-tight leading-tight">Presensi ASM-GSM<br/>GKPS Tangerang</h1></div>
-                        <div className="bg-white/50 p-1.5 rounded-2xl flex mb-6 backdrop-blur-sm">
+                        <h1 className="text-2xl font-black text-center mb-8 leading-tight text-slate-800">Presensi ASM-GSM<br/>GKPS Tangerang</h1>
+                        <div className="bg-white/50 p-1.5 rounded-2xl flex mb-6">
                             {modes.map(m => (
                                 <button key={m} onClick={() => setMode(m)} className={`flex-1 py-3 text-[10px] font-bold rounded-xl transition-all ${mode === m ? 'bg-white text-indigo-600 shadow-md' : 'text-slate-400'}`}>
                                     {m === 'TEACHER' ? 'GURU' : m === 'STUDENT' ? 'SISWA' : 'ADMIN'}
@@ -577,16 +569,16 @@
             );
         };
 
-        [cite_start]// --- MANAJEMEN USER DENGAN PERBAIKAN IMPORT ASYNC --- [cite: 249-304]
+        // --- MANAJEMEN USER (FIXED SYNC) --- [cite: 249-304]
         const UserManagement = () => {
             const [users, setUsers] = useState([]);
             const [search, setSearch] = useState('');
-            const [form, setForm] = useState({ name: '', role: 'STUDENT', className: 'Kelas Daud', gender: 'Laki-Laki', pin: '123456' });
             const [isFormOpen, setIsFormOpen] = useState(false);
-            const [isProcessing, setIsProcessing] = useState(false);
+            const [form, setForm] = useState({ name: '', role: 'STUDENT', className: 'Kelas Daud', gender: 'Laki-Laki', pin: '123456' });
+            const [isUploading, setIsUploading] = useState(false);
             const fileInputRef = useRef(null);
 
-            useEffect(() => { setUsers(DB.get(STORAGE.USERS, DEFAULT_USERS)); }, []);
+            useEffect(() => setUsers(DB.get(STORAGE.USERS, DEFAULT_USERS)), []);
 
             const handleSubmit = (e) => {
                 e.preventDefault();
@@ -597,9 +589,8 @@
                 setIsFormOpen(false);
             };
 
-            // PERBAIKAN UTAMA: LOGIKA IMPORT ASINKRONUS AGAR MASUK KE CLOUD (HP)
             const processCSV = async (csvText) => {
-                setIsProcessing(true);
+                setIsUploading(true);
                 const lines = csvText.split('\n');
                 let successCount = 0;
                 let currentLocalUsers = DB.get(STORAGE.USERS, []);
@@ -610,32 +601,27 @@
                     const [name, role, className, genderRaw] = line.split(',').map(item => item?.trim());
                     if (name && role) {
                         const normalizedRole = role.toUpperCase();
-                        const hasClass = normalizedRole === 'STUDENT' || normalizedRole === 'TEACHER';
-                        const finalClass = hasClass && className ? className : '-';
-                        const finalGender = (genderRaw && /perempuan|p|pr/i.test(genderRaw)) ? 'Perempuan' : 'Laki-Laki';
-                        
                         const newUser = {
                             id: (Date.now() + i).toString(),
-                            name, role: normalizedRole, className: finalClass, gender: finalGender,
-                            pin: '123456', 
+                            name, role: normalizedRole,
+                            className: (normalizedRole !== 'ADMIN' && className) ? className : '-',
+                            gender: (genderRaw && /perempuan|p/i.test(genderRaw)) ? 'Perempuan' : 'Laki-Laki',
+                            pin: '123456',
                             qrCode: `${normalizedRole.substring(0,1)}-${Date.now().toString().slice(-4)}-${i}`
                         };
-
                         try {
-                            // Sync ke Firestore secara individual agar HP bisa mendeteksi perubahan
                             await setDoc(doc(db, 'users', String(newUser.id)), newUser);
                             currentLocalUsers.push(newUser);
                             successCount++;
-                        } catch (err) { console.error("Gagal sync user:", name, err); }
+                        } catch (e) { console.error("Error upload:", name); }
                     }
                 }
-
                 if (successCount > 0) {
                     DB.set(STORAGE.USERS, currentLocalUsers);
                     setUsers(currentLocalUsers);
-                    alert(`Berhasil! ${successCount} user tersinkronisasi ke Cloud.`);
+                    alert(`Berhasil impor ${successCount} user! Data sinkron ke Cloud.`);
                 }
-                setIsProcessing(false);
+                setIsUploading(false);
             };
 
             const handleFileChange = (e) => {
@@ -651,45 +637,31 @@
             return (
                 <div className="p-6 pb-32 animate-slide-up">
                     <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-2xl font-extrabold text-slate-800">Manajemen User</h2>
+                        <h2 className="text-2xl font-black text-slate-800">Manajemen User</h2>
                         <div className="flex gap-2">
                             <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".csv" />
-                            <button onClick={() => fileInputRef.current.click()} disabled={isProcessing} className="bg-emerald-50 text-emerald-600 p-2 px-3 rounded-xl text-xs font-bold border border-emerald-100 flex items-center gap-1">
-                                {isProcessing ? <RefreshCw className="animate-spin" size={14}/> : <Upload size={14}/>} {isProcessing ? 'Syncing...' : 'Import'}
+                            <button onClick={() => fileInputRef.current.click()} disabled={isUploading} className="bg-emerald-50 text-emerald-600 p-2 rounded-xl text-xs font-bold border border-emerald-100 flex items-center gap-1">
+                                {isUploading ? <RefreshCw className="animate-spin" size={14}/> : <Upload size={14}/>} {isUploading ? 'Syncing...' : 'Import'}
                             </button>
-                            <button onClick={() => setIsFormOpen(!isFormOpen)} className="bg-white p-2 px-3 rounded-xl text-xs font-bold text-indigo-600 border"><Plus size={14}/></button>
+                            <button onClick={() => setIsFormOpen(!isFormOpen)} className="bg-indigo-600 text-white p-2 rounded-xl"><Plus size={18}/></button>
                         </div>
                     </div>
                     {isFormOpen && (
-                        <div className="glass-card p-5 rounded-[2rem] mb-6 animate-pop">
-                            <h3 className="font-bold text-slate-700 mb-4">Data User Baru</h3>
-                            <div className="space-y-3">
-                                <input value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="Nama Lengkap" className="w-full p-3 rounded-xl bg-white/50 border outline-none font-semibold text-slate-700" />
-                                <div className="grid grid-cols-2 gap-2">
-                                    <select value={form.role} onChange={e => setForm({...form, role: e.target.value})} className="w-full p-3 rounded-xl bg-white border outline-none font-semibold text-slate-600 text-sm">
-                                        <option value="STUDENT">Siswa</option><option value="TEACHER">Guru</option><option value="ADMIN">Admin</option>
-                                    </select>
-                                    <select value={form.className} onChange={e => setForm({...form, className: e.target.value})} className="w-full p-3 rounded-xl bg-white border outline-none font-semibold text-slate-600 text-sm">
-                                        {DEFAULT_CLASSES.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-                                    </select>
-                                </div>
-                                <Button onClick={handleSubmit}>Simpan Data</Button>
-                            </div>
+                        <div className="glass-card p-5 rounded-3xl mb-6">
+                            <input value={form.name} onChange={e=>setForm({...form, name: e.target.value})} placeholder="Nama Lengkap" className="w-full p-3 border rounded-xl mb-3 font-semibold" />
+                            <Button onClick={handleSubmit}>Simpan User</Button>
                         </div>
                     )}
                     <div className="relative mb-6">
                         <Search className="absolute left-4 top-3.5 text-slate-400" size={20}/>
-                        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari nama user..." className="w-full p-3 pl-12 rounded-2xl bg-white/60 border outline-none font-medium" />
+                        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari nama user..." className="w-full p-3 pl-12 rounded-2xl bg-white border outline-none font-medium" />
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {filtered.map(u => (
-                            <div key={u.id} className="glass-card p-4 rounded-2xl flex items-center justify-between group animate-pop">
+                            <div key={u.id} className="bg-white p-4 rounded-2xl flex justify-between items-center shadow-sm border border-slate-100">
                                 <div className="flex items-center gap-3">
-                                    <Avatar name={u.name} seed={u.avatarSeed} size="sm" />
-                                    <div>
-                                        <p className="font-bold text-slate-800 text-sm">{u.name}</p>
-                                        <p className="text-[10px] text-slate-400 font-bold uppercase">{u.role} • {u.className}</p>
-                                    </div>
+                                    <Avatar name={u.name} size="sm" />
+                                    <div><p className="font-bold text-sm text-slate-800">{u.name}</p><p className="text-[10px] text-slate-400 uppercase font-bold">{u.role} • {u.className}</p></div>
                                 </div>
                                 <button onClick={() => { DB.users.delete(u.id); setUsers(DB.get(STORAGE.USERS)); }} className="text-rose-400 p-2 hover:bg-rose-50 rounded-lg"><Trash2 size={16}/></button>
                             </div>
@@ -723,32 +695,29 @@
             const handleAnalyze = async () => {
                 setIsAnalyzing(true);
                 try {
-                    const result = await GeminiService.call(`Analisa data kehadiran. Total: ${att.length}. JSON: { "insight": "...", "recommendation": "..." }`);
-                    setAiAnalysis(result);
-                } catch (e) { alert("AI Gagal"); } finally { setIsAnalyzing(false); }
+                    const res = await GeminiService.call(`Analisa kehadiran: ${att.length} orang. Berikan insight JSON {"insight": "...", "recommendation": "..."}`);
+                    setAiAnalysis(res);
+                } catch (e) { alert("AI Error"); } finally { setIsAnalyzing(false); }
             };
 
             const COLORS = ['#6366f1', '#ec4899', '#a855f7', '#f43f5e'];
 
             return (
                 <div className="p-6 pb-32 animate-slide-up">
-                    <header className="mb-8 flex justify-between items-center">
-                        <div><h2 className="text-3xl font-extrabold text-slate-800">Admin Control</h2></div>
-                        <input type="date" value={date} onChange={e => setDate(e.target.value)} className="bg-white p-2 rounded-xl border text-xs font-bold" />
-                    </header>
+                    <h2 className="text-3xl font-black text-slate-800 mb-6">Dashboard</h2>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                        <div className="glass-card p-5 rounded-3xl bg-indigo-600 text-white">
+                        <div className="bg-indigo-600 p-5 rounded-[2rem] text-white shadow-xl">
                             <p className="text-[10px] font-bold opacity-80 uppercase mb-1">Hadir Hari Ini</p>
                             <h3 className="text-3xl font-black">{att.length}</h3>
                         </div>
-                        <div className="glass-card p-5 rounded-3xl bg-emerald-500 text-white">
+                        <div className="bg-emerald-500 p-5 rounded-[2rem] text-white shadow-xl">
                             <p className="text-[10px] font-bold opacity-80 uppercase mb-1">Total Siswa</p>
                             <h3 className="text-3xl font-black">{users.filter(u=>u.role==='STUDENT').length}</h3>
                         </div>
                     </div>
-                    <div className="mb-8 bg-gradient-to-r from-purple-500 to-indigo-600 p-6 rounded-[2rem] text-white relative overflow-hidden">
-                        <div className="relative z-10 flex justify-between items-start mb-4">
-                            <div><h3 className="text-xl font-bold flex items-center gap-2"><BrainCircuit/> Analisa Cerdas AI</h3><p className="text-indigo-100 text-xs">Insight kehadiran otomatis.</p></div>
+                    <div className="mb-8 bg-gradient-to-r from-purple-500 to-indigo-600 p-6 rounded-[2rem] text-white relative">
+                        <div className="flex justify-between items-start mb-4">
+                            <div><h3 className="text-xl font-bold flex items-center gap-2"><BrainCircuit size={24}/> Analisa Cerdas AI</h3></div>
                             <button onClick={handleAnalyze} disabled={isAnalyzing} className="bg-white text-indigo-600 px-4 py-2 rounded-xl font-bold text-xs">
                                 {isAnalyzing ? <RefreshCw className="animate-spin" size={16}/> : <Sparkles size={16}/>}
                             </button>
@@ -768,6 +737,16 @@
                             </ResponsiveContainer>
                         </div>
                     </div>
+                    <div className="glass-card p-6 rounded-[2rem] h-80 overflow-y-auto">
+                        <h3 className="font-bold mb-4 flex items-center gap-2 text-slate-700"><Activity size={20} className="text-indigo-500"/> Log Aktivitas</h3>
+                        {activities.map(a => (
+                            <div key={a.id} className="border-l-2 border-indigo-100 pl-4 pb-4 mb-4 relative">
+                                <div className="absolute -left-[9px] top-0 w-4 h-4 bg-white border-2 border-indigo-500 rounded-full"></div>
+                                <p className="text-xs font-bold text-slate-800">{a.userName}</p>
+                                <p className="text-[10px] text-slate-500">{a.action}</p>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             );
         };
@@ -785,7 +764,7 @@
                 else if (user.role === 'TEACHER' && u.className !== user.className) setStatus({ type: 'err', msg: `Gagal! Siswa kelas ${u.className}` });
                 else {
                     const ok = DB.att.add({ id: Date.now(), userId: u.id, userName: u.name, className: u.className, role: u.role, date: new Date().toISOString().split('T')[0], timestamp: new Date().toISOString() });
-                    setStatus(ok ? { type: 'ok', msg: `Berhasil: ${u.name}` } : { type: 'err', msg: 'Sudah Absen' });
+                    setStatus(ok ? { type: 'ok', msg: `Berhasil: ${u.name}` } : { type: 'err', msg: 'Sudah Absen Hari Ini' });
                 }
                 setTimeout(() => setStatus({ type: 'idle', msg: '' }), 2000);
             };
@@ -801,20 +780,18 @@
 
             return (
                 <div className="p-6 pb-40 text-center animate-slide-up">
-                    <h2 className="text-2xl font-black mb-6">Scanner Presensi</h2>
-                    <div className="glass-panel p-3 rounded-[2.5rem] bg-slate-900 relative overflow-hidden mb-6">
-                        <div id="reader" className="w-full aspect-square rounded-[2rem] overflow-hidden"></div>
+                    <h2 className="text-2xl font-black text-slate-800 mb-6">Scanner Presensi</h2>
+                    <div id="reader" className="w-full aspect-square bg-slate-900 rounded-[2.5rem] overflow-hidden mb-6 relative">
                         {status.type !== 'idle' && (
-                            <div className={`absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm`}>
-                                <div className={`p-6 rounded-3xl bg-white text-center transform scale-110 animate-pop border-4 ${status.type === 'ok' ? 'border-emerald-400' : 'border-rose-400'}`}>
-                                    {status.type === 'ok' ? <CheckCircle className="text-emerald-500 mx-auto mb-2" size={32}/> : <AlertCircle className="text-rose-500 mx-auto mb-2" size={32}/>}
-                                    <h4 className="font-black">{status.msg}</h4>
+                            <div className={`absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm transition-all`}>
+                                <div className={`p-6 rounded-3xl bg-white border-4 animate-pop ${status.type==='ok'?'border-emerald-400':'border-rose-400'}`}>
+                                    <h4 className="font-black text-slate-800">{status.msg}</h4>
                                 </div>
                             </div>
                         )}
                     </div>
-                    <Button variant="secondary" onClick={() => setManual(!manual)}>{manual ? <Camera/> : <PenTool/>} {manual ? 'Kamera' : 'Manual ID'}</Button>
-                    {manual && <input value={txt} onChange={e=>setTxt(e.target.value)} onKeyDown={e=>e.key==='Enter'&&onScan(txt)} placeholder="Ketik ID lalu Enter" className="w-full mt-4 p-4 rounded-xl border font-bold text-center" />}
+                    <Button variant="secondary" onClick={() => setManual(!manual)}>{manual ? <Camera/> : <PenTool/>} {manual ? 'Kamera' : 'Input Manual'}</Button>
+                    {manual && <input value={txt} onChange={e=>setTxt(e.target.value)} onKeyDown={e=>e.key==='Enter'&&onScan(txt)} placeholder="Ketik ID" className="w-full mt-4 p-4 rounded-xl border font-bold text-center" />}
                 </div>
             );
         };
@@ -835,27 +812,29 @@
             return (
                 <div className="p-6 pb-24 animate-slide-up">
                     <div className="flex justify-between items-center mb-6">
-                        <div><h2 className="text-xl font-bold">Halo, {user.name.split(' ')[0]}!</h2><p className="text-xs text-slate-500">{user.className}</p></div>
+                        <div><h2 className="text-xl font-bold text-slate-800">Halo, {user.name.split(' ')[0]}!</h2><p className="text-xs text-slate-500 font-medium">Selamat datang di {user.className}</p></div>
                         <Avatar name={user.name} seed={user.avatarSeed} size="lg" />
                     </div>
                     <div className="flex bg-white/50 p-1 rounded-2xl mb-6 shadow-sm overflow-x-auto no-scrollbar">
                         {['card', 'history', 'materials', 'schedule'].map(t => (
-                            <button key={t} onClick={() => setTab(t)} className={`flex-1 py-2.5 text-[11px] font-bold rounded-xl ${tab===t?'bg-white text-indigo-600 shadow-md':'text-slate-500'}`}>
-                                {t === 'card' ? 'Kartu' : t === 'history' ? 'Riwayat' : t === 'materials' ? 'Materi' : 'Jadwal'}
+                            <button key={t} onClick={() => setTab(t)} className={`flex-1 py-2.5 text-[11px] font-bold rounded-xl transition-all ${tab===t?'bg-white text-indigo-600 shadow-md':'text-slate-500'}`}>
+                                {t.toUpperCase()}
                             </button>
                         ))}
                     </div>
-                    {tab === 'card' && (
-                        <div className="relative bg-white/90 backdrop-blur-xl rounded-[2.5rem] p-8 shadow-2xl border text-center animate-pop">
-                            <h1 className="font-black text-indigo-600 mb-6 uppercase tracking-widest">GKPS CARD</h1>
-                            <div className="flex justify-center mb-6 p-4 bg-white rounded-3xl border-2 border-dashed"><QRCode value={user.qrCode} size={160} /></div>
-                            <h2 className="text-2xl font-black text-slate-800 mb-1">{user.name}</h2>
-                            <p className="font-mono text-xs text-slate-400 font-bold">{user.qrCode}</p>
-                        </div>
-                    )}
-                    {tab === 'history' && history.map(h => <div key={h.id} className="glass-card p-4 rounded-2xl mb-2 flex justify-between items-center border-l-4 border-emerald-500"><div className="text-sm font-bold">{formatDateIndo(h.date)}</div><span className="text-xs font-mono bg-emerald-50 px-2 py-1 rounded text-emerald-600">{new Date(h.timestamp).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</span></div>)}
-                    {tab === 'materials' && materials.map(m => <div key={m.id} className="glass-card p-5 rounded-2xl mb-3 relative overflow-hidden"><div className="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div><h4 className="font-extrabold text-slate-800">{m.theme}</h4><p className="text-xs text-slate-500 italic mt-2">"{m.verse}"</p></div>)}
-                    {tab === 'schedule' && schedules.map(s => <div key={s.id} className="glass-card p-4 rounded-3xl mb-3 bg-gradient-to-r from-indigo-50 to-white"><h4 className="font-bold text-sm">{s.activity}</h4><p className="text-[10px] text-indigo-500 font-bold">{formatDateIndo(s.date)}</p><p className="text-xs text-slate-500 mt-2">{s.location} • {s.time}</p></div>)}
+                    <div className="flex-1 overflow-y-auto no-scrollbar">
+                        {tab === 'card' && (
+                            <div className="relative bg-white/90 backdrop-blur-xl rounded-[2.5rem] p-8 shadow-2xl border text-center animate-pop">
+                                <h1 className="font-black text-indigo-600 mb-6 uppercase tracking-widest">GKPS CARD</h1>
+                                <div className="flex justify-center mb-6 p-4 bg-white rounded-3xl border-2 border-dashed"><QRCode value={user.qrCode} size={160} /></div>
+                                <h2 className="text-2xl font-black text-slate-800 mb-1">{user.name}</h2>
+                                <p className="font-mono text-xs text-slate-400 font-bold tracking-widest">{user.qrCode}</p>
+                            </div>
+                        )}
+                        {tab === 'history' && history.map(h => <div key={h.id} className="glass-card p-4 rounded-2xl mb-2 flex justify-between items-center border-l-4 border-emerald-500"><div className="text-sm font-bold text-slate-800">{formatDateIndo(h.date)}</div><span className="text-xs font-mono bg-emerald-50 px-2 py-1 rounded text-emerald-600">{new Date(h.timestamp).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</span></div>)}
+                        {tab === 'materials' && materials.map(m => <div key={m.id} className="glass-card p-5 rounded-2xl mb-3 relative overflow-hidden"><div className="absolute top-0 left-0 w-1 h-full bg-indigo-500"></div><h4 className="font-extrabold text-slate-800 text-sm">{m.theme}</h4><p className="text-xs text-slate-500 italic mt-2">"{m.verse}"</p></div>)}
+                        {tab === 'schedule' && schedules.map(s => <div key={s.id} className="glass-card p-4 rounded-3xl mb-3 bg-gradient-to-r from-indigo-50 to-white border-indigo-100"><h4 className="font-bold text-sm text-slate-800">{s.activity}</h4><p className="text-[10px] text-indigo-500 font-bold">{formatDateIndo(s.date)}</p><p className="text-xs text-slate-500 mt-2">{s.location} • {s.time}</p></div>)}
+                    </div>
                 </div>
             );
         };
@@ -875,39 +854,40 @@
             ].filter(m => m.roles.includes(user.role));
 
             return (
-                <div className="h-screen flex flex-col relative w-full md:max-w-4xl mx-auto bg-white/30 shadow-2xl overflow-hidden border-x">
+                <div className="h-screen flex flex-col relative w-full md:max-w-4xl mx-auto bg-white/30 shadow-2xl overflow-hidden border-x border-white/40">
                     <Background />
                     <div className="glass-nav px-6 py-4 flex justify-between items-center sticky top-0 z-50">
-                        <div className="flex items-center gap-3"><Avatar name={user.name} seed={user.avatarSeed} onClick={() => setIsProfileOpen(true)} /><h3 className="font-bold text-sm">{user.name.split(' ')[0]}</h3></div>
+                        <div className="flex items-center gap-3"><Avatar name={user.name} seed={user.avatarSeed} onClick={() => setIsProfileOpen(true)} /><h3 className="font-bold text-sm text-slate-800">{user.name.split(' ')[0]}</h3></div>
                         <div className="flex gap-2">
                             {user.role === 'TEACHER' && (
                                 <>
-                                    <button onClick={()=>setIsMatModalOpen(true)} className="p-2 text-indigo-500"><BookOpen size={20}/></button>
-                                    <button onClick={()=>setIsSchedModalOpen(true)} className="p-2 text-blue-500"><CalendarDays size={20}/></button>
+                                    <button onClick={()=>setIsMatModalOpen(true)} className="p-2 text-indigo-600"><BookOpen size={20}/></button>
+                                    <button onClick={()=>setIsSchedModalOpen(true)} className="p-2 text-blue-600"><CalendarDays size={20}/></button>
                                 </>
                             )}
-                            <button onClick={()=>setIsNotifOpen(true)} className="p-2 text-slate-400 relative"><Bell size={18} /></button>
-                            <button onClick={onLogout} className="p-2 text-rose-400"><LogOut size={18} /></button>
+                            <button onClick={()=>setIsNotifOpen(true)} className="p-2 text-slate-400 relative"><Bell size={20}/></button>
+                            <button onClick={onLogout} className="p-2 text-rose-400 hover:text-rose-600"><LogOut size={20}/></button>
                         </div>
                     </div>
                     <div className="flex-1 overflow-y-auto">
                         <Routes>
                             <Route path="/" element={user.role === 'STUDENT' ? <StudentDashboard user={user}/> : <Dashboard user={user}/>} />
-                            <Route path="/scan" element={<Scanner user={user} />} />
-                            <Route path="/users" element={<UserManagement />} />
+                            <Route path="/scan" element={<Scanner user={user}/>} />
+                            <Route path="/users" element={<UserManagement/>} />
+                            <Route path="*" element={<div className="p-10 text-center text-slate-500">Halaman tidak ditemukan.</div>} />
                         </Routes>
                     </div>
-                    <div className="absolute bottom-6 left-0 right-0 z-50 flex justify-center">
-                        <div className="glass-nav rounded-[2rem] p-2 flex gap-1 shadow-2xl w-[80%] max-w-sm">
+                    <div className="absolute bottom-6 left-0 right-0 z-50 flex justify-center pointer-events-none">
+                        <div className="glass-nav rounded-[2rem] p-2 flex gap-1 shadow-2xl w-[80%] max-w-sm pointer-events-auto">
                             {menus.map((m, i) => (
-                                <button key={i} onClick={() => nav(m.path)} className={`flex-1 h-12 rounded-[1.5rem] flex items-center justify-center transition-all ${loc.pathname === m.path ? 'bg-indigo-600 text-white' : 'text-slate-400'}`}><m.icon size={20}/></button>
+                                <button key={i} onClick={() => nav(m.path)} className={`flex-1 h-12 rounded-[1.5rem] flex items-center justify-center transition-all ${loc.pathname === m.path ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-50'}`}><m.icon size={20}/></button>
                             ))}
                         </div>
                     </div>
-                    {isProfileOpen && <ProfileModal user={user} onClose={() => setIsProfileOpen(false)} onUpdate={onUpdateUser} />}
-                    {isNotifOpen && <NotificationModal onClose={() => setIsNotifOpen(false)} />}
-                    {isMatModalOpen && <MaterialModal user={user} onClose={() => setIsMatModalOpen(false)} />}
-                    {isSchedModalOpen && <ScheduleManagerModal user={user} onClose={() => setIsSchedModalOpen(false)} />}
+                    {isProfileOpen && <ProfileModal user={user} onClose={()=>setIsProfileOpen(false)} onUpdate={onUpdateUser} />}
+                    {isNotifOpen && <NotificationModal onClose={()=>setIsNotifOpen(false)} />}
+                    {isMatModalOpen && <MaterialModal user={user} onClose={()=>setIsMatModalOpen(false)} />}
+                    {isSchedModalOpen && <ScheduleManagerModal user={user} onClose={()=>setIsSchedModalOpen(false)} />}
                 </div>
             );
         };
@@ -915,10 +895,16 @@
         const App = () => {
             const [user, setUser] = useState(null);
             const [isReady, setIsReady] = useState(false);
-            useEffect(() => { syncFromFirestore().then(() => { const s = DB.get(STORAGE.SESSION); if(s) setUser(s); setIsReady(true); }); }, []);
+            useEffect(() => { 
+                syncFromFirestore().then(() => { 
+                    const s = DB.get(STORAGE.SESSION); 
+                    if(s) { const fresh=DB.get(STORAGE.USERS, DEFAULT_USERS).find(u=>u.id===s.id); setUser(fresh||s); }
+                    setIsReady(true); 
+                }); 
+            }, []);
             if (!isReady) return <LoadingScreen />;
-            if (!user) return <LoginScreen onLogin={(u) => { setUser(u); DB.set(STORAGE.SESSION, u); }} />;
-            return <HashRouter><MainApp user={user} onLogout={() => { setUser(null); localStorage.removeItem(STORAGE.SESSION); }} onUpdateUser={(upd)=>{ const ok=DB.users.update(upd); if(ok) setUser(upd); }} /></HashRouter>;
+            if (!user) return <LoginScreen onLogin={(u)=>{setUser(u); DB.set(STORAGE.SESSION, u);}} />;
+            return <HashRouter><MainApp user={user} onLogout={()=>{setUser(null); localStorage.removeItem(STORAGE.SESSION); window.location.hash='/';}} onUpdateUser={(upd)=>{const ok=DB.users.update(upd); if(ok){setUser(upd); DB.set(STORAGE.SESSION, upd);}}} /></HashRouter>;
         };
 
         createRoot(document.getElementById('root')).render(<App />);
