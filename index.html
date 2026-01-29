@@ -5,1145 +5,677 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Presensi ASM-GSM GKPS Tangerang</title>
     
-    <!-- 1. TAILWIND CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    colors: {
-                        glass: 'rgba(255, 255, 255, 0.65)',
-                        glassBorder: 'rgba(255, 255, 255, 0.6)',
-                        primary: '#6366f1', 
+                    colors: { 
+                        sky: {
+                            light: '#f0f9ff',
+                            main: '#38bdf8',
+                            dark: '#0284c7',
+                        },
+                        ui: {
+                            success: '#e7f9ed',
+                            successText: '#22c55e',
+                            warning: '#fff7ed',
+                            warningText: '#f59e0b',
+                            info: '#f0f9ff',
+                            infoText: '#0ea5e9',
+                            danger: '#fef2f2',
+                            dangerText: '#ef4444'
+                        }
                     },
-                    fontFamily: {
-                        sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
-                    },
-                    animation: {
-                        'blob': 'blob 10s infinite',
+                    fontFamily: { sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'] },
+                    animation: { 
                         'float': 'float 6s ease-in-out infinite',
-                        'slide-up': 'slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
-                        'pop': 'pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                        'pop': 'pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
                     },
                     keyframes: {
-                        blob: {
-                            '0%': { transform: 'translate(0px, 0px) scale(1)' },
-                            '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
-                            '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
-                            '100%': { transform: 'translate(0px, 0px) scale(1)' },
-                        },
-                        float: {
-                            '0%, 100%': { transform: 'translateY(0)' },
-                            '50%': { transform: 'translateY(-10px)' },
-                        },
-                        slideUp: {
-                            'from': { opacity: 0, transform: 'translateY(40px)' },
-                            'to': { opacity: 1, transform: 'translateY(0)' },
-                        },
-                        pop: {
-                            '0%': { transform: 'scale(0.9)', opacity: 0 },
-                            '100%': { transform: 'scale(1)', opacity: 1 },
-                        }
+                        float: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-10px)' } },
+                        pop: { '0%': { transform: 'scale(0.95)', opacity: 0 }, '100%': { transform: 'scale(1)', opacity: 1 } }
                     }
                 }
             }
         }
     </script>
     
-    <!-- 2. HTML5-QRCode -->
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-    
-    <!-- 3. BABEL -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-    <!-- 4. STYLE FIXES & FONTS -->
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-
-        /* Hide Scrollbar */
-        ::-webkit-scrollbar { width: 0px; background: transparent; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        body { overscroll-behavior-y: none; background-color: #f0f9ff; font-family: 'Plus Jakarta Sans', sans-serif; color: #1e293b; }
         
-        body { 
-            overscroll-behavior-y: none; 
-            background-color: #f0f2f5; 
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            -webkit-tap-highlight-color: transparent;
+        .sidebar-gradient {
+            background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%);
         }
-
-        /* Glassmorphism Classes */
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.6);
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+        .soft-card {
+            background: white;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 30px -10px rgba(2, 132, 199, 0.1);
+            border: 1px solid #f1f5f9;
         }
-
-        .glass-card {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        .pill-button-main {
+            background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%);
+            border-radius: 9999px;
+            box-shadow: 0 8px 20px rgba(2, 132, 199, 0.3);
+            color: white; font-weight: 800; transition: all 0.2s;
         }
-
-        .glass-nav {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
-            border-top: 1px solid rgba(255, 255, 255, 0.5);
-            box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.05);
-        }
-
-        /* Scan Animation */
-        @keyframes scan-line {
-            0% { top: 10%; opacity: 0; }
-            50% { opacity: 1; }
-            100% { top: 90%; opacity: 0; }
-        }
-        .animate-scan {
-            animation: scan-line 2.5s ease-in-out infinite;
-        }
-
-        /* Camera Fix */
-        #reader video { 
-            object-fit: cover; 
-            border-radius: 1.5rem; 
-            width: 100% !important;
-            height: 100% !important;
-        }
+        .pill-button-main:active { transform: scale(0.95); }
         
-        .pb-safe { padding-bottom: env(safe-area-inset-bottom, 24px); }
+        #reader { border: none !important; border-radius: 1.5rem; overflow: hidden; }
+        #reader video { object-fit: cover !important; width: 100% !important; height: 100% !important; }
+        
+        .stat-icon {
+            width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
-
-    <!-- 5. IMPORT MAP (Firebase Added) -->
-    <script type="importmap">
-    {
-        "imports": {
-            "react": "https://esm.sh/react@18.2.0",
-            "react-dom/client": "https://esm.sh/react-dom@18.2.0/client?deps=react@18.2.0",
-            "react-dom": "https://esm.sh/react-dom@18.2.0?deps=react@18.2.0",
-            "react-router-dom": "https://esm.sh/react-router-dom@6.22.0?deps=react@18.2.0,react-dom@18.2.0",
-            "lucide-react": "https://esm.sh/lucide-react@0.344.0?deps=react@18.2.0",
-            "recharts": "https://esm.sh/recharts@2.12.0?deps=react@18.2.0,react-dom@18.2.0",
-            "react-qr-code": "https://esm.sh/react-qr-code@2.0.12?deps=react@18.2.0",
-            "firebase/app": "https://www.gstatic.com/firebasejs/11.2.0/firebase-app.js",
-            "firebase/auth": "https://www.gstatic.com/firebasejs/11.2.0/firebase-auth.js",
-            "firebase/firestore": "https://www.gstatic.com/firebasejs/11.2.0/firebase-firestore.js"
-        }
-    }
-    </script>
 </head>
 <body>
     <div id="root"></div>
 
-    <!-- MAIN APPLICATION SCRIPT -->
     <script type="text/babel" data-type="module">
-        import React, { useState, useEffect, useRef, useMemo } from 'react';
-        import { createRoot } from 'react-dom/client';
-        import { HashRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
-        import { 
-            LayoutDashboard, QrCode, Users, BarChart3, LogOut, Church, CreditCard,
-            CheckCircle, AlertCircle, Camera, Trash2, Download, Search, Upload,
-            ChevronRight, Calendar, User, ShieldCheck, Sparkles, Zap, Plus, X, RefreshCw, BookOpen, PenTool,
-            Bell, Activity, MessageSquare, Send, Radio, TrendingUp, Briefcase, GraduationCap, Clock, FileText, CalendarDays, MapPin, Edit, BrainCircuit
-        } from 'lucide-react';
-        import { BarChart, Bar, ResponsiveContainer, PieChart, Pie, Cell, Tooltip, XAxis, YAxis, CartesianGrid } from 'recharts';
-        import QRCode from 'react-qr-code';
+        import React, { useState, useEffect, useRef, useMemo } from 'https://esm.sh/react@18.2.0';
+        import { createRoot } from 'https://esm.sh/react-dom@18.2.0/client?deps=react@18.2.0';
+        import { HashRouter, Routes, Route, useNavigate, useLocation } from 'https://esm.sh/react-router-dom@6.22.0?deps=react@18.2.0';
         
-        // --- FIREBASE IMPORTS ---
-        import { initializeApp } from 'firebase/app';
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'firebase/auth';
-        import { getFirestore, collection, doc, addDoc, setDoc, deleteDoc, updateDoc, onSnapshot, query, orderBy, where } from 'firebase/firestore';
+        import { 
+            LayoutDashboard, QrCode, Users, LogOut, Church, CheckCircle, AlertCircle, 
+            Camera, Trash2, Upload, ChevronRight, Calendar, User, ShieldCheck, 
+            Sparkles, Zap, Plus, X, RefreshCw, BookOpen, PenTool, Bell, Activity, 
+            Radio, TrendingUp, Briefcase, GraduationCap, Clock, MapPin, Edit, Monitor, Eye, Settings,
+            Search, Smile, Send, Info, CreditCard, BrainCircuit, UserPlus, Power, Check, Star
+        } from 'https://esm.sh/lucide-react@0.344.0?deps=react@18.2.0';
+        import QRCode from 'https://esm.sh/react-qr-code@2.0.12?deps=react@18.2.0';
+
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- FIREBASE CONFIG ---
-        const firebaseConfig = JSON.parse(__firebase_config);
+        const firebaseConfig = {
+            apiKey: "AIzaSyClxPWzrnQl6ZBErgOUnwOk40-bU44uH3o",
+            authDomain: "digitalsundayschoolgkpstgr.firebaseapp.com",
+            projectId: "digitalsundayschoolgkpstgr",
+            storageBucket: "digitalsundayschoolgkpstgr.firebasestorage.app",
+            messagingSenderId: "1020099368151",
+            appId: "1:1020099368151:web:b51c7bbc6d923a51d4cc92"
+        };
+
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'gkps-tangerang';
+        const appId = 'gkps-online-final-v7';
 
-        // --- CONSTANTS ---
-        const MOCK_VERSES = [
-            "Amsal 1:7 - Takut akan TUHAN adalah permulaan pengetahuan.",
-            "Filipi 4:13 - Segala perkara dapat kutanggung di dalam Dia.",
-            "Yosua 1:9 - Bukankah telah Kuperintahkan kepadamu: kuatkan dan teguhkanlah hatimu?",
-            "Yeremia 29:11 - Sebab Aku ini mengetahui rancangan-rancangan apa yang ada pada-Ku mengenai kamu."
-        ];
-        
-        const DEFAULT_CLASSES = [
-            { id: 'c1', name: 'Kelas Daud', desc: '4-6 Tahun' },
-            { id: 'c2', name: 'Kelas Daniel', desc: '7-9 Tahun' },
-            { id: 'c3', name: 'Kelas Paulus', desc: '10-12 Tahun' },
-            { id: 'c4', name: 'Kelas Ester', desc: '13+ Tahun' }
-        ];
+        const getPublicCol = (name) => collection(db, 'artifacts', appId, 'public', 'data', name);
+        const getPublicDoc = (name, id) => doc(db, 'artifacts', appId, 'public', 'data', name, id);
 
-        const DEFAULT_USERS = [
-            { id: '1', name: 'Admin Utama', role: 'ADMIN', qrCode: 'ADMIN-001', gender: 'Laki-Laki', pin: 'admin123' },
-            { id: '2', name: 'Guru Sekolah Minggu', role: 'TEACHER', className: 'Kelas Daud', qrCode: 'GURU-001', gender: 'Perempuan', pin: '123456' },
-            { id: '3', name: 'Timothy Simanjuntak', role: 'STUDENT', className: 'Kelas Daud', qrCode: 'S-001', gender: 'Laki-Laki', pin: '123456' },
-            { id: '4', name: 'Sarah Damanik', role: 'STUDENT', className: 'Kelas Ester', qrCode: 'S-002', gender: 'Perempuan', pin: '123456' },
-        ];
-        
-        // Define STORAGE keys for local session only
-        const STORAGE = { 
-            SESSION: 'gkps_sess_v3',
-            CLASSES: 'gkps_cls_v3' // Used for constant fallback
-        };
-
-        // --- HELPERS ---
-        const formatDateIndo = (dateStr) => {
-            if(!dateStr) return "-";
-            const date = new Date(dateStr);
-            return date.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-        };
-
-        // --- CUSTOM HOOK FOR FIREBASE ---
-        const useCollection = (collectionName) => {
-            const [data, setData] = useState([]);
-            const [authUser, setAuthUser] = useState(auth.currentUser);
-
-            useEffect(() => {
-                const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
-                    setAuthUser(user);
-                });
-                return () => unsubscribeAuth();
-            }, []);
-
-            useEffect(() => {
-                if (!authUser) {
-                    setData([]); 
-                    return;
-                }
-                const path = `artifacts/${appId}/public/data/${collectionName}`;
-                // Simple query without compound ordering to avoid index issues
-                const q = query(collection(db, path)); 
-                
-                const unsubscribe = onSnapshot(q, (snapshot) => {
-                    const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    setData(items);
-                }, (error) => {
-                    console.error("Firebase Error for " + collectionName + ":", error);
-                });
-                return () => unsubscribe();
-            }, [collectionName, authUser]);
-            return data;
-        };
-
-        // --- DATABASE SERVICE ACTIONS (CRUD) ---
-        const DB_ACTIONS = {
-            addUser: async (userData) => {
-                const path = `artifacts/${appId}/public/data/users`;
-                await addDoc(collection(db, path), userData);
-            },
-            deleteUser: async (id) => {
-                const path = `artifacts/${appId}/public/data/users`;
-                await deleteDoc(doc(db, path, id));
-            },
-            updateUser: async (id, data) => {
-                const path = `artifacts/${appId}/public/data/users`;
-                await updateDoc(doc(db, path, id), data);
-            },
-            addAttendance: async (record) => {
-                const path = `artifacts/${appId}/public/data/attendance`;
-                await addDoc(collection(db, path), record);
-            },
-            addActivity: async (log) => {
-                const path = `artifacts/${appId}/public/data/activities`;
-                await addDoc(collection(db, path), { ...log, timestamp: new Date().toISOString() });
-            },
-            addSchedule: async (sched) => {
-                const path = `artifacts/${appId}/public/data/schedules`;
-                await addDoc(collection(db, path), sched);
-            },
-            updateSchedule: async (id, data) => {
-                const path = `artifacts/${appId}/public/data/schedules`;
-                await updateDoc(doc(db, path, id), data);
-            },
-            deleteSchedule: async (id) => {
-                const path = `artifacts/${appId}/public/data/schedules`;
-                await deleteDoc(doc(db, path, id));
-            },
-            saveMaterial: async (material) => {
-                const path = `artifacts/${appId}/public/data/materials`;
-                await addDoc(collection(db, path), material);
-            },
-            sendBroadcast: async (notif) => {
-                const path = `artifacts/${appId}/public/data/notifications`;
-                await addDoc(collection(db, path), { ...notif, timestamp: new Date().toISOString() });
-            }
-        };
-
-        // --- DB Helper for Local Storage Fallback or Constants ---
-        const DB = {
-            get: (key, def) => {
-                if (key === STORAGE.CLASSES) return DEFAULT_CLASSES;
-                return def;
-            },
-            // Fallback empty implementations to prevent crashes before migration is complete
-            schedules: { get: () => [] },
-            notifications: { get: () => [] },
-            activities: { get: () => [] }
-        };
-
-        // --- GEMINI AI SERVICE ---
         const GeminiService = {
             call: async (prompt) => {
                 const apiKey = ""; 
                 const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-                const payload = {
-                    contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: { responseMimeType: "application/json" }
-                };
-                const delays = [1000, 2000, 4000];
-                for (let i = 0; i <= 3; i++) {
-                    try {
-                        const response = await fetch(url, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(payload)
-                        });
-                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                        const data = await response.json();
-                        return JSON.parse(data.candidates?.[0]?.content?.parts?.[0]?.text);
-                    } catch (error) {
-                        if (i === 3) throw error;
-                        await new Promise(resolve => setTimeout(resolve, delays[i]));
-                    }
-                }
+                const payload = { contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json" } };
+                try {
+                    const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    const data = await response.json();
+                    return JSON.parse(data.candidates?.[0]?.content?.parts?.[0]?.text);
+                } catch (e) { return null; }
             }
         };
 
-        // --- UI COMPONENTS ---
-        const Background = () => (
-            <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10 bg-[#f3f4f6]">
-                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-indigo-50/50 via-purple-50/50 to-pink-50/50"></div>
-                <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
-                <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-yellow-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
-                <div className="absolute -bottom-32 left-20 w-96 h-96 bg-pink-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000"></div>
+        const BannerIllustration = () => (
+            <svg viewBox="0 0 400 200" className="w-full h-full">
+                <defs>
+                    <linearGradient id="rainbowGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" style={{stopColor:'#f87171'}} /><stop offset="33%" style={{stopColor:'#fbbf24'}} /><stop offset="66%" style={{stopColor:'#4ade80'}} /><stop offset="100%" style={{stopColor:'#38bdf8'}} />
+                    </linearGradient>
+                </defs>
+                <circle cx="320" cy="40" r="15" fill="#fff" opacity="0.8" />
+                <path d="M220 180 Q300 20 380 180" fill="none" stroke="url(#rainbowGrad)" strokeWidth="12" opacity="0.6" />
+                <path d="M0 160 Q200 140 400 160 V200 H0 Z" fill="#bcf0c4" />
+                <path d="M0 180 Q200 170 400 180 V200 H0 Z" fill="#86efac" />
+                <rect x="300" y="100" width="60" height="70" fill="#fff" rx="4" />
+                <path d="M300 100 L330 60 L360 100 Z" fill="#fff" />
+                <rect x="325" y="135" width="10" height="25" fill="#94a3b8" />
+                <rect x="328" y="75" width="4" height="20" fill="#f87171" />
+                <rect x="320" y="82" width="20" height="4" fill="#f87171" />
+            </svg>
+        );
+
+        const Avatar = ({ name, seed, size = 'md', className='' }) => {
+            const s = size === 'lg' ? 'w-12 h-12' : size === 'xl' ? 'w-20 h-20' : 'w-10 h-10';
+            return (
+                <div className={`${s} rounded-full bg-white p-0.5 shadow-sm border border-sky-100 overflow-hidden flex-shrink-0 ${className}`}>
+                    <img src={`https://api.dicebear.com/7.x/adventurer/svg?seed=${seed || name}&backgroundColor=transparent`} alt={name} />
+                </div>
+            );
+        };
+
+        // --- SHARED MODALS ---
+        const CardModal = ({ user, onClose }) => (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+                <div className="soft-card p-8 w-full max-sm relative animate-pop bg-white shadow-2xl text-center">
+                    <button onClick={onClose} className="absolute top-4 right-4 p-2 text-slate-400"><X size={24}/></button>
+                    <Avatar name={user.name} size="xl" className="mb-4 mx-auto border-4 border-sky-100" />
+                    <h3 className="text-2xl font-black text-slate-800 mb-1">{user.name}</h3>
+                    <div className="flex justify-center gap-2 mb-6">
+                        <span className="text-[10px] font-bold bg-sky-50 text-sky-dark px-4 py-1.5 rounded-full uppercase">{user.className}</span>
+                        <span className="text-[10px] font-bold bg-pink-50 text-pink-500 px-4 py-1.5 rounded-full uppercase">{user.gender}</span>
+                    </div>
+                    <div className="p-4 bg-white rounded-3xl border-2 border-dashed border-sky-200 shadow-inner mb-2 flex justify-center">
+                        <QRCode value={user.qrCode || user.id} size={160} fgColor="#0284c7" />
+                    </div>
+                    <p className="font-mono text-[10px] text-slate-300 font-black tracking-[0.2em] uppercase mt-2">{user.qrCode || user.id}</p>
+                </div>
             </div>
         );
 
-        const Button = ({ children, onClick, variant = 'primary', className = '' }) => {
-            const styles = {
-                primary: "bg-gradient-to-r from-indigo-600 to-pink-500 text-white shadow-lg shadow-indigo-500/30 border-0",
-                secondary: "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50",
-                glass: "bg-white/40 backdrop-blur-md border border-white/60 text-indigo-700 hover:bg-white/60",
-                danger: "bg-red-50 text-red-600 border border-red-100 hover:bg-red-100"
-            };
-            return (
-                <button onClick={onClick} className={`w-full py-4 rounded-2xl font-bold transition-all active:scale-95 flex items-center justify-center gap-2 ${styles[variant]} ${className}`}>
-                    {children}
-                </button>
-            );
-        };
-
-        const Avatar = ({ name, seed, size = 'md', className='', onClick }) => {
-            const s = size === 'lg' ? 'w-16 h-16 text-2xl' : size === 'xl' ? 'w-24 h-24 text-4xl' : 'w-10 h-10 text-sm';
-            const avatarSeed = seed || name;
-            return (
-                <div onClick={onClick} className={`${s} rounded-full bg-gradient-to-tr from-indigo-400 to-pink-400 p-0.5 shadow-lg ${className} ${onClick ? 'cursor-pointer hover:scale-105 transition-transform' : ''}`}>
-                    <div className="w-full h-full bg-white rounded-full flex items-center justify-center overflow-hidden">
-                        <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${avatarSeed}&backgroundColor=transparent`} alt={name} />
-                    </div>
-                </div>
-            );
-        };
-
-        // --- SCREENS ---
-
-        const ScheduleManagerModal = ({ user, onClose }) => {
-            const schedules = useCollection('schedules');
-            const [form, setForm] = useState({
-                className: user.role === 'TEACHER' ? user.className : DEFAULT_CLASSES[0].name,
-                date: new Date().toISOString().split('T')[0], 
-                time: '', activity: '', theme: '', speaker: '', location: ''
+        // MODAL UNTUK TAMBAH / EDIT USER
+        const UserEditorModal = ({ user, onClose, onSave }) => {
+            const [form, setForm] = useState(user || { 
+                name: '', role: 'STUDENT', className: 'Pagi', gender: 'Laki-Laki', pin: '123456', status: 'active' 
             });
-            const [filterClass, setFilterClass] = useState(user.role === 'TEACHER' ? user.className : 'ALL');
-            const [confirmId, setConfirmId] = useState(null); 
-            const [editingId, setEditingId] = useState(null);
 
-            const filteredSchedules = useMemo(() => {
-                let data = schedules;
-                if (filterClass !== 'ALL') {
-                    data = data.filter(s => s.className === filterClass);
-                }
-                return data.sort((a, b) => new Date(b.date) - new Date(a.date));
-            }, [schedules, filterClass]);
-
-            const handleSubmit = async () => {
-                if(!form.activity || !form.time || !form.date) return alert("Mohon lengkapi tanggal, aktivitas dan waktu");
-                
-                try {
-                    if (editingId) {
-                        await DB_ACTIONS.updateSchedule(editingId, { ...form, status: 'upcoming' });
-                        await DB_ACTIONS.addActivity({ userName: user.name, action: `Mengubah jadwal: ${form.activity}` });
-                        alert("Jadwal berhasil diperbarui!");
-                        setEditingId(null);
-                    } else {
-                        await DB_ACTIONS.addSchedule({ ...form, status: 'upcoming' });
-                        await DB_ACTIONS.addActivity({ userName: user.name, action: `Membuat jadwal: ${form.activity}` });
-                        alert("Jadwal ditambahkan!");
-                    }
-                    setForm({
-                        className: user.role === 'TEACHER' ? user.className : DEFAULT_CLASSES[0].name,
-                        date: new Date().toISOString().split('T')[0], 
-                        time: '', activity: '', theme: '', speaker: '', location: ''
-                    });
-                } catch (e) {
-                    alert("Gagal menyimpan: " + e.message);
-                }
-            };
-
-            const handleEdit = (sched) => {
-                setForm(sched);
-                setEditingId(sched.id);
-            };
-
-            const handleCancelEdit = () => {
-                setEditingId(null);
-                setForm({
-                    className: user.role === 'TEACHER' ? user.className : DEFAULT_CLASSES[0].name,
-                    date: new Date().toISOString().split('T')[0], 
-                    time: '', activity: '', theme: '', speaker: '', location: ''
-                });
-            };
-
-            const handleDelete = async (id, activityName) => {
-                try {
-                    await DB_ACTIONS.deleteSchedule(id);
-                    await DB_ACTIONS.addActivity({ userName: user.name, action: `Menghapus jadwal: ${activityName}` });
-                    setConfirmId(null);
-                    if (editingId === id) handleCancelEdit();
-                } catch (e) {
-                    alert("Gagal menghapus: " + e.message);
-                }
-            };
+            const classOptions = ["Pagi", "Daud", "Daniel", "Paulus", "Ester", "Timotius", "Abram"];
 
             return (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose}></div>
-                    <div className="bg-white rounded-[2rem] p-6 w-full max-w-md relative z-10 shadow-2xl animate-pop h-[80vh] flex flex-col">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2"><CalendarDays size={20} className="text-indigo-500"/> {editingId ? 'Edit Jadwal' : 'Kelola Jadwal'}</h3>
-                            <button onClick={onClose}><X size={20} className="text-slate-400 hover:text-slate-600"/></button>
-                        </div>
-
-                        <div className="space-y-3 mb-6 bg-slate-50 p-4 rounded-2xl border border-slate-100 relative">
-                            {editingId && <div className="absolute top-0 right-0 bg-amber-100 text-amber-600 text-[10px] font-bold px-2 py-1 rounded-bl-xl rounded-tr-xl">Mode Edit</div>}
-                            
-                            {user.role === 'ADMIN' && (
-                                <select value={form.className} onChange={e=>setForm({...form, className: e.target.value})} className="w-full p-2 rounded-xl border text-sm font-semibold text-slate-600">
-                                    {DEFAULT_CLASSES.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-                                </select>
-                            )}
-                            <div className="grid grid-cols-2 gap-2">
-                                <input type="date" value={form.date} onChange={e=>setForm({...form, date: e.target.value})} className="p-2 rounded-xl border text-sm text-slate-600 font-semibold"/>
-                                <input value={form.time} onChange={e=>setForm({...form, time: e.target.value})} placeholder="Jam (08:00 - 10:00)" className="p-2 rounded-xl border text-sm"/>
-                            </div>
-                            <input value={form.activity} onChange={e=>setForm({...form, activity: e.target.value})} placeholder="Nama Kegiatan" className="w-full p-2 rounded-xl border text-sm"/>
-                            <input value={form.theme} onChange={e=>setForm({...form, theme: e.target.value})} placeholder="Tema (Opsional)" className="w-full p-2 rounded-xl border text-sm"/>
-                            <div className="grid grid-cols-2 gap-2">
-                                <input value={form.speaker} onChange={e=>setForm({...form, speaker: e.target.value})} placeholder="Pengajar" className="p-2 rounded-xl border text-sm"/>
-                                <input value={form.location} onChange={e=>setForm({...form, location: e.target.value})} placeholder="Lokasi" className="p-2 rounded-xl border text-sm"/>
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+                    <div className="soft-card p-8 w-full max-w-md relative animate-pop bg-white shadow-2xl">
+                        <button onClick={onClose} className="absolute top-4 right-4 p-2 text-slate-400"><X size={24}/></button>
+                        <h3 className="text-2xl font-black text-sky-dark mb-6 text-left">{user?.id ? 'Edit Data User' : 'Tambah User Baru'}</h3>
+                        
+                        <div className="space-y-4 text-left">
+                            <div>
+                                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 mb-1 block">Nama Lengkap</label>
+                                <input value={form.name} onChange={e=>setForm({...form, name: e.target.value})} placeholder="Masukkan nama..." className="w-full p-4 rounded-2xl bg-sky-50 outline-none font-bold text-slate-700 border-2 border-transparent focus:border-sky-main transition-all" />
                             </div>
                             
-                            <div className="flex gap-2">
-                                <Button onClick={handleSubmit} className="py-2 text-sm flex-1">{editingId ? 'Simpan Perubahan' : 'Tambah Jadwal'}</Button>
-                                {editingId && <Button onClick={handleCancelEdit} variant="secondary" className="py-2 text-sm w-1/3">Batal</Button>}
-                            </div>
-                        </div>
-
-                        {user.role === 'ADMIN' && (
-                            <div className="mb-4">
-                                <select value={filterClass} onChange={e=>setFilterClass(e.target.value)} className="w-full p-2 rounded-xl border bg-white text-sm font-bold text-slate-600">
-                                    <option value="ALL">Semua Kelas</option>
-                                    {DEFAULT_CLASSES.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-                                </select>
-                            </div>
-                        )}
-
-                        <div className="flex-1 overflow-y-auto space-y-3 pb-4">
-                            {filteredSchedules.length === 0 ? <p className="text-center text-slate-400 text-sm mt-4">Belum ada jadwal.</p> : filteredSchedules.map(s => (
-                                <div key={s.id} className={`p-3 border rounded-xl flex justify-between items-start bg-white shadow-sm transition-colors ${editingId === s.id ? 'border-indigo-500 ring-2 ring-indigo-100' : 'border-slate-100 hover:border-indigo-200'}`}>
-                                    <div className="flex-1">
-                                        <p className="text-[10px] font-bold text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded w-fit mb-1">{s.className}</p>
-                                        <h4 className="font-bold text-slate-800 text-sm">{s.activity}</h4>
-                                        <p className="text-xs text-slate-500 flex items-center gap-1 mt-1">
-                                            <Calendar size={10}/> {formatDateIndo(s.date)} • {s.time}
-                                        </p>
-                                    </div>
-                                    <div className="flex flex-col gap-1 ml-2">
-                                        <button onClick={()=>handleEdit(s)} className="p-2 bg-slate-50 text-slate-400 rounded-lg hover:bg-blue-50 hover:text-blue-500 transition-all" title="Edit Jadwal"><Edit size={16}/></button>
-                                        {confirmId === s.id ? (
-                                            <div className="flex flex-col gap-1 mt-1">
-                                                <button onClick={()=>handleDelete(s.id, s.activity)} className="px-2 py-1 bg-red-500 text-white text-[10px] font-bold rounded hover:bg-red-600">Hapus!</button>
-                                                <button onClick={()=>setConfirmId(null)} className="px-2 py-1 bg-slate-200 text-slate-600 text-[10px] font-bold rounded hover:bg-slate-300">Batal</button>
-                                            </div>
-                                        ) : (
-                                            <button onClick={()=>setConfirmId(s.id)} className="p-2 bg-slate-50 text-slate-400 rounded-lg hover:bg-red-50 hover:text-red-500 transition-all" title="Hapus Jadwal"><Trash2 size={16}/></button>
-                                        )}
-                                    </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 mb-1 block">Peran (Role)</label>
+                                    <select value={form.role} onChange={e=>setForm({...form, role: e.target.value})} className="w-full p-4 rounded-2xl bg-sky-50 outline-none font-bold text-slate-700 appearance-none">
+                                        <option value="STUDENT">Siswa</option>
+                                        <option value="TEACHER">Guru</option>
+                                        <option value="ADMIN">Admin</option>
+                                    </select>
                                 </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
-        const ProfileModal = ({ user, onClose, onUpdate }) => {
-            const [seed, setSeed] = useState(user.avatarSeed || user.name);
-            const [newPin, setNewPin] = useState(user.pin || '123456');
-            
-            const handleRandomize = () => setSeed(Math.random().toString(36).substring(7));
-            const handleSave = async () => { 
-                if (!newPin) return alert("PIN tidak boleh kosong!");
-                if (newPin.length !== 6 || isNaN(newPin)) return alert("PIN harus 6 digit angka!");
-                
-                try {
-                    await DB_ACTIONS.updateUser(user.id, { avatarSeed: seed, pin: newPin });
-                    alert("Profil berhasil diperbarui! Silakan login ulang.");
-                    window.location.reload(); 
-                } catch(e) {
-                    alert("Gagal update profil: " + e.message);
-                }
-            };
-
-            return (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose}></div>
-                    <div className="bg-white rounded-[2rem] p-6 w-full max-w-sm relative z-10 shadow-2xl animate-pop">
-                        <button onClick={onClose} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><X size={24} /></button>
-                        <div className="text-center mb-6">
-                            <h3 className="text-xl font-bold text-slate-800">Edit Profil</h3>
-                        </div>
-                        <div className="flex justify-center mb-6">
-                            <div className="relative">
-                                <Avatar name={user.name} seed={seed} size="xl" className="border-4 border-white shadow-xl" />
-                                <button onClick={handleRandomize} className="absolute bottom-0 right-0 p-2 bg-indigo-600 text-white rounded-full shadow-lg hover:bg-indigo-700 transition-colors"><RefreshCw size={16} /></button>
-                            </div>
-                        </div>
-                        <div className="space-y-4 mb-6">
-                            <div>
-                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">Ganti PIN Keamanan (6 Digit)</label>
-                                <input type="text" maxLength="6" value={newPin} onChange={e => setNewPin(e.target.value.replace(/\D/g, ''))} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-center font-bold text-slate-700 tracking-[0.5em] focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-lg" placeholder="000000" />
-                            </div>
-                        </div>
-                        <div className="space-y-3"><Button onClick={handleSave}>Simpan Perubahan</Button></div>
-                    </div>
-                </div>
-            );
-        };
-
-        const NotificationModal = ({ onClose }) => {
-            const notifs = useCollection('notifications');
-            const sortedNotifs = [...notifs].sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
-
-            return (
-                <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose}></div>
-                    <div className="bg-white rounded-[2rem] p-6 w-full max-w-sm relative z-10 shadow-2xl animate-pop h-[60vh] flex flex-col">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2"><Bell size={20} className="text-indigo-500"/> Notifikasi</h3>
-                            <button onClick={onClose}><X size={20} className="text-slate-400 hover:text-slate-600"/></button>
-                        </div>
-                        <div className="flex-1 overflow-y-auto space-y-3">
-                            {sortedNotifs.length === 0 ? <p className="text-center text-slate-400 mt-10 text-sm">Belum ada pengumuman.</p> : sortedNotifs.map(n => (
-                                <div key={n.id} className="p-3 bg-indigo-50 border border-indigo-100 rounded-xl">
-                                    <div className="flex justify-between items-start mb-1">
-                                        <h4 className="font-bold text-indigo-900 text-sm">{n.title}</h4>
-                                        <span className="text-[10px] text-indigo-400">{new Date(n.timestamp).toLocaleDateString()}</span>
-                                    </div>
-                                    <p className="text-slate-600 text-xs leading-relaxed">{n.message}</p>
-                                    <p className="text-[10px] text-indigo-400 mt-2 font-medium">Oleh: {n.sender}</p>
+                                <div>
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 mb-1 block">PIN Login</label>
+                                    <input value={form.pin} onChange={e=>setForm({...form, pin: e.target.value})} maxLength="6" className="w-full p-4 rounded-2xl bg-sky-50 outline-none font-bold text-center tracking-widest" />
                                 </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
-        const MaterialModal = ({ user, onClose }) => {
-            const [theme, setTheme] = useState('');
-            const [verse, setVerse] = useState('');
-            const [aiTopic, setAiTopic] = useState('');
-            const [isGenerating, setIsGenerating] = useState(false);
-            
-            const handleSave = async () => {
-                if(!theme || !verse) return alert("Mohon isi Tema dan Ayat");
-                try {
-                    await DB_ACTIONS.saveMaterial({
-                        className: user.className,
-                        teacherName: user.name,
-                        theme,
-                        verse,
-                        createdAt: new Date().toISOString()
-                    });
-                    await DB_ACTIONS.addActivity({ userName: user.name, action: `Membuat materi: ${theme}` });
-                    alert("Materi berhasil disimpan!");
-                    onClose();
-                } catch(e) {
-                    alert("Gagal menyimpan materi.");
-                }
-            };
-
-            const handleGenerateAI = async () => {
-                if (!aiTopic) return alert("Masukkan topik cerita Alkitab terlebih dahulu!");
-                setIsGenerating(true);
-                try {
-                    const prompt = `Buatkan materi sekolah minggu singkat untuk anak sekolah dasar tentang topik: "${aiTopic}". Berikan output JSON dengan format: { "theme": "Judul Tema Menarik & Ceria", "verse": "Ayat Alkitab (Kitab Pasal:Ayat - Isi Singkat)" }. Gunakan Bahasa Indonesia yang mudah dipahami anak.`;
-                    const result = await GeminiService.call(prompt);
-                    if (result) {
-                        setTheme(result.theme);
-                        setVerse(result.verse);
-                    }
-                } catch (error) {
-                    alert("Gagal menggunakan AI.");
-                } finally {
-                    setIsGenerating(false);
-                }
-            };
-
-            return (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose}></div>
-                    <div className="bg-white rounded-[2rem] p-6 w-full max-w-sm relative z-10 shadow-2xl animate-pop">
-                        <button onClick={onClose} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><X size={24} /></button>
-                        <div className="text-center mb-6">
-                            <h3 className="text-xl font-bold text-slate-800">Materi Minggu Ini</h3>
-                            <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">{user.className}</p>
-                        </div>
-                        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-2xl mb-4 border border-indigo-100">
-                            <label className="block text-[10px] font-bold text-indigo-500 mb-1 uppercase tracking-wider flex items-center gap-1"><Sparkles size={12}/> AI Assistant</label>
-                            <div className="flex gap-2">
-                                <input value={aiTopic} onChange={e=>setAiTopic(e.target.value)} placeholder="Topik (misal: Kesabaran Ayub)" className="flex-1 p-2 bg-white border border-indigo-100 rounded-xl text-xs font-semibold outline-none focus:border-indigo-400"/>
-                                <button onClick={handleGenerateAI} disabled={isGenerating} className="bg-indigo-500 text-white px-3 py-2 rounded-xl font-bold text-xs shadow-md hover:bg-indigo-600 disabled:opacity-50 transition-all flex items-center gap-1">
-                                    {isGenerating ? <RefreshCw size={14} className="animate-spin"/> : <Zap size={14}/>}
-                                    {isGenerating ? '...' : 'Buat'}
-                                </button>
                             </div>
-                        </div>
-                        <div className="space-y-4 mb-6">
-                            <div>
-                                <label className="block text-xs font-bold text-slate-500 mb-1 ml-1">Tema Pengajaran</label>
-                                <input value={theme} onChange={e=>setTheme(e.target.value)} placeholder="Contoh: Kasih Tuhan" className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none font-semibold text-slate-700"/>
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-slate-500 mb-1 ml-1">Ayat Hafalan / Bacaan</label>
-                                <textarea value={verse} onChange={e=>setVerse(e.target.value)} rows="3" placeholder="Contoh: Yohanes 3:16 - Karena begitu besar..." className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none font-semibold text-slate-700"></textarea>
-                            </div>
-                        </div>
-                        <Button onClick={handleSave}>Publikasikan Materi</Button>
-                    </div>
-                </div>
-            );
-        };
 
-        const LoginScreen = ({ onLogin }) => {
-            const users = useCollection('users');
-            const [mode, setMode] = useState('TEACHER');
-            const [selected, setSelected] = useState('');
-            const [pw, setPw] = useState('');
-            const [secretCount, setSecretCount] = useState(0); 
-            const [showAdmin, setShowAdmin] = useState(false); 
-
-            useEffect(() => {
-                // Initial seeding check
-            }, [users]);
-
-            const handleSecretTrigger = () => {
-                if (showAdmin) return;
-                const newCount = secretCount + 1;
-                setSecretCount(newCount);
-                if (newCount >= 5) {
-                    setShowAdmin(true);
-                    setMode('ADMIN');
-                    alert("🔓 Admin Mode Terbuka!");
-                }
-            };
-
-            const handleLogin = (e) => {
-                e.preventDefault();
-                if (mode === 'ADMIN' && pw === 'admin123') {
-                     onLogin({ id: 'admin_master', name: 'Super Admin', role: 'ADMIN' });
-                     return;
-                }
-                const u = users.find(x => x.id === selected);
-                if (u) {
-                    if (u.pin && u.pin === pw) {
-                        DB_ACTIONS.addActivity({ userName: u.name, action: 'Login ke sistem' });
-                        onLogin(u);
-                    } else {
-                        alert('PIN Salah! Silakan coba lagi.');
-                    }
-                } else {
-                    alert('User tidak ditemukan.');
-                }
-            };
-
-            const modes = showAdmin ? ['TEACHER', 'STUDENT', 'ADMIN'] : ['TEACHER', 'STUDENT'];
-
-            return (
-                <div className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden">
-                    <Background />
-                    <div className="glass-panel p-8 rounded-[2.5rem] w-full max-w-sm animate-slide-up relative z-10">
-                        <div className="flex justify-center mb-6">
-                            <button onClick={handleSecretTrigger} className="w-20 h-20 bg-gradient-to-tr from-indigo-500 to-pink-500 rounded-3xl flex items-center justify-center shadow-xl shadow-indigo-500/20 animate-float active:scale-90 transition-transform cursor-pointer"><Church className="text-white w-10 h-10" /></button>
-                        </div>
-                        <div className="text-center mb-8"><h1 className="text-2xl font-extrabold text-slate-800 tracking-tight mb-2 leading-tight">Presensi ASM-GSM<br/>GKPS Tangerang</h1><p className="text-slate-500 font-medium">Digital Sunday School</p></div>
-                        <div className="bg-white/50 p-1.5 rounded-2xl flex mb-6 backdrop-blur-sm">
-                            {modes.map(m => (<button key={m} onClick={() => { setMode(m); setSelected(''); setPw(''); }} className={`flex-1 py-3 text-[10px] font-bold rounded-xl transition-all ${mode === m ? 'bg-white text-indigo-600 shadow-md scale-100' : 'text-slate-400 hover:text-slate-600'}`}>{m === 'TEACHER' ? 'GURU' : m === 'STUDENT' ? 'SISWA' : 'ADMIN'}</button>))}
-                        </div>
-                        <form onSubmit={handleLogin} className="space-y-4">
-                            {mode !== 'ADMIN' ? (
-                                <div className="space-y-3">
-                                    <div className="relative group">
-                                        <select value={selected} onChange={e => setSelected(e.target.value)} className="w-full p-4 pl-5 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-700 appearance-none shadow-sm transition-all hover:border-indigo-300">
-                                            <option value="">Pilih Nama Anda...</option>
-                                            {users.filter(u => u.role === mode).map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
-                                        </select>
-                                        <div className="absolute right-5 top-4 pointer-events-none text-slate-400"><ChevronRight className="rotate-90"/></div>
-                                    </div>
-                                    <input type="password" placeholder="Masukkan PIN" value={pw} onChange={e => setPw(e.target.value)} className="w-full p-4 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-700 shadow-sm" />
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 mb-1 block">Kelas / Kategori</label>
+                                    <select 
+                                        value={form.className} 
+                                        onChange={e=>setForm({...form, className: e.target.value})} 
+                                        className="w-full p-4 rounded-2xl bg-sky-50 outline-none font-bold text-slate-700 appearance-none"
+                                    >
+                                        {classOptions.map(opt => (
+                                            <option key={opt} value={opt}>{opt}</option>
+                                        ))}
+                                    </select>
                                 </div>
-                            ) : (
-                                <input type="password" placeholder="Password Admin" value={pw} onChange={e => setPw(e.target.value)} className="w-full p-4 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-700 shadow-sm" />
-                            )}
-                            <Button variant="primary">Masuk Aplikasi <Sparkles size={18} /></Button>
-                        </form>
-                    </div>
-                    <p className="absolute bottom-6 text-xs text-slate-400 font-medium opacity-60">GKPS Digital System v2.0</p>
-                </div>
-            );
-        };
-
-        const UserManagement = () => {
-            const users = useCollection('users');
-            const [search, setSearch] = useState('');
-            const [form, setForm] = useState({ name: '', role: 'STUDENT', className: 'Kelas Daud', gender: 'Laki-Laki', pin: '123456' });
-            const [isFormOpen, setIsFormOpen] = useState(false);
-            const fileInputRef = useRef(null);
-
-            const handleSubmit = async (e) => {
-                e.preventDefault();
-                if(!form.name) return;
-                const hasClass = form.role === 'STUDENT' || form.role === 'TEACHER';
-                const newUser = {
-                    name: form.name, role: form.role,
-                    className: hasClass ? form.className : '-',
-                    gender: form.gender,
-                    pin: form.pin || '123456',
-                    qrCode: `${form.role.substring(0,1)}-${Date.now().toString().slice(-4)}`,
-                    avatarSeed: form.name
-                };
-                await DB_ACTIONS.addUser(newUser);
-                await DB_ACTIONS.addActivity({ userName: 'Admin', action: `Menambah user: ${newUser.name}` });
-                setForm({ ...form, name: '', pin: '123456' });
-                setIsFormOpen(false);
-                alert(`User berhasil ditambahkan!`);
-            };
-
-            const handleDelete = async (id, name) => {
-                if(window.confirm('Hapus user ini?')) {
-                    await DB_ACTIONS.deleteUser(id);
-                    await DB_ACTIONS.addActivity({ userName: 'Admin', action: `Menghapus user: ${name}` });
-                }
-            };
-
-            const filtered = users.filter(u => u.name.toLowerCase().includes(search.toLowerCase()));
-
-            return (
-                <div className="p-6 pb-32 animate-slide-up">
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-2xl font-extrabold text-slate-800">Manajemen User</h2>
-                        <button onClick={() => setIsFormOpen(!isFormOpen)} className="bg-white/80 backdrop-blur border border-white p-2 px-3 rounded-xl text-xs font-bold text-indigo-600 shadow-sm flex items-center gap-1 hover:bg-indigo-50 transition-colors">
-                            {isFormOpen ? <><X size={14}/> <span className="hidden md:inline">Tutup</span></> : <><Plus size={14}/> <span className="hidden md:inline">Tambah</span></>}
-                        </button>
-                    </div>
-
-                    {isFormOpen && (
-                        <div className="glass-card p-5 rounded-[2rem] mb-6 animate-pop">
-                            <h3 className="font-bold text-slate-700 mb-4">Data User Baru</h3>
-                            <div className="space-y-3">
-                                <input value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="Nama Lengkap" className="w-full p-3 rounded-xl bg-white/50 border border-white focus:ring-2 focus:ring-indigo-500 outline-none font-semibold text-slate-700 placeholder-slate-400" />
-                                <input value={form.pin} onChange={e => setForm({...form, pin: e.target.value})} placeholder="PIN (Default 6 Digit)" maxLength="6" className="w-full p-3 rounded-xl bg-white/50 border border-white focus:ring-2 focus:ring-indigo-500 outline-none font-semibold text-slate-700 placeholder-slate-400" />
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                    <div className="relative">
-                                        <select value={form.gender} onChange={e => setForm({...form, gender: e.target.value})} className="w-full p-3 rounded-xl bg-white/50 border border-white outline-none font-semibold text-slate-600 text-sm appearance-none"><option value="Laki-Laki">Laki-Laki</option><option value="Perempuan">Perempuan</option></select>
-                                    </div>
-                                    <div className="relative">
-                                        <select value={form.role} onChange={e => setForm({...form, role: e.target.value})} className="w-full p-3 rounded-xl bg-white/50 border border-white outline-none font-semibold text-slate-600 text-sm appearance-none"><option value="STUDENT">Siswa</option><option value="TEACHER">Guru</option><option value="ADMIN">Admin</option></select>
-                                    </div>
+                                <div>
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 mb-1 block">Jenis Kelamin</label>
+                                    <select 
+                                        value={form.gender} 
+                                        onChange={e=>setForm({...form, gender: e.target.value})} 
+                                        className="w-full p-4 rounded-2xl bg-sky-50 outline-none font-bold text-slate-700 appearance-none"
+                                    >
+                                        <option value="Laki-Laki">Laki-Laki</option>
+                                        <option value="Perempuan">Perempuan</option>
+                                    </select>
                                 </div>
-                                {(form.role === 'STUDENT' || form.role === 'TEACHER') && (
-                                    <div className="relative">
-                                        <select value={form.className} onChange={e => setForm({...form, className: e.target.value})} className="w-full p-3 rounded-xl bg-white/50 border border-white outline-none font-semibold text-slate-600 text-sm appearance-none">
-                                            {DEFAULT_CLASSES.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-                                        </select>
-                                    </div>
-                                )}
-                                <Button onClick={handleSubmit}>Simpan Data</Button>
                             </div>
+
+                            <button onClick={() => onSave(form)} className="pill-button-main w-full py-4 uppercase tracking-widest text-sm mt-4 flex items-center justify-center gap-2">
+                                <Check size={18}/> Simpan Data
+                            </button>
                         </div>
-                    )}
-                    
-                    <div className="relative mb-6"><Search className="absolute left-4 top-3.5 text-slate-400" size={20}/><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari nama user..." className="w-full p-3 pl-12 rounded-2xl bg-white/60 border border-white/40 focus:bg-white transition-all outline-none font-medium text-slate-700 placeholder-slate-400" /></div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {filtered.length === 0 ? <div className="col-span-full text-center py-10 text-slate-400 font-medium">Tidak ada user ditemukan. Silahkan tambah user baru.</div> : filtered.map(u => (
-                            <div key={u.id} className="glass-card p-4 rounded-2xl flex items-center justify-between group hover:shadow-lg transition-all">
-                                <div className="flex items-center gap-3">
-                                    <Avatar name={u.name} seed={u.avatarSeed} size="sm" />
-                                    <div>
-                                        <p className="font-bold text-slate-800 text-sm">{u.name}</p>
-                                        <div className="flex items-center gap-2 mt-0.5 flex-wrap"><span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${u.role === 'ADMIN' ? 'bg-rose-100 text-rose-600' : u.role === 'TEACHER' ? 'bg-amber-100 text-amber-600' : 'bg-indigo-100 text-indigo-600'}`}>{u.role}</span></div>
-                                    </div>
-                                </div>
-                                <button onClick={() => handleDelete(u.id, u.name)} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-400 hover:bg-rose-100 hover:text-rose-500 transition-colors"><Trash2 size={16}/></button>
-                            </div>
-                        ))}
                     </div>
                 </div>
             );
         };
 
-        const Dashboard = ({ user }) => {
-            const date = new Date().toISOString().split('T')[0];
-            const att = useCollection('attendance');
-            const activities = useCollection('activities');
-            const users = useCollection('users'); 
-            
-            const todayAtt = att.filter(r => r.date === date);
-            const sortedActivities = [...activities].sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 10);
-            
-            const [isMatModalOpen, setIsMatModalOpen] = useState(false);
-            const [isSchedModalOpen, setIsSchedModalOpen] = useState(false);
-            const [bcTitle, setBcTitle] = useState('');
-            const [bcMsg, setBcMsg] = useState('');
+        const Dashboard = ({ user, allUsers, attendance }) => {
+            const nav = useNavigate();
             const [aiAnalysis, setAiAnalysis] = useState(null);
-            const [isAnalyzing, setIsAnalyzing] = useState(false);
-            const [aiDevotional, setAiDevotional] = useState(null);
-            const [loadingDevo, setLoadingDevo] = useState(false);
+            const [analyzing, setAnalyzing] = useState(false);
 
             const stats = useMemo(() => {
-                const grouped = {};
-                todayAtt.filter(x => x.role === 'STUDENT').forEach(x => grouped[x.className] = (grouped[x.className] || 0) + 1);
-                return Object.entries(grouped).map(([k,v]) => ({ name: k, value: v }));
-            }, [todayAtt]);
+                const totalStudents = allUsers.filter(u => u.role === 'STUDENT').length;
+                const hadir = attendance.length;
+                return { hadir, izin: 0, online: 0, tidakHadir: Math.max(0, totalStudents - hadir) };
+            }, [allUsers, attendance]);
 
-            const weeklyData = [
-                { name: 'Sen', hadir: 12 }, { name: 'Sel', hadir: 15 }, { name: 'Rab', hadir: 8 }, { name: 'Kam', hadir: 20 }, { name: 'Jum', hadir: 18 }, { name: 'Sab', hadir: 25 }, { name: 'Min', hadir: 40 },
-            ];
-
-            const handleBroadcast = async () => {
-                if(!bcTitle || !bcMsg) return alert("Mohon isi judul dan pesan");
-                await DB_ACTIONS.sendBroadcast({ title: bcTitle, message: bcMsg, sender: user.name });
-                await DB_ACTIONS.addActivity({ userName: user.name, action: `Mengirim broadcast: ${bcTitle}` });
-                setBcTitle(''); setBcMsg('');
-                alert("Broadcast terkirim!");
+            const runAnalysis = async () => {
+                setAnalyzing(true);
+                const res = await GeminiService.call(`Analisa data: ${attendance.length} hadir dari ${allUsers.length} jemaat. Berikan saran bijak 1 kalimat dalam JSON: { "insight": "Komentar", "advice": "Saran" }`);
+                if(res) setAiAnalysis(res);
+                setAnalyzing(false);
             };
-
-            const handleAnalyze = async () => {
-                setIsAnalyzing(true);
-                try {
-                    const prompt = `Analisa data absensi: Total Siswa: ${users.filter(u=>u.role==='STUDENT').length}. Hadir: ${todayAtt.length}. Kelas tertinggi: ${stats.sort((a,b)=>b.value-a.value)[0]?.name || '-'}. Output JSON: { "insight": "...", "recommendation": "..." }`;
-                    const res = await GeminiService.call(prompt);
-                    if(res) setAiAnalysis(res);
-                } catch(e) { console.error(e); } finally { setIsAnalyzing(false); }
-            };
-
-            const generateDevotional = async () => {
-                setLoadingDevo(true);
-                try {
-                    const prompt = "Berikan satu renungan singkat dan motivasi untuk guru sekolah minggu. Format JSON: { \"title\": \"Judul\", \"content\": \"Isi Renungan\" }";
-                    const res = await GeminiService.call(prompt);
-                    if(res) setAiDevotional(res);
-                } catch(e) { console.error(e); } finally { setLoadingDevo(false); }
-            };
-
-            const COLORS = ['#6366f1', '#ec4899', '#a855f7', '#f43f5e'];
-
-            if (user.role === 'ADMIN') {
-                 return (
-                    <div className="p-6 pb-32 animate-slide-up">
-                        <header className="mb-8 flex justify-between items-center">
-                            <div><p className="text-slate-500 font-medium text-sm mb-1 uppercase">Dashboard</p><h2 className="text-3xl font-extrabold text-slate-800">Admin Control</h2></div>
-                        </header>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                             <div className="glass-card p-5 rounded-3xl relative overflow-hidden"><h3 className="text-3xl font-black text-slate-800">{users.filter(u=>u.role==='STUDENT').length}</h3><p className="text-xs text-blue-500 font-bold">Total Siswa</p></div>
-                             <div className="glass-card p-5 rounded-3xl relative overflow-hidden"><h3 className="text-3xl font-black text-slate-800">{users.filter(u=>u.role==='TEACHER').length}</h3><p className="text-xs text-amber-500 font-bold">Total Guru</p></div>
-                             <div className="glass-card p-5 rounded-3xl relative overflow-hidden"><h3 className="text-3xl font-black text-slate-800">{todayAtt.length}</h3><p className="text-xs text-emerald-500 font-bold">Hadir Hari Ini</p></div>
-                        </div>
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                             <div className="lg:col-span-2 space-y-6">
-                                <div className="glass-card p-6 rounded-[2rem] border-l-4 border-l-pink-500">
-                                    <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2"><Radio size={20} className="text-pink-500"/> Kirim Broadcast</h3>
-                                    <div className="space-y-4">
-                                        <input value={bcTitle} onChange={e=>setBcTitle(e.target.value)} placeholder="Judul" className="w-full bg-slate-50 p-3 rounded-xl outline-none font-bold text-slate-700"/>
-                                        <textarea value={bcMsg} onChange={e=>setBcMsg(e.target.value)} rows="2" placeholder="Pesan..." className="w-full bg-slate-50 p-3 rounded-xl outline-none text-sm"></textarea>
-                                        <div className="flex justify-end"><button onClick={handleBroadcast} className="bg-pink-500 text-white px-6 py-2 rounded-xl font-bold shadow-lg hover:scale-105 transition-all">Kirim</button></div>
-                                    </div>
-                                </div>
-                             </div>
-                             <div className="space-y-6">
-                                <div className="glass-card p-6 rounded-[2rem] h-[400px] flex flex-col">
-                                    <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2"><Activity size={20}/> Aktivitas</h3>
-                                    <div className="flex-1 overflow-y-auto space-y-4 pr-2">
-                                        {sortedActivities.map(act => (
-                                            <div key={act.id} className="flex gap-3 pb-4 border-l-2 border-slate-100 pl-4 relative">
-                                                <div className="absolute -left-[9px] top-0 w-4 h-4 bg-white border-2 border-indigo-500 rounded-full"></div>
-                                                <div><p className="text-xs font-bold">{act.userName}</p><p className="text-[11px] text-slate-500">{act.action}</p></div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                             </div>
-                        </div>
-                        {isSchedModalOpen && <ScheduleManagerModal user={user} onClose={() => setIsSchedModalOpen(false)} />}
-                    </div>
-                 );
-            }
 
             return (
-                <div className="p-6 pb-32 animate-slide-up">
-                     <header className="flex justify-between items-end mb-8">
-                        <div><p className="text-slate-500 font-medium text-sm mb-1">Overview</p><h2 className="text-3xl font-extrabold text-slate-800">Statistik</h2></div>
-                        <div className="flex items-center gap-2">
-                             {user.role === 'TEACHER' && <button onClick={generateDevotional} className="bg-gradient-to-tr from-yellow-400 to-orange-500 text-white p-2 rounded-xl shadow-lg hover:scale-105 transition-transform" title="Renungan Harian">{loadingDevo ? <RefreshCw size={20} className="animate-spin"/> : <Sparkles size={20}/>}</button>}
-                        </div>
-                     </header>
-                     {aiDevotional && user.role === 'TEACHER' && <div className="mb-6 bg-gradient-to-r from-yellow-50 to-orange-50 p-4 rounded-2xl border border-orange-100 shadow-sm relative overflow-hidden"><div className="relative z-10"><h4 className="font-bold text-orange-600 text-sm flex items-center gap-2 mb-1"><Sparkles size={12}/> {aiDevotional.title}</h4><p className="text-xs text-slate-700 italic">"{aiDevotional.content}"</p></div><button onClick={()=>setAiDevotional(null)} className="absolute top-2 right-2 text-orange-300 hover:text-orange-500"><X size={14}/></button></div>}
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                        <div onClick={() => setIsMatModalOpen(true)} className="glass-card p-5 rounded-3xl bg-gradient-to-r from-indigo-500 to-purple-500 text-white cursor-pointer hover:shadow-xl transition-all"><h3 className="font-bold text-lg">Materi Mingguan</h3><p className="text-xs opacity-90">Buat tema & ayat</p></div>
-                        <div onClick={() => setIsSchedModalOpen(true)} className="glass-card p-5 rounded-3xl bg-gradient-to-r from-blue-500 to-cyan-500 text-white cursor-pointer hover:shadow-xl transition-all"><h3 className="font-bold text-lg">Kelola Jadwal</h3><p className="text-xs opacity-90">Atur kegiatan</p></div>
-                     </div>
-                     <div className="space-y-4">
-                        <h3 className="font-bold text-slate-700 px-2">Baru Hadir</h3>
-                        {todayAtt.map(r => (
-                            <div key={r.id} className="glass-card p-4 rounded-2xl flex items-center justify-between">
-                                <div className="flex items-center gap-4"><Avatar name={r.userName} seed={r.avatarSeed} size="sm" /><div><p className="font-bold text-slate-800 text-sm">{r.userName}</p><p className="text-xs text-slate-500 font-semibold">{r.className}</p></div></div>
-                                <span className="bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full text-[10px] font-bold">{new Date(r.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
+                <div className="p-4 lg:p-10 animate-slide-up space-y-8 max-w-6xl mx-auto text-left">
+                    <div className="soft-card relative overflow-hidden bg-white min-h-[240px] flex items-center p-8 lg:p-12">
+                        <div className="relative z-10 w-full lg:w-3/5 space-y-2">
+                            <h2 className="text-3xl lg:text-5xl font-black text-sky-dark leading-tight uppercase">Selamat Beribadah! 🌼</h2>
+                            <p className="text-slate-500 font-bold text-lg">Minggu, {new Date().toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'})}</p>
+                            <div className="pt-4">
+                                <button onClick={() => nav('/scan')} className="pill-button-main px-14 py-4 text-sm uppercase tracking-widest">Absen Sekarang</button>
                             </div>
-                        ))}
-                     </div>
-                     {isMatModalOpen && <MaterialModal user={user} onClose={() => setIsMatModalOpen(false)} />}
-                     {isSchedModalOpen && <ScheduleManagerModal user={user} onClose={() => setIsSchedModalOpen(false)} />}
+                        </div>
+                        <div className="absolute top-0 right-0 h-full w-full lg:w-2/3 pointer-events-none opacity-30 lg:opacity-100"><BannerIllustration /></div>
+                    </div>
+
+                    <div className="space-y-6">
+                        <div className="flex justify-between items-center px-2">
+                            <h3 className="text-xl font-black text-sky-dark">Statistik Kehadiran</h3>
+                            {user.role === 'ADMIN' && <button onClick={runAnalysis} className="text-xs font-black text-sky-main flex items-center gap-2 hover:underline">{analyzing ? <RefreshCw size={14} className="animate-spin"/> : <BrainCircuit size={14}/>} ANALISA AI</button>}
+                        </div>
+
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div className="soft-card p-6 flex flex-col items-center justify-center border-b-4 border-emerald-400">
+                                <div className="bg-emerald-100 text-emerald-500 stat-icon mb-3"><CheckCircle size={22} fill="currentColor" stroke="white" /></div>
+                                <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Hadir</p>
+                                <h4 className="text-4xl font-black text-slate-800">{stats.hadir}</h4>
+                            </div>
+                            <div className="soft-card p-6 flex flex-col items-center justify-center border-b-4 border-amber-400">
+                                <div className="bg-amber-100 text-amber-500 stat-icon mb-3"><Clock size={22} fill="currentColor" stroke="white" /></div>
+                                <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1">Izin</p>
+                                <h4 className="text-4xl font-black text-slate-800">{stats.izin}</h4>
+                            </div>
+                            <div className="soft-card p-6 flex flex-col items-center justify-center border-b-4 border-sky-400">
+                                <div className="bg-sky-100 text-sky-500 stat-icon mb-3"><Monitor size={22} fill="currentColor" stroke="white" /></div>
+                                <p className="text-[10px] font-black text-sky-600 uppercase tracking-widest mb-1">Online</p>
+                                <h4 className="text-4xl font-black text-slate-800">{stats.online}</h4>
+                            </div>
+                            <div className="soft-card p-6 flex flex-col items-center justify-center border-b-4 border-rose-400">
+                                <div className="bg-rose-100 text-rose-500 stat-icon mb-3"><X size={22} fill="currentColor" stroke="white" /></div>
+                                <p className="text-[10px] font-black text-rose-600 uppercase tracking-widest mb-1">Tidak Hadir</p>
+                                <h4 className="text-4xl font-black text-slate-800">{stats.tidakHadir}</h4>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             );
         };
 
-        const Scanner = ({ user }) => {
-            const [status, setStatus] = useState({ type: 'idle', msg: '' });
-            const [manual, setManual] = useState(false);
-            const [txt, setTxt] = useState('');
-            const ref = useRef(null);
-            const users = useCollection('users');
+        const UserManagement = ({ users, fbUser }) => {
+            const [search, setSearch] = useState('');
+            const [viewingUser, setViewingUser] = useState(null);
+            const [editingUser, setEditingUser] = useState(null);
+            const [showEditor, setShowEditor] = useState(false);
+            const fileRef = useRef(null);
+            const filtered = users.filter(u => u.name.toLowerCase().includes(search.toLowerCase()));
 
-            const onScan = async (code) => {
-                if (status.type !== 'idle') return;
-                try { if(ref.current && ref.current.getState() === 2) ref.current.pause(); } catch(e) {}
-
-                const u = users.find(x => x.qrCode === code || x.id === code || x.name.toLowerCase() === code.toLowerCase());
-
-                if (!u) {
-                    setStatus({ type: 'err', msg: 'Siswa Tidak Ditemukan' });
-                } else if (u.role !== 'STUDENT') {
-                    setStatus({ type: 'err', msg: 'QR Code bukan milik Siswa' });
-                } else {
-                    if (user.role === 'TEACHER' && u.className !== user.className) {
-                        setStatus({ type: 'err', msg: `Gagal! Siswa ini kelas ${u.className}.` });
-                    } else {
-                        await DB_ACTIONS.addAttendance({
-                            userId: u.id, userName: u.name, className: u.className || '-', role: u.role,
-                            date: new Date().toISOString().split('T')[0], timestamp: new Date().toISOString(),
-                            avatarSeed: u.avatarSeed
-                        });
-                        await DB_ACTIONS.addActivity({ userName: user.name, action: `Memindai kehadiran ${u.name}` });
-                        setStatus({ type: 'ok', msg: `Berhasil: ${u.name}` });
-                    }
-                }
-                setTimeout(() => { setStatus({ type: 'idle', msg: '' }); try { if(ref.current && ref.current.getState() === 3) ref.current.resume(); } catch(e) {} }, 2000);
-            };
-            
-            useEffect(() => {
-                if(manual) return;
-                const init = async () => {
-                     try {
-                        const devs = await Html5Qrcode.getCameras();
-                        if(devs && devs.length) {
-                             const scanner = new Html5Qrcode("reader");
-                             ref.current = scanner;
-                             await scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, onScan);
+            const handleImport = (e) => {
+                const file = e.target.files[0];
+                if (!file || !fbUser) return;
+                const reader = new FileReader();
+                reader.onload = async (ev) => {
+                    const lines = ev.target.result.split('\n');
+                    for (const line of lines) {
+                        // Format CSV: Nama, Role, Kelas, Gender
+                        const [name, role, className, gender] = line.split(',').map(s => s?.trim());
+                        if (name && role) {
+                            const id = Math.random().toString(36).substring(7);
+                            await setDoc(getPublicDoc('users', id), { 
+                                id, 
+                                name, 
+                                role: role.toUpperCase(), 
+                                className: className || '-', 
+                                gender: gender || 'Laki-Laki',
+                                qrCode: `GKPS-${id}`, 
+                                pin: '123456', 
+                                status: 'active' 
+                            });
                         }
-                     } catch(e) { setManual(true); }
+                    }
+                    alert('Data Sinkron ke Cloud! ☁️');
                 };
-                const timer = setTimeout(init, 500);
-                return () => { clearTimeout(timer); if(ref.current) ref.current.clear(); };
-            }, [manual]);
+                reader.readAsText(file);
+            };
+
+            const handleSaveUser = async (formData) => {
+                if (!fbUser) return;
+                const id = formData.id || Math.random().toString(36).substring(7);
+                const finalData = { 
+                    ...formData, 
+                    id, 
+                    qrCode: formData.qrCode || `GKPS-${id}`,
+                    status: formData.status || 'active'
+                };
+                await setDoc(getPublicDoc('users', id), finalData);
+                setShowEditor(false);
+                setEditingUser(null);
+                alert("Data user berhasil disimpan!");
+            };
+
+            const handleToggleDisable = async (u) => {
+                if (!fbUser) return;
+                const newStatus = u.status === 'disabled' ? 'active' : 'disabled';
+                await updateDoc(getPublicDoc('users', u.id), { status: newStatus });
+                alert(`User ${u.name} ${newStatus === 'disabled' ? 'Dinonaktifkan' : 'Diaktifkan Kembali'}`);
+            };
+
+            const handleDelete = async (u) => {
+                if (!fbUser) return;
+                if(confirm(`Hapus permanen ${u.name} dari database cloud?`)) {
+                    await deleteDoc(getPublicDoc('users', u.id));
+                    alert("User terhapus.");
+                }
+            };
 
             return (
-                <div className="p-6 pb-40 animate-slide-up min-h-full flex flex-col max-w-lg mx-auto">
-                    <div className="text-center mb-6"><h2 className="text-2xl font-black text-slate-800 tracking-tight">Scanner Presensi</h2>{user.role === 'TEACHER' ? (<div className="inline-block mt-2 px-3 py-1 bg-indigo-50 border border-indigo-100 rounded-full"><p className="text-indigo-600 text-xs font-bold flex items-center gap-1"><ShieldCheck size={12}/> Mode Guru: {user.className}</p></div>) : (<p className="text-slate-500 text-sm font-medium">Mode Admin: Semua Kelas</p>)}</div>
-                    <div className="flex flex-col gap-6 w-full">
-                        <div className="glass-panel p-3 rounded-[2.5rem] shadow-2xl shadow-indigo-200/50 border-4 border-white/50 relative overflow-hidden bg-slate-900 group z-10">
-                             <div className="relative w-full aspect-[3/4] sm:aspect-square rounded-[2rem] overflow-hidden flex items-center justify-center bg-black/20">
-                                {manual ? (
-                                    <div className="w-full px-6 text-center animate-pop"><input value={txt} onChange={e => setTxt(e.target.value)} placeholder="Ketik ID / Nama" className="w-full p-4 rounded-2xl bg-white/10 border border-white/20 text-white font-bold text-center mb-4 backdrop-blur-sm" /><Button onClick={() => { onScan(txt); setTxt(''); }} className="bg-white text-indigo-900 w-full py-3 text-sm">Proses Absen</Button></div>
-                                ) : (
-                                    <div id="reader" className="w-full h-full opacity-90 object-cover absolute inset-0"></div>
-                                )}
-                                {status.type !== 'idle' && <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"><div className="p-6 rounded-3xl bg-white shadow-2xl text-center animate-pop"><h4 className="text-lg font-black text-slate-800">{status.msg}</h4></div></div>}
-                             </div>
+                <div className="p-4 lg:p-8 animate-slide-up space-y-8 max-w-6xl mx-auto">
+                    <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 px-2 text-left">
+                        <div>
+                            <h2 className="text-3xl font-black text-sky-dark uppercase">Data Database</h2>
+                            <p className="text-sm font-bold text-slate-400 mt-1 uppercase tracking-widest">Total: {users.length} Database Cloud</p>
                         </div>
-                        <div className="z-20"><button onClick={() => setManual(!manual)} className="w-full py-4 rounded-2xl font-bold text-sm bg-white text-indigo-600 border border-indigo-100 shadow-lg">{manual ? 'Buka Kamera' : 'Input Manual'}</button></div>
+                        <div className="flex gap-2 flex-wrap">
+                            <button onClick={() => { setEditingUser(null); setShowEditor(true); }} className="p-4 bg-sky-dark text-white rounded-2xl shadow-lg font-bold text-sm flex items-center gap-2 transition-transform hover:scale-105 active:scale-95">
+                                <UserPlus size={18}/> <span>Tambah User</span>
+                            </button>
+                            <button onClick={() => fileRef.current.click()} className="p-4 bg-white rounded-2xl text-sky-main border-2 border-sky-50 shadow-sm font-bold text-sm flex items-center gap-2 transition-transform hover:scale-105">
+                                <Upload size={18}/> <span>Import CSV</span>
+                            </button>
+                            <input type="file" ref={fileRef} onChange={handleImport} className="hidden" accept=".csv" />
+                        </div>
                     </div>
+
+                    <div className="relative">
+                        <Search className="absolute left-6 top-5 text-sky-main" size={24} />
+                        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari nama jemaat, ID, atau kelas..." className="w-full p-6 pl-16 soft-card border-none outline-none font-bold text-lg shadow-sm" />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {filtered.map(u => (
+                            <div key={u.id} className={`soft-card p-6 flex items-center justify-between group transition-all hover:bg-sky-50/50 ${u.status === 'disabled' ? 'opacity-50 grayscale' : ''}`}>
+                                <div className="flex items-center gap-4 overflow-hidden">
+                                    <Avatar name={u.name} size="lg" />
+                                    <div className="truncate text-left">
+                                        <p className="font-black text-slate-700 text-lg leading-tight truncate uppercase">{u.name}</p>
+                                        <div className="flex gap-2 mt-1.5 flex-wrap">
+                                            <span className={`text-[9px] font-black px-2 py-0.5 rounded-lg border uppercase ${u.role === 'ADMIN' ? 'bg-rose-50 text-rose-500 border-rose-100' : 'bg-sky-50 text-sky-dark border-sky-100'}`}>{u.role}</span>
+                                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{u.className}</span>
+                                            <span className="text-[9px] font-bold text-pink-400 uppercase tracking-widest">{u.gender || '-'}</span>
+                                            {u.status === 'disabled' && <span className="text-[9px] font-black bg-slate-800 text-white px-2 py-0.5 rounded-lg uppercase">Disabled</span>}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="flex gap-1.5">
+                                    <button onClick={()=>setViewingUser(u)} className="p-2.5 bg-sky-50 text-sky-main rounded-xl hover:bg-sky-100" title="Lihat Kartu"><Eye size={16}/></button>
+                                    <button onClick={()=>{ setEditingUser(u); setShowEditor(true); }} className="p-2.5 bg-indigo-50 text-indigo-500 rounded-xl hover:bg-indigo-100" title="Edit Data"><Edit size={16}/></button>
+                                    <button onClick={()=>handleToggleDisable(u)} className={`p-2.5 rounded-xl ${u.status === 'disabled' ? 'bg-emerald-50 text-emerald-500 hover:bg-emerald-100' : 'bg-amber-50 text-amber-500 hover:bg-amber-100'}`} title={u.status === 'disabled' ? 'Aktifkan' : 'Nonaktifkan'}><Power size={16}/></button>
+                                    <button onClick={()=>handleDelete(u)} className="p-2.5 bg-rose-50 text-rose-300 hover:text-rose-500 rounded-xl" title="Hapus"><Trash2 size={16}/></button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {viewingUser && <CardModal user={viewingUser} onClose={() => setViewingUser(null)} />}
+                    {showEditor && <UserEditorModal user={editingUser} onClose={() => setShowEditor(false)} onSave={handleSaveUser} />}
                 </div>
             );
         };
 
         const StudentDashboard = ({ user }) => {
-            const [tab, setTab] = useState('card');
-            const att = useCollection('attendance');
-            const mats = useCollection('materials');
-            const scheds = useCollection('schedules');
-            
-            const history = att.filter(a => a.userId === user.id).sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
-            const materials = mats.filter(m => m.className === user.className).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
-            const schedules = scheds.filter(s => s.className === user.className).sort((a,b) => new Date(s.date) - new Date(b.date));
-
             return (
-                <div className="p-6 h-full flex flex-col pb-24 max-w-md mx-auto animate-slide-up">
-                    <div className="flex justify-between items-center mb-6"><div><h2 className="text-xl font-bold text-slate-800">Halo, {user.name.split(' ')[0]}! 👋</h2><p className="text-xs text-slate-500 font-medium">{user.className}</p></div></div>
-                    <div className="flex bg-white/50 p-1 rounded-2xl mb-6 backdrop-blur-sm shadow-sm border border-white/60 overflow-x-auto no-scrollbar">
-                        {['card', 'history', 'materials', 'schedule'].map(t => (<button key={t} onClick={() => setTab(t)} className={`flex-1 min-w-[70px] py-2.5 text-[11px] font-bold rounded-xl transition-all whitespace-nowrap ${tab === t ? 'bg-white text-indigo-600 shadow-md scale-105' : 'text-slate-500 hover:text-slate-700'}`}>{t === 'card' ? 'Kartu' : t === 'history' ? 'Riwayat' : t === 'materials' ? 'Materi' : 'Jadwal'}</button>))}
+                <div className="p-6 lg:p-12 animate-slide-up flex flex-col items-center max-w-4xl mx-auto space-y-10">
+                    <div className="text-center">
+                        <h2 className="text-3xl lg:text-4xl font-black text-sky-dark uppercase tracking-tight">Kartu Digital ASM</h2>
+                        <p className="text-slate-500 font-bold text-lg mt-2 italic tracking-tight">GKPS Tangerang • Sekolah Minggu</p>
                     </div>
-                    <div className="flex-1 overflow-y-auto no-scrollbar">
-                        {tab === 'card' && (
-                             <div className="relative w-full perspective group animate-pop">
-                                <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500 to-pink-500 rounded-[2.5rem] blur-xl opacity-40"></div>
-                                <div className="relative bg-white/90 backdrop-blur-xl rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/50 p-6 flex flex-col items-center">
-                                    <Avatar name={user.name} seed={user.avatarSeed} size="xl" className="border-4 border-white mb-4" />
-                                    <h2 className="text-2xl font-black text-slate-800 text-center">{user.name}</h2>
-                                    <span className="bg-indigo-50 text-indigo-600 px-4 py-1 rounded-full text-xs font-bold uppercase mb-6">{user.className}</span>
-                                    <div className="p-4 bg-white rounded-3xl border-2 border-dashed border-slate-200"><QRCode value={user.qrCode} size={160} /></div>
-                                </div>
-                             </div>
-                        )}
-                        {tab === 'history' && <div className="space-y-4">{history.map(h => <div key={h.id} className="glass-card p-4 rounded-2xl flex justify-between items-center"><p className="text-sm font-bold text-slate-800">{formatDateIndo(h.date)}</p><span className="text-xs font-mono bg-emerald-50 text-emerald-600 px-2 py-1 rounded">{new Date(h.timestamp).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</span></div>)}</div>}
-                        {tab === 'materials' && <div className="space-y-4">{materials.map(m => <div key={m.id} className="glass-card p-5 rounded-2xl"><h4 className="text-lg font-extrabold text-slate-800">{m.theme}</h4><p className="text-sm italic text-slate-600 mt-2">"{m.verse}"</p></div>)}</div>}
-                        {tab === 'schedule' && <div className="space-y-4">{schedules.map(s => <div key={s.id} className="glass-card p-4 rounded-2xl border-l-4 border-indigo-500"><h4 className="font-bold text-slate-800">{s.activity}</h4><p className="text-xs text-slate-500 flex items-center gap-1 mt-1"><Calendar size={12}/> {formatDateIndo(s.date)} • {s.time}</p></div>)}</div>}
-                    </div>
-                </div>
-             );
-        };
 
-        const MainApp = ({ user, onLogout }) => {
-            const nav = useNavigate();
-            const loc = useLocation();
-            const [isProfileOpen, setIsProfileOpen] = useState(false);
-            const [isNotifOpen, setIsNotifOpen] = useState(false);
-            const [hasNewNotif, setHasNewNotif] = useState(false);
-            const notifs = useCollection('notifications');
-
-            const menus = [
-                { path: '/', icon: LayoutDashboard, label: 'Home', roles: ['ADMIN', 'TEACHER'] },
-                { path: '/scan', icon: QrCode, label: 'Scan', roles: ['ADMIN', 'TEACHER'] },
-                { path: '/', icon: CreditCard, label: 'Kartu', roles: ['STUDENT'] },
-                { path: '/users', icon: Users, label: 'Users', roles: ['ADMIN'] },
-            ];
-            
-            const myMenus = menus.filter(m => m.roles.includes(user.role));
-
-            useEffect(() => {
-                if (notifs.length > 0) {
-                    const lastNotif = new Date(notifs[0].timestamp);
-                    if(lastNotif.toDateString() === new Date().toDateString()) setHasNewNotif(true);
-                }
-            }, [notifs]);
-
-            // Route Protection Logic
-            useEffect(() => {
-                if (user.role === 'STUDENT' && loc.pathname !== '/') nav('/', { replace: true });
-                if (user.role === 'TEACHER' && loc.pathname === '/users') nav('/', { replace: true });
-            }, [user, loc.pathname]);
-
-            return (
-                <div className="h-screen flex flex-col relative w-full md:max-w-7xl mx-auto bg-white/30 shadow-2xl overflow-hidden border-x border-white/40">
-                    <Background />
-                    <div className="glass-nav px-6 py-4 flex justify-between items-center sticky top-0 z-50">
-                        <div className="flex items-center gap-3">
-                            <Avatar name={user.name} seed={user.avatarSeed} onClick={() => setIsProfileOpen(true)} />
-                            <div className="cursor-pointer" onClick={() => setIsProfileOpen(true)}>
-                                <h3 className="font-bold text-slate-800 text-sm leading-tight">{user.name.split(' ')[0]}</h3>
-                                <span className="text-[10px] font-bold text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-md">{user.role}</span>
+                    <div className="soft-card relative overflow-hidden bg-white shadow-2xl max-w-sm w-full border-4 border-white/50 transform hover:rotate-1 transition-transform">
+                        <div className="h-36 sidebar-gradient p-8 text-white flex justify-between items-start relative">
+                            <div className="space-y-1 text-left relative z-10">
+                                <span className="font-black tracking-tighter text-sm block">GKPS SUNDAY SCHOOL</span>
+                                <span className="text-[9px] font-bold opacity-70 tracking-[0.4em] uppercase">Student ID Card</span>
                             </div>
+                            <Star size={28} fill="#fff" />
                         </div>
-                        <div className="flex gap-2">
-                            <button onClick={() => { setIsNotifOpen(true); setHasNewNotif(false); }} className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-slate-400 hover:text-indigo-500 transition-colors relative"><Bell size={18} />{hasNewNotif && <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>}</button>
-                            <button onClick={onLogout} className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors"><LogOut size={18} /></button>
-                        </div>
-                    </div>
-                    <div className="flex-1 overflow-y-auto z-0">
-                        <Routes>
-                            <Route path="/" element={user.role === 'STUDENT' ? <StudentDashboard user={user}/> : <Dashboard user={user}/>} />
-                            {user.role !== 'STUDENT' && <Route path="/scan" element={<Scanner user={user} />} />}
-                            {user.role === 'ADMIN' && <Route path="/users" element={<UserManagement />} />}
-                        </Routes>
-                    </div>
-                    {user.role !== 'STUDENT' && (
-                        <div className="absolute bottom-6 left-0 right-0 z-50 flex justify-center pointer-events-none">
-                            <div className="glass-nav rounded-[2rem] p-2 flex justify-between shadow-2xl shadow-indigo-500/10 w-[90%] max-w-md pointer-events-auto">
-                                {myMenus.map((m, i) => (
-                                    <button key={i} onClick={() => nav(m.path)} className={`flex-1 h-14 rounded-[1.8rem] flex items-center justify-center transition-all duration-300 relative ${loc.pathname === m.path ? 'text-white' : 'text-slate-400 hover:bg-slate-50'}`}>
-                                        {loc.pathname === m.path && <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500 to-pink-500 rounded-[1.8rem] shadow-lg shadow-indigo-500/30 animate-pop -z-10"></div>}
-                                        <m.icon size={22} strokeWidth={loc.pathname === m.path ? 2.5 : 2} className={loc.pathname === m.path ? 'scale-110' : ''} />
-                                    </button>
-                                ))}
+                        <div className="px-8 pb-12 flex flex-col items-center -mt-20 relative z-20">
+                            <Avatar name={user.name} size="xl" className="border-8 border-white mb-6 shadow-2xl scale-125" />
+                            <h3 className="text-3xl font-black text-slate-800 mb-1 text-center uppercase tracking-tight">{user.name}</h3>
+                            <div className="flex gap-2 mb-10">
+                                <span className="text-xs font-black bg-sky-50 text-sky-dark px-6 py-2 rounded-full border-2 border-sky-100 uppercase tracking-[0.2em]">{user.className}</span>
+                                <span className="text-xs font-black bg-pink-50 text-pink-500 px-6 py-2 rounded-full border-2 border-pink-100 uppercase tracking-[0.2em]">{user.gender || 'Laki-Laki'}</span>
                             </div>
+                            <div className="p-6 bg-white rounded-[3rem] border-4 border-dashed border-sky-100 shadow-inner mb-4 flex justify-center">
+                                <QRCode value={user.qrCode || user.id} size={180} fgColor="#0284c7" />
+                            </div>
+                            <p className="font-mono text-[10px] text-slate-300 font-black tracking-[0.5em] uppercase mt-4">{user.qrCode || user.id}</p>
                         </div>
-                    )}
-                    {isProfileOpen && <ProfileModal user={user} onClose={() => setIsProfileOpen(false)} onUpdate={async (u) => { await DB_ACTIONS.updateUser(u.id, u); window.location.reload(); }} />}
-                    {isNotifOpen && <NotificationModal onClose={() => setIsNotifOpen(false)} />}
+                    </div>
                 </div>
             );
         };
 
-        const App = () => {
+        const Scanner = ({ users, fbUser }) => {
+            const [status, setStatus] = useState({ type: 'idle', msg: '' });
+            const onScan = async (code) => {
+                if (!code || !fbUser || status.type !== 'idle') return;
+                const target = users.find(u => (u.qrCode === code || u.id === code) && u.status !== 'disabled');
+                if (!target) return setStatus({ type: 'err', msg: 'User Tidak Ditemukan / Dinonaktifkan!' });
+                const today = new Date().toISOString().split('T')[0];
+                const recordId = `${target.id}-${today}`;
+                try {
+                    await setDoc(getPublicDoc('attendance', recordId), { id: recordId, userId: target.id, userName: target.name, className: target.className, date: today, timestamp: new Date().toISOString() });
+                    setStatus({ type: 'ok', msg: `${target.name} Berhasil Absen!` });
+                } catch (e) { setStatus({ type: 'err', msg: 'Maaf, Gagal Cloud Sync' }); }
+                setTimeout(() => setStatus({ type: 'idle', msg: '' }), 2500);
+            };
+
+            useEffect(() => {
+                if (!fbUser) return;
+                const scanner = new Html5Qrcode("reader");
+                const start = async () => {
+                    try { await scanner.start({ facingMode: "environment" }, { fps: 15, qrbox: 280 }, onScan); } catch (err) {
+                        try { await scanner.start({ facingMode: "user" }, { fps: 15, qrbox: 280 }, onScan); } catch (e) {}
+                    }
+                };
+                start();
+                return () => { if (scanner.isScanning) scanner.stop(); };
+            }, [fbUser]);
+
+            return (
+                <div className="p-6 lg:p-12 animate-slide-up flex flex-col items-center">
+                    <h2 className="text-4xl font-black text-sky-dark leading-tight mb-10 uppercase tracking-tighter">Pindai Kode QR</h2>
+                    <div className="relative w-full max-w-lg">
+                        <div className="soft-card p-6 bg-white relative z-10 border-8 border-sky-100 shadow-2xl">
+                            <div id="reader" className="w-full aspect-square bg-slate-900 rounded-[2rem] overflow-hidden shadow-inner border-4 border-slate-800"></div>
+                        </div>
+                        {status.type !== 'idle' && (
+                            <div className="absolute inset-0 z-50 flex items-center justify-center backdrop-blur-md rounded-[2.5rem] bg-white/40 animate-pop">
+                                <div className="soft-card p-12 text-center space-y-4 border-4 border-sky-200">
+                                    {status.type === 'ok' ? <Smile size={80} className="text-emerald-500 mx-auto" /> : <AlertCircle size={80} className="text-rose-500 mx-auto" />}
+                                    <p className="font-black text-slate-800 text-2xl leading-tight">{status.msg}</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const MainApp = () => {
             const [user, setUser] = useState(null);
+            const [fbUser, setFbUser] = useState(null);
+            const [allUsers, setAllUsers] = useState([]);
+            const [attendance, setAttendance] = useState([]);
+            const [isLoading, setIsLoading] = useState(true);
+            const [loginRole, setLoginRole] = useState('TEACHER');
+            const [adminNameInput, setAdminNameInput] = useState('');
+            const [pw, setPw] = useState('');
+            const [secretCount, setSecretCount] = useState(0);
+            const [adminVisible, setAdminVisible] = useState(false);
             
-            // Main auth init
+            const nav = useNavigate();
+            const loc = useLocation();
+
+            const isStudent = user?.role === 'STUDENT';
+            const isAdmin = user?.role === 'ADMIN';
+
             useEffect(() => {
                 const initAuth = async () => {
-                    // Try to restore session from local storage first to show UI immediately if valid
-                    const s = localStorage.getItem(STORAGE.SESSION);
-                    if (s) setUser(JSON.parse(s));
-
-                    // Sign in to Firebase anonymously to enable reading/writing
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                         await signInWithCustomToken(auth, __initial_auth_token);
-                    } else {
-                         await signInAnonymously(auth);
-                    }
+                    try {
+                        await signInAnonymously(auth);
+                        onAuthStateChanged(auth, u => setFbUser(u));
+                    } catch(e) { setIsLoading(false); }
                 };
                 initAuth();
             }, []);
-            
-            const login = (u) => { 
-                setUser(u); 
-                localStorage.setItem(STORAGE.SESSION, JSON.stringify(u)); 
-            };
-            
-            const logout = () => { 
-                setUser(null); 
-                localStorage.removeItem(STORAGE.SESSION);
-                window.location.hash = '/'; 
+
+            useEffect(() => {
+                if (!fbUser) return;
+                const unsubUsers = onSnapshot(getPublicCol('users'), snap => {
+                    const data = snap.docs.map(d => d.data());
+                    setAllUsers(data);
+                    const saved = localStorage.getItem('gkps_sess_v7');
+                    if (saved) {
+                        try {
+                           const parsed = JSON.parse(saved);
+                           const curr = data.find(u => u.id === parsed.id);
+                           if (curr && curr.status !== 'disabled') setUser(curr);
+                        } catch(e) {}
+                    }
+                    setIsLoading(false);
+                }, () => setIsLoading(false));
+                const unsubAtt = onSnapshot(getPublicCol('attendance'), snap => {
+                    const today = new Date().toISOString().split('T')[0];
+                    setAttendance(snap.docs.map(d => d.data()).filter(a => a.date === today));
+                });
+                return () => { unsubUsers(); unsubAtt(); };
+            }, [fbUser]);
+
+            const handleLogin = (e) => {
+                e.preventDefault();
+                const inputName = adminNameInput.trim().toUpperCase();
+                const inputPw = pw.trim();
+
+                if (loginRole === 'ADMIN' && inputName === 'ADMIN SISTEM' && inputPw === '090807') {
+                    const root = { id: 'root', name: 'ADMIN SISTEM', role: 'ADMIN', className: 'SISTEM', status: 'active' };
+                    setUser(root); localStorage.setItem('gkps_sess_v7', JSON.stringify(root)); return;
+                }
+
+                const selId = document.getElementById('select-user')?.value;
+                const target = loginRole === 'ADMIN' 
+                    ? allUsers.find(u => u.role === 'ADMIN' && u.name.toUpperCase().trim() === inputName)
+                    : allUsers.find(u => u.role === loginRole && u.id === selId);
+                
+                if (target && target.status === 'disabled') return alert("Akun Anda sedang dinonaktifkan!");
+                
+                if (target && target.pin === inputPw) {
+                    setUser(target); localStorage.setItem('gkps_sess_v7', JSON.stringify(target));
+                } else alert('Nama atau PIN salah!');
             };
 
-            if (!user) return <LoginScreen onLogin={login} />;
-            return <HashRouter><MainApp user={user} onLogout={logout} /></HashRouter>;
+            if (isLoading || !fbUser) return <div className="h-screen flex items-center justify-center bg-sky-light text-center"><div className="w-16 h-16 border-4 border-sky-main border-t-transparent rounded-full animate-spin mx-auto mb-4"></div><p className="font-bold text-sky-dark">Menyambungkan Cloud...</p></div>;
+
+            if (!user) return (
+                <div className="min-h-screen flex items-center justify-center p-6 relative overflow-hidden bg-sky-light text-center">
+                    <div className="soft-card p-10 w-full max-w-sm relative z-10 animate-pop border-4 border-white shadow-2xl">
+                        <div className="flex justify-center mb-10">
+                            <button onClick={() => { setSecretCount(s=>s+1); if(secretCount>=4) setAdminVisible(true); }} className="w-24 h-24 bg-sky-light rounded-full flex items-center justify-center shadow-xl animate-float border-4 border-white transition-transform active:scale-95"><Church className="text-sky-main" size={52}/></button>
+                        </div>
+                        <h1 className="text-3xl font-black text-sky-dark mb-10 leading-tight">Presensi Kasih<br/><span className="text-[10px] font-bold text-slate-400 tracking-[0.5em] uppercase">GKPS Tangerang</span></h1>
+                        <div className="bg-sky-50 p-1.5 rounded-full flex mb-10 border-2 border-sky-100">
+                            <button onClick={() => setLoginRole('TEACHER')} className={`flex-1 py-3 text-[10px] font-black rounded-full transition-all ${loginRole === 'TEACHER' ? 'bg-white text-sky-dark shadow-sm' : 'text-slate-400'}`}>GURU</button>
+                            <button onClick={() => setLoginRole('STUDENT')} className={`flex-1 py-3 text-[10px] font-black rounded-full transition-all ${loginRole === 'STUDENT' ? 'bg-white text-sky-dark shadow-sm' : 'text-slate-400'}`}>SISWA</button>
+                            {adminVisible && <button onClick={() => setLoginRole('ADMIN')} className={`flex-1 py-3 text-[10px] font-black rounded-full transition-all ${loginRole === 'ADMIN' ? 'bg-white text-sky-dark shadow-sm' : 'text-slate-400'}`}>ADMIN</button>}
+                        </div>
+                        <form onSubmit={handleLogin} className="space-y-4">
+                            {loginRole === 'ADMIN' ? (
+                                <input type="text" placeholder="Nama Admin..." value={adminNameInput} onChange={e => setAdminNameInput(e.target.value)} className="w-full p-5 rounded-3xl border-2 border-sky-50 bg-slate-50 outline-none font-bold text-slate-700" />
+                            ) : (
+                                <select id="select-user" className="w-full p-5 rounded-3xl border-2 border-sky-50 bg-slate-50 outline-none font-bold text-slate-700 appearance-none">
+                                    <option value="">Pilih Nama...</option>
+                                    {allUsers.filter(u => u.role === loginRole).map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+                                </select>
+                            )}
+                            <input type="password" placeholder="PIN Keamanan" value={pw} onChange={e => setPw(e.target.value)} className="w-full p-5 rounded-3xl border-2 border-sky-50 bg-slate-50 outline-none font-bold text-center tracking-[0.5em] placeholder:tracking-normal" />
+                            <button className="pill-button-main w-full py-5 uppercase tracking-widest text-sm mt-6">Masuk Sekarang ✨</button>
+                        </form>
+                    </div>
+                </div>
+            );
+
+            return (
+                <div className="h-screen flex flex-row w-full bg-sky-light relative overflow-hidden">
+                    <aside className="hidden lg:flex flex-col w-80 sidebar-gradient p-8 text-white z-50 shadow-2xl relative overflow-hidden text-left">
+                        <div className="flex flex-col items-center mb-12 relative z-10">
+                            <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mb-4 border-4 border-sky-light/20"><Church className="text-sky-main" size={32} /></div>
+                            <h2 className="text-2xl font-black text-center leading-tight uppercase tracking-tight">Presensi Kasih</h2>
+                            <span className="text-[9px] font-bold opacity-60 tracking-[0.3em] mt-1 uppercase">GKPS Tangerang</span>
+                        </div>
+                        <nav className="flex-1 space-y-3 relative z-10">
+                            {[
+                                { path: '/', icon: LayoutDashboard, label: 'Dashboard', roles: ['ADMIN', 'TEACHER', 'STUDENT'] },
+                                { path: '/scan', icon: QrCode, label: 'Scan Absensi', roles: ['ADMIN', 'TEACHER'] },
+                                { path: isAdmin ? '/users' : '/', icon: isAdmin ? Users : CreditCard, label: isAdmin ? 'Data Database' : 'Informasi', roles: ['ADMIN', 'TEACHER', 'STUDENT'] },
+                            ].filter(m => m.roles.includes(user.role)).map((m, i) => (
+                                <button key={i} onClick={() => nav(m.path)} className={`w-full p-5 rounded-[1.75rem] flex items-center gap-4 transition-all font-black text-sm ${loc.pathname === m.path ? 'bg-white text-sky-dark shadow-xl scale-105' : 'hover:bg-white/10 text-white/80'}`}>
+                                    <m.icon size={22} /><span>{m.label}</span>
+                                </button>
+                            ))}
+                        </nav>
+                        <button onClick={() => { localStorage.removeItem('gkps_sess_v7'); setUser(null); }} className="p-4 rounded-2xl bg-white/10 text-white font-black text-xs uppercase flex items-center justify-center gap-2 hover:bg-white/20 transition-all"><LogOut size={18}/> Logout</button>
+                    </aside>
+
+                    <div className="flex-1 flex flex-col relative h-full overflow-hidden bg-white/40 backdrop-blur-sm">
+                        <header className="p-6 lg:px-10 flex justify-end items-center gap-4 border-b border-sky-100 lg:border-none bg-white lg:bg-transparent z-40">
+                             <div className="p-3 bg-white rounded-2xl shadow-sm border border-sky-50 text-sky-main"><Bell size={20}/></div>
+                            <div className="flex items-center gap-3 ml-4 p-1 pr-4 bg-white rounded-full shadow-sm border border-sky-50">
+                                <Avatar name={user.name} size="md" className="border-2 border-sky-main" />
+                                <div className="leading-tight text-left">
+                                    <p className="text-[11px] font-black text-slate-800 uppercase leading-none">{user.name.split(' ')[0]}</p>
+                                    <p className="text-[9px] font-bold text-sky-dark uppercase opacity-60 tracking-widest mt-1">{user.role}</p>
+                                </div>
+                            </div>
+                        </header>
+
+                        <div className="flex-1 overflow-y-auto no-scrollbar scroll-smooth">
+                            <Routes>
+                                <Route path="/" element={isStudent ? <StudentDashboard user={user} /> : <Dashboard user={user} allUsers={allUsers} attendance={attendance} />} />
+                                <Route path="/scan" element={<Scanner users={allUsers} fbUser={fbUser} />} />
+                                <Route path="/users" element={<UserManagement users={allUsers} fbUser={fbUser} />} />
+                            </Routes>
+                        </div>
+
+                        <div className="lg:hidden p-6 fixed bottom-0 left-0 right-0 pointer-events-none z-50">
+                            <div className="soft-card p-2 flex justify-between gap-1 shadow-2xl pointer-events-auto border-2 border-sky-100 bg-white/95 backdrop-blur-md">
+                                {[
+                                    { path: '/', icon: LayoutDashboard, label: 'Beranda', roles: ['ADMIN', 'TEACHER', 'STUDENT'] },
+                                    { path: '/scan', icon: QrCode, label: 'Scan', roles: ['ADMIN', 'TEACHER'] },
+                                    { path: isAdmin ? '/users' : '/', icon: isAdmin ? Users : CreditCard, label: isAdmin ? 'Data' : 'Kartu', roles: ['ADMIN', 'TEACHER', 'STUDENT'] }
+                                ].filter(m => m.roles.includes(user.role)).map((m, i) => {
+                                    const active = loc.pathname === m.path;
+                                    return (
+                                        <button key={i} onClick={() => nav(m.path)} className={`flex-1 py-3 flex flex-col items-center gap-1 transition-all rounded-2xl ${active ? 'text-sky-dark bg-sky-50 shadow-inner' : 'text-slate-300'}`}>
+                                            <m.icon size={22} /><span className="text-[8px] font-black uppercase tracking-tighter">{m.label}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
         };
 
-        createRoot(document.getElementById('root')).render(<App />);
+        const root = createRoot(document.getElementById('root'));
+        root.render(<HashRouter><MainApp /></HashRouter>);
     </script>
 </body>
 </html>
