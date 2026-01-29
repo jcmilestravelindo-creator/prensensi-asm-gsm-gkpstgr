@@ -86,7 +86,7 @@
         
         import { 
             LayoutDashboard, QrCode, Users, LogOut, Church, CheckCircle, AlertCircle, 
-            Camera, Trash2, Upload, ChevronRight, Calendar, User, ShieldCheck, 
+            Trash2, Upload, ChevronRight, Calendar, User, ShieldCheck, 
             Sparkles, Zap, Plus, X, RefreshCw, BookOpen, PenTool, Bell, Activity, 
             Radio, TrendingUp, Briefcase, GraduationCap, Clock, MapPin, Edit, Monitor, Eye, Settings,
             Search, Smile, Send, Info, CreditCard, BrainCircuit, UserPlus, Power, Check, Star
@@ -115,19 +115,6 @@
         const getPublicCol = (name) => collection(db, 'artifacts', appId, 'public', 'data', name);
         const getPublicDoc = (name, id) => doc(db, 'artifacts', appId, 'public', 'data', name, id);
 
-        const GeminiService = {
-            call: async (prompt) => {
-                const apiKey = ""; 
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-                const payload = { contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json" } };
-                try {
-                    const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-                    const data = await response.json();
-                    return JSON.parse(data.candidates?.[0]?.content?.parts?.[0]?.text);
-                } catch (e) { return null; }
-            }
-        };
-
         const Avatar = ({ name, seed, size = 'md', className='' }) => {
             const s = size === 'lg' ? 'w-12 h-12' : size === 'xl' ? 'w-20 h-20' : 'w-10 h-10';
             return (
@@ -142,7 +129,7 @@
                 <div className="soft-card p-8 w-full max-sm relative animate-pop bg-white shadow-2xl text-center">
                     <button onClick={onClose} className="absolute top-4 right-4 p-2 text-slate-400 hover:text-rose-500 transition-colors"><X size={24}/></button>
                     <Avatar name={user.name} size="xl" className="mb-4 mx-auto border-4 border-sky-100" />
-                    <h3 className="text-2xl font-black text-slate-800 mb-1">{user.name}</h3>
+                    <h3 className="text-2xl font-black text-slate-800 mb-1 leading-tight uppercase tracking-tight">{user.name}</h3>
                     <div className="flex justify-center gap-2 mb-6">
                         <span className="text-[10px] font-bold bg-sky-50 text-sky-dark px-4 py-1.5 rounded-full uppercase border border-sky-100">{user.className}</span>
                         <span className="text-[10px] font-bold bg-pink-50 text-pink-500 px-4 py-1.5 rounded-full uppercase border border-pink-100">{user.gender || 'Laki-Laki'}</span>
@@ -166,20 +153,20 @@
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
                     <div className="soft-card p-8 w-full max-w-md relative animate-pop bg-white shadow-2xl overflow-hidden">
                         <button onClick={onClose} className="absolute top-4 right-4 p-2 text-slate-400 hover:text-rose-500 transition-colors"><X size={24}/></button>
-                        <h3 className="text-2xl font-black text-sky-dark mb-6 text-left">{user?.id ? 'Edit Data User' : 'Tambah User Baru'}</h3>
+                        <h3 className="text-2xl font-black text-sky-dark mb-6 text-left uppercase tracking-tight">{user?.id ? 'Edit Data User' : 'Tambah User Baru'}</h3>
                         
                         <div className="space-y-4 text-left">
                             <div>
                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 mb-1 block">Nama Lengkap</label>
-                                <input value={form.name} onChange={e=>setForm({...form, name: e.target.value})} placeholder="Masukkan nama..." className="w-full p-4 rounded-2xl bg-sky-50 outline-none font-bold text-slate-700 border-2 border-transparent focus:border-sky-main transition-all" />
+                                <input value={form.name} onChange={e=>setForm({...form, name: e.target.value})} placeholder="Masukkan nama..." className="w-full p-4 rounded-2xl bg-sky-50 outline-none font-bold text-slate-700 border-2 border-transparent focus:border-sky-main transition-all uppercase" />
                             </div>
                             
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 mb-1 block">Peran (Role)</label>
                                     <select value={form.role} onChange={e=>setForm({...form, role: e.target.value})} className="w-full p-4 rounded-2xl bg-sky-50 outline-none font-bold text-slate-700 appearance-none cursor-pointer">
-                                        <option value="STUDENT">Siswa</option>
-                                        <option value="TEACHER">Guru</option>
+                                        <option value="STUDENT">Siswa / ASM</option>
+                                        <option value="TEACHER">Guru / GSM</option>
                                         <option value="ADMIN">Admin</option>
                                     </select>
                                 </div>
@@ -226,26 +213,17 @@
 
         const Dashboard = ({ user, allUsers, attendance }) => {
             const nav = useNavigate();
-            const [analyzing, setAnalyzing] = useState(false);
-
             const stats = useMemo(() => {
                 const totalStudents = allUsers.filter(u => u.role === 'STUDENT').length;
                 const hadir = attendance.length;
                 return { hadir, izin: 0, online: 0, tidakHadir: Math.max(0, totalStudents - hadir) };
             }, [allUsers, attendance]);
 
-            const runAnalysis = async () => {
-                setAnalyzing(true);
-                const res = await GeminiService.call(`Analisa data: ${attendance.length} hadir dari ${allUsers.length} jemaat. Berikan saran bijak 1 kalimat dalam JSON: { "insight": "Komentar", "advice": "Saran" }`);
-                if(res) alert(`AI Insight: ${res.insight}\n\nSaran: ${res.advice}`);
-                setAnalyzing(false);
-            };
-
             return (
                 <div className="p-4 lg:p-10 animate-slide-up space-y-8 max-w-6xl mx-auto text-left">
                     <div className="soft-card relative overflow-hidden bg-white min-h-[240px] flex items-center p-8 lg:p-12">
                         <div className="relative z-10 w-full lg:w-3/5 space-y-2">
-                            <h2 className="text-3xl lg:text-5xl font-black text-sky-dark leading-tight uppercase">Selamat Beribadah! 🌼</h2>
+                            <h2 className="text-3xl lg:text-5xl font-black text-sky-dark leading-tight uppercase tracking-tight">Selamat Beribadah! 🌼</h2>
                             <p className="text-slate-500 font-bold text-lg">Minggu, {new Date().toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'})}</p>
                             <div className="pt-4">
                                 <button onClick={() => nav('/scan')} className="pill-button-main px-14 py-4 text-sm uppercase tracking-widest flex items-center gap-2">
@@ -253,8 +231,8 @@
                                 </button>
                             </div>
                         </div>
-                        <div className="absolute top-0 right-0 h-full w-full lg:w-2/3 pointer-events-none opacity-30 lg:opacity-100">
-                             <svg viewBox="0 0 400 200" className="w-full h-full opacity-20">
+                        <div className="absolute top-0 right-0 h-full w-full lg:w-2/3 pointer-events-none opacity-20">
+                             <svg viewBox="0 0 400 200" className="w-full h-full">
                                 <circle cx="320" cy="40" r="15" fill="#38bdf8" />
                                 <rect x="300" y="100" width="60" height="70" fill="#38bdf8" rx="4" />
                             </svg>
@@ -262,11 +240,7 @@
                     </div>
 
                     <div className="space-y-6">
-                        <div className="flex justify-between items-center px-2">
-                            <h3 className="text-xl font-black text-sky-dark">Statistik Kehadiran</h3>
-                            {user.role === 'ADMIN' && <button onClick={runAnalysis} className="text-xs font-black text-sky-main flex items-center gap-2 hover:underline">{analyzing ? <RefreshCw size={14} className="animate-spin"/> : <BrainCircuit size={14}/>} ANALISA AI</button>}
-                        </div>
-
+                        <h3 className="text-xl font-black text-sky-dark uppercase tracking-tight ml-2">Ringkasan Kehadiran</h3>
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
                             {[
                                 { label: 'Hadir', val: stats.hadir, icon: CheckCircle, color: 'emerald' },
@@ -297,68 +271,39 @@
             const handleImport = (e) => {
                 const file = e.target.files[0];
                 if (!file || !fbUser) return;
-                
                 const reader = new FileReader();
                 reader.onload = async (ev) => {
                     try {
                         const text = ev.target.result;
-                        // Better line split handling both CRLF and LF
                         const lines = text.split(/\r\n|\n|\r/).filter(line => line.trim() !== "");
-                        
-                        if (lines.length === 0) return;
-
                         let startIdx = 0;
-                        // Robust header detection
-                        const firstLine = lines[0].toLowerCase();
-                        if (firstLine.includes("nama") || firstLine.includes("peran") || firstLine.includes("role") || firstLine.includes("kelas")) {
-                            startIdx = 1;
-                        }
+                        if (lines[0].toLowerCase().includes("nama")) startIdx = 1;
 
                         let count = 0;
                         for (let i = startIdx; i < lines.length; i++) {
                             const line = lines[i];
-                            // Handle potential different separators (Indonesian Excel uses semicolon)
                             const separator = line.includes(';') ? ';' : ',';
-                            let parts = line.split(separator).map(s => s?.trim().replace(/^["'](.+)["']$/, '$1')); // remove quotes
-                            
+                            let parts = line.split(separator).map(s => s?.trim().replace(/^["'](.+)["']$/, '$1'));
                             let [name, role, className, gender] = parts;
                             
                             if (name && role) {
-                                // Robust role mapping to ensure it appears in Mobile login
+                                // PEMETAAN ROLE: Agar muncul di login Guru/Siswa HP
                                 let rawRole = role.toUpperCase();
-                                let finalRole = 'STUDENT'; // default
-                                if (rawRole.includes('GURU') || rawRole.includes('GSM') || rawRole.includes('TEACHER')) {
-                                    finalRole = 'TEACHER';
-                                } else if (rawRole.includes('ADMIN')) {
-                                    finalRole = 'ADMIN';
-                                } else if (rawRole.includes('SISWA') || rawRole.includes('ASM') || rawRole.includes('STUDENT')) {
-                                    finalRole = 'STUDENT';
-                                }
-                                
+                                let finalRole = 'STUDENT';
+                                if (rawRole.includes('GURU') || rawRole.includes('GSM') || rawRole.includes('TEACHER')) finalRole = 'TEACHER';
+                                else if (rawRole.includes('ADMIN')) finalRole = 'ADMIN';
+
                                 const id = Math.random().toString(36).substring(7);
-                                try {
-                                    await setDoc(getPublicDoc('users', id), { 
-                                        id, 
-                                        name: name, 
-                                        role: finalRole, 
-                                        className: className || 'Pagi', 
-                                        gender: gender || 'Laki-Laki',
-                                        qrCode: `GKPS-${id}`, 
-                                        pin: '123456', 
-                                        status: 'active' 
-                                    });
-                                    count++;
-                                } catch (innerErr) {
-                                    console.error(`Error line ${i}:`, innerErr);
-                                }
+                                await setDoc(getPublicDoc('users', id), { 
+                                    id, name, role: finalRole, className: className || 'Pagi', gender: gender || 'Laki-Laki',
+                                    qrCode: `GKPS-${id}`, pin: '123456', status: 'active' 
+                                });
+                                count++;
                             }
                         }
-                        alert(`✅ Sukses! ${count} data jemaat berhasil disinkron ke Cloud dan siap diakses di Handphone.`);
+                        alert(`✅ Sukses! ${count} Guru/ASM berhasil masuk ke database cloud.`);
                         e.target.value = ''; 
-                    } catch (err) {
-                        console.error("Import error:", err);
-                        alert("Gagal membaca file CSV. Pastikan format benar.");
-                    }
+                    } catch (err) { alert("Gagal membaca file CSV."); }
                 };
                 reader.readAsText(file);
             };
@@ -366,36 +311,17 @@
             const handleSaveUser = async (formData) => {
                 if (!fbUser) return;
                 const id = formData.id || Math.random().toString(36).substring(7);
-                const finalData = { 
-                    ...formData, 
-                    id, 
-                    qrCode: formData.qrCode || `GKPS-${id}`,
-                    status: formData.status || 'active'
-                };
+                const finalData = { ...formData, id, qrCode: formData.qrCode || `GKPS-${id}`, status: formData.status || 'active' };
                 await setDoc(getPublicDoc('users', id), finalData);
-                setShowEditor(false);
-                setEditingUser(null);
-            };
-
-            const handleToggleDisable = async (u) => {
-                if (!fbUser) return;
-                const newStatus = u.status === 'disabled' ? 'active' : 'disabled';
-                await updateDoc(getPublicDoc('users', u.id), { status: newStatus });
-            };
-
-            const handleDelete = async (u) => {
-                if (!fbUser) return;
-                if(confirm(`Hapus permanen ${u.name}?`)) {
-                    await deleteDoc(getPublicDoc('users', u.id));
-                }
+                setShowEditor(false); setEditingUser(null);
             };
 
             return (
                 <div className="p-4 lg:p-8 animate-slide-up space-y-8 max-w-6xl mx-auto">
                     <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 px-2 text-left">
                         <div>
-                            <h2 className="text-3xl font-black text-sky-dark uppercase">Data Database</h2>
-                            <p className="text-sm font-bold text-slate-400 mt-1 uppercase tracking-widest">Total: {users.length} Database Cloud</p>
+                            <h2 className="text-3xl font-black text-sky-dark uppercase tracking-tight">Data Database</h2>
+                            <p className="text-sm font-bold text-slate-400 mt-1 uppercase tracking-widest">Sinkronisasi Cloud Aktif</p>
                         </div>
                         <div className="flex gap-2 flex-wrap">
                             <button onClick={() => { setEditingUser(null); setShowEditor(true); }} className="p-4 bg-sky-dark text-white rounded-2xl shadow-lg font-bold text-sm flex items-center gap-2 transition-all hover:brightness-110 active:scale-95">
@@ -408,9 +334,9 @@
                         </div>
                     </div>
 
-                    <div className="relative group">
-                        <Search className="absolute left-6 top-5 text-sky-main transition-transform group-focus-within:scale-110" size={24} />
-                        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari nama jemaat, ID, atau kelas..." className="w-full p-6 pl-16 soft-card border-2 border-transparent focus:border-sky-main/30 outline-none font-bold text-lg shadow-sm transition-all" />
+                    <div className="relative">
+                        <Search className="absolute left-6 top-5 text-sky-main" size={24} />
+                        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari nama, kelas, atau role..." className="w-full p-6 pl-16 soft-card border-2 border-transparent focus:border-sky-main/30 outline-none font-bold text-lg shadow-sm transition-all" />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -419,7 +345,7 @@
                                 <div className="flex items-center gap-4 overflow-hidden">
                                     <Avatar name={u.name} size="lg" />
                                     <div className="truncate text-left">
-                                        <p className="font-black text-slate-700 text-lg leading-tight truncate uppercase">{u.name}</p>
+                                        <p className="font-black text-slate-700 text-lg leading-tight truncate uppercase tracking-tight">{u.name}</p>
                                         <div className="flex gap-2 mt-1.5 flex-wrap">
                                             <span className={`text-[9px] font-black px-2 py-0.5 rounded-lg border uppercase ${u.role === 'ADMIN' ? 'bg-rose-50 text-rose-500 border-rose-100' : 'bg-sky-50 text-sky-dark border-sky-100'}`}>{u.role}</span>
                                             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{u.className}</span>
@@ -428,10 +354,9 @@
                                     </div>
                                 </div>
                                 <div className="flex gap-1.5">
-                                    <button onClick={()=>setViewingUser(u)} className="p-2.5 bg-sky-50 text-sky-main rounded-xl hover:bg-sky-100 transition-colors" title="Lihat Kartu"><Eye size={16}/></button>
-                                    <button onClick={()=>{ setEditingUser(u); setShowEditor(true); }} className="p-2.5 bg-indigo-50 text-indigo-500 rounded-xl hover:bg-indigo-100 transition-colors" title="Edit Data"><Edit size={16}/></button>
-                                    <button onClick={()=>handleToggleDisable(u)} className={`p-2.5 rounded-xl transition-colors ${u.status === 'disabled' ? 'bg-emerald-50 text-emerald-500 hover:bg-emerald-100' : 'bg-amber-50 text-amber-500 hover:bg-amber-100'}`} title={u.status === 'disabled' ? 'Aktifkan' : 'Nonaktifkan'}><Power size={16}/></button>
-                                    <button onClick={()=>handleDelete(u)} className="p-2.5 bg-rose-50 text-rose-300 hover:text-rose-500 rounded-xl transition-colors" title="Hapus"><Trash2 size={16}/></button>
+                                    <button onClick={()=>setViewingUser(u)} className="p-2.5 bg-sky-50 text-sky-main rounded-xl hover:bg-sky-100 transition-colors"><Eye size={16}/></button>
+                                    <button onClick={()=>{ setEditingUser(u); setShowEditor(true); }} className="p-2.5 bg-indigo-50 text-indigo-500 rounded-xl hover:bg-indigo-100 transition-colors"><Edit size={16}/></button>
+                                    <button onClick={() => { if(confirm(`Hapus ${u.name}?`)) deleteDoc(getPublicDoc('users', u.id))}} className="p-2.5 bg-rose-50 text-rose-300 hover:text-rose-500 rounded-xl transition-colors"><Trash2 size={16}/></button>
                                 </div>
                             </div>
                         ))}
@@ -447,29 +372,27 @@
             return (
                 <div className="p-6 lg:p-12 animate-slide-up flex flex-col items-center max-w-4xl mx-auto space-y-10">
                     <div className="text-center text-left">
-                        <h2 className="text-3xl lg:text-4xl font-black text-sky-dark uppercase tracking-tight">Kartu Digital ASM</h2>
-                        <p className="text-slate-500 font-bold text-lg mt-2 italic tracking-tight">GKPS Tangerang • Sekolah Minggu</p>
+                        <h2 className="text-3xl lg:text-4xl font-black text-sky-dark uppercase tracking-tight">Kartu Digital</h2>
+                        <p className="text-slate-500 font-bold text-lg mt-2 italic tracking-tight uppercase tracking-widest">GKPS Tangerang Online</p>
                     </div>
-
                     <div className="soft-card relative overflow-hidden bg-white shadow-2xl max-w-sm w-full border-4 border-white/50 transform hover:rotate-1 transition-transform">
-                        <div className="h-36 sidebar-gradient p-8 text-white flex justify-between items-start relative">
+                        <div className="h-32 sidebar-gradient p-8 text-white flex justify-between items-start relative">
                             <div className="space-y-1 text-left relative z-10">
                                 <span className="font-black tracking-tighter text-sm block">GKPS SUNDAY SCHOOL</span>
-                                <span className="text-[9px] font-bold opacity-70 tracking-[0.4em] uppercase">Student ID Card</span>
                             </div>
-                            <Star size={28} fill="#fff" />
+                            <Star size={24} fill="#fff" />
                         </div>
-                        <div className="px-8 pb-12 flex flex-col items-center -mt-20 relative z-20">
-                            <Avatar name={user.name} size="xl" className="border-8 border-white mb-6 shadow-2xl scale-125" />
-                            <h3 className="text-3xl font-black text-slate-800 mb-1 text-center uppercase tracking-tight">{user.name}</h3>
+                        <div className="px-8 pb-12 flex flex-col items-center -mt-16 relative z-20">
+                            <Avatar name={user.name} size="xl" className="border-8 border-white mb-6 shadow-2xl scale-110" />
+                            <h3 className="text-2xl font-black text-slate-800 mb-1 text-center uppercase tracking-tight leading-tight">{user.name}</h3>
                             <div className="flex gap-2 mb-10">
-                                <span className="text-xs font-black bg-sky-50 text-sky-dark px-6 py-2 rounded-full border-2 border-sky-100 uppercase tracking-[0.2em]">{user.className}</span>
-                                <span className="text-xs font-black bg-pink-50 text-pink-500 px-6 py-2 rounded-full border-2 border-pink-100 uppercase tracking-[0.2em]">{user.gender || 'Laki-Laki'}</span>
+                                <span className="text-[10px] font-black bg-sky-50 text-sky-dark px-4 py-1 rounded-full border border-sky-100 uppercase tracking-widest">{user.className}</span>
+                                <span className="text-[10px] font-black bg-pink-50 text-pink-500 px-4 py-1 rounded-full border border-pink-100 uppercase tracking-widest">{user.gender || '-'}</span>
                             </div>
-                            <div className="p-6 bg-white rounded-[3rem] border-4 border-dashed border-sky-100 shadow-inner mb-4 flex justify-center">
-                                <QRCode value={user.qrCode || user.id} size={180} fgColor="#0284c7" />
+                            <div className="p-6 bg-white rounded-[2.5rem] border-4 border-dashed border-sky-100 shadow-inner mb-4">
+                                <QRCode value={user.qrCode || user.id} size={160} fgColor="#0284c7" />
                             </div>
-                            <p className="font-mono text-[10px] text-slate-300 font-black tracking-[0.5em] uppercase mt-4">{user.qrCode || user.id}</p>
+                            <p className="font-mono text-[9px] text-slate-300 font-black tracking-[0.4em] uppercase mt-2">{user.qrCode || user.id}</p>
                         </div>
                     </div>
                 </div>
@@ -483,30 +406,25 @@
             const onScan = useCallback(async (code) => {
                 if (!code || !fbUser || status.type !== 'idle') return;
                 const target = users.find(u => (u.qrCode === code || u.id === code) && u.status !== 'disabled');
-                
                 if (!target) {
                     setStatus({ type: 'err', msg: 'User Tidak Ditemukan!' });
-                    setTimeout(() => setStatus({ type: 'idle', msg: '' }), 2000);
-                    return;
+                    setTimeout(() => setStatus({ type: 'idle', msg: '' }), 2000); return;
                 }
-
                 const today = new Date().toISOString().split('T')[0];
                 const recordId = `${target.id}-${today}`;
-                
                 try {
                     await setDoc(getPublicDoc('attendance', recordId), { 
                         id: recordId, userId: target.id, userName: target.name, className: target.className, date: today, timestamp: new Date().toISOString() 
                     });
                     setStatus({ type: 'ok', msg: `${target.name} Berhasil Absen!` });
                 } catch (e) { setStatus({ type: 'err', msg: 'Gagal Cloud Sync.' }); }
-                
                 setTimeout(() => setStatus({ type: 'idle', msg: '' }), 3000);
             }, [fbUser, users, status.type]);
 
             useEffect(() => {
                 if (!fbUser) return;
                 const startScanner = async () => {
-                    await new Promise(r => setTimeout(r, 300));
+                    await new Promise(r => setTimeout(r, 400));
                     const html5QrCode = new Html5Qrcode("reader");
                     scannerRef.current = html5QrCode;
                     try {
@@ -521,14 +439,14 @@
 
             return (
                 <div className="p-6 lg:p-12 animate-slide-up flex flex-col items-center">
-                    <h2 className="text-4xl font-black text-sky-dark mb-4 uppercase">Scan QR ASM</h2>
+                    <h2 className="text-4xl font-black text-sky-dark mb-4 uppercase tracking-tighter">Scan QR Absensi</h2>
                     <div className="relative w-full max-w-lg">
                         <div id="reader" className="w-full aspect-square rounded-3xl overflow-hidden shadow-2xl border-8 border-sky-100"></div>
                         {status.type !== 'idle' && (
-                            <div className="absolute inset-0 z-50 flex items-center justify-center backdrop-blur-md bg-white/40 p-6">
+                            <div className="absolute inset-0 z-50 flex items-center justify-center backdrop-blur-md bg-white/40 p-6 animate-pop">
                                 <div className="soft-card p-10 text-center space-y-4 border-4 border-white shadow-2xl w-full">
                                     {status.type === 'ok' ? <CheckCircle size={80} className="text-emerald-500 mx-auto" /> : <AlertCircle size={80} className="text-rose-500 mx-auto" />}
-                                    <p className="font-black text-slate-800 text-2xl leading-tight uppercase">{status.msg}</p>
+                                    <p className="font-black text-slate-800 text-2xl leading-tight uppercase tracking-tight">{status.msg}</p>
                                 </div>
                             </div>
                         )}
@@ -548,24 +466,11 @@
             const [pw, setPw] = useState('');
             const [secretCount, setSecretCount] = useState(0);
             const [adminVisible, setAdminVisible] = useState(false);
-            
             const nav = useNavigate();
             const loc = useLocation();
 
-            const isStudent = user?.role === 'STUDENT';
-            const isAdmin = user?.role === 'ADMIN';
-
             useEffect(() => {
-                const initAuth = async () => {
-                    try {
-                        await signInAnonymously(auth);
-                        onAuthStateChanged(auth, u => {
-                            setFbUser(u);
-                            if(!u) setIsLoading(false);
-                        });
-                    } catch(e) { setIsLoading(false); }
-                };
-                initAuth();
+                signInAnonymously(auth).then(() => onAuthStateChanged(auth, u => setFbUser(u)));
             }, []);
 
             useEffect(() => {
@@ -594,29 +499,20 @@
                 e.preventDefault();
                 const inputName = adminNameInput.trim().toUpperCase();
                 const inputPw = pw.trim();
-
                 if (loginRole === 'ADMIN' && inputName === 'ADMIN SISTEM' && inputPw === '090807') {
                     const root = { id: 'root', name: 'ADMIN SISTEM', role: 'ADMIN', className: 'SISTEM', status: 'active' };
                     setUser(root); localStorage.setItem('gkps_sess_v7', JSON.stringify(root)); return;
                 }
-
                 const selId = document.getElementById('select-user')?.value;
                 const target = loginRole === 'ADMIN' 
                     ? allUsers.find(u => u.role === 'ADMIN' && u.name.toUpperCase().trim() === inputName)
                     : allUsers.find(u => u.id === selId);
-                
-                if (target && target.status === 'disabled') return alert("Akun Dinonaktifkan!");
                 if (target && target.pin === inputPw) {
                     setUser(target); localStorage.setItem('gkps_sess_v7', JSON.stringify(target));
                 } else alert('PIN Salah!');
             };
 
-            if (isLoading) return (
-                <div className="h-screen flex flex-col items-center justify-center bg-sky-light text-center p-6">
-                    <div className="w-16 h-16 border-4 border-sky-main border-t-transparent rounded-full animate-spin mb-6"></div>
-                    <h3 className="text-xl font-black text-sky-dark uppercase tracking-widest">Sinkronisasi Cloud...</h3>
-                </div>
-            );
+            if (isLoading) return <div className="h-screen flex flex-col items-center justify-center bg-sky-light text-center p-6"><div className="w-16 h-16 border-4 border-sky-main border-t-transparent rounded-full animate-spin mb-6"></div><h3 className="text-xl font-black text-sky-dark uppercase tracking-widest">Sinkronisasi Cloud...</h3></div>;
 
             if (!user) return (
                 <div className="min-h-screen flex items-center justify-center p-6 bg-sky-light text-center">
@@ -624,7 +520,7 @@
                         <div className="flex justify-center mb-10">
                             <button onClick={() => { setSecretCount(s=>s+1); if(secretCount>=4) setAdminVisible(true); }} className="w-24 h-24 bg-sky-light rounded-full flex items-center justify-center shadow-xl border-4 border-white transition-transform active:scale-95"><Church className="text-sky-main" size={52}/></button>
                         </div>
-                        <h1 className="text-3xl font-black text-sky-dark mb-10 leading-tight">Presensi Kasih<br/><span className="text-[10px] font-bold text-slate-400 tracking-[0.5em] uppercase">GKPS Tangerang</span></h1>
+                        <h1 className="text-3xl font-black text-sky-dark mb-10 leading-tight uppercase tracking-tight">Presensi Kasih<br/><span className="text-[10px] font-bold text-slate-400 tracking-[0.5em] uppercase">GKPS Tangerang</span></h1>
                         <div className="bg-sky-50 p-1.5 rounded-full flex mb-10 border-2 border-sky-100">
                             <button onClick={() => setLoginRole('TEACHER')} className={`flex-1 py-3 text-[10px] font-black rounded-full transition-all ${loginRole === 'TEACHER' ? 'bg-white text-sky-dark shadow-sm' : 'text-slate-400'}`}>GURU/GSM</button>
                             <button onClick={() => setLoginRole('STUDENT')} className={`flex-1 py-3 text-[10px] font-black rounded-full transition-all ${loginRole === 'STUDENT' ? 'bg-white text-sky-dark shadow-sm' : 'text-slate-400'}`}>SISWA/ASM</button>
@@ -632,9 +528,9 @@
                         </div>
                         <form onSubmit={handleLogin} className="space-y-4">
                             {loginRole === 'ADMIN' ? (
-                                <input type="text" placeholder="Nama Admin..." value={adminNameInput} onChange={e => setAdminNameInput(e.target.value)} className="w-full p-5 rounded-3xl border-2 border-sky-50 bg-slate-50 outline-none font-bold text-slate-700" />
+                                <input type="text" placeholder="Nama Admin..." value={adminNameInput} onChange={e => setAdminNameInput(e.target.value)} className="w-full p-5 rounded-3xl border-2 border-sky-50 bg-slate-50 outline-none font-bold text-slate-700 uppercase" />
                             ) : (
-                                <select id="select-user" className="w-full p-5 rounded-3xl border-2 border-sky-50 bg-slate-50 outline-none font-bold text-slate-700 appearance-none cursor-pointer">
+                                <select id="select-user" className="w-full p-5 rounded-3xl border-2 border-sky-50 bg-slate-50 outline-none font-bold text-slate-700 appearance-none cursor-pointer uppercase">
                                     <option value="">Pilih Nama...</option>
                                     {allUsers.filter(u => u.role === loginRole).sort((a,b) => a.name.localeCompare(b.name)).map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
                                 </select>
@@ -646,19 +542,22 @@
                 </div>
             );
 
+            const isStudent = user?.role === 'STUDENT';
+            const isAdmin = user?.role === 'ADMIN';
+
             return (
                 <div className="h-screen flex flex-row w-full bg-sky-light relative overflow-hidden">
                     <aside className="hidden lg:flex flex-col w-80 sidebar-gradient p-8 text-white z-50 shadow-2xl relative overflow-hidden text-left">
                         <div className="flex flex-col items-center mb-12 relative z-10">
                             <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mb-4 border-4 border-sky-light/20 shadow-lg"><Church className="text-sky-main" size={32} /></div>
                             <h2 className="text-2xl font-black text-center leading-tight uppercase tracking-tight">Presensi Kasih</h2>
-                            <span className="text-[9px] font-bold opacity-60 tracking-[0.3em] mt-1 uppercase">GKPS Tangerang</span>
+                            <span className="text-[9px] font-bold opacity-60 tracking-[0.3em] mt-1 uppercase">GKPS Tangerang Online</span>
                         </div>
                         <nav className="flex-1 space-y-3 relative z-10">
                             {[
                                 { path: '/', icon: LayoutDashboard, label: 'Dashboard', roles: ['ADMIN', 'TEACHER', 'STUDENT'] },
                                 { path: '/scan', icon: QrCode, label: 'Scan Absensi', roles: ['ADMIN', 'TEACHER'] },
-                                { path: isAdmin ? '/users' : '/', icon: isAdmin ? Users : CreditCard, label: isAdmin ? 'Data Database' : 'Kartu Digital', roles: ['ADMIN', 'TEACHER', 'STUDENT'] },
+                                { path: isAdmin ? '/users' : '/', icon: isAdmin ? Users : CreditCard, label: isAdmin ? 'Data Cloud' : 'Kartu Digital', roles: ['ADMIN', 'TEACHER', 'STUDENT'] },
                             ].filter(m => m.roles.includes(user.role)).map((m, i) => (
                                 <button key={i} onClick={() => nav(m.path)} className={`w-full p-5 rounded-[1.75rem] flex items-center gap-4 transition-all font-black text-sm ${loc.pathname === m.path ? 'bg-white text-sky-dark shadow-xl scale-105' : 'hover:bg-white/10 text-white/80'}`}>
                                     <m.icon size={22} /><span>{m.label}</span>
@@ -673,7 +572,7 @@
                             <div className="flex items-center gap-3 p-1 pr-4 bg-white rounded-full shadow-sm border border-sky-50 text-left">
                                 <Avatar name={user.name} size="md" className="border-2 border-sky-main" />
                                 <div className="leading-tight">
-                                    <p className="text-[11px] font-black text-slate-800 uppercase leading-none">{user.name.split(' ')[0]}</p>
+                                    <p className="text-[11px] font-black text-slate-800 uppercase leading-none tracking-tight">{user.name.split(' ')[0]}</p>
                                     <p className="text-[9px] font-bold text-sky-dark uppercase opacity-60 tracking-widest mt-1">{user.role}</p>
                                 </div>
                             </div>
