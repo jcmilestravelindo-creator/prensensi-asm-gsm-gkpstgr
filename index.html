@@ -89,7 +89,7 @@
             Camera, Trash2, Upload, ChevronRight, Calendar, User, ShieldCheck, 
             Sparkles, Zap, Plus, X, RefreshCw, BookOpen, PenTool, Bell, Activity, 
             Radio, TrendingUp, Briefcase, GraduationCap, Clock, MapPin, Edit, Monitor, Eye, Settings,
-            Search, Smile, Send, Info, CreditCard, BrainCircuit, UserPlus, Power, Check
+            Search, Smile, Send, Info, CreditCard, BrainCircuit, UserPlus, Power, Check, Star
         } from 'https://esm.sh/lucide-react@0.344.0?deps=react@18.2.0';
         import QRCode from 'https://esm.sh/react-qr-code@2.0.12?deps=react@18.2.0';
 
@@ -159,7 +159,7 @@
         // --- SHARED MODALS ---
         const CardModal = ({ user, onClose }) => (
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-                <div className="soft-card p-8 w-full max-w-sm relative animate-pop bg-white shadow-2xl text-center">
+                <div className="soft-card p-8 w-full max-sm relative animate-pop bg-white shadow-2xl text-center">
                     <button onClick={onClose} className="absolute top-4 right-4 p-2 text-slate-400"><X size={24}/></button>
                     <Avatar name={user.name} size="xl" className="mb-4 mx-auto border-4 border-sky-100" />
                     <h3 className="text-2xl font-black text-slate-800 mb-1">{user.name}</h3>
@@ -175,8 +175,10 @@
         // MODAL UNTUK TAMBAH / EDIT USER
         const UserEditorModal = ({ user, onClose, onSave }) => {
             const [form, setForm] = useState(user || { 
-                name: '', role: 'STUDENT', className: 'Umum', gender: 'Laki-Laki', pin: '123456', status: 'active' 
+                name: '', role: 'STUDENT', className: 'Pagi', gender: 'Laki-Laki', pin: '123456', status: 'active' 
             });
+
+            const classOptions = ["Pagi", "Daud", "Daniel", "Paulus", "Ester", "Timotius", "Abram"];
 
             return (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
@@ -207,7 +209,15 @@
 
                             <div>
                                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2 mb-1 block">Kelas / Kategori</label>
-                                <input value={form.className} onChange={e=>setForm({...form, className: e.target.value})} placeholder="Contoh: Balita, Remaja..." className="w-full p-4 rounded-2xl bg-sky-50 outline-none font-bold text-slate-700" />
+                                <select 
+                                    value={form.className} 
+                                    onChange={e=>setForm({...form, className: e.target.value})} 
+                                    className="w-full p-4 rounded-2xl bg-sky-50 outline-none font-bold text-slate-700 appearance-none"
+                                >
+                                    {classOptions.map(opt => (
+                                        <option key={opt} value={opt}>{opt}</option>
+                                    ))}
+                                </select>
                             </div>
 
                             <button onClick={() => onSave(form)} className="pill-button-main w-full py-4 uppercase tracking-widest text-sm mt-4 flex items-center justify-center gap-2">
