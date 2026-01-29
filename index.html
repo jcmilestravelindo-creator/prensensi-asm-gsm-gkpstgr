@@ -3,127 +3,105 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Absensi Kasih</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/html5-qrcode"></script>
 
 <style>
 body{
-    margin:0;
-    font-family:Poppins,sans-serif;
-    background:linear-gradient(#87CEEB,#E0F7FF);
-    color:#0c4a6e;
+margin:0;
+font-family:Poppins,sans-serif;
+background:linear-gradient(#87CEEB,#E0F7FF);
+color:#0c4a6e;
 }
 
 /* HEADER */
 .header{
-    text-align:center;
-    padding:15px;
-    font-weight:700;
-    font-size:20px;
-    background:#38BDF8;
-    color:white;
+background:#38BDF8;
+color:white;
+text-align:center;
+padding:15px;
+font-weight:700;
+font-size:20px;
 }
 
 /* CARD */
 .card{
-    background:white;
-    margin:15px;
-    padding:20px;
-    border-radius:18px;
-    box-shadow:0 5px 15px rgba(0,0,0,0.1);
-    text-align:center;
+background:white;
+margin:15px;
+padding:20px;
+border-radius:18px;
+box-shadow:0 5px 15px rgba(0,0,0,0.1);
 }
 
 /* BUTTON */
 .btn{
-    background:#0EA5E9;
-    color:white;
-    border:none;
-    padding:14px 20px;
-    border-radius:14px;
-    font-size:16px;
-    cursor:pointer;
-    width:100%;
-    margin-top:10px;
+background:#0EA5E9;
+color:white;
+border:none;
+padding:14px;
+border-radius:14px;
+width:100%;
+font-size:16px;
+margin-top:10px;
 }
 
-.btn:active{
-    transform:scale(0.97);
-}
-
-/* STATUS BOX */
+/* STATUS */
 .status{
-    display:flex;
-    justify-content:space-around;
-    margin-top:10px;
+display:flex;
+justify-content:space-between;
+text-align:center;
 }
 
 .status div{
-    background:#E0F2FE;
-    padding:10px;
-    border-radius:12px;
-    width:22%;
-    font-size:14px;
+background:#E0F2FE;
+padding:10px;
+border-radius:12px;
+width:23%;
 }
 
-/* NAVIGATION */
+/* NAV */
 .nav{
-    position:fixed;
-    bottom:0;
-    width:100%;
-    background:white;
-    display:flex;
-    justify-content:space-around;
-    padding:10px 0;
-    box-shadow:0 -3px 10px rgba(0,0,0,0.1);
+position:fixed;
+bottom:0;
+width:100%;
+background:white;
+display:flex;
+justify-content:space-around;
+padding:10px 0;
+box-shadow:0 -3px 10px rgba(0,0,0,0.1);
 }
 
 .nav button{
-    background:none;
-    border:none;
-    font-size:14px;
+background:none;
+border:none;
+font-size:14px;
 }
 
-/* SCREENS */
+/* SCREEN */
 .screen{display:none;}
 .active{display:block;}
 
-/* QR BOX */
-.qrbox{
-    border:4px dashed #0EA5E9;
-    padding:40px;
-    border-radius:20px;
-    font-size:20px;
-    margin-top:20px;
-}
+#reader{width:100%;}
 
 /* LIST */
-.list{
-    text-align:left;
-}
-
 .person{
-    display:flex;
-    justify-content:space-between;
-    margin:10px 0;
+display:flex;
+justify-content:space-between;
+margin:8px 0;
 }
 
-.hadir{
-    background:#22C55E;
-    color:white;
-    border:none;
-    padding:6px 12px;
-    border-radius:10px;
+.hadirBtn{
+background:#22C55E;
+color:white;
+border:none;
+padding:6px 12px;
+border-radius:10px;
 }
 
-/* DESKTOP */
 @media(min-width:768px){
-    .container{
-        max-width:500px;
-        margin:auto;
-    }
+.container{max-width:500px;margin:auto;}
 }
 </style>
 </head>
@@ -136,85 +114,129 @@ body{
 
 <!-- HOME -->
 <div id="home" class="screen active">
-    <div class="card">
-        <h2>Selamat Datang 🙏</h2>
-        <p id="tanggal"></p>
+<div class="card">
+<h3>Selamat Beribadah 🙏</h3>
+<p id="tanggal"></p>
 
-        <button class="btn" onclick="absen()">Absen Sekarang</button>
+<button class="btn" onclick="manualAbsen()">Absen Sekarang</button>
 
-        <div class="status">
-            <div>🟢<br>Hadir<br><span id="hadirCount">0</span></div>
-            <div>🟡<br>Izin<br>0</div>
-            <div>🔵<br>Online<br>0</div>
-            <div>🔴<br>Tidak<br>0</div>
-        </div>
-    </div>
+<h3>Statistik Kehadiran</h3>
+<div class="status">
+<div>🟢<br>Hadir<br><span id="hadir">0</span></div>
+<div>🟡<br>Izin<br>0</div>
+<div>🔵<br>Online<br>0</div>
+<div>🔴<br>Tidak<br>0</div>
+</div>
+</div>
 </div>
 
 <!-- SCAN -->
 <div id="scan" class="screen">
-    <div class="card">
-        <h2>📷 Scan QR</h2>
-        <div class="qrbox">
-            Arahkan QR di sini
-        </div>
-        <button class="btn" onclick="fakeScan()">Simulasi Scan</button>
-    </div>
+<div class="card">
+<h3>Scan QR Absensi</h3>
+<div id="reader"></div>
+</div>
+</div>
+
+<!-- SEKOLAH MINGGU -->
+<div id="kelas" class="screen">
+<div class="card">
+<h3>Daftar Hadir Sekolah Minggu</h3>
+
+<div class="person">Samuel <button class="hadirBtn" onclick="addData('Samuel')">Hadir</button></div>
+<div class="person">Maria <button class="hadirBtn" onclick="addData('Maria')">Hadir</button></div>
+<div class="person">Andi <button class="hadirBtn" onclick="addData('Andi')">Hadir</button></div>
+<div class="person">Siska <button class="hadirBtn" onclick="addData('Siska')">Hadir</button></div>
+
+</div>
 </div>
 
 <!-- RIWAYAT -->
 <div id="history" class="screen">
-    <div class="card">
-        <h2>📅 Riwayat</h2>
-        <ul id="log"></ul>
-    </div>
+<div class="card">
+<h3>Riwayat</h3>
+<ul id="log"></ul>
+<button class="btn" onclick="clearData()">Hapus Data</button>
 </div>
-
-<!-- PROFIL -->
-<div id="profile" class="screen">
-    <div class="card">
-        <h2>👤 Profil</h2>
-        <p>Nama: Jemaat</p>
-        <p>Tuhan Memberkati 🙏</p>
-    </div>
 </div>
 
 </div>
 
 <!-- NAVIGATION -->
 <div class="nav">
-    <button onclick="show('home')">🏠<br>Home</button>
-    <button onclick="show('scan')">📷<br>Scan</button>
-    <button onclick="show('history')">📅<br>Riwayat</button>
-    <button onclick="show('profile')">👤<br>Profil</button>
+<button onclick="show('home')">Home</button>
+<button onclick="startScan()">Scan</button>
+<button onclick="show('kelas')">Kelas</button>
+<button onclick="show('history');loadLog()">Riwayat</button>
 </div>
 
 <script>
-let hadir=0;
+let data=JSON.parse(localStorage.getItem("absen")||"[]");
+
+function save(){
+localStorage.setItem("absen",JSON.stringify(data));
+document.getElementById("hadir").innerText=data.length;
+}
+
+save();
 
 function show(id){
-    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
+document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+document.getElementById(id).classList.add('active');
 }
 
-function absen(){
-    hadir++;
-    document.getElementById("hadirCount").innerText=hadir;
-
-    let li=document.createElement("li");
-    li.innerText="Hadir - "+new Date().toLocaleString();
-    document.getElementById("log").appendChild(li);
-
-    alert("✅ Absensi berhasil! Tuhan memberkati 🙏");
+function addData(nama){
+let item={nama,waktu:new Date().toLocaleString()};
+data.push(item);
+save();
+alert("Terima kasih "+nama+" 🙏");
 }
 
-function fakeScan(){
-    alert("QR berhasil discan ✅");
-    absen();
+function manualAbsen(){
+let nama=prompt("Masukkan Nama:");
+if(nama) addData(nama);
 }
 
+function loadLog(){
+let ul=document.getElementById("log");
+ul.innerHTML="";
+data.forEach(d=>{
+let li=document.createElement("li");
+li.innerText=d.nama+" - "+d.waktu;
+ul.appendChild(li);
+});
+}
+
+function clearData(){
+localStorage.clear();
+data=[];
+save();
+loadLog();
+}
+
+/* QR SCAN */
+let qr;
+
+function startScan(){
+show('scan');
+
+qr=new Html5Qrcode("reader");
+qr.start(
+{facingMode:"environment"},
+{fps:10,qrbox:250},
+(decodedText)=>{
+addData(decodedText);
+qr.stop();
+show('home');
+},
+()=>{}
+);
+}
+
+/* TANGGAL */
 document.getElementById("tanggal").innerText=
-new Date().toLocaleDateString("id-ID",{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+new Date().toLocaleDateString("id-ID",
+{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 </script>
 
 </body>
