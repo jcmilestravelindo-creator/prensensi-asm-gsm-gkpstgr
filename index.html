@@ -1,535 +1,241 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Presensi ASM-GSM GKPS Tangerang</title>
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: { 
-                        sky: {
-                            light: '#f0f9ff',
-                            main: '#38bdf8',
-                            dark: '#0284c7',
-                        },
-                        ui: {
-                            success: '#e7f9ed',
-                            successText: '#22c55e',
-                            warning: '#fff7ed',
-                            warningText: '#f59e0b',
-                            info: '#f0f9ff',
-                            infoText: '#0ea5e9',
-                            danger: '#fef2f2',
-                            dangerText: '#ef4444'
-                        }
-                    },
-                    fontFamily: { sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'] },
-                    animation: { 
-                        'float': 'float 6s ease-in-out infinite',
-                        'pop': 'pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                    },
-                    keyframes: {
-                        float: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-10px)' } },
-                        pop: { '0%': { transform: 'scale(0.95)', opacity: 0 }, '100%': { transform: 'scale(1)', opacity: 1 } }
-                    }
-                }
-            }
-        }
-    </script>
-    
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Absensi Kasih ULTRA MAX</title>
 
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        body { overscroll-behavior-y: none; background-color: #f0f9ff; font-family: 'Plus Jakarta Sans', sans-serif; color: #1e293b; }
-        
-        /* Dashboard Styles from Image */
-        .sidebar-gradient {
-            background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%);
-        }
-        .soft-card {
-            background: white;
-            border-radius: 1.5rem;
-            box-shadow: 0 10px 30px -10px rgba(2, 132, 199, 0.1);
-        }
-        .pill-button-main {
-            background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%);
-            border-radius: 9999px;
-            box-shadow: 0 8px 20px rgba(2, 132, 199, 0.3);
-            color: white; font-weight: 800; transition: all 0.2s;
-        }
-        .pill-button-main:active { transform: scale(0.95); }
-        
-        #reader { border: none !important; border-radius: 1.5rem; overflow: hidden; }
-        #reader video { object-fit: cover !important; width: 100% !important; height: 100% !important; }
-        
-        .stat-icon {
-            width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-        }
-    </style>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+<style>
+body{
+font-family:Poppins;
+margin:0;
+background:linear-gradient(#87CEEB,#E0F7FF);
+}
+
+.header{
+background:#38BDF8;
+color:white;
+text-align:center;
+padding:15px;
+font-weight:600;
+}
+
+.card{
+background:white;
+margin:15px;
+padding:20px;
+border-radius:16px;
+box-shadow:0 5px 15px rgba(0,0,0,0.1);
+}
+
+.btn{
+background:#0EA5E9;
+color:white;
+border:none;
+padding:12px;
+width:100%;
+border-radius:12px;
+margin-top:10px;
+}
+
+.nav{
+position:fixed;
+bottom:0;
+width:100%;
+background:white;
+display:flex;
+justify-content:space-around;
+padding:10px;
+}
+
+.screen{display:none}
+.active{display:block}
+
+input,select{
+width:100%;
+padding:10px;
+margin-top:5px;
+border-radius:10px;
+border:1px solid #ccc;
+}
+
+#reader{width:100%}
+</style>
 </head>
+
 <body>
-    <div id="root"></div>
 
-    <script type="text/babel" data-type="module">
-        import React, { useState, useEffect, useRef, useMemo } from 'https://esm.sh/react@18.2.0';
-        import { createRoot } from 'https://esm.sh/react-dom@18.2.0/client?deps=react@18.2.0';
-        import { HashRouter, Routes, Route, useNavigate, useLocation } from 'https://esm.sh/react-router-dom@6.22.0?deps=react@18.2.0';
-        
-        import { 
-            LayoutDashboard, QrCode, Users, LogOut, Church, CheckCircle, AlertCircle, 
-            Camera, Trash2, Upload, ChevronRight, Calendar, User, ShieldCheck, 
-            Sparkles, Zap, Plus, X, RefreshCw, BookOpen, PenTool, Bell, Activity, 
-            Radio, TrendingUp, Briefcase, GraduationCap, Clock, MapPin, Edit, Monitor, Eye, Settings
-        } from 'https://esm.sh/lucide-react@0.344.0?deps=react@18.2.0';
-        import QRCode from 'https://esm.sh/react-qr-code@2.0.12?deps=react@18.2.0';
+<div class="header">🙏 Absensi Kasih ULTRA MAX</div>
 
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+<!-- LOGIN -->
+<div id="login" class="screen active">
+<div class="card">
+<h3>Login</h3>
+<input id="user" placeholder="Username">
+<input id="pass" type="password" placeholder="Password">
+<select id="role">
+<option>Guru</option>
+<option>Admin</option>
+</select>
+<button class="btn" onclick="login()">Login</button>
 
-        // --- FIREBASE CONFIG ---
-        const firebaseConfig = {
-            apiKey: "AIzaSyClxPWzrnQl6ZBErgOUnwOk40-bU44uH3o",
-            authDomain: "digitalsundayschoolgkpstgr.firebaseapp.com",
-            projectId: "digitalsundayschoolgkpstgr",
-            storageBucket: "digitalsundayschoolgkpstgr.firebasestorage.app",
-            messagingSenderId: "1020099368151",
-            appId: "1:1020099368151:web:b51c7bbc6d923a51d4cc92"
-        };
+<p>Admin: admin / 1234<br>Guru: guru / 1234</p>
+</div>
+</div>
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const appId = 'gkps-online-v6'; // Updated version ID
+<!-- HOME -->
+<div id="home" class="screen">
+<div class="card">
+<h3>Dashboard</h3>
 
-        const getPublicCol = (name) => collection(db, 'artifacts', appId, 'public', 'data', name);
-        const getPublicDoc = (name, id) => doc(db, 'artifacts', appId, 'public', 'data', name, id);
+<select id="kelasSelect">
+<option>Kelas A</option>
+<option>Kelas B</option>
+<option>Kelas C</option>
+</select>
 
-        // --- ILLUSTRATIONS ---
-        const BannerIllustration = () => (
-            <svg viewBox="0 0 400 200" className="w-full h-full">
-                <defs>
-                    <linearGradient id="skyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" style={{stopColor:'#f0f9ff', stopOpacity:0}} />
-                        <stop offset="100%" style={{stopColor:'#f0f9ff', stopOpacity:1}} />
-                    </linearGradient>
-                    <linearGradient id="rainbowGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" style={{stopColor:'#f87171'}} />
-                        <stop offset="33%" style={{stopColor:'#fbbf24'}} />
-                        <stop offset="66%" style={{stopColor:'#4ade80'}} />
-                        <stop offset="100%" style={{stopColor:'#38bdf8'}} />
-                    </linearGradient>
-                </defs>
-                {/* Awan */}
-                <circle cx="320" cy="40" r="15" fill="#fff" opacity="0.8" />
-                <circle cx="340" cy="45" r="20" fill="#fff" opacity="0.8" />
-                <circle cx="360" cy="40" r="15" fill="#fff" opacity="0.8" />
-                
-                {/* Pelangi */}
-                <path d="M220 180 Q300 20 380 180" fill="none" stroke="url(#rainbowGrad)" strokeWidth="12" opacity="0.6" />
-                
-                {/* Tanah Hijau */}
-                <path d="M0 160 Q200 140 400 160 V200 H0 Z" fill="#bcf0c4" />
-                <path d="M0 180 Q200 170 400 180 V200 H0 Z" fill="#86efac" />
-                
-                {/* Gedung Gereja */}
-                <rect x="300" y="100" width="60" height="70" fill="#fff" rx="4" />
-                <path d="M300 100 L330 60 L360 100 Z" fill="#fff" />
-                <rect x="325" y="135" width="10" height="25" fill="#94a3b8" />
-                <rect x="328" y="75" width="4" height="20" fill="#f87171" />
-                <rect x="320" y="82" width="20" height="4" fill="#f87171" />
-                
-                {/* Pohon */}
-                <circle cx="280" cy="150" r="15" fill="#4ade80" />
-                <circle cx="375" cy="145" r="12" fill="#22c55e" />
-            </svg>
-        );
+<h1 id="total">0</h1>
+<p>Total Hadir</p>
 
-        const Avatar = ({ name, seed, size = 'md', className='' }) => {
-            const s = size === 'lg' ? 'w-12 h-12' : size === 'xl' ? 'w-20 h-20' : 'w-10 h-10';
-            return (
-                <div className={`${s} rounded-full bg-white p-0.5 shadow-sm border border-sky-100 overflow-hidden flex-shrink-0 ${className}`}>
-                    <img src={`https://api.dicebear.com/7.x/adventurer/svg?seed=${seed || name}&backgroundColor=transparent`} alt={name} />
-                </div>
-            );
-        };
+<button class="btn" onclick="manual()">Absen Manual</button>
+<button class="btn" onclick="exportCSV()">Export Excel</button>
+</div>
+</div>
 
-        // --- MAIN APP PAGES ---
-        const Dashboard = ({ user, allUsers, attendance }) => {
-            const nav = useNavigate();
-            const stats = useMemo(() => {
-                const totalStudents = allUsers.filter(u => u.role === 'STUDENT').length;
-                const hadir = attendance.length;
-                return {
-                    hadir: hadir,
-                    izin: 0,
-                    online: 0,
-                    tidakHadir: Math.max(0, totalStudents - hadir)
-                };
-            }, [allUsers, attendance]);
+<!-- SCAN -->
+<div id="scan" class="screen">
+<div class="card">
+<h3>Scan QR</h3>
+<div id="reader"></div>
+</div>
+</div>
 
-            return (
-                <div className="p-4 lg:p-10 animate-slide-up space-y-8 max-w-6xl mx-auto">
-                    {/* Banner Section - Exact match to Absen-UI-Dashboard.jpg */}
-                    <div className="soft-card relative overflow-hidden bg-white min-h-[240px] flex items-center p-8 lg:p-12">
-                        <div className="relative z-10 w-full lg:w-1/2 space-y-2">
-                            <h2 className="text-3xl lg:text-4xl font-black text-sky-dark">Selamat Beribadah! 🌼</h2>
-                            <p className="text-slate-500 font-bold text-lg">{new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
-                            <div className="pt-6">
-                                <button onClick={() => nav('/scan')} className="pill-button-main px-14 py-4 text-sm uppercase tracking-widest hover:scale-105 active:scale-95 transition-all">
-                                    Absen Sekarang
-                                </button>
-                            </div>
-                        </div>
-                        <div className="absolute top-0 right-0 h-full w-full lg:w-2/3 pointer-events-none opacity-40 lg:opacity-100">
-                            <BannerIllustration />
-                        </div>
-                    </div>
+<!-- LOG -->
+<div id="logscreen" class="screen">
+<div class="card">
+<h3>Riwayat</h3>
+<ul id="log"></ul>
+</div>
+</div>
 
-                    {/* Statistik Section - Exact match to Absen-UI-Dashboard.jpg */}
-                    <div className="space-y-6">
-                        <h3 className="text-xl font-black text-sky-dark px-2">Statistik Kehadiran</h3>
-                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
-                            {/* Hadir */}
-                            <div className="soft-card p-6 flex flex-col items-center justify-center border-b-4 border-emerald-400">
-                                <div className="bg-emerald-100 text-emerald-500 stat-icon mb-3">
-                                    <CheckCircle size={22} fill="currentColor" stroke="white" />
-                                </div>
-                                <p className="text-xs font-bold text-emerald-600 uppercase tracking-widest mb-1">Hadir</p>
-                                <h4 className="text-4xl font-black text-slate-800">{stats.hadir}</h4>
-                            </div>
-                            {/* Izin */}
-                            <div className="soft-card p-6 flex flex-col items-center justify-center border-b-4 border-amber-400">
-                                <div className="bg-amber-100 text-amber-500 stat-icon mb-3">
-                                    <Clock size={22} fill="currentColor" stroke="white" />
-                                </div>
-                                <p className="text-xs font-bold text-amber-600 uppercase tracking-widest mb-1">Izin</p>
-                                <h4 className="text-4xl font-black text-slate-800">{stats.izin}</h4>
-                            </div>
-                            {/* Online */}
-                            <div className="soft-card p-6 flex flex-col items-center justify-center border-b-4 border-sky-400">
-                                <div className="bg-sky-100 text-sky-500 stat-icon mb-3">
-                                    <Monitor size={22} fill="currentColor" stroke="white" />
-                                </div>
-                                <p className="text-xs font-bold text-sky-600 uppercase tracking-widest mb-1">Online</p>
-                                <h4 className="text-4xl font-black text-slate-800">{stats.online}</h4>
-                            </div>
-                            {/* Tidak Hadir */}
-                            <div className="soft-card p-6 flex flex-col items-center justify-center border-b-4 border-rose-400">
-                                <div className="bg-rose-100 text-rose-500 stat-icon mb-3">
-                                    <X size={22} fill="currentColor" stroke="white" />
-                                </div>
-                                <p className="text-xs font-bold text-rose-600 uppercase tracking-widest mb-1">Tidak Hadir</p>
-                                <h4 className="text-4xl font-black text-slate-800">{stats.tidakHadir}</h4>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            );
-        };
+<div class="nav">
+<button onclick="show('home')">Home</button>
+<button onclick="startScan()">Scan</button>
+<button onclick="show('logscreen')">Riwayat</button>
+</div>
 
-        const Scanner = ({ users, fbUser }) => {
-            const [status, setStatus] = useState({ type: 'idle', msg: '' });
-            const scannerRef = useRef(null);
+<script type="module">
 
-            const onScan = async (code) => {
-                if (!code || !fbUser || status.type !== 'idle') return;
-                const target = users.find(u => u.qrCode === code || u.id === code);
-                if (!target) return setStatus({ type: 'err', msg: 'Waduh, belum terdaftar!' });
-                
-                const today = new Date().toISOString().split('T')[0];
-                const recordId = `${target.id}-${today}`;
-                
-                try {
-                    await setDoc(getPublicDoc('attendance', recordId), {
-                        id: recordId, userId: target.id, userName: target.name, className: target.className,
-                        date: today, timestamp: new Date().toISOString()
-                    });
-                    setStatus({ type: 'ok', msg: `${target.name} Berhasil Absen!` });
-                } catch (e) { setStatus({ type: 'err', msg: 'Maaf, Gagal Cloud Sync' }); }
-                setTimeout(() => setStatus({ type: 'idle', msg: '' }), 2500);
-            };
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-            useEffect(() => {
-                if (!fbUser) return;
-                const scanner = new Html5Qrcode("reader");
-                scannerRef.current = scanner;
-                
-                const startScanner = async () => {
-                    try {
-                        await scanner.start({ facingMode: "environment" }, { fps: 15, qrbox: 280 }, onScan);
-                    } catch (err) {
-                        try {
-                            await scanner.start({ facingMode: "user" }, { fps: 15, qrbox: 280 }, onScan);
-                        } catch (err2) { setStatus({ type: 'err', msg: 'Kamera tidak ditemukan' }); }
-                    }
-                };
+/* 🔥 GANTI CONFIG */
+const firebaseConfig={
+apiKey:"ISI",
+authDomain:"ISI",
+databaseURL:"ISI",
+projectId:"ISI",
+storageBucket:"ISI",
+messagingSenderId:"ISI",
+appId:"ISI"
+};
 
-                startScanner();
-                return () => { if (scannerRef.current && scannerRef.current.isScanning) scannerRef.current.stop().catch(() => {}); };
-            }, [fbUser]);
+const app=initializeApp(firebaseConfig);
+const db=getDatabase(app);
 
-            return (
-                <div className="p-6 lg:p-12 animate-slide-up flex flex-col items-center">
-                    <div className="text-center mb-10">
-                        <h2 className="text-4xl font-black text-sky-dark leading-tight">Scan QR Absensi</h2>
-                        <p className="text-slate-500 font-bold text-lg mt-2 italic">Arahkan kamera ke Kartu Digital Jemaat</p>
-                    </div>
-                    <div className="relative w-full max-w-lg">
-                        <div className="soft-card p-6 bg-white relative z-10 border-8 border-sky-100 shadow-2xl">
-                            <div id="reader" className="w-full aspect-square bg-slate-900 rounded-[2rem] overflow-hidden shadow-inner"></div>
-                        </div>
-                        {status.type !== 'idle' && (
-                            <div className="absolute inset-0 z-50 flex items-center justify-center backdrop-blur-md rounded-[2.5rem] bg-white/40 animate-pop">
-                                <div className="soft-card p-12 text-center space-y-4 border-4 border-sky-200 min-w-[280px]">
-                                    {status.type === 'ok' ? <Smile size={80} className="text-emerald-500 mx-auto" /> : <AlertCircle size={80} className="text-rose-500 mx-auto" />}
-                                    <p className="font-black text-slate-800 text-2xl leading-tight">{status.msg}</p>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            );
-        };
+let currentRole="Guru";
 
-        const UserManagement = ({ users, fbUser }) => {
-            const [search, setSearch] = useState('');
-            const fileRef = useRef(null);
-            const filtered = users.filter(u => u.name.toLowerCase().includes(search.toLowerCase()));
+window.login=function(){
+if((user.value==="admin"&&pass.value==="1234")||
+(user.value==="guru"&&pass.value==="1234")){
+currentRole=role.value;
+show("home");
+}else alert("Login salah");
+}
 
-            const handleImport = (e) => {
-                const file = e.target.files[0];
-                if (!file || !fbUser) return;
-                const reader = new FileReader();
-                reader.onload = async (ev) => {
-                    const lines = ev.target.result.split('\n');
-                    for (const line of lines) {
-                        const [name, role, className] = line.split(',').map(s => s?.trim());
-                        if (name && role) {
-                            const id = Math.random().toString(36).substring(7);
-                            await setDoc(getPublicDoc('users', id), { id, name, role: role.toUpperCase(), className: className || '-', qrCode: `GKPS-${id}`, pin: '123456' });
-                        }
-                    }
-                    alert('Data Sinkron ke Cloud! ☁️');
-                };
-                reader.readAsText(file);
-            };
+window.show=function(id){
+document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+document.getElementById(id).classList.add("active");
+}
 
-            return (
-                <div className="p-4 lg:p-8 animate-slide-up space-y-8">
-                    <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 px-2">
-                        <h2 className="text-3xl font-black text-sky-dark">Data Database</h2>
-                        <button onClick={() => fileRef.current.click()} className="p-4 bg-white rounded-2xl text-sky-main border border-sky-100 shadow-sm font-bold text-sm flex items-center gap-2">
-                            <Upload size={18}/> <span>Import CSV</span>
-                        </button>
-                        <input type="file" ref={fileRef} onChange={handleImport} className="hidden" accept=".csv" />
-                    </div>
-                    <div className="relative">
-                        <Search className="absolute left-6 top-5 text-sky-main" size={24} />
-                        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari nama jemaat..." className="w-full p-6 pl-16 soft-card border-none outline-none font-bold text-lg" />
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {filtered.map(u => (
-                            <div key={u.id} className="soft-card p-6 flex items-center justify-between group">
-                                <div className="flex items-center gap-4 overflow-hidden">
-                                    <Avatar name={u.name} size="lg" />
-                                    <div className="truncate">
-                                        <p className="font-black text-slate-700 text-lg leading-tight truncate">{u.name}</p>
-                                        <p className="text-[10px] font-black text-sky-dark bg-sky-50 px-2 py-0.5 rounded-lg border border-sky-100 uppercase mt-1">{u.role}</p>
-                                    </div>
-                                </div>
-                                <button onClick={async () => { if(confirm('Hapus?')) await deleteDoc(getPublicDoc('users', u.id)); }} className="p-3 text-rose-300 hover:text-rose-500 transition-colors"><Trash2 size={18}/></button>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            );
-        };
+function absenRef(){
+return ref(db,"absensi/"+kelasSelect.value);
+}
 
-        const MainApp = () => {
-            const [user, setUser] = useState(null);
-            const [fbUser, setFbUser] = useState(null);
-            const [allUsers, setAllUsers] = useState([]);
-            const [attendance, setAttendance] = useState([]);
-            const [isLoading, setIsLoading] = useState(true);
-            const [loginRole, setLoginRole] = useState('TEACHER');
-            const [selectedUid, setSelectedUid] = useState('');
-            const [adminNameInput, setAdminNameInput] = useState('');
-            const [pw, setPw] = useState('');
-            const [secretCount, setSecretCount] = useState(0);
-            const [adminVisible, setAdminVisible] = useState(false);
-            
-            const nav = useNavigate();
-            const loc = useLocation();
+function tambah(nama){
+push(absenRef(),{
+nama:nama,
+waktu:new Date().toLocaleString(),
+kelas:kelasSelect.value,
+role:currentRole
+});
+}
 
-            useEffect(() => {
-                const initAuth = async () => {
-                    try {
-                        await signInAnonymously(auth);
-                        onAuthStateChanged(auth, u => setFbUser(u));
-                    } catch(e) { setIsLoading(false); }
-                };
-                initAuth();
-            }, []);
+window.manual=function(){
+let n=prompt("Nama Anak:");
+if(n) tambah(n);
+}
 
-            useEffect(() => {
-                if (!fbUser) return;
-                const unsubUsers = onSnapshot(getPublicCol('users'), snap => {
-                    const data = snap.docs.map(d => d.data());
-                    setAllUsers(data);
-                    const saved = localStorage.getItem('gkps_sess_v6');
-                    if (saved) {
-                        try {
-                           const parsed = JSON.parse(saved);
-                           const curr = data.find(u => u.id === parsed.id);
-                           if (curr) setUser(curr);
-                        } catch(e) {}
-                    }
-                    setIsLoading(false);
-                }, () => setIsLoading(false));
-                const unsubAtt = onSnapshot(getPublicCol('attendance'), snap => setAttendance(snap.docs.map(d => d.data())));
-                return () => { unsubUsers(); unsubAtt(); };
-            }, [fbUser]);
+let allData=[];
 
-            const handleLogin = (e) => {
-                e.preventDefault();
-                if (loginRole === 'ADMIN' && adminNameInput.toUpperCase() === 'ADMIN SISTEM' && pw === '090807') {
-                    const root = { id: 'root', name: 'ADMIN SISTEM', role: 'ADMIN', className: 'SYSTEM' };
-                    setUser(root); localStorage.setItem('gkps_sess_v6', JSON.stringify(root)); return;
-                }
-                const target = loginRole === 'ADMIN' 
-                    ? allUsers.find(u => u.role === 'ADMIN' && u.name.toLowerCase() === adminNameInput.toLowerCase())
-                    : allUsers.find(u => u.id === selectedUid);
-                if (target && target.pin === pw) {
-                    setUser(target); localStorage.setItem('gkps_sess_v6', JSON.stringify(target));
-                } else alert('Nama atau PIN salah!');
-            };
+function load(){
+onValue(absenRef(),snap=>{
+let total=0;
+log.innerHTML="";
+allData=[];
 
-            if (isLoading || !fbUser) return (
-                <div className="h-screen flex flex-col items-center justify-center bg-sky-light">
-                    <div className="w-16 h-16 border-4 border-sky-main border-t-transparent rounded-full animate-spin"></div>
-                    <p className="mt-4 font-black text-sky-dark uppercase tracking-widest text-xs">Membangun Koneksi Cloud...</p>
-                </div>
-            );
+snap.forEach(d=>{
+let v=d.val();
+total++;
+allData.push(v);
 
-            if (!user) return (
-                <div className="min-h-screen flex items-center justify-center p-6 relative overflow-hidden">
-                    <div className="sidebar-gradient fixed inset-0 z-[-1] opacity-10"></div>
-                    <div className="soft-card p-10 w-full max-w-sm relative z-10 animate-pop">
-                        <div className="flex justify-center mb-10">
-                            <button onClick={() => { setSecretCount(s=>s+1); if(secretCount>=4) setAdminVisible(true); }} className="w-24 h-24 bg-sky-light rounded-full flex items-center justify-center shadow-xl animate-float border-4 border-white transition-transform active:scale-95">
-                                <Church className="text-sky-main" size={52}/>
-                            </button>
-                        </div>
-                        <h1 className="text-3xl font-black text-center text-sky-dark mb-10 leading-tight">Absensi Kasih<br/><span className="text-[10px] uppercase tracking-[0.4em] opacity-40 font-bold">GKPS Tangerang</span></h1>
-                        <div className="bg-sky-50 p-1.5 rounded-full flex mb-10 border border-sky-100/50">
-                            <button onClick={() => setLoginRole('TEACHER')} className={`flex-1 py-3 text-[10px] font-black rounded-full transition-all ${loginRole === 'TEACHER' ? 'bg-white text-sky-dark shadow-sm' : 'text-slate-400'}`}>GURU</button>
-                            <button onClick={() => setLoginRole('STUDENT')} className={`flex-1 py-3 text-[10px] font-black rounded-full transition-all ${loginRole === 'STUDENT' ? 'bg-white text-sky-dark shadow-sm' : 'text-slate-400'}`}>SISWA</button>
-                            {adminVisible && <button onClick={() => setLoginRole('ADMIN')} className={`flex-1 py-3 text-[10px] font-black rounded-full transition-all ${loginRole === 'ADMIN' ? 'bg-white text-sky-dark shadow-sm' : 'text-slate-400'}`}>ADMIN</button>}
-                        </div>
-                        <form onSubmit={handleLogin} className="space-y-4">
-                            {loginRole === 'ADMIN' ? (
-                                <input type="text" placeholder="Nama Admin..." value={adminNameInput} onChange={e => setAdminNameInput(e.target.value)} className="w-full p-5 rounded-3xl border-none bg-sky-50 outline-none font-bold text-slate-700 shadow-inner" />
-                            ) : (
-                                <select value={selectedUid} onChange={e => setSelectedUid(e.target.value)} className="w-full p-5 rounded-3xl border-none bg-sky-50 outline-none font-bold text-slate-700 appearance-none shadow-inner">
-                                    <option value="">Pilih Nama...</option>
-                                    {allUsers.filter(u => u.role === loginRole).map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
-                                </select>
-                            )}
-                            <input type="password" placeholder="PIN Keamanan" value={pw} onChange={e => setPw(e.target.value)} className="w-full p-5 rounded-3xl border-none bg-sky-50 outline-none font-bold text-center shadow-inner tracking-[0.5em] placeholder:tracking-normal" />
-                            <button className="pill-button-main w-full py-5 uppercase tracking-widest text-sm mt-6">Masuk Sistem ✨</button>
-                        </form>
-                    </div>
-                </div>
-            );
+let li=document.createElement("li");
+li.innerText=`${v.nama} (${v.kelas}) - ${v.waktu}`;
+log.appendChild(li);
+});
 
-            const isAdmin = user.role === 'ADMIN';
+document.getElementById("total").innerText=total;
+});
+}
 
-            return (
-                <div className="h-screen flex flex-row w-full bg-[#f8faff] relative overflow-hidden">
-                    {/* DESKTOP SIDEBAR - From Image */}
-                    <aside className="hidden lg:flex flex-col w-72 sidebar-gradient p-8 text-white z-50 shadow-2xl relative overflow-hidden">
-                        <div className="flex flex-col items-center mb-12 relative z-10">
-                            <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mb-4 shadow-xl">
-                                <Church className="text-sky-main" size={32} />
-                            </div>
-                            <h2 className="text-2xl font-black text-center leading-tight">Absensi Kasih</h2>
-                        </div>
-                        <nav className="flex-1 space-y-3 relative z-10">
-                            {[
-                                { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
-                                { path: '/scan', icon: QrCode, label: 'Scan QR' },
-                                { path: '/', icon: Clock, label: 'Riwayat' },
-                                { path: isAdmin ? '/users' : '/', icon: Users, label: 'Data Jemaat' },
-                                { path: '/', icon: Settings, label: 'Pengaturan' }
-                            ].map((m, i) => (
-                                <button key={i} onClick={() => nav(m.path)} className={`w-full p-4 rounded-2xl flex items-center gap-4 transition-all font-black text-sm ${loc.pathname === m.path ? 'bg-white/20 shadow-inner' : 'hover:bg-white/10 text-white/80'}`}>
-                                    <m.icon size={20} />
-                                    <span>{m.label}</span>
-                                </button>
-                            ))}
-                        </nav>
-                        {/* Awan Kecil di Bawah Sidebar */}
-                        <div className="absolute bottom-0 left-0 right-0 h-32 opacity-20 pointer-events-none">
-                            <svg viewBox="0 0 400 200" className="w-full h-full"><circle cx="100" cy="200" r="100" fill="#fff" /><circle cx="300" cy="220" r="120" fill="#fff" /></svg>
-                        </div>
-                    </aside>
+kelasSelect.onchange=load;
+load();
 
-                    {/* MAIN CONTENT */}
-                    <div className="flex-1 flex flex-col relative h-full overflow-hidden bg-white/40 backdrop-blur-sm">
-                        {/* Header dengan Notif & Profil - Sesuai Gambar */}
-                        <header className="p-6 lg:px-10 flex justify-end items-center gap-4">
-                            <div className="flex gap-2">
-                                <div className="p-3 bg-white rounded-full shadow-sm border border-sky-50 text-sky-main cursor-pointer hover:bg-sky-50"><Bell size={20}/></div>
-                                <div className="p-3 bg-white rounded-full shadow-sm border border-sky-50 text-sky-main cursor-pointer hover:bg-sky-50"><Monitor size={20}/></div>
-                            </div>
-                            <div className="flex items-center gap-3 ml-4 cursor-pointer" onClick={() => { localStorage.removeItem('gkps_sess_v6'); setUser(null); }}>
-                                <Avatar name={user.name} size="md" className="border-2 border-sky-main" />
-                            </div>
-                        </header>
+/* QR */
+let qr;
+window.startScan=function(){
+show("scan");
+qr=new Html5Qrcode("reader");
 
-                        <div className="flex-1 overflow-y-auto no-scrollbar scroll-smooth">
-                            <Routes>
-                                <Route path="/" element={<Dashboard user={user} allUsers={allUsers} attendance={attendance} />} />
-                                <Route path="/scan" element={<Scanner users={allUsers} fbUser={fbUser} />} />
-                                <Route path="/users" element={<UserManagement users={allUsers} fbUser={fbUser} />} />
-                            </Routes>
-                        </div>
+qr.start(
+{facingMode:"environment"},
+{fps:10,qrbox:250},
+txt=>{
+tambah(txt);
+qr.stop();
+show("home");
+},
+()=>{}
+);
+}
 
-                        {/* Mobile Bottom Nav */}
-                        <div className="lg:hidden p-6 fixed bottom-0 left-0 right-0 pointer-events-none z-50">
-                            <div className="soft-card p-2 flex justify-between gap-1 shadow-2xl pointer-events-auto border-sky-100 bg-white/90 backdrop-blur-md">
-                                {[
-                                    { path: '/', icon: LayoutDashboard, label: 'Beranda' },
-                                    { path: '/scan', icon: QrCode, label: 'Scan' },
-                                    { path: '/', icon: Clock, label: 'Riwayat' },
-                                    { path: '/', icon: User, label: 'Profil' }
-                                ].map((m, i) => {
-                                    const active = loc.pathname === m.path;
-                                    return (
-                                        <button key={i} onClick={() => nav(m.path)} className={`flex-1 py-3 flex flex-col items-center gap-1 transition-all rounded-2xl ${active ? 'text-sky-dark bg-sky-50' : 'text-slate-300'}`}>
-                                            <m.icon size={22} />
-                                            <span className="text-[8px] font-black uppercase tracking-tighter">{m.label}</span>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            );
-        };
+/* EXPORT */
+window.exportCSV=function(){
+let csv="Nama,Kelas,Waktu\n";
+allData.forEach(d=>{
+csv+=`${d.nama},${d.kelas},${d.waktu}\n`;
+});
 
-        const root = createRoot(document.getElementById('root'));
-        root.render(<HashRouter><MainApp /></HashRouter>);
-    </script>
+let blob=new Blob([csv],{type:"text/csv"});
+let a=document.createElement("a");
+a.href=URL.createObjectURL(blob);
+a.download="absensi.csv";
+a.click();
+}
+
+</script>
+
 </body>
 </html>
