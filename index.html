@@ -16,15 +16,10 @@
                             main: '#38bdf8',
                             dark: '#0284c7',
                         },
-                        ui: {
-                            success: '#e7f9ed',
-                            successText: '#22c55e',
-                            warning: '#fff7ed',
-                            warningText: '#f59e0b',
-                            info: '#f0f9ff',
-                            infoText: '#0ea5e9',
-                            danger: '#fef2f2',
-                            dangerText: '#ef4444'
+                        brand: {
+                            primary: '#6366f1',
+                            secondary: '#f59e0b',
+                            accent: '#10b981',
                         }
                     },
                     fontFamily: { sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'] },
@@ -48,30 +43,14 @@
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-        body { overscroll-behavior-y: none; background-color: #f0f9ff; font-family: 'Plus Jakarta Sans', sans-serif; color: #1e293b; }
-        
-        .sidebar-gradient {
-            background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%);
-        }
-        .soft-card {
-            background: white;
-            border-radius: 1.5rem;
-            box-shadow: 0 10px 30px -10px rgba(2, 132, 199, 0.1);
-        }
-        .pill-button-main {
-            background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%);
-            border-radius: 9999px;
-            box-shadow: 0 8px 20px rgba(2, 132, 199, 0.3);
-            color: white; font-weight: 800; transition: all 0.2s;
-        }
+        body { overscroll-behavior-y: none; background-color: #f8faff; font-family: 'Plus Jakarta Sans', sans-serif; color: #1e293b; }
+        .sidebar-gradient { background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%); }
+        .soft-card { background: white; border-radius: 1.5rem; box-shadow: 0 10px 30px -10px rgba(2, 132, 199, 0.1); border: 1px solid #f1f5f9; }
+        .pill-button-main { background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%); border-radius: 9999px; box-shadow: 0 8px 20px rgba(2, 132, 199, 0.3); color: white; font-weight: 800; transition: all 0.2s; }
         .pill-button-main:active { transform: scale(0.95); }
-        
         #reader { border: none !important; border-radius: 1.5rem; overflow: hidden; }
         #reader video { object-fit: cover !important; width: 100% !important; height: 100% !important; }
-        
-        .stat-icon {
-            width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-        }
+        .stat-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
@@ -88,9 +67,8 @@
             Camera, Trash2, Upload, ChevronRight, Calendar, User, ShieldCheck, 
             Sparkles, Zap, Plus, X, RefreshCw, BookOpen, PenTool, Bell, Activity, 
             Radio, TrendingUp, Briefcase, GraduationCap, Clock, MapPin, Edit, Monitor, Eye, Settings,
-            Search, Smile, Send, Info
+            Search, Smile, Send, Info, CreditCard, BrainCircuit // BrainCircuit ditambahkan di sini
         } from 'https://esm.sh/lucide-react@0.344.0?deps=react@18.2.0';
-        import { BarChart, Bar, ResponsiveContainer, Tooltip, XAxis, CartesianGrid, YAxis } from 'https://esm.sh/recharts@2.12.0?deps=react@18.2.0,react-dom@18.2.0';
         import QRCode from 'https://esm.sh/react-qr-code@2.0.12?deps=react@18.2.0';
 
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -110,12 +88,11 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = 'gkps-online-v6';
+        const appId = 'gkps-online-final-v7';
 
         const getPublicCol = (name) => collection(db, 'artifacts', appId, 'public', 'data', name);
         const getPublicDoc = (name, id) => doc(db, 'artifacts', appId, 'public', 'data', name, id);
 
-        // --- GEMINI AI SERVICE ---
         const GeminiService = {
             call: async (prompt) => {
                 const apiKey = ""; 
@@ -129,7 +106,6 @@
             }
         };
 
-        // --- ILLUSTRATIONS ---
         const BannerIllustration = () => (
             <svg viewBox="0 0 400 200" className="w-full h-full">
                 <defs>
@@ -138,15 +114,14 @@
                     </linearGradient>
                 </defs>
                 <circle cx="320" cy="40" r="15" fill="#fff" opacity="0.8" />
-                <circle cx="340" cy="45" r="20" fill="#fff" opacity="0.8" />
                 <path d="M220 180 Q300 20 380 180" fill="none" stroke="url(#rainbowGrad)" strokeWidth="12" opacity="0.6" />
                 <path d="M0 160 Q200 140 400 160 V200 H0 Z" fill="#bcf0c4" />
                 <path d="M0 180 Q200 170 400 180 V200 H0 Z" fill="#86efac" />
                 <rect x="300" y="100" width="60" height="70" fill="#fff" rx="4" />
                 <path d="M300 100 L330 60 L360 100 Z" fill="#fff" />
                 <rect x="325" y="135" width="10" height="25" fill="#94a3b8" />
-                <rect x="328" y="75" width="4" height="20" stroke="#f87171" strokeWidth="2" />
-                <rect x="320" y="82" width="20" height="4" stroke="#f87171" strokeWidth="2" />
+                <rect x="328" y="75" width="4" height="20" fill="#f87171" />
+                <rect x="320" y="82" width="20" height="4" fill="#f87171" />
             </svg>
         );
 
@@ -159,20 +134,17 @@
             );
         };
 
-        // --- SHARED MODALS ---
         const CardModal = ({ user, onClose }) => (
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-                <div className="soft-card p-8 w-full max-w-sm relative animate-pop bg-white shadow-2xl">
-                    <button onClick={onClose} className="absolute top-4 right-4 p-2 text-slate-400 hover:text-rose-500 transition-colors"><X size={24}/></button>
-                    <div className="flex flex-col items-center">
-                        <Avatar name={user.name} size="xl" className="mb-4 border-4 border-sky-100" />
-                        <h3 className="text-2xl font-black text-slate-800 mb-1 leading-tight text-center">{user.name}</h3>
-                        <span className="text-xs font-bold bg-sky-50 text-sky-dark px-4 py-1.5 rounded-full mb-6 border border-sky-100 uppercase">{user.className}</span>
-                        <div className="p-4 bg-white rounded-3xl border-2 border-dashed border-sky-200 shadow-inner mb-2">
-                            <QRCode value={user.qrCode || user.id} size={160} fgColor="#0284c7" />
-                        </div>
-                        <p className="font-mono text-[10px] text-slate-300 font-black tracking-[0.2em] uppercase mt-2">{user.qrCode || user.id}</p>
+                <div className="soft-card p-8 w-full max-w-sm relative animate-pop bg-white shadow-2xl text-center">
+                    <button onClick={onClose} className="absolute top-4 right-4 p-2 text-slate-400"><X size={24}/></button>
+                    <Avatar name={user.name} size="xl" className="mb-4 mx-auto border-4 border-sky-100" />
+                    <h3 className="text-2xl font-black text-slate-800 mb-1">{user.name}</h3>
+                    <span className="text-xs font-bold bg-sky-50 text-sky-dark px-4 py-1.5 rounded-full mb-6 inline-block uppercase">{user.className}</span>
+                    <div className="p-4 bg-white rounded-3xl border-2 border-dashed border-sky-200 shadow-inner mb-2 flex justify-center">
+                        <QRCode value={user.qrCode || user.id} size={160} fgColor="#0284c7" />
                     </div>
+                    <p className="font-mono text-[10px] text-slate-300 font-black tracking-[0.2em] uppercase mt-2">{user.qrCode || user.id}</p>
                 </div>
             </div>
         );
@@ -203,67 +175,77 @@
                         <h3 className="text-xl font-black text-sky-dark mb-6">Materi Mingguan</h3>
                         <div className="space-y-4">
                             <div className="bg-sky-50 p-4 rounded-2xl border border-sky-100">
-                                <label className="text-[10px] font-black text-sky-dark uppercase mb-2 block">Asisten AI</label>
+                                <label className="text-[10px] font-black text-sky-dark uppercase mb-2 block">Asisten AI Guru</label>
                                 <div className="flex gap-2">
-                                    <input value={aiTopic} onChange={e=>setAiTopic(e.target.value)} placeholder="Topik Alkitab..." className="flex-1 bg-white p-2 rounded-xl text-xs outline-none border border-sky-100" />
+                                    <input value={aiTopic} onChange={e=>setAiTopic(e.target.value)} placeholder="Misal: Cerita Nuh..." className="flex-1 bg-white p-2 rounded-xl text-xs outline-none border border-sky-100" />
                                     <button onClick={handleGenerate} className="bg-sky-dark text-white p-2 rounded-xl">{loading ? <RefreshCw size={16} className="animate-spin"/> : <Sparkles size={16}/>}</button>
                                 </div>
                             </div>
                             <input value={theme} onChange={e=>setTheme(e.target.value)} placeholder="Tema Pengajaran" className="w-full p-4 rounded-xl border border-sky-100 outline-none font-bold" />
                             <textarea value={verse} onChange={e=>setVerse(e.target.value)} placeholder="Ayat Hafalan" rows="3" className="w-full p-4 rounded-xl border border-sky-100 outline-none text-sm"></textarea>
-                            <button onClick={handleSave} className="pill-button-main w-full py-4 text-sm uppercase">Simpan Materi</button>
-                            <button onClick={onClose} className="w-full text-slate-400 font-bold text-xs">BATAL</button>
+                            <button onClick={handleSave} className="pill-button-main w-full py-4 text-sm uppercase">Publikasikan Materi</button>
+                            <button onClick={onClose} className="w-full text-slate-400 font-bold text-xs mt-2 uppercase tracking-widest">Tutup</button>
                         </div>
                     </div>
                 </div>
             );
         };
 
-        // --- DASHBOARD PAGES ---
         const Dashboard = ({ user, allUsers, attendance }) => {
             const nav = useNavigate();
             const [isMatOpen, setIsMatOpen] = useState(false);
             const [aiAnalysis, setAiAnalysis] = useState(null);
             const [analyzing, setAnalyzing] = useState(false);
+            const [bcTitle, setBcTitle] = useState('');
+            const [bcMsg, setBcMsg] = useState('');
 
             const stats = useMemo(() => {
                 const totalStudents = allUsers.filter(u => u.role === 'STUDENT').length;
                 const hadir = attendance.length;
-                return { hadir: hadir, izin: 0, online: 0, tidakHadir: Math.max(0, totalStudents - hadir) };
+                return { hadir, izin: 0, online: 0, tidakHadir: Math.max(0, totalStudents - hadir) };
             }, [allUsers, attendance]);
 
             const runAnalysis = async () => {
                 setAnalyzing(true);
-                const res = await GeminiService.call(`Analisa singkat data: ${attendance.length} jemaat hadir hari ini dari total ${allUsers.length} jemaat. Berikan 1 saran dalam JSON: { "insight": "Komentar", "advice": "Saran" }`);
+                const res = await GeminiService.call(`Analisa data: ${attendance.length} hadir dari ${allUsers.length} jemaat. Berikan saran bijak 1 kalimat dalam JSON: { "insight": "Komentar", "advice": "Saran" }`);
                 if(res) setAiAnalysis(res);
                 setAnalyzing(false);
             };
 
+            const handleBroadcast = async () => {
+                if(!bcTitle || !bcMsg) return alert("Isi pesan broadcast!");
+                await setDoc(getPublicDoc('notifications', Date.now().toString()), { title: bcTitle, message: bcMsg, sender: user.name, timestamp: new Date().toISOString() });
+                setBcTitle(''); setBcMsg(''); alert("Broadcast dikirim!");
+            };
+
             return (
-                <div className="p-4 lg:p-10 animate-slide-up space-y-8 max-w-6xl mx-auto">
-                    <div className="soft-card relative overflow-hidden bg-white min-h-[240px] flex items-center p-8 lg:p-12 text-left">
-                        <div className="relative z-10 w-full lg:w-1/2 space-y-2">
-                            <h2 className="text-3xl lg:text-4xl font-black text-sky-dark">Selamat Beribadah! 🌼</h2>
-                            <p className="text-slate-500 font-bold text-lg leading-tight">Melayani dengan kasih untuk GKPS Tangerang.</p>
-                            <div className="pt-6 flex flex-wrap gap-4">
+                <div className="p-4 lg:p-10 animate-slide-up space-y-8 max-w-6xl mx-auto text-left">
+                    <div className="soft-card relative overflow-hidden bg-white min-h-[260px] flex items-center p-8 lg:p-12">
+                        <div className="relative z-10 w-full lg:w-3/5 space-y-2">
+                            <h2 className="text-3xl lg:text-5xl font-black text-sky-dark leading-tight uppercase">Selamat Beribadah! 🌼</h2>
+                            <p className="text-slate-500 font-bold text-lg">Minggu, {new Date().toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'})}</p>
+                            <div className="pt-4 flex flex-wrap gap-4">
                                 <button onClick={() => nav('/scan')} className="pill-button-main px-14 py-4 text-sm uppercase tracking-widest">Absen Sekarang</button>
-                                {user.role === 'TEACHER' && <button onClick={()=>setIsMatOpen(true)} className="bg-white border border-sky-100 p-4 rounded-full text-sky-dark shadow-sm hover:bg-sky-50"><BookOpen size={20}/></button>}
+                                {user.role === 'TEACHER' && <button onClick={()=>setIsMatOpen(true)} className="bg-white border-2 border-sky-100 p-4 rounded-full text-sky-dark shadow-sm hover:scale-110 transition-transform"><PenTool size={24}/></button>}
                             </div>
                         </div>
-                        <div className="absolute top-0 right-0 h-full w-full lg:w-2/3 pointer-events-none opacity-40 lg:opacity-100"><BannerIllustration /></div>
+                        <div className="absolute top-0 right-0 h-full w-full lg:w-2/3 pointer-events-none opacity-30 lg:opacity-100"><BannerIllustration /></div>
                     </div>
 
-                    <div className="space-y-6 text-left">
+                    <div className="space-y-6">
                         <div className="flex justify-between items-center px-2">
                             <h3 className="text-xl font-black text-sky-dark">Statistik Kehadiran</h3>
-                            {user.role === 'ADMIN' && <button onClick={runAnalysis} className="text-xs font-black text-sky-main flex items-center gap-2">{analyzing ? 'Menganalisa...' : 'Analisa AI'}</button>}
+                            {user.role === 'ADMIN' && <button onClick={runAnalysis} className="text-xs font-black text-sky-main flex items-center gap-2 hover:underline">{analyzing ? <RefreshCw size={14} className="animate-spin"/> : <BrainCircuit size={14}/>} ANALISA AI</button>}
                         </div>
 
                         {aiAnalysis && (
-                            <div className="bg-sky-dark p-6 rounded-[2rem] text-white animate-pop shadow-xl">
-                                <div className="flex items-center gap-2 mb-2"><BrainCircuit size={18}/><span className="font-black text-xs uppercase">Analisa Cerdas</span></div>
-                                <p className="text-sm font-medium leading-relaxed mb-3">"{aiAnalysis.insight}"</p>
-                                <p className="text-xs font-black text-sky-light border-t border-white/20 pt-3 flex items-center gap-2"><Sparkles size={14}/> {aiAnalysis.advice}</p>
+                            <div className="bg-sky-dark p-6 rounded-[2.5rem] text-white animate-pop shadow-2xl relative overflow-hidden">
+                                <div className="flex items-center gap-2 mb-2"><Sparkles size={18} className="text-amber-300"/><span className="font-black text-xs uppercase tracking-widest">Insight Cerdas AI</span></div>
+                                <p className="text-sm font-medium leading-relaxed italic mb-4">"{aiAnalysis.insight}"</p>
+                                <div className="bg-white/10 p-4 rounded-2xl border border-white/10 flex gap-3">
+                                    <Info size={20} className="text-sky-light flex-shrink-0" />
+                                    <p className="text-xs font-bold text-sky-light">{aiAnalysis.advice}</p>
+                                </div>
                             </div>
                         )}
 
@@ -291,6 +273,19 @@
                         </div>
                     </div>
 
+                    {user.role === 'ADMIN' && (
+                        <div className="soft-card p-8 border-l-8 border-sky-dark">
+                            <div className="flex items-center gap-3 mb-6 text-left">
+                                <div className="p-3 bg-sky-50 text-sky-dark rounded-2xl"><Radio size={24}/></div>
+                                <h3 className="text-xl font-black text-sky-dark uppercase tracking-tight">Kirim Pengumuman (Broadcast)</h3>
+                            </div>
+                            <div className="space-y-4">
+                                <input value={bcTitle} onChange={e=>setBcTitle(e.target.value)} placeholder="Judul Broadcast..." className="w-full p-4 rounded-xl border-2 border-sky-50 bg-slate-50 outline-none focus:border-sky-dark transition-all font-bold" />
+                                <textarea value={bcMsg} onChange={e=>setBcMsg(e.target.value)} placeholder="Tulis pesan pengumuman di sini..." rows="3" className="w-full p-4 rounded-xl border-2 border-sky-50 bg-slate-50 outline-none focus:border-sky-dark transition-all text-sm"></textarea>
+                                <button onClick={handleBroadcast} className="pill-button-main py-4 w-full flex items-center justify-center gap-2 uppercase text-sm tracking-widest">Kirim Sekarang <Send size={18}/></button>
+                            </div>
+                        </div>
+                    )}
                     {isMatOpen && <MaterialModal user={user} onClose={()=>setIsMatOpen(false)} />}
                 </div>
             );
@@ -324,31 +319,33 @@
                 <div className="p-4 lg:p-8 animate-slide-up space-y-8 max-w-6xl mx-auto">
                     <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 px-2 text-left">
                         <div>
-                            <h2 className="text-3xl font-black text-sky-dark">Data Database</h2>
-                            <p className="text-sm font-bold text-slate-400 mt-1">Total: {users.length} Database Cloud</p>
+                            <h2 className="text-4xl font-black text-sky-dark uppercase">Data Database</h2>
+                            <p className="text-sm font-bold text-slate-400 mt-1 uppercase">Cloud Management ({users.length} Data)</p>
                         </div>
-                        <button onClick={() => fileRef.current.click()} className="p-4 bg-white rounded-2xl text-sky-main border border-sky-100 shadow-sm font-bold text-sm flex items-center gap-2 transition-transform hover:scale-105 active:scale-95">
-                            <Upload size={18}/> <span>Import CSV</span>
+                        <button onClick={() => fileRef.current.click()} className="p-4 bg-white rounded-2xl text-sky-main border-2 border-sky-50 shadow-sm font-black text-xs flex items-center gap-3 transition-all hover:scale-105 active:scale-95 uppercase tracking-widest">
+                            <Upload size={20}/> <span>Import CSV</span>
                         </button>
                         <input type="file" ref={fileRef} onChange={handleImport} className="hidden" accept=".csv" />
                     </div>
                     <div className="relative">
-                        <Search className="absolute left-6 top-5 text-sky-main" size={24} />
-                        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari nama jemaat..." className="w-full p-6 pl-16 soft-card border-none outline-none font-bold text-lg shadow-sm" />
+                        <Search className="absolute left-6 top-5 text-sky-main" size={26} />
+                        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari nama jemaat atau ID..." className="w-full p-6 pl-16 soft-card border-none outline-none font-black text-xl shadow-lg placeholder:text-slate-300" />
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {filtered.map(u => (
-                            <div key={u.id} className="soft-card p-6 flex items-center justify-between group transition-all hover:bg-sky-50/50">
+                            <div key={u.id} className="soft-card p-6 flex items-center justify-between group transition-all hover:bg-sky-50/30">
                                 <div className="flex items-center gap-4 overflow-hidden">
                                     <Avatar name={u.name} size="lg" />
                                     <div className="truncate text-left">
-                                        <p className="font-black text-slate-700 text-lg leading-tight truncate">{u.name}</p>
-                                        <p className="text-[10px] font-black text-sky-dark bg-sky-50 px-2 py-0.5 rounded-lg border border-sky-100 uppercase mt-1">{u.role}</p>
+                                        <p className="font-black text-slate-800 text-lg leading-tight truncate uppercase">{u.name}</p>
+                                        <div className="flex gap-2 mt-2">
+                                            <span className="text-[10px] font-black text-sky-dark bg-sky-100 px-2 py-0.5 rounded-lg uppercase">{u.role}</span>
+                                        </div>
                                     </div>
                                 </div>
                                 <div className="flex gap-2">
-                                    <button onClick={()=>setViewingUser(u)} className="p-3 bg-sky-50 text-sky-main rounded-2xl hover:bg-sky-100 transition-colors"><Eye size={18}/></button>
-                                    <button onClick={async () => { if(confirm('Hapus?')) await deleteDoc(getPublicDoc('users', u.id)); }} className="p-3 bg-rose-50 text-rose-300 hover:text-rose-500 transition-colors"><Trash2 size={18}/></button>
+                                    <button onClick={()=>setViewingUser(u)} className="p-3 bg-sky-50 text-sky-main rounded-2xl hover:bg-sky-100"><Eye size={20}/></button>
+                                    <button onClick={async () => { if(confirm(`Hapus ${u.name}?`)) await deleteDoc(getPublicDoc('users', u.id)); }} className="p-3 bg-rose-50 text-rose-300 hover:text-rose-500 rounded-2xl"><Trash2 size={20}/></button>
                                 </div>
                             </div>
                         ))}
@@ -358,32 +355,44 @@
             );
         };
 
-        const StudentDashboard = ({ user, attendance }) => {
+        const StudentDashboard = ({ user }) => {
+            const [notifs, setNotifs] = useState([]);
+            useEffect(() => onSnapshot(getPublicCol('notifications'), snap => setNotifs(snap.docs.map(d=>d.data()))), []);
+
             return (
-                <div className="p-6 lg:p-12 animate-slide-up flex flex-col items-center">
-                    <div className="text-center mb-10">
-                        <h2 className="text-3xl lg:text-4xl font-black text-sky-dark">Kartu Digital ASM</h2>
-                        <p className="text-slate-500 font-bold text-lg mt-2 italic tracking-tight">Tunjukkan ke Guru Sekolah Minggu ya!</p>
+                <div className="p-6 lg:p-12 animate-slide-up flex flex-col items-center max-w-4xl mx-auto space-y-10">
+                    <div className="text-center">
+                        <h2 className="text-3xl lg:text-4xl font-black text-sky-dark uppercase tracking-tight">Kartu Digital ASM</h2>
+                        <p className="text-slate-500 font-bold text-lg mt-2 italic tracking-tight">GKPS Tangerang • Sekolah Minggu</p>
                     </div>
 
-                    <div className="soft-card relative overflow-hidden bg-white shadow-2xl max-w-sm w-full border-4 border-white/50">
-                        <div className="h-32 sidebar-gradient p-8 text-white flex justify-between items-start">
-                            <div className="space-y-1 text-left">
+                    <div className="soft-card relative overflow-hidden bg-white shadow-2xl max-w-sm w-full border-4 border-white/50 transform hover:rotate-1 transition-transform">
+                        <div className="h-36 sidebar-gradient p-8 text-white flex justify-between items-start relative">
+                            <div className="space-y-1 text-left relative z-10">
                                 <span className="font-black tracking-tighter text-sm block">GKPS SUNDAY SCHOOL</span>
-                                <span className="text-[9px] font-bold opacity-60 tracking-[0.3em] uppercase">Student Identity</span>
+                                <span className="text-[9px] font-bold opacity-70 tracking-[0.4em] uppercase">Student ID Card</span>
                             </div>
-                            <Star size={24} className="animate-pulse" fill="#fff" />
+                            <Star size={28} fill="#fff" />
                         </div>
-                        <div className="px-8 pb-12 flex flex-col items-center -mt-16">
-                            <Avatar name={user.name} size="xl" className="border-4 border-white mb-6 shadow-xl scale-125" />
-                            <h3 className="text-2xl font-black text-slate-800 mb-1 text-center">{user.name}</h3>
-                            <span className="text-xs font-black bg-sky-50 text-sky-dark px-6 py-2 rounded-full mb-10 border border-sky-100 uppercase tracking-[0.1em]">{user.className}</span>
-                            
-                            <div className="p-6 bg-white rounded-[2.5rem] border-2 border-dashed border-sky-200 shadow-inner mb-4">
-                                <QRCode value={user.qrCode || user.id} size={160} fgColor="#0284c7" />
+                        <div className="px-8 pb-12 flex flex-col items-center -mt-20 relative z-20">
+                            <Avatar name={user.name} size="xl" className="border-8 border-white mb-6 shadow-2xl scale-125" />
+                            <h3 className="text-3xl font-black text-slate-800 mb-1 text-center uppercase tracking-tight">{user.name}</h3>
+                            <span className="text-xs font-black bg-sky-50 text-sky-dark px-6 py-2 rounded-full mb-10 border-2 border-sky-100 uppercase tracking-[0.2em]">{user.className}</span>
+                            <div className="p-6 bg-white rounded-[3rem] border-4 border-dashed border-sky-100 shadow-inner mb-4 flex justify-center">
+                                <QRCode value={user.qrCode || user.id} size={180} fgColor="#0284c7" />
                             </div>
-                            <p className="font-mono text-[9px] text-slate-300 font-black tracking-[0.4em] uppercase mt-4">{user.qrCode || user.id}</p>
+                            <p className="font-mono text-[10px] text-slate-300 font-black tracking-[0.5em] uppercase mt-4">{user.qrCode || user.id}</p>
                         </div>
+                    </div>
+
+                    <div className="w-full space-y-4 text-left">
+                        <h4 className="font-black text-sky-dark flex items-center gap-2 px-2 uppercase tracking-widest text-sm"><Bell size={18}/> Pengumuman</h4>
+                        {notifs.map((n, i) => (
+                            <div key={i} className="soft-card p-5 border-l-4 border-sky-main animate-pop">
+                                <h5 className="font-black text-slate-800 text-sm mb-1">{n.title}</h5>
+                                <p className="text-xs text-slate-600 leading-relaxed">{n.message}</p>
+                            </div>
+                        ))}
                     </div>
                 </div>
             );
@@ -391,8 +400,6 @@
 
         const Scanner = ({ users, fbUser }) => {
             const [status, setStatus] = useState({ type: 'idle', msg: '' });
-            const scannerRef = useRef(null);
-
             const onScan = async (code) => {
                 if (!code || !fbUser || status.type !== 'idle') return;
                 const target = users.find(u => u.qrCode === code || u.id === code);
@@ -409,22 +416,21 @@
             useEffect(() => {
                 if (!fbUser) return;
                 const scanner = new Html5Qrcode("reader");
-                scannerRef.current = scanner;
-                const startScanner = async () => {
+                const start = async () => {
                     try { await scanner.start({ facingMode: "environment" }, { fps: 15, qrbox: 280 }, onScan); } catch (err) {
-                        try { await scanner.start({ facingMode: "user" }, { fps: 15, qrbox: 280 }, onScan); } catch (err2) { setStatus({ type: 'err', msg: 'Kamera tidak ditemukan' }); }
+                        try { await scanner.start({ facingMode: "user" }, { fps: 15, qrbox: 280 }, onScan); } catch (e) {}
                     }
                 };
-                startScanner();
-                return () => { if (scannerRef.current && scannerRef.current.isScanning) scannerRef.current.stop().catch(() => {}); };
+                start();
+                return () => { if (scanner.isScanning) scanner.stop(); };
             }, [fbUser]);
 
             return (
                 <div className="p-6 lg:p-12 animate-slide-up flex flex-col items-center">
-                    <h2 className="text-4xl font-black text-sky-dark leading-tight mb-10">Scan QR Absensi</h2>
+                    <h2 className="text-4xl font-black text-sky-dark leading-tight mb-10 uppercase tracking-tighter">Pindai Kode QR</h2>
                     <div className="relative w-full max-w-lg">
                         <div className="soft-card p-6 bg-white relative z-10 border-8 border-sky-100 shadow-2xl">
-                            <div id="reader" className="w-full aspect-square bg-slate-900 rounded-[2rem] overflow-hidden shadow-inner"></div>
+                            <div id="reader" className="w-full aspect-square bg-slate-900 rounded-[2rem] overflow-hidden shadow-inner border-4 border-slate-800"></div>
                         </div>
                         {status.type !== 'idle' && (
                             <div className="absolute inset-0 z-50 flex items-center justify-center backdrop-blur-md rounded-[2.5rem] bg-white/40 animate-pop">
@@ -446,7 +452,6 @@
             const [attendance, setAttendance] = useState([]);
             const [isLoading, setIsLoading] = useState(true);
             const [loginRole, setLoginRole] = useState('TEACHER');
-            const [selectedUid, setSelectedUid] = useState('');
             const [adminNameInput, setAdminNameInput] = useState('');
             const [pw, setPw] = useState('');
             const [secretCount, setSecretCount] = useState(0);
@@ -455,14 +460,18 @@
             const nav = useNavigate();
             const loc = useLocation();
 
+            // --- PROTEKSI & DEFINISI VARIABEL ---
+            const isStudent = user?.role === 'STUDENT';
+            const isAdmin = user?.role === 'ADMIN';
+
             useEffect(() => {
-                const initAuth = async () => {
+                const init = async () => {
                     try {
                         await signInAnonymously(auth);
                         onAuthStateChanged(auth, u => setFbUser(u));
                     } catch(e) { setIsLoading(false); }
                 };
-                initAuth();
+                init();
             }, []);
 
             useEffect(() => {
@@ -470,7 +479,7 @@
                 const unsubUsers = onSnapshot(getPublicCol('users'), snap => {
                     const data = snap.docs.map(d => d.data());
                     setAllUsers(data);
-                    const saved = localStorage.getItem('gkps_sess_v6');
+                    const saved = localStorage.getItem('gkps_sess_v7');
                     if (saved) {
                         try {
                            const parsed = JSON.parse(saved);
@@ -492,77 +501,78 @@
                 const inputName = adminNameInput.trim().toUpperCase();
                 const inputPw = pw.trim();
                 if (loginRole === 'ADMIN' && inputName === 'ADMIN SISTEM' && inputPw === '090807') {
-                    const root = { id: 'root', name: 'ADMIN SISTEM', role: 'ADMIN', className: 'SYSTEM' };
-                    setUser(root); localStorage.setItem('gkps_sess_v6', JSON.stringify(root)); return;
+                    const root = { id: 'root', name: 'ADMIN SISTEM', role: 'ADMIN', className: 'SISTEM' };
+                    setUser(root); localStorage.setItem('gkps_sess_v7', JSON.stringify(root)); return;
                 }
-                const target = loginRole === 'ADMIN' ? allUsers.find(u => u.role === 'ADMIN' && u.name.toUpperCase().trim() === inputName) : allUsers.find(u => u.id === selectedUid);
-                if (target && target.pin === inputPw) {
-                    setUser(target); localStorage.setItem('gkps_sess_v6', JSON.stringify(target));
+                const found = allUsers.filter(u => u.role === loginRole && u.id === (document.getElementById('select-user')?.value));
+                const finalTarget = loginRole === 'ADMIN' ? allUsers.find(u => u.role === 'ADMIN' && u.name.toUpperCase().trim() === inputName) : found[0];
+                
+                if (finalTarget && finalTarget.pin === inputPw) {
+                    setUser(finalTarget); localStorage.setItem('gkps_sess_v7', JSON.stringify(finalTarget));
                 } else alert('Nama atau PIN salah!');
             };
 
             if (isLoading || !fbUser) return <div className="h-screen flex items-center justify-center bg-sky-light"><div className="w-16 h-16 border-4 border-sky-main border-t-transparent rounded-full animate-spin"></div></div>;
 
             if (!user) return (
-                <div className="min-h-screen flex items-center justify-center p-6 relative overflow-hidden bg-sky-light">
-                    <div className="sidebar-gradient fixed inset-0 z-[-1] opacity-5"></div>
-                    <div className="soft-card p-10 w-full max-w-sm relative z-10 animate-pop">
+                <div className="min-h-screen flex items-center justify-center p-6 relative overflow-hidden bg-sky-light text-center">
+                    <div className="soft-card p-10 w-full max-w-sm relative z-10 animate-pop border-4 border-white">
                         <div className="flex justify-center mb-10">
-                            <button onClick={() => { setSecretCount(s=>s+1); if(secretCount>=4) setAdminVisible(true); }} className="w-24 h-24 bg-sky-light rounded-full flex items-center justify-center shadow-xl animate-float border-4 border-white transition-transform active:scale-95"><Church className="text-sky-main" size={52}/></button>
+                            <button onClick={() => { setSecretCount(s=>s+1); if(secretCount>=4) setAdminVisible(true); }} className="w-24 h-24 bg-sky-light rounded-full flex items-center justify-center shadow-xl animate-float border-4 border-white"><Church className="text-sky-main" size={52}/></button>
                         </div>
-                        <h1 className="text-3xl font-black text-center text-sky-dark mb-10 tracking-tight">Presensi Kasih</h1>
-                        <div className="bg-sky-50 p-1.5 rounded-full flex mb-10 border border-sky-100/50">
+                        <h1 className="text-3xl font-black text-sky-dark mb-10 leading-tight">Presensi Kasih<br/><span className="text-[10px] font-bold text-slate-400 tracking-[0.5em] uppercase">GKPS Tangerang</span></h1>
+                        <div className="bg-sky-50 p-1.5 rounded-full flex mb-10 border-2 border-sky-100">
                             <button onClick={() => setLoginRole('TEACHER')} className={`flex-1 py-3 text-[10px] font-black rounded-full transition-all ${loginRole === 'TEACHER' ? 'tab-active' : 'text-slate-400'}`}>GURU</button>
                             <button onClick={() => setLoginRole('STUDENT')} className={`flex-1 py-3 text-[10px] font-black rounded-full transition-all ${loginRole === 'STUDENT' ? 'tab-active' : 'text-slate-400'}`}>SISWA</button>
                             {adminVisible && <button onClick={() => setLoginRole('ADMIN')} className={`flex-1 py-3 text-[10px] font-black rounded-full transition-all ${loginRole === 'ADMIN' ? 'tab-active' : 'text-slate-400'}`}>ADMIN</button>}
                         </div>
                         <form onSubmit={handleLogin} className="space-y-4">
                             {loginRole === 'ADMIN' ? (
-                                <input type="text" placeholder="Nama Admin..." value={adminNameInput} onChange={e => setAdminNameInput(e.target.value)} className="w-full p-5 rounded-3xl border-none bg-sky-50 outline-none font-bold text-slate-700 shadow-inner" />
+                                <input type="text" placeholder="Nama Admin..." value={adminNameInput} onChange={e => setAdminNameInput(e.target.value)} className="w-full p-5 rounded-3xl border-2 border-sky-50 bg-slate-50 outline-none font-bold text-slate-700" />
                             ) : (
-                                <select value={selectedUid} onChange={e => setSelectedUid(e.target.value)} className="w-full p-5 rounded-3xl border-none bg-sky-50 outline-none font-bold text-slate-700 appearance-none shadow-inner">
+                                <select id="select-user" className="w-full p-5 rounded-3xl border-2 border-sky-50 bg-slate-50 outline-none font-bold text-slate-700 appearance-none">
                                     <option value="">Pilih Nama...</option>
                                     {allUsers.filter(u => u.role === loginRole).map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
                                 </select>
                             )}
-                            <input type="password" placeholder="PIN Keamanan" value={pw} onChange={e => setPw(e.target.value)} className="w-full p-5 rounded-3xl border-none bg-sky-50 outline-none font-bold text-center shadow-inner tracking-[0.5em] placeholder:tracking-normal" />
-                            <button className="pill-button-main w-full py-5 uppercase tracking-widest text-sm mt-6">Masuk Sistem ✨</button>
+                            <input type="password" placeholder="PIN Keamanan" value={pw} onChange={e => setPw(e.target.value)} className="w-full p-5 rounded-3xl border-2 border-sky-50 bg-slate-50 outline-none font-bold text-center tracking-[0.5em] placeholder:tracking-normal" />
+                            <button className="pill-button-main w-full py-5 uppercase tracking-widest text-sm mt-6">Masuk Sekarang ✨</button>
                         </form>
                     </div>
                 </div>
             );
 
-            const isStudent = user.role === 'STUDENT';
-            const isAdmin = user.role === 'ADMIN';
-
             return (
                 <div className="h-screen flex flex-row w-full bg-sky-light relative overflow-hidden">
-                    <aside className="hidden lg:flex flex-col w-72 sidebar-gradient p-8 text-white z-50 shadow-2xl relative overflow-hidden">
+                    <aside className="hidden lg:flex flex-col w-80 sidebar-gradient p-8 text-white z-50 shadow-2xl relative overflow-hidden text-left">
                         <div className="flex flex-col items-center mb-12 relative z-10">
-                            <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mb-4 shadow-xl"><Church className="text-sky-main" size={32} /></div>
-                            <h2 className="text-2xl font-black text-center leading-tight">Presensi Kasih</h2>
+                            <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mb-4 border-4 border-sky-light/20"><Church className="text-sky-main" size={32} /></div>
+                            <h2 className="text-2xl font-black text-center leading-tight uppercase tracking-tight">Presensi Kasih</h2>
+                            <span className="text-[9px] font-bold opacity-60 tracking-[0.3em] mt-1 uppercase">GKPS Tangerang</span>
                         </div>
                         <nav className="flex-1 space-y-3 relative z-10">
                             {[
-                                { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
-                                { path: '/scan', icon: QrCode, label: 'Scan QR' },
-                                { path: isAdmin ? '/users' : '/', icon: isAdmin ? Users : Info, label: isAdmin ? 'Data Database' : 'Informasi' },
-                                { path: '/', icon: Settings, label: 'Pengaturan' }
-                            ].map((m, i) => (
-                                <button key={i} onClick={() => nav(m.path)} className={`w-full p-4 rounded-2xl flex items-center gap-4 transition-all font-black text-sm ${loc.pathname === m.path ? 'bg-white/20 shadow-inner' : 'hover:bg-white/10 text-white/80'}`}>
-                                    <m.icon size={20} /><span>{m.label}</span>
+                                { path: '/', icon: LayoutDashboard, label: 'Dashboard', roles: ['ADMIN', 'TEACHER', 'STUDENT'] },
+                                { path: '/scan', icon: QrCode, label: 'Scan Absensi', roles: ['ADMIN', 'TEACHER'] },
+                                { path: isAdmin ? '/users' : '/', icon: isAdmin ? Users : CreditCard, label: isAdmin ? 'Data Database' : 'Informasi', roles: ['ADMIN', 'TEACHER', 'STUDENT'] },
+                            ].filter(m => m.roles.includes(user.role)).map((m, i) => (
+                                <button key={i} onClick={() => nav(m.path)} className={`w-full p-5 rounded-[1.75rem] flex items-center gap-4 transition-all font-black text-sm ${loc.pathname === m.path ? 'bg-white text-sky-dark shadow-xl scale-105' : 'hover:bg-white/10 text-white/80'}`}>
+                                    <m.icon size={22} /><span>{m.label}</span>
                                 </button>
                             ))}
                         </nav>
-                        <div className="absolute bottom-0 left-0 right-0 h-32 opacity-10 pointer-events-none">
-                            <svg viewBox="0 0 400 200" className="w-full h-full"><circle cx="100" cy="200" r="100" fill="#fff" /><circle cx="300" cy="220" r="120" fill="#fff" /></svg>
-                        </div>
+                        <button onClick={() => { localStorage.removeItem('gkps_sess_v7'); setUser(null); }} className="p-4 rounded-2xl bg-white/10 text-white font-black text-xs uppercase flex items-center justify-center gap-2 hover:bg-white/20 transition-all"><LogOut size={18}/> Logout</button>
                     </aside>
 
                     <div className="flex-1 flex flex-col relative h-full overflow-hidden bg-white/40 backdrop-blur-sm">
-                        <header className="p-6 lg:px-10 flex justify-end items-center gap-4">
-                            <div className="flex items-center gap-3 ml-4 cursor-pointer" onClick={() => { localStorage.removeItem('gkps_sess_v6'); setUser(null); }}>
+                        <header className="p-6 lg:px-10 flex justify-end items-center gap-4 border-b border-sky-100 lg:border-none bg-white lg:bg-transparent z-40">
+                             <div className="p-3 bg-white rounded-2xl shadow-sm border border-sky-50 text-sky-main"><Bell size={20}/></div>
+                            <div className="flex items-center gap-3 ml-4 p-1 pr-4 bg-white rounded-full shadow-sm border border-sky-50">
                                 <Avatar name={user.name} size="md" className="border-2 border-sky-main" />
+                                <div className="leading-tight text-left">
+                                    <p className="text-[11px] font-black text-slate-800 uppercase">{user.name.split(' ')[0]}</p>
+                                    <p className="text-[9px] font-bold text-sky-dark uppercase opacity-60 tracking-widest">{user.role}</p>
+                                </div>
                             </div>
                         </header>
 
@@ -575,16 +585,15 @@
                         </div>
 
                         <div className="lg:hidden p-6 fixed bottom-0 left-0 right-0 pointer-events-none z-50">
-                            <div className="soft-card p-2 flex justify-between gap-1 shadow-2xl pointer-events-auto border-sky-100 bg-white/90 backdrop-blur-md">
+                            <div className="soft-card p-2 flex justify-between gap-1 shadow-2xl pointer-events-auto border-2 border-sky-100 bg-white/95 backdrop-blur-md">
                                 {[
-                                    { path: '/', icon: LayoutDashboard, label: 'Beranda' },
-                                    { path: '/scan', icon: QrCode, label: 'Scan' },
-                                    { path: isAdmin ? '/users' : '/', icon: isAdmin ? Users : Info, label: 'Data' },
-                                    { path: '/', icon: User, label: 'Profil' }
-                                ].map((m, i) => {
+                                    { path: '/', icon: LayoutDashboard, label: 'Beranda', roles: ['ADMIN', 'TEACHER', 'STUDENT'] },
+                                    { path: '/scan', icon: QrCode, label: 'Scan', roles: ['ADMIN', 'TEACHER'] },
+                                    { path: isAdmin ? '/users' : '/', icon: isAdmin ? Users : CreditCard, label: isAdmin ? 'Data' : 'Kartu', roles: ['ADMIN', 'TEACHER', 'STUDENT'] }
+                                ].filter(m => m.roles.includes(user.role)).map((m, i) => {
                                     const active = loc.pathname === m.path;
                                     return (
-                                        <button key={i} onClick={() => nav(m.path)} className={`flex-1 py-3 flex flex-col items-center gap-1 transition-all rounded-2xl ${active ? 'text-sky-dark bg-sky-50' : 'text-slate-300'}`}>
+                                        <button key={i} onClick={() => nav(m.path)} className={`flex-1 py-3 flex flex-col items-center gap-1 transition-all rounded-2xl ${active ? 'text-sky-dark bg-sky-50 shadow-inner' : 'text-slate-300'}`}>
                                             <m.icon size={22} /><span className="text-[8px] font-black uppercase tracking-tighter">{m.label}</span>
                                         </button>
                                     );
