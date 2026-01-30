@@ -131,6 +131,7 @@
             "recharts": "https://esm.sh/recharts@2.12.0?deps=react@18.2.0,react-dom@18.2.0",
             "react-qr-code": "https://esm.sh/react-qr-code@2.0.12?deps=react@18.2.0",
             "firebase/app": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js",
+            "firebase/auth": "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js",
             "firebase/firestore": "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js",
             "firebase/analytics": "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js"
         }
@@ -156,26 +157,61 @@
         // --- FIREBASE INTEGRATION ---
         import { initializeApp } from "firebase/app";
         import { getAnalytics } from "firebase/analytics";
-        // FIX: Import onSnapshot untuk Real-time Sync
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "firebase/auth";
         import { getFirestore, collection, getDocs, setDoc, doc, addDoc, updateDoc, deleteDoc, onSnapshot } from "firebase/firestore";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyDDtjCJO09qP3kwOcoctObU-qOg-GTnrTE",
-            authDomain: "sundayschoolattendance-58661.firebaseapp.com",
-            databaseURL: "https://sundayschoolattendance-58661-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "sundayschoolattendance-58661",
-            storageBucket: "sundayschoolattendance-58661.firebasestorage.app",
-            messagingSenderId: "1055300658311",
-            appId: "1:1055300658311:web:2db2708b0c8bfa5aa54422",
-            measurementId: "G-PCB8J7RRHJ"
-        };
+        // CONFIGURATION HANDLING
+        let firebaseConfig;
+        try {
+            firebaseConfig = JSON.parse(__firebase_config);
+        } catch (e) {
+            // Fallback ke config user
+            firebaseConfig = {
+                apiKey: "AIzaSyDDtjCJO09qP3kwOcoctObU-qOg-GTnrTE",
+                authDomain: "sundayschoolattendance-58661.firebaseapp.com",
+                databaseURL: "https://sundayschoolattendance-58661-default-rtdb.asia-southeast1.firebasedatabase.app",
+                projectId: "sundayschoolattendance-58661",
+                storageBucket: "sundayschoolattendance-58661.firebasestorage.app",
+                messagingSenderId: "1055300658311",
+                appId: "1:1055300658311:web:2db2708b0c8bfa5aa54422",
+                measurementId: "G-PCB8J7RRHJ"
+            };
+        }
 
         const app = initializeApp(firebaseConfig);
         const analytics = getAnalytics(app);
+        const auth = getAuth(app); 
         const db = getFirestore(app);
+        
+        // --- APP ID FOR PATHING ---
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        // Helper untuk mendapatkan referensi koleksi di path yang benar
+        const getCollectionRef = (colName) => {
+            return collection(db, 'artifacts', appId, 'public', 'data', colName);
+        };
+
+        // Helper untuk mendapatkan referensi dokumen di path yang benar
+        const getDocRef = (colName, docId) => {
+            return doc(db, 'artifacts', appId, 'public', 'data', colName, String(docId));
+        };
+
+        // --- TIMEZONE FIX HELPER ---
+        const getLocalDate = () => {
+            const now = new Date();
+            const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+            const wibTime = new Date(utc + (7 * 3600000));
+            
+            const year = wibTime.getFullYear();
+            const month = String(wibTime.getMonth() + 1).padStart(2, '0');
+            const day = String(wibTime.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
 
         // --- FIREBASE HELPERS ---
         const syncFromFirestore = async () => {
+            if (!auth.currentUser) return false; 
+            
             const collections = [
                 { name: 'users', key: 'gkps_users_v3' },
                 { name: 'attendance', key: 'gkps_att_v3' },
@@ -187,7 +223,7 @@
             let hasData = false;
             try {
                 for (const col of collections) {
-                    const querySnapshot = await getDocs(collection(db, col.name));
+                    const querySnapshot = await getDocs(getCollectionRef(col.name));
                     const data = [];
                     querySnapshot.forEach((doc) => {
                         data.push(doc.data());
@@ -206,15 +242,22 @@
 
         const pushToFirestore = async (collectionName, data, id) => {
             try {
-                await setDoc(doc(db, collectionName, String(id)), data);
+                if (auth.currentUser) {
+                    await setDoc(getDocRef(collectionName, id), data);
+                    console.log(`Berhasil simpan ke ${collectionName}:`, id);
+                } else {
+                    console.warn("Offline: Data disimpan lokal saja.");
+                }
             } catch (e) {
-                console.error("Gagal push ke Firestore:", e);
+                console.error(`Gagal push ke Firestore (${collectionName}):`, e);
             }
         };
 
         const deleteFromFirestore = async (collectionName, id) => {
             try {
-                await deleteDoc(doc(db, collectionName, String(id)));
+                if (auth.currentUser) {
+                    await deleteDoc(getDocRef(collectionName, id));
+                }
             } catch (e) {
                 console.error("Gagal hapus di Firestore:", e);
             }
@@ -243,13 +286,13 @@
             USERS: 'gkps_users_v3', 
             ATTENDANCE: 'gkps_att_v3', 
             CLASSES: 'gkps_cls_v3', 
-            SESSION: 'gkps_sess_v3',
+            SESSION: 'gkps_sess_v3', 
             MATERIALS: 'gkps_mat_v3',
             ACTIVITIES: 'gkps_act_v3', 
-            NOTIFICATIONS: 'gkps_notif_v3',
+            NOTIFICATIONS: 'gkps_notif_v3', 
             SCHEDULES: 'gkps_sched_v3' 
         };
-        // Added isActive: true to defaults
+        
         const DEFAULT_USERS = [
             { id: '1', name: 'Admin Utama', role: 'ADMIN', qrCode: 'ADMIN-001', gender: 'Laki-Laki', pin: 'admin123', isActive: true, lastLogin: new Date().toISOString() },
             { id: '2', name: 'Guru Sekolah Minggu', role: 'TEACHER', className: 'Kelas Daud', qrCode: 'GURU-001', gender: 'Perempuan', pin: '123456', isActive: true },
@@ -263,8 +306,8 @@
             { id: 'c4', name: 'Kelas Ester', desc: '13+ Tahun' }
         ];
         const DEFAULT_SCHEDULES = [
-            { id: 's1', className: 'Kelas Daud', date: '2025-01-26', time: '08:00 - 09:30', activity: 'Ibadah Minggu', theme: 'Tuhan Yesus Baik', speaker: 'Kak Lisa', location: 'R. Daud Lt. 1', status: 'upcoming' },
-            { id: 's2', className: 'Kelas Daniel', date: '2025-01-26', time: '08:00 - 09:30', activity: 'Ibadah & Aktivitas', theme: 'Daud Melawan Goliat', speaker: 'Kak Budi', location: 'R. Daniel Lt. 1', status: 'upcoming' },
+            { id: 's1', className: 'Kelas Daud', date: getLocalDate(), time: '08:00 - 09:30', activity: 'Ibadah Minggu', theme: 'Tuhan Yesus Baik', speaker: 'Kak Lisa', location: 'R. Daud Lt. 1', status: 'upcoming' },
+            { id: 's2', className: 'Kelas Daniel', date: getLocalDate(), time: '08:00 - 09:30', activity: 'Ibadah & Aktivitas', theme: 'Daud Melawan Goliat', speaker: 'Kak Budi', location: 'R. Daniel Lt. 1', status: 'upcoming' },
         ];
 
         // --- GEMINI AI SERVICE ---
@@ -409,18 +452,7 @@
             }
         };
 
-        // --- HELPER ---
-        const formatDateIndo = (dateStr) => {
-            const date = new Date(dateStr);
-            return date.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-        };
-        
-        const isNotifVisible = (n) => {
-             if (!n.scheduledTime) return true;
-             return new Date(n.scheduledTime) <= new Date();
-        };
-
-        // --- UI COMPONENTS ---
+        // --- COMPONENTS ---
         const Background = () => (
             <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10 bg-[#f3f4f6]">
                 <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-indigo-50/50 via-purple-50/50 to-pink-50/50"></div>
@@ -472,12 +504,404 @@
             </div>
         );
 
-        // --- MODALS & SCREENS ---
+        // --- LOGIN SCREEN ---
+        const LoginScreen = ({ onLogin }) => {
+            const [mode, setMode] = useState('TEACHER');
+            const [users, setUsers] = useState([]);
+            const [selected, setSelected] = useState('');
+            const [pw, setPw] = useState('');
+            const [secretCount, setSecretCount] = useState(0);
+            const [showAdmin, setShowAdmin] = useState(false); 
+            const [showForgot, setShowForgot] = useState(false);
+            const [recoveryKey, setRecoveryKey] = useState('');
+
+            useEffect(() => setUsers(DB.get(STORAGE.USERS, DEFAULT_USERS)), []);
+            const handleSecretTrigger = () => {
+                if (showAdmin) return;
+                const newCount = secretCount + 1;
+                setSecretCount(newCount);
+                if (newCount >= 5) {
+                    setShowAdmin(true);
+                    setMode('ADMIN');
+                    alert("🔓 Admin Mode Terbuka!");
+                }
+            };
+            const handleLogin = (e) => {
+                e.preventDefault();
+                const recordLogin = (loggedInUser) => {
+                     const updated = { ...loggedInUser, lastLogin: new Date().toISOString() };
+                     DB.users.update(updated);
+                     DB.activities.add(loggedInUser.name, 'Login ke sistem');
+                     onLogin(updated);
+                };
+
+                if (mode === 'ADMIN') {
+                    if (pw === 'admin123') {
+                        const adminUser = { id: 'admin', name: 'Administrator', role: 'ADMIN', lastLogin: new Date().toISOString() };
+                        recordLogin(adminUser);
+                    }
+                    else alert('Password salah!');
+                } else {
+                    const u = users.find(x => x.id === selected);
+                    if (u) {
+                        if (u.isActive === false) return alert("Akun ini telah dinonaktifkan oleh Admin.");
+                        if (u.pin && u.pin === pw) {
+                            recordLogin(u);
+                        } else {
+                            alert('PIN Salah! Silakan coba lagi. (Default: 123456)');
+                        }
+                    } else {
+                        alert('Silakan pilih nama pengguna terlebih dahulu.');
+                    }
+                }
+            };
+
+            const handleForgot = () => {
+                if (recoveryKey === 'GKPS2025') { 
+                    const admin = users.find(u => u.role === 'ADMIN');
+                    if(admin) {
+                        alert("Reset Berhasil! Password Admin kembali ke: admin123");
+                        const updatedAdmin = { ...admin, pin: 'admin123' };
+                        DB.users.update(updatedAdmin);
+                    } else {
+                        alert("Reset ke Default: Gunakan 'admin123'");
+                    }
+                    setShowForgot(false);
+                } else {
+                    alert("Recovery Key Salah!");
+                }
+            };
+
+            const modes = showAdmin ? ['TEACHER', 'STUDENT', 'ADMIN'] : ['TEACHER', 'STUDENT'];
+            return (
+                <div className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden">
+                    <Background />
+                    <div className="glass-panel p-8 rounded-[2.5rem] w-full max-w-sm animate-slide-up relative z-10">
+                        <div className="flex justify-center mb-6">
+                            <button onClick={handleSecretTrigger} className="w-20 h-20 bg-gradient-to-tr from-indigo-500 to-pink-500 rounded-3xl flex items-center justify-center shadow-xl shadow-indigo-500/20 animate-float active:scale-90 transition-transform cursor-pointer">
+                                <Church className="text-white w-10 h-10" />
+                            </button>
+                        </div>
+                        <div className="text-center mb-8">
+                            <h1 className="text-2xl font-extrabold text-slate-800 tracking-tight mb-2 leading-tight">Presensi ASM-GSM<br/>GKPS Tangerang</h1>
+                            <p className="text-slate-500 font-medium flex items-center justify-center gap-1"><Cloud size={14}/> Online Database System</p>
+                        </div>
+                        <div className="bg-white/50 p-1.5 rounded-2xl flex mb-6 backdrop-blur-sm">
+                            {modes.map(m => (
+                                <button key={m} onClick={() => { setMode(m); setSelected(''); setPw(''); }}
+                                    className={`flex-1 py-3 text-[10px] font-bold rounded-xl transition-all ${mode === m ? 'bg-white text-indigo-600 shadow-md scale-100' : 'text-slate-400 hover:text-slate-600'}`}>
+                                    {m === 'TEACHER' ? 'GURU' : m === 'STUDENT' ? 'SISWA' : 'ADMIN'}
+                                </button>
+                            ))}
+                        </div>
+                        <form onSubmit={handleLogin} className="space-y-4">
+                            {mode !== 'ADMIN' ? (
+                                <div className="space-y-3">
+                                    <div className="relative group">
+                                        <select value={selected} onChange={e => setSelected(e.target.value)}
+                                            className="w-full p-4 pl-5 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-700 appearance-none shadow-sm transition-all hover:border-indigo-300">
+                                            <option value="">Pilih Nama Anda...</option>
+                                            {users.filter(u => u.role === mode && u.isActive !== false).map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+                                        </select>
+                                        <div className="absolute right-5 top-4 pointer-events-none text-slate-400"><ChevronRight className="rotate-90"/></div>
+                                    </div>
+                                    <input 
+                                        type="password" 
+                                        placeholder="Masukkan PIN (Default: 123456)" 
+                                        value={pw} 
+                                        onChange={e => setPw(e.target.value)}
+                                        className="w-full p-4 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-700 shadow-sm" 
+                                    />
+                                </div>
+                            ) : (
+                                <div>
+                                    <input type="password" placeholder="Password Admin" value={pw} onChange={e => setPw(e.target.value)}
+                                        className="w-full p-4 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-700 shadow-sm" />
+                                    <div className="text-right mt-2">
+                                        <button type="button" onClick={() => setShowForgot(true)} className="text-xs text-indigo-500 font-bold hover:underline">Lupa Password?</button>
+                                    </div>
+                                </div>
+                            )}
+                            <Button variant="primary">Masuk Aplikasi <Sparkles size={18} /></Button>
+                        </form>
+                    </div>
+                    <p className="absolute bottom-6 text-xs text-slate-400 font-medium opacity-60">GKPS Digital System v3.0 (Firebase)</p>
+
+                    {showForgot && (
+                        <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+                            <div className="bg-white p-6 rounded-3xl w-full max-w-xs animate-pop shadow-2xl">
+                                <h3 className="text-lg font-bold text-slate-800 mb-2">Reset Password Admin</h3>
+                                <p className="text-xs text-slate-500 mb-4">Masukkan Recovery Key dari Developer untuk mereset password ke default.</p>
+                                <input value={recoveryKey} onChange={e=>setRecoveryKey(e.target.value)} placeholder="Recovery Key" className="w-full p-3 border rounded-xl text-sm font-bold mb-4 outline-none focus:border-indigo-500"/>
+                                <div className="flex gap-2">
+                                    <Button onClick={handleForgot}>Reset</Button>
+                                    <Button variant="secondary" onClick={() => setShowForgot(false)}>Batal</Button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        // --- USER MANAGEMENT ---
+        const UserManagement = () => {
+            const [users, setUsers] = useState([]);
+            const [search, setSearch] = useState('');
+            const [form, setForm] = useState({ name: '', role: 'STUDENT', className: 'Kelas Daud', gender: 'Laki-Laki', pin: '123456' });
+            const [isFormOpen, setIsFormOpen] = useState(false);
+            const [isUploading, setIsUploading] = useState(false);
+            const [editingId, setEditingId] = useState(null); 
+            const fileInputRef = useRef(null);
+            
+            useEffect(() => { setUsers(DB.get(STORAGE.USERS, DEFAULT_USERS)); }, []);
+            
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if(!form.name) return;
+                
+                if (editingId) {
+                    const updatedUser = { 
+                        ...form, 
+                        id: editingId,
+                        ...users.find(u => u.id === editingId) 
+                    };
+                    updatedUser.name = form.name;
+                    updatedUser.role = form.role;
+                    updatedUser.className = (form.role === 'STUDENT' || form.role === 'TEACHER') ? form.className : '-';
+                    updatedUser.gender = form.gender;
+                    updatedUser.pin = form.pin;
+
+                    DB.users.update(updatedUser);
+                    alert("Data user berhasil diperbarui!");
+                    setEditingId(null);
+                } else {
+                    const hasClass = form.role === 'STUDENT' || form.role === 'TEACHER';
+                    const newUser = {
+                        id: Date.now().toString(), 
+                        name: form.name, 
+                        role: form.role,
+                        className: hasClass ? form.className : '-',
+                        gender: form.gender,
+                        pin: form.pin || '123456', 
+                        qrCode: `${form.role.substring(0,1)}-${Date.now().toString().slice(-4)}`,
+                        avatarStyle: 'avataaars',
+                        isActive: true,
+                        lastLogin: null
+                    };
+                    DB.users.add(newUser); 
+                    alert(`User ${newUser.name} berhasil ditambahkan dengan PIN: ${newUser.pin}`);
+                }
+                
+                const updated = DB.get(STORAGE.USERS);
+                setUsers(updated);
+                
+                setForm({ name: '', role: 'STUDENT', className: 'Kelas Daud', gender: 'Laki-Laki', pin: '123456' });
+                setIsFormOpen(false);
+            };
+            
+            const handleEdit = (user) => {
+                setForm({
+                    name: user.name,
+                    role: user.role,
+                    className: user.className !== '-' ? user.className : 'Kelas Daud',
+                    gender: user.gender,
+                    pin: user.pin
+                });
+                setEditingId(user.id);
+                setIsFormOpen(true);
+            };
+
+            const handleResetPin = (user) => {
+                if(confirm(`Reset PIN untuk ${user.name} menjadi 123456?`)) {
+                    const updatedUser = { ...user, pin: '123456' };
+                    DB.users.update(updatedUser);
+                    setUsers(DB.get(STORAGE.USERS));
+                    alert("PIN berhasil direset!");
+                }
+            };
+
+            const handleToggleStatus = (user) => {
+                const newStatus = !user.isActive; 
+                const action = newStatus ? "Mengaktifkan" : "Menonaktifkan";
+                if(confirm(`${action} akun ${user.name}?`)) {
+                    const updatedUser = { ...user, isActive: newStatus };
+                    DB.users.update(updatedUser);
+                    setUsers(DB.get(STORAGE.USERS));
+                }
+            };
+
+            const handleImportClick = () => {
+                fileInputRef.current.click();
+            };
+
+            const handleFileChange = (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const text = e.target.result;
+                    processCSV(text);
+                };
+                reader.readAsText(file);
+                event.target.value = ''; 
+            };
+
+            const processCSV = async (csvText) => {
+                setIsUploading(true);
+                const lines = csvText.split('\n');
+                let successCount = 0;
+                
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i];
+                    const [name, role, className, genderRaw] = line.split(',').map(item => item?.trim());
+                    
+                    if (name && role) {
+                        const normalizedRole = role.toUpperCase();
+                        if (['STUDENT', 'TEACHER', 'ADMIN'].includes(normalizedRole)) {
+                             const hasClass = normalizedRole === 'STUDENT' || normalizedRole === 'TEACHER';
+                             const finalClass = hasClass && className ? className : '-';
+                             let finalGender = 'Laki-Laki';
+                             if (genderRaw && (genderRaw.toLowerCase() === 'perempuan' || genderRaw.toLowerCase() === 'p' || genderRaw.toLowerCase() === 'pr')) {
+                                 finalGender = 'Perempuan';
+                             }
+                             const newUser = {
+                                id: Date.now().toString() + i, 
+                                name: name, role: normalizedRole, className: finalClass, gender: finalGender,
+                                pin: '123456', 
+                                qrCode: `${normalizedRole.substring(0,1)}-${Date.now().toString().slice(-4)}-${i}`,
+                                avatarStyle: 'avataaars',
+                                isActive: true
+                            };
+                            try {
+                                await pushToFirestore('users', newUser, newUser.id);
+                                const currentUsers = JSON.parse(localStorage.getItem(STORAGE.USERS)) || [];
+                                currentUsers.push(newUser);
+                                localStorage.setItem(STORAGE.USERS, JSON.stringify(currentUsers));
+                                successCount++;
+                            } catch (err) {
+                                console.error("Gagal upload user:", name, err);
+                            }
+                        }
+                    }
+                }
+
+                if (successCount > 0) {
+                    setUsers(DB.get(STORAGE.USERS));
+                    DB.activities.add('Admin', `Import ${successCount} user baru via CSV`);
+                    alert(`SUKSES! ${successCount} data berhasil diupload ke Cloud. Silakan buka HP Anda.`);
+                } else {
+                    alert("Gagal membaca data. Gunakan format: Nama,Role,Kelas,Gender");
+                }
+                setIsUploading(false);
+            };
+            const handleDelete = (id) => {
+                if(window.confirm('Hapus user ini?')) {
+                    DB.users.delete(id);
+                    const updated = DB.get(STORAGE.USERS);
+                    setUsers(updated);
+                    DB.activities.add('Admin', `Menghapus user ID: ${id}`);
+                }
+            };
+
+            const filtered = users.filter(u => u.name.toLowerCase().includes(search.toLowerCase()));
+            return (
+                <div className="p-6 pb-32 animate-slide-up">
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-2xl font-extrabold text-slate-800">Manajemen User</h2>
+                        <div className="flex gap-2">
+                            <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".csv" />
+                            <button onClick={handleImportClick} disabled={isUploading} className="bg-emerald-50 backdrop-blur border border-emerald-100 p-2 px-3 rounded-xl text-xs font-bold text-emerald-600 shadow-sm flex items-center gap-1 hover:bg-emerald-100 transition-colors">
+                                {isUploading ? <RefreshCw size={14} className="animate-spin"/> : <Upload size={14}/>} 
+                                <span className="hidden md:inline">{isUploading ? 'Mengupload...' : 'Import'}</span>
+                            </button>
+                            <button onClick={() => { setIsFormOpen(!isFormOpen); setEditingId(null); setForm({name: '', role: 'STUDENT', className: 'Kelas Daud', gender: 'Laki-Laki', pin: '123456'}); }} className="bg-white/80 backdrop-blur border border-white p-2 px-3 rounded-xl text-xs font-bold text-indigo-600 shadow-sm flex items-center gap-1 hover:bg-indigo-50 transition-colors">
+                                {isFormOpen ? <><X size={14}/> <span className="hidden md:inline">Tutup</span></> : <><Plus size={14}/> <span className="hidden md:inline">Tambah</span></>}
+                            </button>
+                        </div>
+                    </div>
+
+                    {isFormOpen && (
+                        <div className="glass-card p-5 rounded-[2rem] mb-6 animate-pop">
+                            <h3 className="font-bold text-slate-700 mb-4">{editingId ? 'Edit Data User' : 'Data User Baru'}</h3>
+                            <div className="space-y-3">
+                                <input value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="Nama Lengkap" className="w-full p-3 rounded-xl bg-white/50 border border-white focus:ring-2 focus:ring-indigo-500 outline-none font-semibold text-slate-700 placeholder-slate-400" />
+                                <input value={form.pin} onChange={e => setForm({...form, pin: e.target.value})} placeholder="Set PIN (Default: 123456)" className="w-full p-3 rounded-xl bg-white/50 border border-white focus:ring-2 focus:ring-indigo-500 outline-none font-semibold text-slate-700 placeholder-slate-400" />
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                    <div className="relative">
+                                        <select value={form.gender} onChange={e => setForm({...form, gender: e.target.value})} className="w-full p-3 rounded-xl bg-white/50 border border-white outline-none font-semibold text-slate-600 text-sm appearance-none">
+                                            <option value="Laki-Laki">Laki-Laki</option>
+                                            <option value="Perempuan">Perempuan</option>
+                                        </select>
+                                        <ChevronRight className="absolute right-3 top-3.5 rotate-90 text-slate-400 w-4 h-4 pointer-events-none"/>
+                                    </div>
+                                    <div className="relative">
+                                        <select value={form.role} onChange={e => setForm({...form, role: e.target.value})} className="w-full p-3 rounded-xl bg-white/50 border border-white outline-none font-semibold text-slate-600 text-sm appearance-none">
+                                            <option value="STUDENT">Siswa</option><option value="TEACHER">Guru</option><option value="ADMIN">Admin</option>
+                                        </select>
+                                        <ChevronRight className="absolute right-3 top-3.5 rotate-90 text-slate-400 w-4 h-4 pointer-events-none"/>
+                                    </div>
+                                </div>
+                                {(form.role === 'STUDENT' || form.role === 'TEACHER') && (
+                                    <div className="relative">
+                                        <select value={form.className} onChange={e => setForm({...form, className: e.target.value})} className="w-full p-3 rounded-xl bg-white/50 border border-white outline-none font-semibold text-slate-600 text-sm appearance-none">
+                                            {DEFAULT_CLASSES.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                                        </select>
+                                        <ChevronRight className="absolute right-3 top-3.5 rotate-90 text-slate-400 w-4 h-4 pointer-events-none"/>
+                                    </div>
+                                )}
+                                <Button onClick={handleSubmit}>{editingId ? 'Update Data' : 'Simpan Data'}</Button>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="relative mb-6">
+                        <Search className="absolute left-4 top-3.5 text-slate-400" size={20}/>
+                        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari nama user..." className="w-full p-3 pl-12 rounded-2xl bg-white/60 border border-white/40 focus:bg-white transition-all outline-none font-medium text-slate-700 placeholder-slate-400" />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {filtered.length === 0 ? <div className="col-span-full text-center py-10 text-slate-400 font-medium">Tidak ada user ditemukan</div> : filtered.map(u => (
+                            <div key={u.id} className={`glass-card p-4 rounded-2xl flex flex-col gap-3 group animate-pop hover:shadow-lg transition-all ${u.isActive === false ? 'opacity-60 grayscale' : ''}`}>
+                                <div className="flex items-center justify-between w-full">
+                                    <div className="flex items-center gap-3">
+                                        <Avatar name={u.name} seed={u.avatarSeed} style={u.avatarStyle} size="sm" />
+                                        <div>
+                                            <p className="font-bold text-slate-800 text-sm">{u.name}</p>
+                                            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${u.role === 'ADMIN' ? 'bg-rose-100 text-rose-600' : u.role === 'TEACHER' ? 'bg-amber-100 text-amber-600' : 'bg-indigo-100 text-indigo-600'}`}>{u.role}</span>
+                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${u.gender === 'Perempuan' ? 'bg-pink-100 text-pink-600' : 'bg-blue-100 text-blue-600'}`}>{u.gender === 'Perempuan' ? 'P' : 'L'}</span>
+                                                {(u.role === 'STUDENT' || u.role === 'TEACHER') && <span className="text-[10px] text-slate-400 font-medium">• {u.className}</span>}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-1">
+                                        <button onClick={() => handleEdit(u)} className="w-8 h-8 flex items-center justify-center rounded-full bg-blue-50 text-blue-500 hover:bg-blue-100 transition-colors" title="Edit User"><Edit size={14}/></button>
+                                        <button onClick={() => handleDelete(u.id)} className="w-8 h-8 flex items-center justify-center rounded-full bg-red-50 text-red-500 hover:bg-red-100 transition-colors" title="Hapus User"><Trash2 size={14}/></button>
+                                    </div>
+                                </div>
+                                
+                                <div className="grid grid-cols-2 gap-2 border-t border-slate-100 pt-3">
+                                    <button onClick={() => handleResetPin(u)} className="flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-slate-50 text-[10px] font-bold text-slate-600 hover:bg-slate-100">
+                                        <Key size={12}/> Reset PIN
+                                    </button>
+                                    <button onClick={() => handleToggleStatus(u)} className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[10px] font-bold ${u.isActive !== false ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' : 'bg-slate-200 text-slate-500 hover:bg-slate-300'}`}>
+                                        {u.isActive !== false ? <><Power size={12}/> Aktif</> : <><Power size={12}/> Nonaktif</>}
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
         const ScheduleManagerModal = ({ user, onClose }) => {
             const [schedules, setSchedules] = useState([]);
             const [form, setForm] = useState({
                 className: user.role === 'TEACHER' ? user.className : DEFAULT_CLASSES[0].name,
-                date: new Date().toISOString().split('T')[0], 
+                date: getLocalDate(), 
                 time: '', activity: '', theme: '', speaker: '', location: ''
             });
             const [filterClass, setFilterClass] = useState(user.role === 'TEACHER' ? user.className : 'ALL');
@@ -511,7 +935,7 @@
                 
                 setForm({
                     className: user.role === 'TEACHER' ? user.className : DEFAULT_CLASSES[0].name,
-                    date: new Date().toISOString().split('T')[0], 
+                    date: getLocalDate(), 
                     time: '', activity: '', theme: '', speaker: '', location: ''
                 }); 
             };
@@ -525,7 +949,7 @@
                 setEditingId(null);
                 setForm({
                     className: user.role === 'TEACHER' ? user.className : DEFAULT_CLASSES[0].name,
-                    date: new Date().toISOString().split('T')[0], 
+                    date: getLocalDate(), 
                     time: '', activity: '', theme: '', speaker: '', location: ''
                 });
             };
@@ -820,400 +1244,8 @@
             );
         };
 
-        const LoginScreen = ({ onLogin }) => {
-            const [mode, setMode] = useState('TEACHER');
-            const [users, setUsers] = useState([]);
-            const [selected, setSelected] = useState('');
-            const [pw, setPw] = useState('');
-            const [secretCount, setSecretCount] = useState(0);
-            const [showAdmin, setShowAdmin] = useState(false); 
-            const [showForgot, setShowForgot] = useState(false);
-            const [recoveryKey, setRecoveryKey] = useState('');
-
-            useEffect(() => setUsers(DB.get(STORAGE.USERS, DEFAULT_USERS)), []);
-            const handleSecretTrigger = () => {
-                if (showAdmin) return;
-                const newCount = secretCount + 1;
-                setSecretCount(newCount);
-                if (newCount >= 5) {
-                    setShowAdmin(true);
-                    setMode('ADMIN');
-                    alert("🔓 Admin Mode Terbuka!");
-                }
-            };
-            const handleLogin = (e) => {
-                e.preventDefault();
-                
-                const recordLogin = (loggedInUser) => {
-                     const updated = { ...loggedInUser, lastLogin: new Date().toISOString() };
-                     DB.users.update(updated);
-                     DB.activities.add(loggedInUser.name, 'Login ke sistem');
-                     onLogin(updated);
-                };
-
-                if (mode === 'ADMIN') {
-                    if (pw === 'admin123') {
-                        const adminUser = { id: 'admin', name: 'Administrator', role: 'ADMIN', lastLogin: new Date().toISOString() };
-                        recordLogin(adminUser);
-                    }
-                    else alert('Password salah!');
-                } else {
-                    const u = users.find(x => x.id === selected);
-                    if (u) {
-                        if (u.isActive === false) return alert("Akun ini telah dinonaktifkan oleh Admin.");
-                        if (u.pin && u.pin === pw) {
-                            recordLogin(u);
-                        } else {
-                            alert('PIN Salah! Silakan coba lagi. (Default: 123456)');
-                        }
-                    } else {
-                        alert('Silakan pilih nama pengguna terlebih dahulu.');
-                    }
-                }
-            };
-
-            const handleForgot = () => {
-                if (recoveryKey === 'GKPS2025') { 
-                    const admin = users.find(u => u.role === 'ADMIN');
-                    if(admin) {
-                        alert("Reset Berhasil! Password Admin kembali ke: admin123");
-                        const updatedAdmin = { ...admin, pin: 'admin123' };
-                        DB.users.update(updatedAdmin);
-                    } else {
-                        alert("Reset ke Default: Gunakan 'admin123'");
-                    }
-                    setShowForgot(false);
-                } else {
-                    alert("Recovery Key Salah!");
-                }
-            };
-
-            const modes = showAdmin ? ['TEACHER', 'STUDENT', 'ADMIN'] : ['TEACHER', 'STUDENT'];
-            return (
-                <div className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden">
-                    <Background />
-                    <div className="glass-panel p-8 rounded-[2.5rem] w-full max-w-sm animate-slide-up relative z-10">
-                        <div className="flex justify-center mb-6">
-                            <button onClick={handleSecretTrigger} className="w-20 h-20 bg-gradient-to-tr from-indigo-500 to-pink-500 rounded-3xl flex items-center justify-center shadow-xl shadow-indigo-500/20 animate-float active:scale-90 transition-transform cursor-pointer">
-                                <Church className="text-white w-10 h-10" />
-                            </button>
-                        </div>
-                        <div className="text-center mb-8">
-                            <h1 className="text-2xl font-extrabold text-slate-800 tracking-tight mb-2 leading-tight">Presensi ASM-GSM<br/>GKPS Tangerang</h1>
-                            <p className="text-slate-500 font-medium flex items-center justify-center gap-1"><Cloud size={14}/> Online Database System</p>
-                        </div>
-                        <div className="bg-white/50 p-1.5 rounded-2xl flex mb-6 backdrop-blur-sm">
-                            {modes.map(m => (
-                                <button key={m} onClick={() => { setMode(m); setSelected(''); setPw(''); }}
-                                    className={`flex-1 py-3 text-[10px] font-bold rounded-xl transition-all ${mode === m ? 'bg-white text-indigo-600 shadow-md scale-100' : 'text-slate-400 hover:text-slate-600'}`}>
-                                    {m === 'TEACHER' ? 'GURU' : m === 'STUDENT' ? 'SISWA' : 'ADMIN'}
-                                </button>
-                            ))}
-                        </div>
-                        <form onSubmit={handleLogin} className="space-y-4">
-                            {mode !== 'ADMIN' ? (
-                                <div className="space-y-3">
-                                    <div className="relative group">
-                                        <select value={selected} onChange={e => setSelected(e.target.value)}
-                                            className="w-full p-4 pl-5 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-700 appearance-none shadow-sm transition-all hover:border-indigo-300">
-                                            <option value="">Pilih Nama Anda...</option>
-                                            {users.filter(u => u.role === mode && u.isActive !== false).map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
-                                        </select>
-                                        <div className="absolute right-5 top-4 pointer-events-none text-slate-400"><ChevronRight className="rotate-90"/></div>
-                                    </div>
-                                    <input 
-                                        type="password" 
-                                        placeholder="Masukkan PIN (Default: 123456)" 
-                                        value={pw} 
-                                        onChange={e => setPw(e.target.value)}
-                                        className="w-full p-4 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-700 shadow-sm" 
-                                    />
-                                </div>
-                            ) : (
-                                <div>
-                                    <input type="password" placeholder="Password Admin" value={pw} onChange={e => setPw(e.target.value)}
-                                        className="w-full p-4 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-700 shadow-sm" />
-                                    <div className="text-right mt-2">
-                                        <button type="button" onClick={() => setShowForgot(true)} className="text-xs text-indigo-500 font-bold hover:underline">Lupa Password?</button>
-                                    </div>
-                                </div>
-                            )}
-                            <Button variant="primary">Masuk Aplikasi <Sparkles size={18} /></Button>
-                        </form>
-                    </div>
-                    <p className="absolute bottom-6 text-xs text-slate-400 font-medium opacity-60">GKPS Digital System v3.0 (Firebase)</p>
-
-                    {showForgot && (
-                        <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-                            <div className="bg-white p-6 rounded-3xl w-full max-w-xs animate-pop shadow-2xl">
-                                <h3 className="text-lg font-bold text-slate-800 mb-2">Reset Password Admin</h3>
-                                <p className="text-xs text-slate-500 mb-4">Masukkan Recovery Key dari Developer untuk mereset password ke default.</p>
-                                <input value={recoveryKey} onChange={e=>setRecoveryKey(e.target.value)} placeholder="Recovery Key" className="w-full p-3 border rounded-xl text-sm font-bold mb-4 outline-none focus:border-indigo-500"/>
-                                <div className="flex gap-2">
-                                    <Button onClick={handleForgot}>Reset</Button>
-                                    <Button variant="secondary" onClick={() => setShowForgot(false)}>Batal</Button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            );
-        };
-
-        const UserManagement = () => {
-            const [users, setUsers] = useState([]);
-            const [search, setSearch] = useState('');
-            const [form, setForm] = useState({ name: '', role: 'STUDENT', className: 'Kelas Daud', gender: 'Laki-Laki', pin: '123456' });
-            const [isFormOpen, setIsFormOpen] = useState(false);
-            const [isUploading, setIsUploading] = useState(false);
-            const [editingId, setEditingId] = useState(null); 
-            const fileInputRef = useRef(null);
-            
-            useEffect(() => { setUsers(DB.get(STORAGE.USERS, DEFAULT_USERS)); }, []);
-            
-            const handleSubmit = (e) => {
-                e.preventDefault();
-                if(!form.name) return;
-                
-                if (editingId) {
-                    const updatedUser = { 
-                        ...form, 
-                        id: editingId,
-                        ...users.find(u => u.id === editingId) 
-                    };
-                    updatedUser.name = form.name;
-                    updatedUser.role = form.role;
-                    updatedUser.className = (form.role === 'STUDENT' || form.role === 'TEACHER') ? form.className : '-';
-                    updatedUser.gender = form.gender;
-                    updatedUser.pin = form.pin;
-
-                    DB.users.update(updatedUser);
-                    alert("Data user berhasil diperbarui!");
-                    setEditingId(null);
-                } else {
-                    const hasClass = form.role === 'STUDENT' || form.role === 'TEACHER';
-                    const newUser = {
-                        id: Date.now().toString(), 
-                        name: form.name, 
-                        role: form.role,
-                        className: hasClass ? form.className : '-',
-                        gender: form.gender,
-                        pin: form.pin || '123456', 
-                        qrCode: `${form.role.substring(0,1)}-${Date.now().toString().slice(-4)}`,
-                        avatarStyle: 'avataaars',
-                        isActive: true,
-                        lastLogin: null
-                    };
-                    DB.users.add(newUser); 
-                    alert(`User ${newUser.name} berhasil ditambahkan dengan PIN: ${newUser.pin}`);
-                }
-                
-                const updated = DB.get(STORAGE.USERS);
-                setUsers(updated);
-                
-                setForm({ name: '', role: 'STUDENT', className: 'Kelas Daud', gender: 'Laki-Laki', pin: '123456' });
-                setIsFormOpen(false);
-            };
-            
-            const handleEdit = (user) => {
-                setForm({
-                    name: user.name,
-                    role: user.role,
-                    className: user.className !== '-' ? user.className : 'Kelas Daud',
-                    gender: user.gender,
-                    pin: user.pin
-                });
-                setEditingId(user.id);
-                setIsFormOpen(true);
-            };
-
-            const handleResetPin = (user) => {
-                if(confirm(`Reset PIN untuk ${user.name} menjadi 123456?`)) {
-                    const updatedUser = { ...user, pin: '123456' };
-                    DB.users.update(updatedUser);
-                    setUsers(DB.get(STORAGE.USERS));
-                    alert("PIN berhasil direset!");
-                }
-            };
-
-            const handleToggleStatus = (user) => {
-                const newStatus = !user.isActive; 
-                const action = newStatus ? "Mengaktifkan" : "Menonaktifkan";
-                if(confirm(`${action} akun ${user.name}?`)) {
-                    const updatedUser = { ...user, isActive: newStatus };
-                    DB.users.update(updatedUser);
-                    setUsers(DB.get(STORAGE.USERS));
-                }
-            };
-
-            const handleImportClick = () => {
-                fileInputRef.current.click();
-            };
-
-            const handleFileChange = (event) => {
-                const file = event.target.files[0];
-                if (!file) return;
-
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const text = e.target.result;
-                    processCSV(text);
-                };
-                reader.readAsText(file);
-                event.target.value = ''; 
-            };
-
-            const processCSV = async (csvText) => {
-                setIsUploading(true);
-                const lines = csvText.split('\n');
-                let successCount = 0;
-                
-                for (let i = 0; i < lines.length; i++) {
-                    const line = lines[i];
-                    const [name, role, className, genderRaw] = line.split(',').map(item => item?.trim());
-                    
-                    if (name && role) {
-                        const normalizedRole = role.toUpperCase();
-                        if (['STUDENT', 'TEACHER', 'ADMIN'].includes(normalizedRole)) {
-                             const hasClass = normalizedRole === 'STUDENT' || normalizedRole === 'TEACHER';
-                             const finalClass = hasClass && className ? className : '-';
-                             let finalGender = 'Laki-Laki';
-                             if (genderRaw && (genderRaw.toLowerCase() === 'perempuan' || genderRaw.toLowerCase() === 'p' || genderRaw.toLowerCase() === 'pr')) {
-                                 finalGender = 'Perempuan';
-                             }
-                             const newUser = {
-                                id: Date.now().toString() + i, 
-                                name: name, role: normalizedRole, className: finalClass, gender: finalGender,
-                                pin: '123456', 
-                                qrCode: `${normalizedRole.substring(0,1)}-${Date.now().toString().slice(-4)}-${i}`,
-                                avatarStyle: 'avataaars',
-                                isActive: true
-                            };
-                            try {
-                                await pushToFirestore('users', newUser, newUser.id);
-                                const currentUsers = JSON.parse(localStorage.getItem(STORAGE.USERS)) || [];
-                                currentUsers.push(newUser);
-                                localStorage.setItem(STORAGE.USERS, JSON.stringify(currentUsers));
-                                successCount++;
-                            } catch (err) {
-                                console.error("Gagal upload user:", name, err);
-                            }
-                        }
-                    }
-                }
-
-                if (successCount > 0) {
-                    setUsers(DB.get(STORAGE.USERS));
-                    DB.activities.add('Admin', `Import ${successCount} user baru via CSV`);
-                    alert(`SUKSES! ${successCount} data berhasil diupload ke Cloud. Silakan buka HP Anda.`);
-                } else {
-                    alert("Gagal membaca data. Gunakan format: Nama,Role,Kelas,Gender");
-                }
-                setIsUploading(false);
-            };
-            const handleDelete = (id) => {
-                if(window.confirm('Hapus user ini?')) {
-                    DB.users.delete(id);
-                    const updated = DB.get(STORAGE.USERS);
-                    setUsers(updated);
-                    DB.activities.add('Admin', `Menghapus user ID: ${id}`);
-                }
-            };
-
-            const filtered = users.filter(u => u.name.toLowerCase().includes(search.toLowerCase()));
-            return (
-                <div className="p-6 pb-32 animate-slide-up">
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-2xl font-extrabold text-slate-800">Manajemen User</h2>
-                        <div className="flex gap-2">
-                            <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".csv" />
-                            <button onClick={handleImportClick} disabled={isUploading} className="bg-emerald-50 backdrop-blur border border-emerald-100 p-2 px-3 rounded-xl text-xs font-bold text-emerald-600 shadow-sm flex items-center gap-1 hover:bg-emerald-100 transition-colors">
-                                {isUploading ? <RefreshCw size={14} className="animate-spin"/> : <Upload size={14}/>} 
-                                <span className="hidden md:inline">{isUploading ? 'Mengupload...' : 'Import'}</span>
-                            </button>
-                            <button onClick={() => { setIsFormOpen(!isFormOpen); setEditingId(null); setForm({name: '', role: 'STUDENT', className: 'Kelas Daud', gender: 'Laki-Laki', pin: '123456'}); }} className="bg-white/80 backdrop-blur border border-white p-2 px-3 rounded-xl text-xs font-bold text-indigo-600 shadow-sm flex items-center gap-1 hover:bg-indigo-50 transition-colors">
-                                {isFormOpen ? <><X size={14}/> <span className="hidden md:inline">Tutup</span></> : <><Plus size={14}/> <span className="hidden md:inline">Tambah</span></>}
-                            </button>
-                        </div>
-                    </div>
-
-                    {isFormOpen && (
-                        <div className="glass-card p-5 rounded-[2rem] mb-6 animate-pop">
-                            <h3 className="font-bold text-slate-700 mb-4">{editingId ? 'Edit Data User' : 'Data User Baru'}</h3>
-                            <div className="space-y-3">
-                                <input value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="Nama Lengkap" className="w-full p-3 rounded-xl bg-white/50 border border-white focus:ring-2 focus:ring-indigo-500 outline-none font-semibold text-slate-700 placeholder-slate-400" />
-                                <input value={form.pin} onChange={e => setForm({...form, pin: e.target.value})} placeholder="Set PIN (Default: 123456)" className="w-full p-3 rounded-xl bg-white/50 border border-white focus:ring-2 focus:ring-indigo-500 outline-none font-semibold text-slate-700 placeholder-slate-400" />
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                    <div className="relative">
-                                        <select value={form.gender} onChange={e => setForm({...form, gender: e.target.value})} className="w-full p-3 rounded-xl bg-white/50 border border-white outline-none font-semibold text-slate-600 text-sm appearance-none">
-                                            <option value="Laki-Laki">Laki-Laki</option>
-                                            <option value="Perempuan">Perempuan</option>
-                                        </select>
-                                        <ChevronRight className="absolute right-3 top-3.5 rotate-90 text-slate-400 w-4 h-4 pointer-events-none"/>
-                                    </div>
-                                    <div className="relative">
-                                        <select value={form.role} onChange={e => setForm({...form, role: e.target.value})} className="w-full p-3 rounded-xl bg-white/50 border border-white outline-none font-semibold text-slate-600 text-sm appearance-none">
-                                            <option value="STUDENT">Siswa</option><option value="TEACHER">Guru</option><option value="ADMIN">Admin</option>
-                                        </select>
-                                        <ChevronRight className="absolute right-3 top-3.5 rotate-90 text-slate-400 w-4 h-4 pointer-events-none"/>
-                                    </div>
-                                </div>
-                                {(form.role === 'STUDENT' || form.role === 'TEACHER') && (
-                                    <div className="relative">
-                                        <select value={form.className} onChange={e => setForm({...form, className: e.target.value})} className="w-full p-3 rounded-xl bg-white/50 border border-white outline-none font-semibold text-slate-600 text-sm appearance-none">
-                                            {DEFAULT_CLASSES.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-                                        </select>
-                                        <ChevronRight className="absolute right-3 top-3.5 rotate-90 text-slate-400 w-4 h-4 pointer-events-none"/>
-                                    </div>
-                                )}
-                                <Button onClick={handleSubmit}>{editingId ? 'Update Data' : 'Simpan Data'}</Button>
-                            </div>
-                        </div>
-                    )}
-
-                    <div className="relative mb-6">
-                        <Search className="absolute left-4 top-3.5 text-slate-400" size={20}/>
-                        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari nama user..." className="w-full p-3 pl-12 rounded-2xl bg-white/60 border border-white/40 focus:bg-white transition-all outline-none font-medium text-slate-700 placeholder-slate-400" />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {filtered.length === 0 ? <div className="col-span-full text-center py-10 text-slate-400 font-medium">Tidak ada user ditemukan</div> : filtered.map(u => (
-                            <div key={u.id} className={`glass-card p-4 rounded-2xl flex flex-col gap-3 group animate-pop hover:shadow-lg transition-all ${u.isActive === false ? 'opacity-60 grayscale' : ''}`}>
-                                <div className="flex items-center justify-between w-full">
-                                    <div className="flex items-center gap-3">
-                                        <Avatar name={u.name} seed={u.avatarSeed} style={u.avatarStyle} size="sm" />
-                                        <div>
-                                            <p className="font-bold text-slate-800 text-sm">{u.name}</p>
-                                            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${u.role === 'ADMIN' ? 'bg-rose-100 text-rose-600' : u.role === 'TEACHER' ? 'bg-amber-100 text-amber-600' : 'bg-indigo-100 text-indigo-600'}`}>{u.role}</span>
-                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${u.gender === 'Perempuan' ? 'bg-pink-100 text-pink-600' : 'bg-blue-100 text-blue-600'}`}>{u.gender === 'Perempuan' ? 'P' : 'L'}</span>
-                                                {(u.role === 'STUDENT' || u.role === 'TEACHER') && <span className="text-[10px] text-slate-400 font-medium">• {u.className}</span>}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="flex gap-1">
-                                        <button onClick={() => handleEdit(u)} className="w-8 h-8 flex items-center justify-center rounded-full bg-blue-50 text-blue-500 hover:bg-blue-100 transition-colors" title="Edit User"><Edit size={14}/></button>
-                                        <button onClick={() => handleDelete(u.id)} className="w-8 h-8 flex items-center justify-center rounded-full bg-red-50 text-red-500 hover:bg-red-100 transition-colors" title="Hapus User"><Trash2 size={14}/></button>
-                                    </div>
-                                </div>
-                                
-                                <div className="grid grid-cols-2 gap-2 border-t border-slate-100 pt-3">
-                                    <button onClick={() => handleResetPin(u)} className="flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-slate-50 text-[10px] font-bold text-slate-600 hover:bg-slate-100">
-                                        <Key size={12}/> Reset PIN
-                                    </button>
-                                    <button onClick={() => handleToggleStatus(u)} className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[10px] font-bold ${u.isActive !== false ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' : 'bg-slate-200 text-slate-500 hover:bg-slate-300'}`}>
-                                        {u.isActive !== false ? <><Power size={12}/> Aktif</> : <><Power size={12}/> Nonaktif</>}
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            );
-        };
-
         const Dashboard = ({ user }) => {
-            const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+            const [date, setDate] = useState(getLocalDate());
             const [att, setAtt] = useState([]);
             const [activities, setActivities] = useState([]);
             const [users, setUsers] = useState([]);
@@ -1222,7 +1254,7 @@
             
             const [bcTitle, setBcTitle] = useState('');
             const [bcMsg, setBcMsg] = useState('');
-            const [bcDate, setBcDate] = useState(new Date().toISOString().split('T')[0]); 
+            const [bcDate, setBcDate] = useState(getLocalDate()); 
             const [bcTime, setBcTime] = useState(new Date().toTimeString().slice(0,5)); 
             const [pendingBroadcasts, setPendingBroadcasts] = useState([]); 
 
@@ -1231,50 +1263,44 @@
             const [aiDevotional, setAiDevotional] = useState(null);
             const [loadingDevo, setLoadingDevo] = useState(false);
             
-            // FIX: Tambahkan Real-time Listener (onSnapshot)
             useEffect(() => {
-                // Listener untuk Presensi
-                const unsubscribeAtt = onSnapshot(collection(db, 'attendance'), (snapshot) => {
+                if (!auth.currentUser) return; 
+
+                const unsubscribeAtt = onSnapshot(getCollectionRef('attendance'), (snapshot) => {
                     const data = snapshot.docs.map(doc => doc.data());
                     localStorage.setItem(STORAGE.ATTENDANCE, JSON.stringify(data));
                     setAtt(data.filter(r => r.date === date));
-                });
+                }, (error) => { console.error("Error fetching attendance:", error); });
 
-                // Listener untuk Aktivitas
-                const unsubscribeAct = onSnapshot(collection(db, 'activities'), (snapshot) => {
+                const unsubscribeAct = onSnapshot(getCollectionRef('activities'), (snapshot) => {
                     const data = snapshot.docs.map(doc => doc.data());
-                    // Sort descending
                     data.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
                     localStorage.setItem(STORAGE.ACTIVITIES, JSON.stringify(data));
                     setActivities(data);
-                });
+                }, (error) => { console.error("Error fetching activities:", error); });
 
                 let unsubscribeUsers = () => {};
-                // Admin perlu live update user untuk melihat status login
                 if (user.role === 'ADMIN') {
-                     unsubscribeUsers = onSnapshot(collection(db, 'users'), (snapshot) => {
+                     unsubscribeUsers = onSnapshot(getCollectionRef('users'), (snapshot) => {
                         const data = snapshot.docs.map(doc => doc.data());
                         localStorage.setItem(STORAGE.USERS, JSON.stringify(data));
                         setUsers(data);
-                    });
+                    }, (error) => { console.error("Error fetching users:", error); });
                 } else {
-                    // Non-admin load from LS normally
                     setUsers(DB.get(STORAGE.USERS, DEFAULT_USERS));
                 }
 
-                // Initial load from LS for immediate display before sync
                 const allAtt = DB.get(STORAGE.ATTENDANCE, []);
                 setAtt(allAtt.filter(r => r.date === date));
                 setActivities(DB.activities.get());
                 
-                // Load Pending Broadcasts
                 const allNotifs = DB.notifications.get();
                 setPendingBroadcasts(allNotifs.filter(n => n.status === 'scheduled' && new Date(n.scheduledTime) > new Date()));
 
                 return () => {
-                    unsubscribeAtt();
-                    unsubscribeAct();
-                    unsubscribeUsers();
+                    if(unsubscribeAtt) unsubscribeAtt();
+                    if(unsubscribeAct) unsubscribeAct();
+                    if(unsubscribeUsers) unsubscribeUsers();
                 };
             }, [date, user.role]); 
 
@@ -1702,7 +1728,7 @@
                     <div className="space-y-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         <h3 className="font-bold text-slate-700 px-2 col-span-full">Baru Hadir</h3>
                         {att.map((r, i) => (
-                            <div key={i} className="glass-card p-4 rounded-2xl flex items-center justify-between animate-pop" style={{animationDelay: `${i*100}ms`}}>
+                            <div key={i} className="glass-card p-4 rounded-2xl flex items-center justify-between animate-pop">
                                 <div className="flex items-center gap-4">
                                     <Avatar name={r.userName} seed={r.avatarSeed} style={r.avatarStyle} size="sm" />
                                     <div>
@@ -1764,7 +1790,9 @@
                     if (isAllowed) {
                         const ok = DB.att.add({
                             id: Date.now(), userId: u.id, userName: u.name, className: u.className || '-', role: u.role,
-                            date: new Date().toISOString().split('T')[0], timestamp: new Date().toISOString(),
+                            // FIX: GUNAKAN getLocalDate() AGAR TERSIMPAN TANGGAL LOKAL (WIB)
+                            date: getLocalDate(), 
+                            timestamp: new Date().toISOString(),
                             avatarSeed: u.avatarSeed,
                             avatarStyle: u.avatarStyle || 'avataaars'
                         });
@@ -1906,30 +1934,27 @@
             const [aiDevotional, setAiDevotional] = useState(null);
             const [loadingDevo, setLoadingDevo] = useState(false);
             
-            // Menggunakan onSnapshot juga untuk Siswa agar melihat update realtime (Jadwal/Materi/History)
             useEffect(() => {
-                // Listener Attendance
-                const unsubAtt = onSnapshot(collection(db, 'attendance'), (snap) => {
+                if (!auth.currentUser) return; 
+                const unsubAtt = onSnapshot(getCollectionRef('attendance'), (snap) => {
                     const data = snap.docs.map(d => d.data());
                     const myAtt = data.filter(a => a.userId === user.id).sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
                     setHistory(myAtt);
-                });
+                }, (e) => console.error(e));
                 
-                // Listener Materials
-                const unsubMat = onSnapshot(collection(db, 'materials'), (snap) => {
+                const unsubMat = onSnapshot(getCollectionRef('materials'), (snap) => {
                     const data = snap.docs.map(d => d.data());
                     const myMat = data.filter(m => m.className === user.className).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
                     setMaterials(myMat);
-                });
+                }, (e) => console.error(e));
 
-                // Listener Schedules
-                const unsubSched = onSnapshot(collection(db, 'schedules'), (snap) => {
+                const unsubSched = onSnapshot(getCollectionRef('schedules'), (snap) => {
                     const data = snap.docs.map(d => d.data());
                     const mySched = data.filter(s => s.className === user.className || s.className === 'ALL');
                     setSchedules(mySched);
-                });
+                }, (e) => console.error(e));
 
-                return () => { unsubAtt(); unsubMat(); unsubSched(); };
+                return () => { if(unsubAtt) unsubAtt(); if(unsubMat) unsubMat(); if(unsubSched) unsubSched(); };
             }, [user]);
 
             const generateDevotional = async () => {
@@ -2145,9 +2170,9 @@
             
             // Listen notif realtime
             useEffect(() => {
-                const unsubNotif = onSnapshot(collection(db, 'notifications'), (snap) => {
+                if (!auth.currentUser) return; // Guard
+                const unsubNotif = onSnapshot(getCollectionRef('notifications'), (snap) => {
                     const data = snap.docs.map(d => d.data());
-                    // Simpan ke local storage agar sync
                     localStorage.setItem(STORAGE.NOTIFICATIONS, JSON.stringify(data));
                     
                     if (data.length > 0) {
@@ -2157,8 +2182,8 @@
                              setHasNewNotif(true);
                         }
                     }
-                });
-                return () => unsubNotif();
+                }, (e) => console.error(e));
+                return () => { if(unsubNotif) unsubNotif(); };
             }, []);
             
             return (
@@ -2216,8 +2241,22 @@
             
             useEffect(() => {
                 const initApp = async () => {
-                    await syncFromFirestore(); 
-                    setIsReady(true); 
+                    try {
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                        await syncFromFirestore(); 
+                    } catch (e) {
+                        console.error("Initialization Error:", e);
+                        if (e.code === 'auth/configuration-not-found' || e.code === 'auth/admin-restricted-operation') {
+                            alert("PERINGATAN: Mode Offline (Cek Config Firebase).");
+                        }
+                    } finally {
+                        setIsReady(true);
+                    }
+                    
                     const s = DB.get(STORAGE.SESSION); 
                     if(s) {
                         const users = DB.get(STORAGE.USERS, DEFAULT_USERS);
@@ -2231,6 +2270,7 @@
                 };
                 initApp();
             }, []);
+
             const login = (u) => { setUser(u); DB.set(STORAGE.SESSION, u); };
             const logout = () => { 
                 setUser(null);
@@ -2241,6 +2281,7 @@
                 const success = DB.users.update(updatedUser);
                 if (success) { setUser(updatedUser); DB.set(STORAGE.SESSION, updatedUser); }
             };
+            
             if (!isReady) return <LoadingScreen />;
             if (!user) return <LoginScreen onLogin={login} />;
             return <HashRouter><MainApp user={user} onLogout={logout} onUpdateUser={handleUpdateUser} /></HashRouter>;
