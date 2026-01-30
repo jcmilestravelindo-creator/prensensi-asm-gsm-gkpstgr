@@ -313,7 +313,7 @@
         // --- GEMINI AI SERVICE ---
         const GeminiService = {
             call: async (prompt) => {
-                const apiKey = ""; // API Key
+                const apiKey = "AIzaSyDR3b9r0Z7s_nd_I-ir0ywgIJlP0TGKpgs";
                 const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
                 const payload = {
                     contents: [{ parts: [{ text: prompt }] }],
@@ -376,21 +376,12 @@
                 }
             },
             att: {
-                // REBUILD: Logika untuk menambah kehadiran dengan pengecekan ganda yang kuat
                 add: (record) => {
                     const all = DB.get(STORAGE.ATTENDANCE, []);
-                    // Cek duplikat berdasarkan ID user dan TANGGAL HARI INI
-                    const isDuplicate = all.some(r => r.userId === record.userId && r.date === record.date);
-                    
-                    if (isDuplicate) {
-                        return { success: false, reason: 'duplicate' };
-                    }
-                    
-                    // Simpan data
-                    const newAttendance = [...all, record];
-                    DB.set(STORAGE.ATTENDANCE, newAttendance);
+                    if (all.some(r => r.userId === record.userId && r.date === record.date)) return false;
+                    DB.set(STORAGE.ATTENDANCE, [...all, record]);
                     pushToFirestore('attendance', record, record.id);
-                    return { success: true, reason: 'ok' };
+                    return true;
                 }
             },
             materials: {
@@ -1276,38 +1267,9 @@
                 if (!auth.currentUser) return; 
 
                 const unsubscribeAtt = onSnapshot(getCollectionRef('attendance'), (snapshot) => {
-                    // 1. Ambil data terbaru dari Server
-                    const serverData = snapshot.docs.map(doc => doc.data());
-                    
-                    // --- SMART MERGE LOGIC (PERBAIKAN) ---
-                    // Tujuannya: Mencegah data hilang (reset ke 0) saat koneksi lambat
-                    
-                    // 2. Ambil data lokal saat ini
-                    const localData = DB.get(STORAGE.ATTENDANCE, []);
-                    
-                    // 3. Buat daftar ID dari server untuk pengecekan cepat
-                    const serverIds = new Set(serverData.map(d => String(d.id)));
-                    
-                    // 4. Gunakan data server sebagai basis utama (Source of Truth)
-                    const mergedData = [...serverData];
-                    
-                    // 5. Cek data lokal: Jika ada data HARI INI yang belum masuk server (Pending), pertahankan!
-                    const todayStr = getLocalDate();
-                    
-                    localData.forEach(localItem => {
-                        // Syarat mempertahankan data lokal:
-                        // a. Tanggalnya hari ini (agar tidak memunculkan data lama yang sudah dihapus)
-                        // b. ID-nya belum ada di list server
-                        if (localItem.date === todayStr && !serverIds.has(String(localItem.id))) {
-                            mergedData.push(localItem);
-                        }
-                    });
-
-                    // 6. Simpan hasil gabungan (Server + Pending Local) ke localStorage
-                    localStorage.setItem(STORAGE.ATTENDANCE, JSON.stringify(mergedData));
-                    
-                    // 7. Update tampilan UI dengan data gabungan
-                    setAtt(mergedData.filter(r => r.date === date));
+                    const data = snapshot.docs.map(doc => doc.data());
+                    localStorage.setItem(STORAGE.ATTENDANCE, JSON.stringify(data));
+                    setAtt(data.filter(r => r.date === date));
                 }, (error) => { console.error("Error fetching attendance:", error); });
 
                 const unsubscribeAct = onSnapshot(getCollectionRef('activities'), (snapshot) => {
@@ -1774,7 +1736,7 @@
                                         <p className="text-xs text-slate-500 font-semibold">{r.className}</p>
                                     </div>
                                 </div>
-                                <span className="bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full text-xs font-bold">{new Date(r.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
+                                <span className="bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full text-[10px] font-bold">{new Date(r.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
                             </div>
                         ))}
                         {att.length === 0 && <p className="text-center text-slate-400 py-8 text-sm col-span-full">Menunggu scan pertama...</p>}
@@ -1791,35 +1753,22 @@
             const [txt, setTxt] = useState('');
             const ref = useRef(null);
             
-            // REBUILD: Logika Scan yang lebih robust untuk input manual dan QR
             const onScan = (code) => {
-                if (status.type !== 'idle' || !code) return;
-                
-                // Pause scanner jika aktif
+                if (status.type !== 'idle') return;
                 try {
                     if(ref.current && ref.current.getState() === 2) {
                         ref.current.pause();
                     }
                 } catch(e) { console.log("Pause error:", e); }
 
-                // Bersihkan input (trim spasi) agar pencarian akurat
-                const cleanCode = typeof code === 'string' ? code.trim() : code;
-
                 const users = DB.get(STORAGE.USERS, DEFAULT_USERS);
-                
-                // Cari user berdasarkan QR, ID, atau Nama (Case Insensitive)
-                const u = users.find(x => 
-                    x.qrCode === cleanCode || 
-                    x.id === cleanCode || 
-                    x.name.toLowerCase() === cleanCode.toLowerCase()
-                );
+                const u = users.find(x => x.qrCode === code || x.id === code || x.name.toLowerCase() === code.toLowerCase());
                 
                 if (!u) {
                     setStatus({ type: 'err', msg: 'Data Tidak Ditemukan' });
                 } else {
                     let isAllowed = false;
 
-                    // Logika Permission (Siapa boleh scan siapa)
                     if (user.role === 'ADMIN') {
                         isAllowed = true;
                     } else if (user.role === 'TEACHER') {
@@ -1839,30 +1788,19 @@
                     }
 
                     if (isAllowed) {
-                        // REBUILD: Menggunakan fungsi add yang mengembalikan status object
-                        const result = DB.att.add({
-                            id: Date.now(), 
-                            userId: u.id, 
-                            userName: u.name, 
-                            className: u.className || '-', 
-                            role: u.role,
-                            date: getLocalDate(), // Pastikan tanggal konsisten
+                        const ok = DB.att.add({
+                            id: Date.now(), userId: u.id, userName: u.name, className: u.className || '-', role: u.role,
+                            // FIX: GUNAKAN getLocalDate() AGAR TERSIMPAN TANGGAL LOKAL (WIB)
+                            date: getLocalDate(), 
                             timestamp: new Date().toISOString(),
                             avatarSeed: u.avatarSeed,
                             avatarStyle: u.avatarStyle || 'avataaars'
                         });
-
-                        if (result.success) {
-                             DB.activities.add(user.name, `Memindai kehadiran ${u.name} (${u.role})`);
-                             setStatus({ type: 'ok', msg: `Berhasil: ${u.name}` });
-                        } else {
-                             // Handle duplicate or error
-                             setStatus({ type: 'err', msg: result.reason === 'duplicate' ? 'Sudah Absen Hari Ini' : 'Gagal Menyimpan' });
-                        }
+                        if (ok) DB.activities.add(user.name, `Memindai kehadiran ${u.name} (${u.role})`);
+                        setStatus(ok ? { type: 'ok', msg: `Berhasil: ${u.name}` } : { type: 'err', msg: 'Sudah Absen Hari Ini' });
                     }
                 }
                 
-                // Resume Scanner / Reset Status
                 setTimeout(() => { 
                     setStatus({ type: 'idle', msg: '' }); 
                     try { 
@@ -2356,4 +2294,3 @@
     </script>
 </body>
 </html>
-
