@@ -148,7 +148,7 @@
             LayoutDashboard, QrCode, Users, BarChart3, LogOut, Church, CreditCard,
             CheckCircle, AlertCircle, Camera, Trash2, Download, Search, Upload,
             ChevronRight, Calendar, User, ShieldCheck, Sparkles, Zap, Plus, X, RefreshCw, BookOpen, PenTool,
-            Bell, Activity, MessageSquare, Send, Radio, TrendingUp, Briefcase, GraduationCap, Clock, FileText, CalendarDays, MapPin, Edit, BrainCircuit, Cloud, CloudOff, FileSpreadsheet, File
+            Bell, Activity, MessageSquare, Send, Radio, TrendingUp, Briefcase, GraduationCap, Clock, FileText, CalendarDays, MapPin, Edit, BrainCircuit, Cloud, CloudOff, FileSpreadsheet, File, Lock, Key, Power, Eye
         } from 'lucide-react';
         import { BarChart, Bar, ResponsiveContainer, PieChart, Pie, Cell, Tooltip, XAxis, YAxis, CartesianGrid } from 'recharts';
         import QRCode from 'react-qr-code';
@@ -227,7 +227,6 @@
             "Yeremia 29:11 - Sebab Aku ini mengetahui rancangan-rancangan apa yang ada pada-Ku mengenai kamu."
         ];
         
-        // --- DAFTAR AVATAR KHUSUS ---
         const ML_HEROES = [
             "Alucard", "Miya", "Layla", "Zilong", "Tigreal", "Nana", "Eudora", "Gord",
             "Saber", "Balmond", "Akai", "Franco", "Chou", "Gusion", "Fanny", "Lesley"
@@ -249,11 +248,12 @@
             NOTIFICATIONS: 'gkps_notif_v3',
             SCHEDULES: 'gkps_sched_v3' 
         };
+        // Added isActive: true to defaults
         const DEFAULT_USERS = [
-            { id: '1', name: 'Admin Utama', role: 'ADMIN', qrCode: 'ADMIN-001', gender: 'Laki-Laki', pin: 'admin123' },
-            { id: '2', name: 'Guru Sekolah Minggu', role: 'TEACHER', className: 'Kelas Daud', qrCode: 'GURU-001', gender: 'Perempuan', pin: '123456' },
-            { id: '3', name: 'Timothy Simanjuntak', role: 'STUDENT', className: 'Kelas Daud', qrCode: 'S-001', gender: 'Laki-Laki', pin: '123456' },
-            { id: '4', name: 'Sarah Damanik', role: 'STUDENT', className: 'Kelas Ester', qrCode: 'S-002', gender: 'Perempuan', pin: '123456' },
+            { id: '1', name: 'Admin Utama', role: 'ADMIN', qrCode: 'ADMIN-001', gender: 'Laki-Laki', pin: 'admin123', isActive: true },
+            { id: '2', name: 'Guru Sekolah Minggu', role: 'TEACHER', className: 'Kelas Daud', qrCode: 'GURU-001', gender: 'Perempuan', pin: '123456', isActive: true },
+            { id: '3', name: 'Timothy Simanjuntak', role: 'STUDENT', className: 'Kelas Daud', qrCode: 'S-001', gender: 'Laki-Laki', pin: '123456', isActive: true },
+            { id: '4', name: 'Sarah Damanik', role: 'STUDENT', className: 'Kelas Ester', qrCode: 'S-002', gender: 'Perempuan', pin: '123456', isActive: true },
         ];
         const DEFAULT_CLASSES = [
             { id: 'c1', name: 'Kelas Daud', desc: '4-6 Tahun' },
@@ -430,7 +430,6 @@
             );
         };
 
-        // --- MODIFIED AVATAR COMPONENT ---
         const Avatar = ({ name, seed, style = 'avataaars', size = 'md', className='', onClick }) => {
             const s = size === 'lg' ? 'w-16 h-16 text-2xl' : size === 'xl' ? 'w-24 h-24 text-4xl' : 'w-10 h-10 text-sm';
             const avatarSeed = seed || name;
@@ -720,7 +719,9 @@
 
                             {/* Ganti PIN */}
                             <div className="mb-4">
-                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">PIN Keamanan (6 Digit)</label>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">
+                                    {user.role === 'ADMIN' ? 'Ganti Password/PIN Admin' : 'PIN Keamanan (6 Digit)'}
+                                </label>
                                 <input type="text" maxLength="6" value={newPin} onChange={e => setNewPin(e.target.value.replace(/\D/g, ''))} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-center font-bold text-slate-700 tracking-[0.5em] focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="000000" />
                             </div>
                         </div>
@@ -814,6 +815,9 @@
             const [pw, setPw] = useState('');
             const [secretCount, setSecretCount] = useState(0);
             const [showAdmin, setShowAdmin] = useState(false); 
+            // New state for Forgot Password
+            const [showForgot, setShowForgot] = useState(false);
+            const [recoveryKey, setRecoveryKey] = useState('');
 
             useEffect(() => setUsers(DB.get(STORAGE.USERS, DEFAULT_USERS)), []);
             const handleSecretTrigger = () => {
@@ -838,6 +842,7 @@
                 } else {
                     const u = users.find(x => x.id === selected);
                     if (u) {
+                        if (u.isActive === false) return alert("Akun ini telah dinonaktifkan oleh Admin.");
                         if (u.pin && u.pin === pw) {
                             DB.activities.add(u.name, 'Login ke sistem');
                             onLogin(u);
@@ -849,6 +854,26 @@
                     }
                 }
             };
+
+            const handleForgot = () => {
+                if (recoveryKey === 'GKPS2025') { // Kunci rahasia sederhana
+                    const admin = users.find(u => u.role === 'ADMIN');
+                    if(admin) {
+                        alert("Reset Berhasil! Password Admin kembali ke: admin123");
+                        // Logika reset (simulasi, karena admin di hardcode di DEFAULT_USERS, tapi jika ada di localstorage, kita update)
+                        // Karena admin login logic di atas di-hardcode 'admin123', ini hanya simulasi UX atau jika sistem diubah ke DB based admin.
+                        // Namun jika user '1' adalah admin di DB:
+                        const updatedAdmin = { ...admin, pin: 'admin123' };
+                        DB.users.update(updatedAdmin);
+                    } else {
+                        alert("Reset ke Default: Gunakan 'admin123'");
+                    }
+                    setShowForgot(false);
+                } else {
+                    alert("Recovery Key Salah!");
+                }
+            };
+
             const modes = showAdmin ? ['TEACHER', 'STUDENT', 'ADMIN'] : ['TEACHER', 'STUDENT'];
             return (
                 <div className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden">
@@ -878,7 +903,7 @@
                                         <select value={selected} onChange={e => setSelected(e.target.value)}
                                             className="w-full p-4 pl-5 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-700 appearance-none shadow-sm transition-all hover:border-indigo-300">
                                             <option value="">Pilih Nama Anda...</option>
-                                            {users.filter(u => u.role === mode).map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+                                            {users.filter(u => u.role === mode && u.isActive !== false).map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
                                         </select>
                                         <div className="absolute right-5 top-4 pointer-events-none text-slate-400"><ChevronRight className="rotate-90"/></div>
                                     </div>
@@ -891,13 +916,33 @@
                                     />
                                 </div>
                             ) : (
-                                <input type="password" placeholder="Password Admin" value={pw} onChange={e => setPw(e.target.value)}
-                                    className="w-full p-4 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-700 shadow-sm" />
+                                <div>
+                                    <input type="password" placeholder="Password Admin" value={pw} onChange={e => setPw(e.target.value)}
+                                        className="w-full p-4 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-700 shadow-sm" />
+                                    <div className="text-right mt-2">
+                                        <button type="button" onClick={() => setShowForgot(true)} className="text-xs text-indigo-500 font-bold hover:underline">Lupa Password?</button>
+                                    </div>
+                                </div>
                             )}
                             <Button variant="primary">Masuk Aplikasi <Sparkles size={18} /></Button>
                         </form>
                     </div>
                     <p className="absolute bottom-6 text-xs text-slate-400 font-medium opacity-60">GKPS Digital System v3.0 (Firebase)</p>
+
+                    {/* Modal Lupa Password */}
+                    {showForgot && (
+                        <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+                            <div className="bg-white p-6 rounded-3xl w-full max-w-xs animate-pop shadow-2xl">
+                                <h3 className="text-lg font-bold text-slate-800 mb-2">Reset Password Admin</h3>
+                                <p className="text-xs text-slate-500 mb-4">Masukkan Recovery Key dari Developer untuk mereset password ke default.</p>
+                                <input value={recoveryKey} onChange={e=>setRecoveryKey(e.target.value)} placeholder="Recovery Key" className="w-full p-3 border rounded-xl text-sm font-bold mb-4 outline-none focus:border-indigo-500"/>
+                                <div className="flex gap-2">
+                                    <Button onClick={handleForgot}>Reset</Button>
+                                    <Button variant="secondary" onClick={() => setShowForgot(false)}>Batal</Button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             );
         };
@@ -908,34 +953,91 @@
             const [form, setForm] = useState({ name: '', role: 'STUDENT', className: 'Kelas Daud', gender: 'Laki-Laki', pin: '123456' });
             const [isFormOpen, setIsFormOpen] = useState(false);
             const [isUploading, setIsUploading] = useState(false);
+            const [editingId, setEditingId] = useState(null); // ID user yang sedang diedit
             const fileInputRef = useRef(null);
+            
             useEffect(() => { setUsers(DB.get(STORAGE.USERS, DEFAULT_USERS)); }, []);
             
             const handleSubmit = (e) => {
                 e.preventDefault();
                 if(!form.name) return;
-                const hasClass = form.role === 'STUDENT' || form.role === 'TEACHER';
-                const newUser = {
-                    id: Date.now().toString(), 
-                    name: form.name, 
-                    role: form.role,
-                    className: hasClass ? form.className : '-',
-                    gender: form.gender,
-                    pin: form.pin || '123456', 
-                    qrCode: `${form.role.substring(0,1)}-${Date.now().toString().slice(-4)}`,
-                    avatarStyle: 'avataaars'
-                };
-                DB.users.add(newUser); 
                 
+                if (editingId) {
+                    // MODE EDIT
+                    const updatedUser = { 
+                        ...form, 
+                        id: editingId,
+                        // Pastikan field lain yg tidak di form tetap ada (avatar, qrCode, dll)
+                        ...users.find(u => u.id === editingId) 
+                    };
+                    // Override form fields again just in case
+                    updatedUser.name = form.name;
+                    updatedUser.role = form.role;
+                    updatedUser.className = (form.role === 'STUDENT' || form.role === 'TEACHER') ? form.className : '-';
+                    updatedUser.gender = form.gender;
+                    updatedUser.pin = form.pin;
+
+                    DB.users.update(updatedUser);
+                    alert("Data user berhasil diperbarui!");
+                    setEditingId(null);
+                } else {
+                    // MODE TAMBAH BARU
+                    const hasClass = form.role === 'STUDENT' || form.role === 'TEACHER';
+                    const newUser = {
+                        id: Date.now().toString(), 
+                        name: form.name, 
+                        role: form.role,
+                        className: hasClass ? form.className : '-',
+                        gender: form.gender,
+                        pin: form.pin || '123456', 
+                        qrCode: `${form.role.substring(0,1)}-${Date.now().toString().slice(-4)}`,
+                        avatarStyle: 'avataaars',
+                        isActive: true
+                    };
+                    DB.users.add(newUser); 
+                    alert(`User ${newUser.name} berhasil ditambahkan dengan PIN: ${newUser.pin}`);
+                }
+                
+                // Refresh List
                 const updated = DB.get(STORAGE.USERS);
                 setUsers(updated);
                 
-                DB.activities.add('Admin', `Menambah user baru: ${newUser.name} (${newUser.role})`);
-                setForm({ ...form, name: '', pin: '123456' });
+                // Reset Form
+                setForm({ name: '', role: 'STUDENT', className: 'Kelas Daud', gender: 'Laki-Laki', pin: '123456' });
                 setIsFormOpen(false);
-                alert(`User ${newUser.name} berhasil ditambahkan dengan PIN: ${newUser.pin}`);
             };
             
+            const handleEdit = (user) => {
+                setForm({
+                    name: user.name,
+                    role: user.role,
+                    className: user.className !== '-' ? user.className : 'Kelas Daud',
+                    gender: user.gender,
+                    pin: user.pin
+                });
+                setEditingId(user.id);
+                setIsFormOpen(true);
+            };
+
+            const handleResetPin = (user) => {
+                if(confirm(`Reset PIN untuk ${user.name} menjadi 123456?`)) {
+                    const updatedUser = { ...user, pin: '123456' };
+                    DB.users.update(updatedUser);
+                    setUsers(DB.get(STORAGE.USERS));
+                    alert("PIN berhasil direset!");
+                }
+            };
+
+            const handleToggleStatus = (user) => {
+                const newStatus = !user.isActive; // Toggle
+                const action = newStatus ? "Mengaktifkan" : "Menonaktifkan";
+                if(confirm(`${action} akun ${user.name}?`)) {
+                    const updatedUser = { ...user, isActive: newStatus };
+                    DB.users.update(updatedUser);
+                    setUsers(DB.get(STORAGE.USERS));
+                }
+            };
+
             const handleImportClick = () => {
                 fileInputRef.current.click();
             };
@@ -976,7 +1078,8 @@
                                 name: name, role: normalizedRole, className: finalClass, gender: finalGender,
                                 pin: '123456', 
                                 qrCode: `${normalizedRole.substring(0,1)}-${Date.now().toString().slice(-4)}-${i}`,
-                                avatarStyle: 'avataaars'
+                                avatarStyle: 'avataaars',
+                                isActive: true
                             };
                             try {
                                 await pushToFirestore('users', newUser, newUser.id);
@@ -1020,7 +1123,7 @@
                                 {isUploading ? <RefreshCw size={14} className="animate-spin"/> : <Upload size={14}/>} 
                                 <span className="hidden md:inline">{isUploading ? 'Mengupload...' : 'Import'}</span>
                             </button>
-                            <button onClick={() => setIsFormOpen(!isFormOpen)} className="bg-white/80 backdrop-blur border border-white p-2 px-3 rounded-xl text-xs font-bold text-indigo-600 shadow-sm flex items-center gap-1 hover:bg-indigo-50 transition-colors">
+                            <button onClick={() => { setIsFormOpen(!isFormOpen); setEditingId(null); setForm({name: '', role: 'STUDENT', className: 'Kelas Daud', gender: 'Laki-Laki', pin: '123456'}); }} className="bg-white/80 backdrop-blur border border-white p-2 px-3 rounded-xl text-xs font-bold text-indigo-600 shadow-sm flex items-center gap-1 hover:bg-indigo-50 transition-colors">
                                 {isFormOpen ? <><X size={14}/> <span className="hidden md:inline">Tutup</span></> : <><Plus size={14}/> <span className="hidden md:inline">Tambah</span></>}
                             </button>
                         </div>
@@ -1028,7 +1131,7 @@
 
                     {isFormOpen && (
                         <div className="glass-card p-5 rounded-[2rem] mb-6 animate-pop">
-                            <h3 className="font-bold text-slate-700 mb-4">Data User Baru</h3>
+                            <h3 className="font-bold text-slate-700 mb-4">{editingId ? 'Edit Data User' : 'Data User Baru'}</h3>
                             <div className="space-y-3">
                                 <input value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="Nama Lengkap" className="w-full p-3 rounded-xl bg-white/50 border border-white focus:ring-2 focus:ring-indigo-500 outline-none font-semibold text-slate-700 placeholder-slate-400" />
                                 <input value={form.pin} onChange={e => setForm({...form, pin: e.target.value})} placeholder="Set PIN (Default: 123456)" className="w-full p-3 rounded-xl bg-white/50 border border-white focus:ring-2 focus:ring-indigo-500 outline-none font-semibold text-slate-700 placeholder-slate-400" />
@@ -1055,7 +1158,7 @@
                                         <ChevronRight className="absolute right-3 top-3.5 rotate-90 text-slate-400 w-4 h-4 pointer-events-none"/>
                                     </div>
                                 )}
-                                <Button onClick={handleSubmit}>Simpan Data</Button>
+                                <Button onClick={handleSubmit}>{editingId ? 'Update Data' : 'Simpan Data'}</Button>
                             </div>
                         </div>
                     )}
@@ -1067,20 +1170,34 @@
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {filtered.length === 0 ? <div className="col-span-full text-center py-10 text-slate-400 font-medium">Tidak ada user ditemukan</div> : filtered.map(u => (
-                            <div key={u.id} className="glass-card p-4 rounded-2xl flex items-center justify-between group animate-pop hover:shadow-lg transition-all">
-                                <div className="flex items-center gap-3">
-                                    <Avatar name={u.name} seed={u.avatarSeed} style={u.avatarStyle} size="sm" />
-                                    <div>
-                                        <p className="font-bold text-slate-800 text-sm">{u.name}</p>
-                                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${u.role === 'ADMIN' ? 'bg-rose-100 text-rose-600' : u.role === 'TEACHER' ? 'bg-amber-100 text-amber-600' : 'bg-indigo-100 text-indigo-600'}`}>{u.role}</span>
-                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${u.gender === 'Perempuan' ? 'bg-pink-100 text-pink-600' : 'bg-blue-100 text-blue-600'}`}>{u.gender === 'Perempuan' ? 'P' : 'L'}</span>
-                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 border border-slate-200">PIN: {u.pin}</span>
-                                            {(u.role === 'STUDENT' || u.role === 'TEACHER') && <span className="text-[10px] text-slate-400 font-medium">• {u.className}</span>}
+                            <div key={u.id} className={`glass-card p-4 rounded-2xl flex flex-col gap-3 group animate-pop hover:shadow-lg transition-all ${u.isActive === false ? 'opacity-60 grayscale' : ''}`}>
+                                <div className="flex items-center justify-between w-full">
+                                    <div className="flex items-center gap-3">
+                                        <Avatar name={u.name} seed={u.avatarSeed} style={u.avatarStyle} size="sm" />
+                                        <div>
+                                            <p className="font-bold text-slate-800 text-sm">{u.name}</p>
+                                            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${u.role === 'ADMIN' ? 'bg-rose-100 text-rose-600' : u.role === 'TEACHER' ? 'bg-amber-100 text-amber-600' : 'bg-indigo-100 text-indigo-600'}`}>{u.role}</span>
+                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${u.gender === 'Perempuan' ? 'bg-pink-100 text-pink-600' : 'bg-blue-100 text-blue-600'}`}>{u.gender === 'Perempuan' ? 'P' : 'L'}</span>
+                                                {(u.role === 'STUDENT' || u.role === 'TEACHER') && <span className="text-[10px] text-slate-400 font-medium">• {u.className}</span>}
+                                            </div>
                                         </div>
                                     </div>
+                                    <div className="flex gap-1">
+                                        <button onClick={() => handleEdit(u)} className="w-8 h-8 flex items-center justify-center rounded-full bg-blue-50 text-blue-500 hover:bg-blue-100 transition-colors" title="Edit User"><Edit size={14}/></button>
+                                        <button onClick={() => handleDelete(u.id)} className="w-8 h-8 flex items-center justify-center rounded-full bg-red-50 text-red-500 hover:bg-red-100 transition-colors" title="Hapus User"><Trash2 size={14}/></button>
+                                    </div>
                                 </div>
-                                <button onClick={() => handleDelete(u.id)} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-400 hover:bg-rose-100 hover:text-rose-500 transition-colors"><Trash2 size={16}/></button>
+                                
+                                {/* Action Buttons Row */}
+                                <div className="grid grid-cols-2 gap-2 border-t border-slate-100 pt-3">
+                                    <button onClick={() => handleResetPin(u)} className="flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-slate-50 text-[10px] font-bold text-slate-600 hover:bg-slate-100">
+                                        <Key size={12}/> Reset PIN
+                                    </button>
+                                    <button onClick={() => handleToggleStatus(u)} className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[10px] font-bold ${u.isActive !== false ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' : 'bg-slate-200 text-slate-500 hover:bg-slate-300'}`}>
+                                        {u.isActive !== false ? <><Power size={12}/> Aktif</> : <><Power size={12}/> Nonaktif</>}
+                                    </button>
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -1980,7 +2097,11 @@
                     if(s) {
                         const users = DB.get(STORAGE.USERS, DEFAULT_USERS);
                         const freshUser = users.find(u => u.id === s.id);
-                        setUser(freshUser || s);
+                        if(freshUser && freshUser.isActive !== false) {
+                            setUser(freshUser || s);
+                        } else {
+                            localStorage.removeItem(STORAGE.SESSION);
+                        }
                     } 
                 };
                 initApp();
