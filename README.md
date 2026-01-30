@@ -131,6 +131,7 @@
             "recharts": "https://esm.sh/recharts@2.12.0?deps=react@18.2.0,react-dom@18.2.0",
             "react-qr-code": "https://esm.sh/react-qr-code@2.0.12?deps=react@18.2.0",
             "firebase/app": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js",
+            "firebase/auth": "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js",
             "firebase/firestore": "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js",
             "firebase/analytics": "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js"
         }
@@ -156,36 +157,68 @@
         // --- FIREBASE INTEGRATION ---
         import { initializeApp } from "firebase/app";
         import { getAnalytics } from "firebase/analytics";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "firebase/auth";
         import { getFirestore, collection, getDocs, setDoc, doc, addDoc, updateDoc, deleteDoc, onSnapshot } from "firebase/firestore";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyDDtjCJO09qP3kwOcoctObU-qOg-GTnrTE",
-            authDomain: "sundayschoolattendance-58661.firebaseapp.com",
-            databaseURL: "https://sundayschoolattendance-58661-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "sundayschoolattendance-58661",
-            storageBucket: "sundayschoolattendance-58661.firebasestorage.app",
-            messagingSenderId: "1055300658311",
-            appId: "1:1055300658311:web:2db2708b0c8bfa5aa54422",
-            measurementId: "G-PCB8J7RRHJ"
-        };
+        // CONFIGURATION HANDLING
+        // Cobalah menggunakan config environment jika tersedia (untuk preview),
+        // jika tidak, gunakan config hardcoded milik user.
+        let firebaseConfig;
+        try {
+            firebaseConfig = JSON.parse(__firebase_config);
+        } catch (e) {
+            // Fallback ke config user jika variabel environment tidak ada
+            firebaseConfig = {
+                apiKey: "AIzaSyDDtjCJO09qP3kwOcoctObU-qOg-GTnrTE",
+                authDomain: "sundayschoolattendance-58661.firebaseapp.com",
+                databaseURL: "https://sundayschoolattendance-58661-default-rtdb.asia-southeast1.firebasedatabase.app",
+                projectId: "sundayschoolattendance-58661",
+                storageBucket: "sundayschoolattendance-58661.firebasestorage.app",
+                messagingSenderId: "1055300658311",
+                appId: "1:1055300658311:web:2db2708b0c8bfa5aa54422",
+                measurementId: "G-PCB8J7RRHJ"
+            };
+        }
 
         const app = initializeApp(firebaseConfig);
         const analytics = getAnalytics(app);
+        const auth = getAuth(app); 
         const db = getFirestore(app);
+        
+        // --- APP ID FOR PATHING ---
+        // PENTING: Gunakan App ID ini untuk path Firestore agar tidak kena error "Missing permissions"
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
-        // --- TIMEZONE FIX HELPER ---
-        // PENTING: Fungsi ini memastikan tanggal yang diambil adalah tanggal LOKAL pengguna, bukan UTC.
-        // Ini memperbaiki bug dimana scan di pagi hari (00:00 - 06:59 WIB) tercatat sebagai hari kemarin.
+        // Helper untuk mendapatkan referensi koleksi di path yang benar
+        const getCollectionRef = (colName) => {
+            return collection(db, 'artifacts', appId, 'public', 'data', colName);
+        };
+
+        // Helper untuk mendapatkan referensi dokumen di path yang benar
+        const getDocRef = (colName, docId) => {
+            return doc(db, 'artifacts', appId, 'public', 'data', colName, String(docId));
+        };
+
+        // --- TIMEZONE FIX HELPER (CRITICAL FOR ATTENDANCE) ---
+        // Memaksa waktu server/aplikasi mengikuti Waktu Indonesia Barat (GMT+7)
+        // Apapun settingan jam di HP user, data yang masuk akan tetap dianggap tanggal WIB.
         const getLocalDate = () => {
-            const d = new Date();
-            const year = d.getFullYear();
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
+            const now = new Date();
+            // Konversi waktu saat ini ke UTC Timestamp
+            const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+            // Tambahkan offset 7 Jam (WIB) secara manual
+            const wibTime = new Date(utc + (7 * 3600000));
+            
+            const year = wibTime.getFullYear();
+            const month = String(wibTime.getMonth() + 1).padStart(2, '0');
+            const day = String(wibTime.getDate()).padStart(2, '0');
             return `${year}-${month}-${day}`;
         };
 
         // --- FIREBASE HELPERS ---
         const syncFromFirestore = async () => {
+            if (!auth.currentUser) return false; // Jangan sync jika offline
+            
             const collections = [
                 { name: 'users', key: 'gkps_users_v3' },
                 { name: 'attendance', key: 'gkps_att_v3' },
@@ -197,7 +230,7 @@
             let hasData = false;
             try {
                 for (const col of collections) {
-                    const querySnapshot = await getDocs(collection(db, col.name));
+                    const querySnapshot = await getDocs(getCollectionRef(col.name));
                     const data = [];
                     querySnapshot.forEach((doc) => {
                         data.push(doc.data());
@@ -216,15 +249,23 @@
 
         const pushToFirestore = async (collectionName, data, id) => {
             try {
-                await setDoc(doc(db, collectionName, String(id)), data);
+                // Pastikan user terautentikasi sebelum menulis
+                if (auth.currentUser) {
+                    await setDoc(getDocRef(collectionName, id), data);
+                    console.log(`Berhasil simpan ke ${collectionName}:`, id);
+                } else {
+                    console.warn("Offline: Data disimpan lokal saja.");
+                }
             } catch (e) {
-                console.error("Gagal push ke Firestore:", e);
+                console.error(`Gagal push ke Firestore (${collectionName}):`, e);
             }
         };
 
         const deleteFromFirestore = async (collectionName, id) => {
             try {
-                await deleteDoc(doc(db, collectionName, String(id)));
+                if (auth.currentUser) {
+                    await deleteDoc(getDocRef(collectionName, id));
+                }
             } catch (e) {
                 console.error("Gagal hapus di Firestore:", e);
             }
@@ -253,7 +294,7 @@
             USERS: 'gkps_users_v3', 
             ATTENDANCE: 'gkps_att_v3', 
             CLASSES: 'gkps_cls_v3', 
-            SESSION: 'gkps_sess_v3',
+            SESSION: 'gkps_sess_v3', 
             MATERIALS: 'gkps_mat_v3',
             ACTIVITIES: 'gkps_act_v3', 
             NOTIFICATIONS: 'gkps_notif_v3', 
@@ -1247,28 +1288,36 @@
             // FIX: Tambahkan Real-time Listener (onSnapshot)
             useEffect(() => {
                 // Listener untuk Presensi
-                const unsubscribeAtt = onSnapshot(collection(db, 'attendance'), (snapshot) => {
+                if (!auth.currentUser) return; // Guard clause
+
+                const unsubscribeAtt = onSnapshot(getCollectionRef('attendance'), (snapshot) => {
                     const data = snapshot.docs.map(doc => doc.data());
                     localStorage.setItem(STORAGE.ATTENDANCE, JSON.stringify(data));
                     setAtt(data.filter(r => r.date === date));
+                }, (error) => {
+                    console.error("Error fetching attendance:", error);
                 });
 
                 // Listener untuk Aktivitas
-                const unsubscribeAct = onSnapshot(collection(db, 'activities'), (snapshot) => {
+                const unsubscribeAct = onSnapshot(getCollectionRef('activities'), (snapshot) => {
                     const data = snapshot.docs.map(doc => doc.data());
                     // Sort descending
                     data.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
                     localStorage.setItem(STORAGE.ACTIVITIES, JSON.stringify(data));
                     setActivities(data);
+                }, (error) => {
+                    console.error("Error fetching activities:", error);
                 });
 
                 let unsubscribeUsers = () => {};
                 // Admin perlu live update user untuk melihat status login
                 if (user.role === 'ADMIN') {
-                     unsubscribeUsers = onSnapshot(collection(db, 'users'), (snapshot) => {
+                     unsubscribeUsers = onSnapshot(getCollectionRef('users'), (snapshot) => {
                         const data = snapshot.docs.map(doc => doc.data());
                         localStorage.setItem(STORAGE.USERS, JSON.stringify(data));
                         setUsers(data);
+                    }, (error) => {
+                        console.error("Error fetching users:", error);
                     });
                 } else {
                     // Non-admin load from LS normally
@@ -1285,9 +1334,9 @@
                 setPendingBroadcasts(allNotifs.filter(n => n.status === 'scheduled' && new Date(n.scheduledTime) > new Date()));
 
                 return () => {
-                    unsubscribeAtt();
-                    unsubscribeAct();
-                    unsubscribeUsers();
+                    if(unsubscribeAtt) unsubscribeAtt();
+                    if(unsubscribeAct) unsubscribeAct();
+                    if(unsubscribeUsers) unsubscribeUsers();
                 };
             }, [date, user.role]); 
 
@@ -1777,7 +1826,7 @@
                     if (isAllowed) {
                         const ok = DB.att.add({
                             id: Date.now(), userId: u.id, userName: u.name, className: u.className || '-', role: u.role,
-                            // FIX: GUNAKAN getLocalDate() AGAR TERSIMPAN TANGGAL LOKAL
+                            // FIX: GUNAKAN getLocalDate() AGAR TERSIMPAN TANGGAL LOKAL (WIB)
                             date: getLocalDate(), 
                             timestamp: new Date().toISOString(),
                             avatarSeed: u.avatarSeed,
@@ -1924,27 +1973,28 @@
             // Menggunakan onSnapshot juga untuk Siswa agar melihat update realtime (Jadwal/Materi/History)
             useEffect(() => {
                 // Listener Attendance
-                const unsubAtt = onSnapshot(collection(db, 'attendance'), (snap) => {
+                if (!auth.currentUser) return; // Guard
+                const unsubAtt = onSnapshot(getCollectionRef('attendance'), (snap) => {
                     const data = snap.docs.map(d => d.data());
                     const myAtt = data.filter(a => a.userId === user.id).sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
                     setHistory(myAtt);
-                });
+                }, (e) => console.error(e));
                 
                 // Listener Materials
-                const unsubMat = onSnapshot(collection(db, 'materials'), (snap) => {
+                const unsubMat = onSnapshot(getCollectionRef('materials'), (snap) => {
                     const data = snap.docs.map(d => d.data());
                     const myMat = data.filter(m => m.className === user.className).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
                     setMaterials(myMat);
-                });
+                }, (e) => console.error(e));
 
                 // Listener Schedules
-                const unsubSched = onSnapshot(collection(db, 'schedules'), (snap) => {
+                const unsubSched = onSnapshot(getCollectionRef('schedules'), (snap) => {
                     const data = snap.docs.map(d => d.data());
                     const mySched = data.filter(s => s.className === user.className || s.className === 'ALL');
                     setSchedules(mySched);
-                });
+                }, (e) => console.error(e));
 
-                return () => { unsubAtt(); unsubMat(); unsubSched(); };
+                return () => { if(unsubAtt) unsubAtt(); if(unsubMat) unsubMat(); if(unsubSched) unsubSched(); };
             }, [user]);
 
             const generateDevotional = async () => {
@@ -2160,9 +2210,9 @@
             
             // Listen notif realtime
             useEffect(() => {
-                const unsubNotif = onSnapshot(collection(db, 'notifications'), (snap) => {
+                if (!auth.currentUser) return; // Guard
+                const unsubNotif = onSnapshot(getCollectionRef('notifications'), (snap) => {
                     const data = snap.docs.map(d => d.data());
-                    // Simpan ke local storage agar sync
                     localStorage.setItem(STORAGE.NOTIFICATIONS, JSON.stringify(data));
                     
                     if (data.length > 0) {
@@ -2172,8 +2222,8 @@
                              setHasNewNotif(true);
                         }
                     }
-                });
-                return () => unsubNotif();
+                }, (e) => console.error(e));
+                return () => { if(unsubNotif) unsubNotif(); };
             }, []);
             
             return (
@@ -2231,8 +2281,31 @@
             
             useEffect(() => {
                 const initApp = async () => {
-                    await syncFromFirestore(); 
-                    setIsReady(true); 
+                    try {
+                        // CRITICAL: Auth Flow
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                            console.log("Logged in with Custom Token");
+                        } else {
+                            await signInAnonymously(auth);
+                            console.log("Logged in Anonymously");
+                        }
+                        
+                        await syncFromFirestore(); 
+                    } catch (e) {
+                        console.error("Initialization Error:", e);
+                        // Jika auth gagal karena konfigurasi (Anon belum diaktifkan), beri tahu user
+                        // dan biarkan aplikasi tetap berjalan dalam mode offline
+                        if (e.code === 'auth/configuration-not-found' || e.code === 'auth/admin-restricted-operation') {
+                            alert("PERINGATAN: Fitur 'Anonymous Sign-in' belum diaktifkan di Firebase Console. Aplikasi berjalan dalam MODE OFFLINE (Data hanya tersimpan di browser ini dan tidak akan disinkronisasi ke server).");
+                        } else if (e.code === 'auth/operation-not-allowed') {
+                            alert("PERINGATAN: Operasi login tidak diizinkan. Cek setting Authentication di Firebase Console.");
+                        }
+                    } finally {
+                        // Selalu set ready agar UI tetap muncul meski auth gagal
+                        setIsReady(true);
+                    }
+                    
                     const s = DB.get(STORAGE.SESSION); 
                     if(s) {
                         const users = DB.get(STORAGE.USERS, DEFAULT_USERS);
@@ -2246,6 +2319,7 @@
                 };
                 initApp();
             }, []);
+
             const login = (u) => { setUser(u); DB.set(STORAGE.SESSION, u); };
             const logout = () => { 
                 setUser(null);
@@ -2256,6 +2330,7 @@
                 const success = DB.users.update(updatedUser);
                 if (success) { setUser(updatedUser); DB.set(STORAGE.SESSION, updatedUser); }
             };
+            
             if (!isReady) return <LoadingScreen />;
             if (!user) return <LoginScreen onLogin={login} />;
             return <HashRouter><MainApp user={user} onLogout={logout} onUpdateUser={handleUpdateUser} /></HashRouter>;
