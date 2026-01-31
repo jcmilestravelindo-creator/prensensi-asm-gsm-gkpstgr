@@ -154,13 +154,13 @@
         import { BarChart, Bar, ResponsiveContainer, PieChart, Pie, Cell, Tooltip, XAxis, YAxis, CartesianGrid } from 'recharts';
         import QRCode from 'react-qr-code';
         
-        // --- FIREBASE INTEGRATION ---
+        // --- FIREBASE INTEGRATION (SS-GKSPTANGERANG) ---
         import { initializeApp } from "firebase/app";
         import { getAnalytics } from "firebase/analytics";
         import { getAuth, signInAnonymously } from "firebase/auth";
         import { getFirestore, collection, getDocs, setDoc, doc, addDoc, updateDoc, deleteDoc, onSnapshot } from "firebase/firestore";
 
-        // Konfigurasi Baru: ss-gksptangerang
+        // Konfigurasi Baru
         const firebaseConfig = {
           apiKey: "AIzaSyBhlFeG_TcKP42Xjk5rV71YZKIlR6PljGw",
           authDomain: "ss-gksptangerang.firebaseapp.com",
@@ -176,7 +176,7 @@
         const auth = getAuth(app); 
         const db = getFirestore(app);
         
-        // --- APP ID FOR PATHING ---
+        // --- APP ID ---
         const appId = 'gkps-tangerang-v3-prod';
 
         const getCollectionRef = (colName) => collection(db, 'artifacts', appId, 'public', 'data', colName);
@@ -261,7 +261,7 @@
 
         const GeminiService = {
             call: async (prompt) => {
-                const apiKey = "AIzaSyDR3b9r0Z7s_nd_I-ir0ywgIJlP0TGKpgs";
+                const apiKey = "AIzaSyDR3b9r0Z7s_nd_I-ir0ywgIJlP0TGKpgs"; // Ganti dengan key Anda jika perlu
                 const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
                 try {
                     const response = await fetch(url, {
@@ -308,10 +308,10 @@
             att: {
                 add: (record) => {
                     const all = DB.get(STORAGE.ATTENDANCE, []);
-                    if (all.some(r => r.userId === record.userId && r.date === record.date)) return false;
+                    if (all.some(r => r.userId === record.userId && r.date === record.date)) return { success: false, reason: 'duplicate' };
                     DB.set(STORAGE.ATTENDANCE, [...all, record]);
                     pushToFirestore('attendance', record, record.id);
-                    return true;
+                    return { success: true };
                 }
             },
             materials: {
@@ -441,7 +441,7 @@
                         students: todaysData.filter(d => d.role === 'STUDENT').length,
                         teachers: todaysData.filter(d => d.role === 'TEACHER').length
                     });
-                });
+                }, (error) => console.error("Live View Error:", error));
                 return () => unsubscribe();
             }, []);
 
@@ -530,8 +530,11 @@
                         const updatedUsers = DB.get(STORAGE.USERS, DEFAULT_USERS);
                         setUsers(updatedUsers);
                         alert(`Berhasil Sinkronisasi! Data dimuat: ${count} items.\nSilakan pilih nama Anda sekarang.`);
-                    } else alert("Gagal koneksi ke server. Pastikan internet lancar.");
-                } catch(e) { alert("Error sync."); } finally { setIsSyncing(false); }
+                    }
+                } catch(e) {
+                    if (e.code === 'permission-denied') alert("Gagal: Izin Ditolak. Pastikan Rules Firebase benar.");
+                    else alert("Gagal koneksi ke server.");
+                } finally { setIsSyncing(false); }
             };
 
             const handleSecretTrigger = () => {
@@ -949,9 +952,13 @@
                 else {
                     let isAllowed = user.role === 'ADMIN' ? true : (user.role === 'TEACHER' && u.role === 'STUDENT' && u.className === user.className);
                     if (isAllowed) {
-                        const ok = DB.att.add({ id: Date.now(), userId: u.id, userName: u.name, className: u.className || '-', role: u.role, date: getLocalDate(), timestamp: new Date().toISOString(), avatarSeed: u.avatarSeed, avatarStyle: u.avatarStyle || 'avataaars' });
-                        if (ok) DB.activities.add(user.name, `Memindai ${u.name}`);
-                        setStatus(ok ? { type: 'ok', msg: `Berhasil: ${u.name}` } : { type: 'err', msg: 'Sudah Absen' });
+                        const result = DB.att.add({ id: Date.now(), userId: u.id, userName: u.name, className: u.className || '-', role: u.role, date: getLocalDate(), timestamp: new Date().toISOString(), avatarSeed: u.avatarSeed, avatarStyle: u.avatarStyle || 'avataaars' });
+                        if (result.success) {
+                            DB.activities.add(user.name, `Memindai ${u.name}`);
+                            setStatus({ type: 'ok', msg: `Berhasil: ${u.name}` });
+                        } else {
+                            setStatus({ type: 'err', msg: 'Sudah Absen' });
+                        }
                     } else setStatus({ type: 'err', msg: 'Akses Ditolak' });
                 }
                 setTimeout(() => setStatus({ type: 'idle', msg: '' }), 2000);
