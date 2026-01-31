@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Presensi ASM-GSM GKPS Tangerang (Online)</title>
+    <title>Presensi ASM-GSM GKPS Tangerang (Online Mode)</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -157,20 +157,20 @@
         // --- FIREBASE INTEGRATION ---
         import { initializeApp } from "firebase/app";
         import { getAnalytics } from "firebase/analytics";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "firebase/auth";
-        import { getFirestore, collection, getDocs, setDoc, doc, addDoc, updateDoc, deleteDoc, onSnapshot } from "firebase/firestore";
+        import { getAuth, signInAnonymously } from "firebase/auth";
+        import { getFirestore, collection, getDocs, setDoc, doc, deleteDoc, onSnapshot } from "firebase/firestore";
 
-        // --- KONFIGURASI DATABASE (MODIFIED: FORCE SYNC) ---
-        // Kita gunakan konfigurasi Hardcoded agar Laptop dan HP connect ke database yang sama persis.
+        // --- KONFIGURASI DATABASE (ONLINE) ---
+        // PENTING: Ganti konfigurasi di bawah ini dengan milik Anda sendiri dari Firebase Console.
         const firebaseConfig = {
-            apiKey: "AIzaSyDDtjCJO09qP3kwOcoctObU-qOg-GTnrTE",
-            authDomain: "sundayschoolattendance-58661.firebaseapp.com",
-            databaseURL: "https://sundayschoolattendance-58661-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "sundayschoolattendance-58661",
-            storageBucket: "sundayschoolattendance-58661.firebasestorage.app",
-            messagingSenderId: "1055300658311",
-            appId: "1:1055300658311:web:2db2708b0c8bfa5aa54422",
-            measurementId: "G-PCB8J7RRHJ"
+            
+  apiKey: "AIzaSyBQ-MyLw4_HfYtxMND-9fnCQheGsLlSNMk",
+  authDomain: "gkps-presensi.firebaseapp.com",
+  projectId: "gkps-presensi",
+  storageBucket: "gkps-presensi.firebasestorage.app",
+  messagingSenderId: "733824830232",
+  appId: "1:733824830232:web:40fac80695bc0daf31ec6d",
+  measurementId: "G-99SXQPD3B6"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -178,8 +178,7 @@
         const auth = getAuth(app); 
         const db = getFirestore(app);
         
-        // --- APP ID FOR PATHING (MODIFIED: FIXED) ---
-        // Gunakan ID tetap ini agar path data sama di semua perangkat (Laptop/HP/dll)
+        // --- APP ID FOR PATHING (FIXED) ---
         const appId = 'gkps-tangerang-v3-prod';
 
         // Helper untuk mendapatkan referensi koleksi di path yang benar
@@ -216,7 +215,6 @@
                 { name: 'activities', key: 'gkps_act_v3' },
                 { name: 'notifications', key: 'gkps_notif_v3' }
             ];
-            let hasData = false;
             let totalDocs = 0; 
             try {
                 for (const col of collections) {
@@ -228,7 +226,6 @@
                     
                     if (data.length > 0) {
                         localStorage.setItem(col.key, JSON.stringify(data));
-                        hasData = true;
                         totalDocs += data.length;
                     }
                 }
@@ -313,7 +310,7 @@
         // --- GEMINI AI SERVICE ---
         const GeminiService = {
             call: async (prompt) => {
-                const apiKey = "AIzaSyDR3b9r0Z7s_nd_I-ir0ywgIJlP0TGKpgs";
+                const apiKey = ""; // API Key
                 const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
                 const payload = {
                     contents: [{ parts: [{ text: prompt }] }],
@@ -376,17 +373,14 @@
                 }
             },
             att: {
-                // REBUILD: Logika untuk menambah kehadiran dengan pengecekan ganda yang kuat
                 add: (record) => {
                     const all = DB.get(STORAGE.ATTENDANCE, []);
-                    // Cek duplikat berdasarkan ID user dan TANGGAL HARI INI
                     const isDuplicate = all.some(r => r.userId === record.userId && r.date === record.date);
                     
                     if (isDuplicate) {
                         return { success: false, reason: 'duplicate' };
                     }
                     
-                    // Simpan data
                     const newAttendance = [...all, record];
                     DB.set(STORAGE.ATTENDANCE, newAttendance);
                     pushToFirestore('attendance', record, record.id);
@@ -513,124 +507,6 @@
             </div>
         );
 
-        // --- NEW COMPONENT: LIVE ATTENDANCE VIEW ---
-        const LiveAttendanceView = ({ onClose }) => {
-            const [logs, setLogs] = useState([]);
-            const [stats, setStats] = useState({ total: 0, students: 0, teachers: 0 });
-            const today = getLocalDate();
-
-            useEffect(() => {
-                // Gunakan listener langsung ke Firebase (tanpa local storage) untuk data realtime murni
-                const unsubscribe = onSnapshot(getCollectionRef('attendance'), (snapshot) => {
-                    const data = snapshot.docs.map(doc => doc.data());
-                    
-                    // Filter hanya data hari ini
-                    const todaysData = data.filter(d => d.date === today);
-                    
-                    // Urutkan dari yang terbaru (timestamp descending)
-                    todaysData.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-                    
-                    setLogs(todaysData);
-                    setStats({
-                        total: todaysData.length,
-                        students: todaysData.filter(d => d.role === 'STUDENT').length,
-                        teachers: todaysData.filter(d => d.role === 'TEACHER').length
-                    });
-                });
-
-                return () => unsubscribe();
-            }, []);
-
-            return (
-                <div className="fixed inset-0 z-[100] bg-slate-100 flex flex-col animate-slide-up">
-                    <div className="bg-white p-4 shadow-sm flex justify-between items-center z-10 border-b border-slate-100">
-                        <div>
-                            <h2 className="text-2xl font-black text-indigo-600 flex items-center gap-2">
-                                <Radio className="animate-pulse text-red-500" /> Live Attendance
-                            </h2>
-                            <p className="text-xs text-slate-500 font-bold">{new Date().toLocaleDateString('id-ID', {weekday:'long', day:'numeric', month:'long', year:'numeric'})}</p>
-                        </div>
-                        <button onClick={onClose} className="bg-slate-100 p-2 rounded-full hover:bg-slate-200 transition-colors">
-                            <X size={24} className="text-slate-600" />
-                        </button>
-                    </div>
-
-                    <div className="flex-1 overflow-hidden flex flex-col md:flex-row">
-                        {/* Stats Panel */}
-                        <div className="md:w-1/3 p-6 bg-white border-r border-slate-100 flex flex-col gap-4">
-                            <div className="p-6 rounded-3xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-200">
-                                <p className="text-indigo-100 text-xs font-bold uppercase tracking-wider mb-2">Total Hadir</p>
-                                <h3 className="text-6xl font-black">{stats.total}</h3>
-                                <div className="flex gap-4 mt-4 pt-4 border-t border-white/20">
-                                    <div>
-                                        <p className="text-xs opacity-80">Siswa</p>
-                                        <p className="text-xl font-bold">{stats.students}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs opacity-80">Guru</p>
-                                        <p className="text-xl font-bold">{stats.teachers}</p>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            {/* Kotak Animasi Terbaru */}
-                            <div className="flex-1 bg-slate-50 rounded-3xl border border-slate-100 p-4 relative overflow-hidden flex items-center justify-center">
-                                {logs.length > 0 ? (
-                                    <div className="text-center animate-pop">
-                                        <Avatar name={logs[0].userName} seed={logs[0].avatarSeed} style={logs[0].avatarStyle} size="xl" className="mx-auto mb-3 shadow-xl border-4 border-white" />
-                                        <h4 className="text-xl font-bold text-slate-800">{logs[0].userName}</h4>
-                                        <span className="inline-block mt-2 px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold animate-pulse">
-                                            Baru Saja Masuk
-                                        </span>
-                                    </div>
-                                ) : (
-                                    <div className="text-center">
-                                        <div className="loader mx-auto mb-2 opacity-50"></div>
-                                        <p className="text-slate-400 text-sm font-medium">Menunggu scan...</p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* List Panel */}
-                        <div className="flex-1 p-6 overflow-y-auto bg-slate-50/50">
-                            <h3 className="font-bold text-slate-700 mb-4 text-lg">Log Kedatangan</h3>
-                            <div className="space-y-3">
-                                {logs.map((log, i) => (
-                                    <div key={log.id} className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between animate-slide-up" style={{animationDelay: `${i * 0.05}s`}}>
-                                        <div className="flex items-center gap-4">
-                                            <span className="text-xs font-bold text-slate-300 w-6">#{logs.length - i}</span>
-                                            <Avatar name={log.userName} seed={log.avatarSeed} style={log.avatarStyle} size="md" />
-                                            <div>
-                                                <h4 className="font-bold text-slate-800 text-sm">{log.userName}</h4>
-                                                <div className="flex gap-2">
-                                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${log.role === 'TEACHER' ? 'bg-amber-100 text-amber-600' : 'bg-indigo-50 text-indigo-600'}`}>
-                                                        {log.role === 'TEACHER' ? 'GURU' : log.className}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-sm font-bold text-slate-700">{new Date(log.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</p>
-                                            <p className="text-[10px] text-slate-400">WIB</p>
-                                        </div>
-                                    </div>
-                                ))}
-                                {logs.length === 0 && (
-                                    <div className="text-center py-20">
-                                        <div className="w-16 h-16 bg-slate-200 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400">
-                                            <Clock size={24} />
-                                        </div>
-                                        <p className="text-slate-500 font-medium">Belum ada data absensi hari ini.</p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
         // --- LOGIN SCREEN ---
         const LoginScreen = ({ onLogin }) => {
             const [mode, setMode] = useState('TEACHER');
@@ -650,7 +526,6 @@
                 try {
                     const count = await syncFromFirestore();
                     if (count >= 0) {
-                        // Refresh user list from updated storage
                         const updatedUsers = DB.get(STORAGE.USERS, DEFAULT_USERS);
                         setUsers(updatedUsers);
                         alert(`Berhasil Sinkronisasi! Data dimuat: ${count} items.\nSilakan pilih nama Anda sekarang.`);
@@ -781,7 +656,7 @@
                             <p className="text-[10px] text-slate-400 mt-2">Tekan tombol di atas jika nama user terbaru belum muncul.</p>
                         </div>
                     </div>
-                    <p className="absolute bottom-6 text-xs text-slate-400 font-medium opacity-60">GKPS Digital System v3.3 (Live Monitor)</p>
+                    <p className="absolute bottom-6 text-xs text-slate-400 font-medium opacity-60">GKPS Digital System v3.2 (Online)</p>
 
                     {showForgot && (
                         <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
@@ -800,7 +675,7 @@
             );
         };
 
-        // ... (UserManagement code remains unchanged) ...
+        // --- USER MANAGEMENT ---
         const UserManagement = () => {
             const [users, setUsers] = useState([]);
             const [search, setSearch] = useState('');
@@ -1053,7 +928,6 @@
             );
         };
 
-        // ... (ScheduleManagerModal, NotificationModal, ProfileModal, MaterialModal remain unchanged) ...
         const ScheduleManagerModal = ({ user, onClose }) => {
             const [schedules, setSchedules] = useState([]);
             const [form, setForm] = useState({
@@ -1409,7 +1283,6 @@
             const [isMatModalOpen, setIsMatModalOpen] = useState(false);
             const [isSchedModalOpen, setIsSchedModalOpen] = useState(false);
             const [isSyncing, setIsSyncing] = useState(false);
-            const [showLive, setShowLive] = useState(false);
             
             const [bcTitle, setBcTitle] = useState('');
             const [bcMsg, setBcMsg] = useState('');
@@ -1936,20 +1809,25 @@
                         </div>
                     </div>
 
-                    <div className="mt-8 p-6 rounded-[2rem] bg-gradient-to-r from-slate-800 to-slate-900 text-white text-center relative overflow-hidden shadow-xl animate-pop">
-                        <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
-                        <div className="relative z-10">
-                            <h3 className="text-2xl font-bold mb-2">Monitor Kehadiran</h3>
-                            <p className="text-slate-400 text-sm mb-6">Pantau data scan masuk secara real-time di layar penuh.</p>
-                            <button onClick={() => setShowLive(true)} className="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-emerald-500/30 transition-all active:scale-95 flex items-center justify-center gap-2 mx-auto">
-                                <Radio size={20} className="animate-pulse"/> Buka Live Attendance
-                            </button>
-                        </div>
+                    <div className="space-y-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <h3 className="font-bold text-slate-700 px-2 col-span-full">Baru Hadir</h3>
+                        {att.map((r, i) => (
+                            <div key={i} className="glass-card p-4 rounded-2xl flex items-center justify-between animate-pop">
+                                <div className="flex items-center gap-4">
+                                    <Avatar name={r.userName} seed={r.avatarSeed} style={r.avatarStyle} size="sm" />
+                                    <div>
+                                        <p className="font-bold text-slate-800 text-sm">{r.userName}</p>
+                                        <p className="text-xs text-slate-500 font-semibold">{r.className}</p>
+                                    </div>
+                                </div>
+                                <span className="bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full text-xs font-bold">{new Date(r.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
+                            </div>
+                        ))}
+                        {att.length === 0 && <p className="text-center text-slate-400 py-8 text-sm col-span-full">Menunggu scan pertama...</p>}
                     </div>
 
                     {isMatModalOpen && <MaterialModal user={user} onClose={() => setIsMatModalOpen(false)} />}
                     {isSchedModalOpen && <ScheduleManagerModal user={user} onClose={() => setIsSchedModalOpen(false)} />}
-                    {showLive && <LiveAttendanceView onClose={() => setShowLive(false)} />}
                 </div>
             );
         };
@@ -1959,23 +1837,18 @@
             const [txt, setTxt] = useState('');
             const ref = useRef(null);
             
-            // REBUILD: Logika Scan yang lebih robust untuk input manual dan QR
             const onScan = (code) => {
                 if (status.type !== 'idle' || !code) return;
                 
-                // Pause scanner jika aktif
                 try {
                     if(ref.current && ref.current.getState() === 2) {
                         ref.current.pause();
                     }
                 } catch(e) { console.log("Pause error:", e); }
 
-                // Bersihkan input (trim spasi) agar pencarian akurat
                 const cleanCode = typeof code === 'string' ? code.trim() : code;
-
                 const users = DB.get(STORAGE.USERS, DEFAULT_USERS);
                 
-                // Cari user berdasarkan QR, ID, atau Nama (Case Insensitive)
                 const u = users.find(x => 
                     x.qrCode === cleanCode || 
                     x.id === cleanCode || 
@@ -1986,8 +1859,6 @@
                     setStatus({ type: 'err', msg: 'Data Tidak Ditemukan' });
                 } else {
                     let isAllowed = false;
-
-                    // Logika Permission (Siapa boleh scan siapa)
                     if (user.role === 'ADMIN') {
                         isAllowed = true;
                     } else if (user.role === 'TEACHER') {
@@ -2007,14 +1878,13 @@
                     }
 
                     if (isAllowed) {
-                        // REBUILD: Menggunakan fungsi add yang mengembalikan status object
                         const result = DB.att.add({
                             id: Date.now(), 
                             userId: u.id, 
                             userName: u.name, 
                             className: u.className || '-', 
                             role: u.role,
-                            date: getLocalDate(), // Pastikan tanggal konsisten
+                            date: getLocalDate(), 
                             timestamp: new Date().toISOString(),
                             avatarSeed: u.avatarSeed,
                             avatarStyle: u.avatarStyle || 'avataaars'
@@ -2024,13 +1894,11 @@
                              DB.activities.add(user.name, `Memindai kehadiran ${u.name} (${u.role})`);
                              setStatus({ type: 'ok', msg: `Berhasil: ${u.name}` });
                         } else {
-                             // Handle duplicate or error
                              setStatus({ type: 'err', msg: result.reason === 'duplicate' ? 'Sudah Absen Hari Ini' : 'Gagal Menyimpan' });
                         }
                     }
                 }
                 
-                // Resume Scanner / Reset Status
                 setTimeout(() => { 
                     setStatus({ type: 'idle', msg: '' }); 
                     try { 
@@ -2167,21 +2035,21 @@
             // Menggunakan onSnapshot juga untuk Siswa agar melihat update realtime (Jadwal/Materi/History)
             useEffect(() => {
                 // Listener Attendance
-                const unsubAtt = onSnapshot(collection(db, 'attendance'), (snap) => {
+                const unsubAtt = onSnapshot(getCollectionRef('attendance'), (snap) => {
                     const data = snap.docs.map(d => d.data());
                     const myAtt = data.filter(a => a.userId === user.id).sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
                     setHistory(myAtt);
                 });
                 
                 // Listener Materials
-                const unsubMat = onSnapshot(collection(db, 'materials'), (snap) => {
+                const unsubMat = onSnapshot(getCollectionRef('materials'), (snap) => {
                     const data = snap.docs.map(d => d.data());
                     const myMat = data.filter(m => m.className === user.className).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
                     setMaterials(myMat);
                 });
 
                 // Listener Schedules
-                const unsubSched = onSnapshot(collection(db, 'schedules'), (snap) => {
+                const unsubSched = onSnapshot(getCollectionRef('schedules'), (snap) => {
                     const data = snap.docs.map(d => d.data());
                     const mySched = data.filter(s => s.className === user.className || s.className === 'ALL');
                     setSchedules(mySched);
@@ -2475,8 +2343,7 @@
             useEffect(() => {
                 const initApp = async () => {
                     try {
-                        // MODIFIED: Kita gunakan signInAnonymously sebagai default untuk aplikasi publik/shared ini
-                        // agar tidak ada konflik antara token environment (Sandbox) dan config manual (Real DB).
+                        // START ONLINE
                         await signInAnonymously(auth);
                         await syncFromFirestore(); 
                     } catch (e) {
@@ -2522,5 +2389,3 @@
     </script>
 </body>
 </html>
-
-
