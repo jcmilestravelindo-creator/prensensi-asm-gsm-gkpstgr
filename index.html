@@ -1278,7 +1278,6 @@
         const Dashboard = ({ user }) => {
             const [date, setDate] = useState(getLocalDate());
             const [att, setAtt] = useState([]);
-            const [allAttendance, setAllAttendance] = useState([]); // State untuk semua data attendance (realtime)
             const [activities, setActivities] = useState([]);
             const [users, setUsers] = useState([]);
             const [isMatModalOpen, setIsMatModalOpen] = useState(false);
@@ -1331,10 +1330,7 @@
                     localStorage.setItem(STORAGE.ATTENDANCE, JSON.stringify(mergedData));
                     
                     // 7. Update tampilan UI dengan data gabungan
-                    setAllAttendance(mergedData); // Update semua data
-                    
-                    // 🔥 PERBAIKAN REALTIME: Tambah log untuk debug
-                    console.log(`✅ Realtime Update: ${mergedData.length} total, ${mergedData.filter(r => r.date === date).length} untuk tanggal ${date}`);
+                    setAtt(mergedData.filter(r => r.date === date)); // Realtime update
                 }, (error) => { console.error("Error fetching attendance:", error); });
 
                 const unsubscribeAct = onSnapshot(getCollectionRef('activities'), (snapshot) => {
@@ -1370,14 +1366,20 @@
             }, [date, user.role]); 
 
             const stats = useMemo(() => {
-
-            // useEffect untuk filter data berdasarkan date yang dipilih
-            useEffect(() => {
-                const filtered = allAttendance.filter(r => r.date === date);
-                setAtt(filtered);
-                console.log(`📅 Filter untuk tanggal ${date}: ${filtered.length} records`);
-            }, [date, allAttendance]);
                 const grouped = {};
+
+            // 🔥 AUTO-REFRESH: Update UI setiap 5 detik untuk sinkronisasi realtime
+            useEffect(() => {
+                const interval = setInterval(() => {
+                    const allAtt = DB.get(STORAGE.ATTENDANCE, []);
+                    const filtered = allAtt.filter(r => r.date === date);
+                    if (JSON.stringify(filtered) !== JSON.stringify(att)) {
+                        setAtt(filtered);
+                        console.log("🔄 Auto-refresh: Data updated");
+                    }
+                }, 5000);
+                return () => clearInterval(interval);
+            }, [date, att]);
                 att.filter(x => x.role === 'STUDENT').forEach(x => grouped[x.className] = (grouped[x.className] || 0) + 1);
                 return Object.entries(grouped).map(([k,v]) => ({ name: k, value: v }));
             }, [att]);
