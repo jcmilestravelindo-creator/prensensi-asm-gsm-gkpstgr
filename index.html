@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Presensi ASM-GSM GKPS Tangerang (Live Report Mode)</title>
+    <title>Presensi ASM-GSM GKPS Tangerang (Online Mode)</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -98,8 +98,9 @@
         }
         .animate-scan { animation: scan-line 2.5s ease-in-out infinite; }
 
-        #live-reader video { 
+        #reader video { 
             object-fit: cover;
+            border-radius: 1.5rem; 
             width: 100% !important;
             height: 100% !important;
         }
@@ -160,21 +161,24 @@
         import { getFirestore, collection, getDocs, setDoc, doc, deleteDoc, onSnapshot } from "firebase/firestore";
 
         // --- KONFIGURASI DATABASE (ONLINE) ---
+        // PENTING: Ganti konfigurasi di bawah ini dengan milik Anda sendiri dari Firebase Console.
         const firebaseConfig = {
-            apiKey: "AIzaSyBQ-MyLw4_HfYtxMND-9fnCQheGsLlSNMk",
-            authDomain: "gkps-presensi.firebaseapp.com",
-            projectId: "gkps-presensi",
-            storageBucket: "gkps-presensi.firebasestorage.app",
-            messagingSenderId: "733824830232",
-            appId: "1:733824830232:web:40fac80695bc0daf31ec6d",
-            measurementId: "G-99SXQPD3B6"
+            
+  apiKey: "AIzaSyBQ-MyLw4_HfYtxMND-9fnCQheGsLlSNMk",
+  authDomain: "gkps-presensi.firebaseapp.com",
+  projectId: "gkps-presensi",
+  storageBucket: "gkps-presensi.firebasestorage.app",
+  messagingSenderId: "733824830232",
+  appId: "1:733824830232:web:40fac80695bc0daf31ec6d",
+  measurementId: "G-99SXQPD3B6"
         };
+
         const app = initializeApp(firebaseConfig);
         const analytics = getAnalytics(app);
         const auth = getAuth(app); 
         const db = getFirestore(app);
-
-        // --- APP ID FOR PATHING ---
+        
+        // --- APP ID FOR PATHING (FIXED) ---
         const appId = 'gkps-tangerang-v3-prod';
 
         // Helper untuk mendapatkan referensi koleksi di path yang benar
@@ -192,6 +196,7 @@
             const now = new Date();
             const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
             const wibTime = new Date(utc + (7 * 3600000));
+            
             const year = wibTime.getFullYear();
             const month = String(wibTime.getMonth() + 1).padStart(2, '0');
             const day = String(wibTime.getDate()).padStart(2, '0');
@@ -200,7 +205,8 @@
 
         // --- FIREBASE HELPERS ---
         const syncFromFirestore = async () => {
-            if (!auth.currentUser) return false;
+            if (!auth.currentUser) return false; 
+            
             const collections = [
                 { name: 'users', key: 'gkps_users_v3' },
                 { name: 'attendance', key: 'gkps_att_v3' },
@@ -217,6 +223,7 @@
                     querySnapshot.forEach((doc) => {
                         data.push(doc.data());
                     });
+                    
                     if (data.length > 0) {
                         localStorage.setItem(col.key, JSON.stringify(data));
                         totalDocs += data.length;
@@ -252,33 +259,6 @@
                 console.error("Gagal hapus di Firestore:", e);
             }
         }
-        
-        // --- AUDIO HELPER (NEW) ---
-        const playSound = (type) => {
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-            
-            if (type === 'success') {
-                oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(500, audioContext.currentTime);
-                oscillator.frequency.exponentialRampToValueAtTime(1000, audioContext.currentTime + 0.1);
-                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-                oscillator.start();
-                oscillator.stop(audioContext.currentTime + 0.5);
-            } else if (type === 'error') {
-                oscillator.type = 'sawtooth';
-                oscillator.frequency.setValueAtTime(150, audioContext.currentTime);
-                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-                oscillator.start();
-                oscillator.stop(audioContext.currentTime + 0.3);
-            }
-        };
 
         // --- DATA & CONFIG ---
         const MOCK_VERSES = [
@@ -292,6 +272,7 @@
             "Alucard", "Miya", "Layla", "Zilong", "Tigreal", "Nana", "Eudora", "Gord",
             "Saber", "Balmond", "Akai", "Franco", "Chou", "Gusion", "Fanny", "Lesley"
         ];
+
         const JACOB_SONS = [
             "Ruben", "Simeon", "Lewi", "Yehuda", "Dan", "Naftali", 
             "Gad", "Asyer", "Isakhar", "Zebulon", "Yusuf", "Benyamin"
@@ -308,7 +289,7 @@
             NOTIFICATIONS: 'gkps_notif_v3', 
             SCHEDULES: 'gkps_sched_v3' 
         };
-
+        
         const DEFAULT_USERS = [
             { id: '1', name: 'Admin Utama', role: 'ADMIN', qrCode: 'ADMIN-001', gender: 'Laki-Laki', pin: 'admin123', isActive: true, lastLogin: new Date().toISOString() },
             { id: '2', name: 'Guru Sekolah Minggu', role: 'TEACHER', className: 'Kelas Daud', qrCode: 'GURU-001', gender: 'Perempuan', pin: '123456', isActive: true },
@@ -335,6 +316,7 @@
                     contents: [{ parts: [{ text: prompt }] }],
                     generationConfig: { responseMimeType: "application/json" }
                 };
+
                 const delays = [1000, 2000, 4000];
                 for (let i = 0; i <= 3; i++) {
                     try {
@@ -394,6 +376,7 @@
                 add: (record) => {
                     const all = DB.get(STORAGE.ATTENDANCE, []);
                     const isDuplicate = all.some(r => r.userId === record.userId && r.date === record.date);
+                    
                     if (isDuplicate) {
                         return { success: false, reason: 'duplicate' };
                     }
@@ -566,7 +549,6 @@
                     alert("🔓 Admin Mode Terbuka!");
                 }
             };
-
             const handleLogin = (e) => {
                 e.preventDefault();
                 const recordLogin = (loggedInUser) => {
@@ -702,7 +684,7 @@
             const [isUploading, setIsUploading] = useState(false);
             const [editingId, setEditingId] = useState(null); 
             const fileInputRef = useRef(null);
-
+            
             useEffect(() => { setUsers(DB.get(STORAGE.USERS, DEFAULT_USERS)); }, []);
             
             const handleSubmit = (e) => {
@@ -748,7 +730,7 @@
                 setForm({ name: '', role: 'STUDENT', className: 'Kelas Daud', gender: 'Laki-Laki', pin: '123456' });
                 setIsFormOpen(false);
             };
-
+            
             const handleEdit = (user) => {
                 setForm({
                     name: user.name,
@@ -771,7 +753,7 @@
             };
 
             const handleToggleStatus = (user) => {
-                const newStatus = !user.isActive;
+                const newStatus = !user.isActive; 
                 const action = newStatus ? "Mengaktifkan" : "Menonaktifkan";
                 if(confirm(`${action} akun ${user.name}?`)) {
                     const updatedUser = { ...user, isActive: newStatus };
@@ -845,7 +827,6 @@
                 }
                 setIsUploading(false);
             };
-
             const handleDelete = (id) => {
                 if(window.confirm('Hapus user ini?')) {
                     DB.users.delete(id);
@@ -866,9 +847,7 @@
                                 {isUploading ? <RefreshCw size={14} className="animate-spin"/> : <Upload size={14}/>} 
                                 <span className="hidden md:inline">{isUploading ? 'Mengupload...' : 'Import'}</span>
                             </button>
-                            <button onClick={() => { setIsFormOpen(!isFormOpen); setEditingId(null);
-                                setForm({name: '', role: 'STUDENT', className: 'Kelas Daud', gender: 'Laki-Laki', pin: '123456'});
-                            }} className="bg-white/80 backdrop-blur border border-white p-2 px-3 rounded-xl text-xs font-bold text-indigo-600 shadow-sm flex items-center gap-1 hover:bg-indigo-50 transition-colors">
+                            <button onClick={() => { setIsFormOpen(!isFormOpen); setEditingId(null); setForm({name: '', role: 'STUDENT', className: 'Kelas Daud', gender: 'Laki-Laki', pin: '123456'}); }} className="bg-white/80 backdrop-blur border border-white p-2 px-3 rounded-xl text-xs font-bold text-indigo-600 shadow-sm flex items-center gap-1 hover:bg-indigo-50 transition-colors">
                                 {isFormOpen ? <><X size={14}/> <span className="hidden md:inline">Tutup</span></> : <><Plus size={14}/> <span className="hidden md:inline">Tambah</span></>}
                             </button>
                         </div>
@@ -1096,6 +1075,7 @@
                 const visible = all.filter(n => isNotifVisible(n));
                 setNotifs(visible);
             }, []);
+
             return (
                 <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose}></div>
@@ -1224,7 +1204,6 @@
             const [verse, setVerse] = useState('');
             const [aiTopic, setAiTopic] = useState('');
             const [isGenerating, setIsGenerating] = useState(false);
-
             const handleSave = () => {
                 if(!theme || !verse) return alert("Mohon isi Tema dan Ayat");
                 DB.materials.save({
@@ -1244,9 +1223,7 @@
                 if (!aiTopic) return alert("Masukkan topik cerita Alkitab terlebih dahulu!");
                 setIsGenerating(true);
                 try {
-                    const prompt = `Buatkan materi sekolah minggu singkat untuk anak sekolah dasar tentang topik: "${aiTopic}".
-Berikan output JSON dengan format: { "theme": "Judul Tema Menarik & Ceria", "verse": "Ayat Alkitab (Kitab Pasal:Ayat - Isi Singkat)" }.
-Gunakan Bahasa Indonesia yang mudah dipahami anak.`;
+                    const prompt = `Buatkan materi sekolah minggu singkat untuk anak sekolah dasar tentang topik: "${aiTopic}". Berikan output JSON dengan format: { "theme": "Judul Tema Menarik & Ceria", "verse": "Ayat Alkitab (Kitab Pasal:Ayat - Isi Singkat)" }. Gunakan Bahasa Indonesia yang mudah dipahami anak.`;
                     const result = await GeminiService.call(prompt);
                     if (result) {
                         setTheme(result.theme);
@@ -1259,7 +1236,6 @@ Gunakan Bahasa Indonesia yang mudah dipahami anak.`;
                     setIsGenerating(false);
                 }
             };
-
             return (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose}></div>
@@ -1312,32 +1288,48 @@ Gunakan Bahasa Indonesia yang mudah dipahami anak.`;
             const [bcMsg, setBcMsg] = useState('');
             const [bcDate, setBcDate] = useState(getLocalDate()); 
             const [bcTime, setBcTime] = useState(new Date().toTimeString().slice(0,5)); 
-            const [pendingBroadcasts, setPendingBroadcasts] = useState([]);
+            const [pendingBroadcasts, setPendingBroadcasts] = useState([]); 
 
             const [aiAnalysis, setAiAnalysis] = useState(null);
             const [isAnalyzing, setIsAnalyzing] = useState(false);
             const [aiDevotional, setAiDevotional] = useState(null);
             const [loadingDevo, setLoadingDevo] = useState(false);
-
+            
             useEffect(() => {
                 if (!auth.currentUser) return; 
 
                 const unsubscribeAtt = onSnapshot(getCollectionRef('attendance'), (snapshot) => {
+                    // 1. Ambil data terbaru dari Server
                     const serverData = snapshot.docs.map(doc => doc.data());
                     
-                    // --- SMART MERGE LOGIC ---
+                    // --- SMART MERGE LOGIC (PERBAIKAN) ---
+                    // Tujuannya: Mencegah data hilang (reset ke 0) saat koneksi lambat
+                    
+                    // 2. Ambil data lokal saat ini
                     const localData = DB.get(STORAGE.ATTENDANCE, []);
+                    
+                    // 3. Buat daftar ID dari server untuk pengecekan cepat
                     const serverIds = new Set(serverData.map(d => String(d.id)));
+                    
+                    // 4. Gunakan data server sebagai basis utama (Source of Truth)
                     const mergedData = [...serverData];
+                    
+                    // 5. Cek data lokal: Jika ada data HARI INI yang belum masuk server (Pending), pertahankan!
                     const todayStr = getLocalDate();
                     
                     localData.forEach(localItem => {
+                        // Syarat mempertahankan data lokal:
+                        // a. Tanggalnya hari ini (agar tidak memunculkan data lama yang sudah dihapus)
+                        // b. ID-nya belum ada di list server
                         if (localItem.date === todayStr && !serverIds.has(String(localItem.id))) {
                             mergedData.push(localItem);
                         }
                     });
 
+                    // 6. Simpan hasil gabungan (Server + Pending Local) ke localStorage
                     localStorage.setItem(STORAGE.ATTENDANCE, JSON.stringify(mergedData));
+                    
+                    // 7. Update tampilan UI dengan data gabungan
                     setAtt(mergedData.filter(r => r.date === date));
                 }, (error) => { console.error("Error fetching attendance:", error); });
 
@@ -1378,7 +1370,6 @@ Gunakan Bahasa Indonesia yang mudah dipahami anak.`;
                 att.filter(x => x.role === 'STUDENT').forEach(x => grouped[x.className] = (grouped[x.className] || 0) + 1);
                 return Object.entries(grouped).map(([k,v]) => ({ name: k, value: v }));
             }, [att]);
-
             const weeklyData = [
                 { name: 'Sen', hadir: 12 }, { name: 'Sel', hadir: 15 }, { name: 'Rab', hadir: 8 },
                 { name: 'Kam', hadir: 20 }, { name: 'Jum', hadir: 18 }, { name: 'Sab', hadir: 25 }, { name: 'Min', hadir: 40 }
@@ -1386,16 +1377,20 @@ Gunakan Bahasa Indonesia yang mudah dipahami anak.`;
 
             const handleBroadcast = () => {
                 if(!bcTitle || !bcMsg) return alert("Mohon isi judul dan pesan");
+                
                 const scheduleDateTime = new Date(`${bcDate}T${bcTime}`);
                 const isScheduled = scheduleDateTime > new Date();
                 
                 DB.notifications.broadcast(bcTitle, bcMsg, user.name, scheduleDateTime.toISOString());
+                
                 const actionText = isScheduled ? `Menjadwalkan broadcast: ${bcTitle} pada ${scheduleDateTime.toLocaleString()}` : `Mengirim broadcast: ${bcTitle}`;
                 DB.activities.add(user.name, actionText);
                 
                 setBcTitle(''); setBcMsg('');
+                
                 const allNotifs = DB.notifications.get();
                 setPendingBroadcasts(allNotifs.filter(n => n.status === 'scheduled' && new Date(n.scheduledTime) > new Date()));
+
                 alert(isScheduled ? "Broadcast berhasil dijadwalkan!" : "Broadcast berhasil dikirim!");
             };
 
@@ -1403,8 +1398,8 @@ Gunakan Bahasa Indonesia yang mudah dipahami anak.`;
                 setIsAnalyzing(true);
                 try {
                     const prompt = `Analisa data absensi berikut dan berikan insight singkat (maks 3 kalimat) serta 1 rekomendasi konkret.
-Total Siswa: ${users.filter(u => u.role === 'STUDENT').length}. Hadir Hari Ini: ${att.length}. Kelas dengan kehadiran tertinggi: ${stats.sort((a,b)=>b.value-a.value)[0]?.name || '-'}.
-Format output JSON: { "insight": "...", "recommendation": "..." }`;
+                    Total Siswa: ${users.filter(u => u.role === 'STUDENT').length}. Hadir Hari Ini: ${att.length}. Kelas dengan kehadiran tertinggi: ${stats.sort((a,b)=>b.value-a.value)[0]?.name || '-'}.
+                    Format output JSON: { "insight": "...", "recommendation": "..." }`;
                     const result = await GeminiService.call(prompt);
                     if (result) setAiAnalysis(result);
                 } catch (error) {
@@ -1414,7 +1409,7 @@ Format output JSON: { "insight": "...", "recommendation": "..." }`;
                     setIsAnalyzing(false);
                 }
             };
-
+            
             const handleManualSync = async () => {
                 if(!confirm("Update data terbaru dari server?")) return;
                 setIsSyncing(true);
@@ -1438,7 +1433,7 @@ Format output JSON: { "insight": "...", "recommendation": "..." }`;
                 } catch(e) { console.error(e); } finally { setLoadingDevo(false);
                 }
             };
-
+            
             const handleExportExcel = () => {
                 const allAtt = DB.get(STORAGE.ATTENDANCE, []);
                 if(allAtt.length === 0) return alert("Belum ada data absensi untuk diexport.");
@@ -1449,7 +1444,6 @@ Format output JSON: { "insight": "...", "recommendation": "..." }`;
                 XLSX.utils.book_append_sheet(wb, ws, "Kehadiran");
                 XLSX.writeFile(wb, "Laporan_Kehadiran_GKPS.xlsx");
             };
-
             const handleExportPDF = () => {
                  const allAtt = DB.get(STORAGE.ATTENDANCE, []);
                  if(allAtt.length === 0) return alert("Belum ada data absensi untuk diexport.");
@@ -1468,6 +1462,7 @@ Format output JSON: { "insight": "...", "recommendation": "..." }`;
             };
 
             const COLORS = ['#6366f1', '#ec4899', '#a855f7', '#f43f5e'];
+            
             const recentLogins = useMemo(() => {
                 return users
                     .filter(u => u.lastLogin)
@@ -1488,12 +1483,12 @@ Format output JSON: { "insight": "...", "recommendation": "..." }`;
                             </div>
                             <div className="flex items-center gap-2">
                                 <button onClick={handleManualSync} disabled={isSyncing} className="bg-white p-2 rounded-2xl shadow-sm border border-slate-100 text-indigo-500 hover:bg-indigo-50 active:scale-95 transition-all">
-                                   {isSyncing ? <RefreshCw size={18} className="animate-spin"/> : <RefreshCw size={18}/>}
+                                    {isSyncing ? <RefreshCw size={18} className="animate-spin"/> : <RefreshCw size={18}/>}
                                 </button>
                                 <div className="hidden md:flex items-center gap-2 bg-white px-4 py-2 rounded-2xl shadow-sm">
                                     <Calendar size={18} className="text-indigo-500" />
                                     <span className="text-sm font-bold text-slate-600">{new Date().toLocaleDateString('id-ID', { 
-                                      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                                        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
                                 </div>
                             </div>
                         </header>
@@ -1547,7 +1542,7 @@ Format output JSON: { "insight": "...", "recommendation": "..." }`;
                         </div>
                         
                         <div className="mb-8">
-                            <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2">
+                             <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2">
                                 <Eye size={20} className="text-indigo-500"/> Pantauan Login User (5 Terakhir)
                             </h3>
                             <div className="glass-card p-0 rounded-[1.5rem] overflow-hidden">
@@ -1726,9 +1721,9 @@ Format output JSON: { "insight": "...", "recommendation": "..." }`;
                             <h2 className="text-3xl font-extrabold text-slate-800">Statistik</h2>
                         </div>
                         <div className="flex items-center gap-2">
-                            <button onClick={handleManualSync} disabled={isSyncing} className="bg-white p-2 rounded-2xl shadow-sm border border-slate-100 text-indigo-500 hover:bg-indigo-50 active:scale-95 transition-all">
+                             <button onClick={handleManualSync} disabled={isSyncing} className="bg-white p-2 rounded-2xl shadow-sm border border-slate-100 text-indigo-500 hover:bg-indigo-50 active:scale-95 transition-all">
                                 {isSyncing ? <RefreshCw size={18} className="animate-spin"/> : <RefreshCw size={18}/>}
-                            </button>
+                             </button>
                              {user.role === 'TEACHER' && (
                                 <button onClick={generateDevotional} className="bg-gradient-to-tr from-yellow-400 to-orange-500 text-white p-2 rounded-xl shadow-lg hover:scale-105 transition-transform" title="Renungan Harian Guru AI">
                                     {loadingDevo ? <RefreshCw size={20} className="animate-spin"/> : <Sparkles size={20}/>}
@@ -1836,329 +1831,193 @@ Format output JSON: { "insight": "...", "recommendation": "..." }`;
                 </div>
             );
         };
-
-        const LiveReportPage = ({ user }) => {
-            const [lastScan, setLastScan] = useState(null);
-            const [recentAtt, setRecentAtt] = useState([]);
-            const [stats, setStats] = useState({ total: 0, classStats: {} });
-            const [isManual, setIsManual] = useState(false);
-            const [manualId, setManualId] = useState('');
-            const [scanStatus, setScanStatus] = useState('idle'); // idle, processing, success, error
-            const scannerRef = useRef(null);
-
-            // --- REALTIME DATA LISTENER ---
-            useEffect(() => {
-                // Menggunakan listener yang sama dengan Dashboard agar konsisten
-                const today = getLocalDate();
-                const unsubscribe = onSnapshot(getCollectionRef('attendance'), (snapshot) => {
-                    const serverData = snapshot.docs.map(doc => doc.data());
-                    
-                    // Filter hanya data hari ini untuk Live Report
-                    const todaysData = serverData
-                        .filter(d => d.date === today)
-                        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)); // Urutkan yang terbaru di atas
-
-                    setRecentAtt(todaysData);
-                    
-                    // Hitung Statistik Live
-                    const grouped = {};
-                    todaysData.forEach(d => {
-                        grouped[d.className] = (grouped[d.className] || 0) + 1;
-                    });
-                    setStats({ total: todaysData.length, classStats: grouped });
-
-                }, (err) => console.error("Live sync error:", err));
-
-                return () => unsubscribe();
-            }, []);
-
-            // --- LOGIC SCANNING ---
-            const handleScan = (code) => {
-                if (!code || scanStatus === 'processing') return;
+        const Scanner = ({ user }) => {
+            const [status, setStatus] = useState({ type: 'idle', msg: '' });
+            const [manual, setManual] = useState(false);
+            const [txt, setTxt] = useState('');
+            const ref = useRef(null);
+            
+            const onScan = (code) => {
+                if (status.type !== 'idle' || !code) return;
                 
-                // Pause scanner sebentar agar tidak double scan
-                setScanStatus('processing');
-                if (scannerRef.current && !isManual) {
-                    try { scannerRef.current.pause(); } catch(e){}
-                }
+                try {
+                    if(ref.current && ref.current.getState() === 2) {
+                        ref.current.pause();
+                    }
+                } catch(e) { console.log("Pause error:", e); }
 
-                const cleanCode = code.trim();
-                const users = DB.get(STORAGE.USERS, DEFAULT_USERS); //
+                const cleanCode = typeof code === 'string' ? code.trim() : code;
+                const users = DB.get(STORAGE.USERS, DEFAULT_USERS);
                 
-                // Cari user (support QR Code, ID, atau Nama)
-                const targetUser = users.find(x => 
+                const u = users.find(x => 
                     x.qrCode === cleanCode || 
                     x.id === cleanCode || 
                     x.name.toLowerCase() === cleanCode.toLowerCase()
                 );
-
-                if (!targetUser) {
-                    playSound('error');
-                    setLastScan({ status: 'error', msg: 'Data tidak ditemukan!', name: cleanCode });
-                    resumeScanner(2000);
-                    return;
-                }
-
-                // Cek Validasi Role (Guru Scan Siswa, Admin Scan Semua)
-                let isAllowed = false;
-                if (user.role === 'ADMIN') isAllowed = true;
-                else if (user.role === 'TEACHER') {
-                    if (targetUser.role === 'STUDENT' && targetUser.className === user.className) isAllowed = true;
-                    else if (targetUser.role === 'TEACHER') {
-                        setLastScan({ status: 'error', msg: 'Hanya Admin bisa scan Guru', name: targetUser.name });
-                        playSound('error');
-                        resumeScanner(2500);
-                        return;
-                    } else {
-                        setLastScan({ status: 'error', msg: `Siswa Kelas ${targetUser.className}`, name: targetUser.name });
-                        playSound('error');
-                        resumeScanner(2500);
-                        return;
-                    }
-                }
-
-                if (isAllowed) {
-                    // Simpan Data
-                    const result = DB.att.add({
-                        id: Date.now(),
-                        userId: targetUser.id,
-                        userName: targetUser.name,
-                        className: targetUser.className || '-',
-                        role: targetUser.role,
-                        date: getLocalDate(),
-                        timestamp: new Date().toISOString(),
-                        avatarSeed: targetUser.avatarSeed,
-                        avatarStyle: targetUser.avatarStyle || 'avataaars'
-                    });
-
-                    if (result.success) {
-                        playSound('success');
-                        setLastScan({ status: 'success', user: targetUser });
-                        DB.activities.add(user.name, `Live Scan: ${targetUser.name}`);
-                    } else {
-                        playSound('error');
-                        setLastScan({ status: 'duplicate', user: targetUser, msg: 'Sudah Hadir Sebelumnya' });
-                    }
-                } else {
-                    playSound('error');
-                    setLastScan({ status: 'error', msg: 'Akses Ditolak', name: targetUser.name });
-                }
-
-                resumeScanner(2000); // Tampilkan hasil selama 2 detik sebelum scan lagi
-            };
-
-            const resumeScanner = (delay) => {
-                setTimeout(() => {
-                    setLastScan(null);
-                    setManualId('');
-                    setScanStatus('idle');
-                    if (scannerRef.current && !isManual) {
-                        try { scannerRef.current.resume(); } catch(e){}
-                    }
-                }, delay);
-            };
-
-            // --- SETUP CAMERA ---
-            useEffect(() => {
-                if (isManual) return;
                 
-                // Hapus instance lama jika ada
-                if (scannerRef.current) {
-                    scannerRef.current.clear().catch(() => {});
-                }
-
-                const startCamera = async () => {
-                    try {
-                        const devices = await Html5Qrcode.getCameras(); //
-                        if (devices && devices.length) {
-                            const scanner = new Html5Qrcode("live-reader");
-                            scannerRef.current = scanner;
-                            await scanner.start(
-                                { facingMode: "environment" },
-                                { fps: 10, qrbox: { width: 250, height: 250 } },
-                                handleScan
-                            );
+                if (!u) {
+                    setStatus({ type: 'err', msg: 'Data Tidak Ditemukan' });
+                } else {
+                    let isAllowed = false;
+                    if (user.role === 'ADMIN') {
+                        isAllowed = true;
+                    } else if (user.role === 'TEACHER') {
+                        if (u.role === 'STUDENT' && u.className === user.className) {
+                            isAllowed = true;
+                        } else if (u.role === 'TEACHER') {
+                             setStatus({ type: 'err', msg: 'Hanya Admin yang bisa scan Guru.' });
+                             setTimeout(() => { setStatus({ type: 'idle', msg: '' }); try { if(ref.current && ref.current.getState() === 3) ref.current.resume(); } catch(e){} }, 2000);
+                             return;
                         } else {
-                            setIsManual(true);
+                            setStatus({ type: 'err', msg: 'Siswa beda kelas / Akses ditolak' });
+                             setTimeout(() => { setStatus({ type: 'idle', msg: '' }); try { if(ref.current && ref.current.getState() === 3) ref.current.resume(); } catch(e){} }, 2000);
+                             return;
                         }
-                    } catch (e) {
-                        console.warn("Camera failed", e);
-                        setIsManual(true);
+                    } else {
+                         isAllowed = false;
                     }
-                };
 
-                // Delay sedikit untuk memastikan DOM ready
-                const t = setTimeout(startCamera, 500);
-                return () => {
-                    clearTimeout(t);
-                    if (scannerRef.current) {
-                        scannerRef.current.stop().then(() => scannerRef.current.clear()).catch(()=>{});
+                    if (isAllowed) {
+                        const result = DB.att.add({
+                            id: Date.now(), 
+                            userId: u.id, 
+                            userName: u.name, 
+                            className: u.className || '-', 
+                            role: u.role,
+                            date: getLocalDate(), 
+                            timestamp: new Date().toISOString(),
+                            avatarSeed: u.avatarSeed,
+                            avatarStyle: u.avatarStyle || 'avataaars'
+                        });
+
+                        if (result.success) {
+                             DB.activities.add(user.name, `Memindai kehadiran ${u.name} (${u.role})`);
+                             setStatus({ type: 'ok', msg: `Berhasil: ${u.name}` });
+                        } else {
+                             setStatus({ type: 'err', msg: result.reason === 'duplicate' ? 'Sudah Absen Hari Ini' : 'Gagal Menyimpan' });
+                        }
+                    }
+                }
+                
+                setTimeout(() => { 
+                    setStatus({ type: 'idle', msg: '' }); 
+                    try { 
+                        if(ref.current && ref.current.getState() === 3) {
+                            ref.current.resume();
+                        }
+                    } catch(e) { console.log("Resume error:", e); }
+                }, 2000);
+            };
+
+            useEffect(() => {
+                if(manual) return;
+                if (ref.current) {
+                    ref.current.stop().then(() => { ref.current.clear(); }).catch(() => {});
+                }
+                const init = async () => {
+                    try {
+                        const devs = await Html5Qrcode.getCameras();
+                        if(devs && devs.length) {
+                            const scanner = new Html5Qrcode("reader");
+                            ref.current = scanner;
+                            await scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, onScan);
+                        }
+                    } catch { setManual(true); }
+                };
+                const timer = setTimeout(init, 500);
+                return () => { 
+                    clearTimeout(timer);
+                    if(ref.current) {
+                        try {
+                            ref.current.stop().then(() => ref.current.clear()).catch(()=>{});
+                        } catch (e) {}
                     }
                 };
-            }, [isManual]);
+            }, [manual]);
 
             return (
-                <div className="h-full flex flex-col bg-slate-50 animate-slide-up overflow-hidden relative">
-                    {/* Header / Stats Ticker */}
-                    <div className="bg-slate-900 text-white p-4 shadow-xl z-20 flex justify-between items-center shrink-0">
-                        <div className="flex items-center gap-3">
-                            <div className="relative">
-                                <div className="w-3 h-3 bg-red-500 rounded-full animate-ping absolute"></div>
-                                <div className="w-3 h-3 bg-red-500 rounded-full relative border-2 border-white"></div>
-                            </div>
-                            <div>
-                                <h2 className="font-black text-lg leading-none tracking-tight">LIVE REPORT</h2>
-                                <p className="text-[10px] text-slate-400 font-mono tracking-widest uppercase">
-                                    {user.role === 'TEACHER' ? `Kelas: ${user.className}` : 'GKPS TANGERANG'}
+                <div className="p-6 pb-40 animate-slide-up min-h-full flex flex-col max-w-lg mx-auto">
+                    <div className="text-center mb-6">
+                        <h2 className="text-2xl font-black text-slate-800 tracking-tight">Scanner Presensi</h2>
+                        {user.role === 'TEACHER' ? (
+                            <div className="inline-block mt-2 px-3 py-1 bg-indigo-50 border border-indigo-100 rounded-full">
+                                <p className="text-indigo-600 text-xs font-bold flex items-center gap-1">
+                                    <ShieldCheck size={12}/> Mode Guru: {user.className}
                                 </p>
                             </div>
-                        </div>
-                        <div className="flex gap-4 text-right">
-                            <div>
-                                <p className="text-[10px] text-slate-400 font-bold uppercase">Total Hadir</p>
-                                <p className="text-2xl font-black text-emerald-400 font-mono leading-none">{stats.total}</p>
-                            </div>
-                            <div className="hidden md:block border-l border-slate-700 pl-4">
-                                <p className="text-[10px] text-slate-400 font-bold uppercase">Terbaru</p>
-                                <p className="text-sm font-bold text-white leading-none mt-1">
-                                    {recentAtt.length > 0 ? recentAtt[0].userName.split(' ')[0] : '-'}
-                                </p>
-                            </div>
-                        </div>
+                        ) : (
+                            <p className="text-slate-500 text-sm font-medium">Mode Admin: Scan Guru & Siswa</p>
+                        )}
                     </div>
-
-                    {/* Main Content: Split View */}
-                    <div className="flex-1 flex flex-col md:flex-row overflow-hidden relative">
-                        
-                        {/* KIRI: AREA SCANNING */}
-                        <div className="w-full md:w-5/12 bg-black relative flex flex-col">
-                            {/* Camera View */}
-                            <div className="flex-1 relative overflow-hidden bg-slate-800">
-                                {!isManual ? (
+                    <div className="flex flex-col gap-6 w-full">
+                        <div className="glass-panel p-3 rounded-[2.5rem] shadow-2xl shadow-indigo-200/50 border-4 border-white/50 relative overflow-hidden bg-slate-900 group z-10">
+                            <div className="relative w-full aspect-[3/4] sm:aspect-square rounded-[2rem] overflow-hidden flex items-center justify-center bg-black/20">
+                                {manual ? (
+                                    <div className="w-full px-6 text-center relative z-10 animate-pop">
+                                        <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-md border border-white/20">
+                                            <PenTool size={28} className="text-white"/>
+                                        </div>
+                                        <p className="text-white/60 text-xs font-medium mb-4">Mode Input Manual</p>
+                                        <input 
+                                            value={txt} 
+                                            onChange={e => setTxt(e.target.value)} 
+                                            placeholder="Ketik ID / Nama" 
+                                            className="w-full p-4 rounded-2xl bg-white/10 border border-white/20 text-white font-bold text-center mb-4 placeholder-white/40 focus:bg-white/20 focus:border-white/50 outline-none transition-all backdrop-blur-sm" 
+                                        />
+                                        <Button onClick={() => { onScan(txt); setTxt(''); }} className="bg-white text-indigo-900 hover:bg-indigo-50 w-full py-3 text-sm">
+                                            Proses Absen
+                                        </Button>
+                                    </div>
+                                ) : (
                                     <>
-                                        <div id="live-reader" className="w-full h-full object-cover opacity-80"></div>
+                                        <div id="reader" className="w-full h-full opacity-90 object-cover absolute inset-0"></div>
                                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                            <div className="w-64 h-64 border-2 border-white/30 rounded-3xl relative">
-                                                <div className="absolute top-0 left-0 w-8 h-8 border-l-4 border-t-4 border-white rounded-tl-xl"></div>
-                                                <div className="absolute top-0 right-0 w-8 h-8 border-r-4 border-t-4 border-white rounded-tr-xl"></div>
-                                                <div className="absolute bottom-0 left-0 w-8 h-8 border-l-4 border-b-4 border-white rounded-bl-xl"></div>
-                                                <div className="absolute bottom-0 right-0 w-8 h-8 border-r-4 border-b-4 border-white rounded-br-xl"></div>
-                                                {scanStatus === 'idle' && (
-                                                    <div className="absolute inset-x-0 top-1/2 h-0.5 bg-red-500 shadow-[0_0_15px_rgba(239,68,68,1)] animate-scan"></div>
-                                                )}
+                                            <div className="w-56 h-56 relative">
+                                                <div className="absolute top-0 left-0 w-10 h-10 border-l-4 border-t-4 border-white/80 rounded-tl-3xl"></div>
+                                                <div className="absolute top-0 right-0 w-10 h-10 border-r-4 border-t-4 border-white/80 rounded-tr-3xl"></div>
+                                                <div className="absolute bottom-0 left-0 w-10 h-10 border-l-4 border-b-4 border-white/80 rounded-bl-3xl"></div>
+                                                <div className="absolute bottom-0 right-0 w-10 h-10 border-r-4 border-b-4 border-white/80 rounded-br-3xl"></div>
+                                                <div className="absolute inset-x-0 top-1/2 h-0.5 bg-red-500/50 shadow-[0_0_10px_rgba(239,68,68,0.8)] animate-scan"></div>
                                             </div>
+                                        </div>
+                                        <div className="absolute bottom-4 left-0 right-0 text-center">
+                                            <span className="bg-black/40 backdrop-blur-md text-white/80 text-[10px] px-3 py-1 rounded-full border border-white/10">Scanning...</span>
                                         </div>
                                     </>
-                                ) : (
-                                    <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-slate-800 to-slate-900">
-                                        <div className="w-3/4 max-w-sm p-6 glass-panel rounded-3xl text-center">
-                                            <PenTool className="mx-auto text-white mb-4" size={32}/>
-                                            <input 
-                                                value={manualId}
-                                                onChange={e => setManualId(e.target.value)}
-                                                placeholder="Ketik Nama / ID..."
-                                                className="w-full p-4 bg-white/10 border border-white/20 rounded-xl text-white font-bold text-center outline-none focus:bg-white/20 mb-4"
-                                                onKeyDown={(e) => e.key === 'Enter' && handleScan(manualId)}
-                                            />
-                                            <Button onClick={() => handleScan(manualId)}>Check In Manual</Button>
+                                )}
+
+                                {status.type !== 'idle' && (
+                                    <div className={`absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm transition-all duration-300`}>
+                                        <div className={`p-6 rounded-3xl shadow-2xl text-center transform scale-110 animate-pop border-4 ${
+                                            status.type === 'ok' ? 'bg-white border-emerald-400' : 'bg-white border-rose-400'
+                                        }`}>
+                                            <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 ${
+                                                status.type === 'ok' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'
+                                            }`}>
+                                                {status.type === 'ok' ? <CheckCircle size={32}/> : <AlertCircle size={32}/>}
+                                            </div>
+                                            <h4 className={`text-lg font-black mb-1 ${status.type === 'ok' ? 'text-emerald-700' : 'text-rose-700'}`}>
+                                                {status.type === 'ok' ? 'Berhasil!' : 'Gagal!'}
+                                            </h4>
+                                            <p className="text-slate-600 text-xs font-bold px-4">{status.msg}</p>
                                         </div>
                                     </div>
                                 )}
-
-                                {/* Toggle Manual/Camera */}
-                                <button 
-                                    onClick={() => setIsManual(!isManual)}
-                                    className="absolute bottom-6 right-6 bg-white/10 backdrop-blur-md border border-white/20 text-white p-3 rounded-full hover:bg-white/20 transition-all z-30"
-                                    title="Ganti Mode Input"
-                                >
-                                    {isManual ? <Camera size={20}/> : <PenTool size={20}/>}
-                                </button>
                             </div>
-
-                            {/* OVERLAY HASIL SCAN (POPUP BESAR) */}
-                            {lastScan && (
-                                <div className="absolute inset-0 z-50 bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-6 animate-pop">
-                                    <div className={`w-full max-w-sm bg-white rounded-[2rem] p-6 text-center shadow-2xl border-4 ${
-                                        lastScan.status === 'success' ? 'border-emerald-400' : 
-                                        lastScan.status === 'duplicate' ? 'border-yellow-400' : 'border-rose-500'
-                                    }`}>
-                                        <div className="mb-4 flex justify-center">
-                                            {lastScan.user ? (
-                                                <Avatar name={lastScan.user.name} seed={lastScan.user.avatarSeed} style={lastScan.user.avatarStyle} size="xl" className="shadow-lg scale-125" />
-                                            ) : (
-                                                <div className="w-24 h-24 bg-rose-100 rounded-full flex items-center justify-center text-rose-500 text-4xl">
-                                                    <AlertCircle size={48}/>
-                                                </div>
-                                            )}
-                                        </div>
-                                        
-                                        <h3 className="text-2xl font-black text-slate-800 mb-1">
-                                            {lastScan.user ? lastScan.user.name : 'Gagal Scan'}
-                                        </h3>
-                                        
-                                        {lastScan.user && (
-                                            <p className="text-lg font-bold text-slate-500 mb-4">{lastScan.user.className}</p>
-                                        )}
-
-                                        <div className={`py-3 px-6 rounded-xl font-black text-white text-lg tracking-wide uppercase shadow-lg ${
-                                            lastScan.status === 'success' ? 'bg-gradient-to-r from-emerald-400 to-green-500' :
-                                            lastScan.status === 'duplicate' ? 'bg-gradient-to-r from-yellow-400 to-amber-500' :
-                                            'bg-gradient-to-r from-rose-400 to-red-500'
-                                        }`}>
-                                            {lastScan.status === 'success' ? 'BERHASIL HADIR' : 
-                                            lastScan.status === 'duplicate' ? 'SUDAH SCAN' : 
-                                            lastScan.msg}
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
                         </div>
 
-                        {/* KANAN: LIVE FEED (DAFTAR HADIR) */}
-                        <div className="w-full md:w-7/12 bg-slate-50 flex flex-col border-l border-slate-200">
-                            <div className="p-4 bg-white border-b border-slate-200 shadow-sm z-10">
-                                <h3 className="font-bold text-slate-700 flex items-center gap-2">
-                                    <Activity size={18} className="text-indigo-500"/> Feed Kehadiran Real-time
-                                </h3>
-                            </div>
-                            
-                            <div className="flex-1 overflow-y-auto p-4 space-y-3 pb-24">
-                                {recentAtt.length === 0 ? (
-                                    <div className="h-full flex flex-col items-center justify-center text-slate-400 opacity-60">
-                                        <QrCode size={48} className="mb-4 opacity-50"/>
-                                        <p className="font-medium text-sm">Menunggu data masuk...</p>
-                                    </div>
-                                ) : (
-                                    recentAtt.map((item, index) => (
-                                        <div key={item.id} className={`bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between transition-all duration-500 ${
-                                            index === 0 ? 'scale-105 border-indigo-200 shadow-md ring-2 ring-indigo-50 animate-pop mb-4' : 'opacity-90'
-                                        }`}>
-                                            <div className="flex items-center gap-4">
-                                                <div className="relative">
-                                                    <Avatar name={item.userName} seed={item.avatarSeed} style={item.avatarStyle} size={index === 0 ? 'md' : 'sm'} />
-                                                    {index === 0 && (
-                                                        <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
-                                                            <span className="relative inline-flex rounded-full h-3 w-3 bg-sky-500"></span>
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <div>
-                                                    <h4 className={`font-bold text-slate-800 ${index === 0 ? 'text-lg' : 'text-sm'}`}>
-                                                        {item.userName}
-                                                    </h4>
-                                                    <p className="text-xs text-slate-500 font-semibold">{item.className} • {item.role}</p>
-                                                </div>
-                                            </div>
-                                            <div className="text-right">
-                                                <p className="text-xs font-bold text-indigo-600 font-mono bg-indigo-50 px-2 py-1 rounded-lg">
-                                                    {new Date(item.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
+                        <div className="z-20">
+                            <button 
+                                onClick={() => setManual(!manual)} 
+                                className={`w-full py-4 rounded-2xl font-bold text-sm transition-all flex items-center justify-center gap-2 border shadow-lg active:scale-95 ${
+                                    manual 
+                                    ? 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200' 
+                                    : 'bg-white text-indigo-600 border-white hover:bg-indigo-50'
+                                }`}
+                            >
+                                {manual ? <Camera size={18} /> : <PenTool size={18} />}
+                                {manual ? 'Kembali ke Kamera' : 'Input Manual ID'}
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -2205,8 +2064,7 @@ Format output JSON: { "insight": "...", "recommendation": "..." }`;
                     const prompt = "Berikan satu renungan sangat singkat (1 kalimat) dan motivasi untuk anak sekolah minggu yang ceria. Format JSON: { \"title\": \"Judul Ceria\", \"content\": \"Isi Renungan\" }";
                     const res = await GeminiService.call(prompt);
                     if(res) setAiDevotional(res);
-                } catch(e) { console.error(e); } finally { setLoadingDevo(false);
-                }
+                } catch(e) { console.error(e); } finally { setLoadingDevo(false); }
             };
             const verse = useMemo(() => {
                 if(materials.length > 0) return `${materials[0].verse}`;
@@ -2428,7 +2286,7 @@ Format output JSON: { "insight": "...", "recommendation": "..." }`;
                 }, (e) => console.error(e));
                 return () => { if(unsubNotif) unsubNotif(); };
             }, []);
-
+            
             return (
                 <div className="h-screen flex flex-col relative w-full md:max-w-7xl mx-auto bg-white/30 shadow-2xl overflow-hidden border-x border-white/40">
                     <Background />
@@ -2451,7 +2309,7 @@ Format output JSON: { "insight": "...", "recommendation": "..." }`;
                     <div className="flex-1 overflow-y-auto z-0">
                         <Routes>
                             <Route path="/" element={user.role === 'STUDENT' ? <StudentDashboard user={user}/> : <Dashboard user={user}/>} />
-                            {user.role !== 'STUDENT' && <Route path="/scan" element={<LiveReportPage user={user} />} />}
+                            {user.role !== 'STUDENT' && <Route path="/scan" element={<Scanner user={user} />} />}
                             {user.role === 'ADMIN' && <Route path="/users" element={<UserManagement />} />}
                             <Route path="*" element={<div className="p-10 text-center text-slate-500">Halaman tidak ditemukan atau akses ditolak.</div>} />
                         </Routes>
@@ -2521,6 +2379,7 @@ Format output JSON: { "insight": "...", "recommendation": "..." }`;
                 const success = DB.users.update(updatedUser);
                 if (success) { setUser(updatedUser); DB.set(STORAGE.SESSION, updatedUser); }
             };
+            
             if (!isReady) return <LoadingScreen />;
             if (!user) return <LoginScreen onLogin={login} />;
             return <HashRouter><MainApp user={user} onLogout={logout} onUpdateUser={handleUpdateUser} /></HashRouter>;
@@ -2530,4 +2389,3 @@ Format output JSON: { "insight": "...", "recommendation": "..." }`;
     </script>
 </body>
 </html>
-
