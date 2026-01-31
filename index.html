@@ -309,7 +309,11 @@
                 add: (record) => {
                     const all = DB.get(STORAGE.ATTENDANCE, []);
                     if (all.some(r => r.userId === record.userId && r.date === record.date)) return { success: false, reason: 'duplicate' };
+                    
+                    // Simpan lokal sebagai backup
                     DB.set(STORAGE.ATTENDANCE, [...all, record]);
+                    
+                    // Kirim ke server - ini yang utama
                     pushToFirestore('attendance', record, record.id);
                     return { success: true };
                 }
@@ -530,11 +534,8 @@
                         const updatedUsers = DB.get(STORAGE.USERS, DEFAULT_USERS);
                         setUsers(updatedUsers);
                         alert(`Berhasil Sinkronisasi! Data dimuat: ${count} items.\nSilakan pilih nama Anda sekarang.`);
-                    }
-                } catch(e) {
-                    if (e.code === 'permission-denied') alert("Gagal: Izin Ditolak. Pastikan Rules Firebase benar.");
-                    else alert("Gagal koneksi ke server.");
-                } finally { setIsSyncing(false); }
+                    } else alert("Gagal koneksi ke server. Pastikan internet lancar.");
+                } catch(e) { alert("Error sync."); } finally { setIsSyncing(false); }
             };
 
             const handleSecretTrigger = () => {
@@ -809,14 +810,14 @@
 
             useEffect(() => {
                 if (!auth.currentUser) return; 
+                // REBUILD: STRICTLY USE SERVER SNAPSHOT FOR CONSISTENCY
                 const unsubscribeAtt = onSnapshot(getCollectionRef('attendance'), (snapshot) => {
                     const data = snapshot.docs.map(doc => doc.data());
-                    const localData = DB.get(STORAGE.ATTENDANCE, []);
-                    const serverIds = new Set(data.map(d => String(d.id)));
-                    const mergedData = [...data];
-                    localData.forEach(item => { if (item.date === getLocalDate() && !serverIds.has(String(item.id))) mergedData.push(item); });
-                    localStorage.setItem(STORAGE.ATTENDANCE, JSON.stringify(mergedData));
-                    setAtt(mergedData.filter(r => r.date === date));
+                    // Removed the manual localData merge logic to enforce consistency
+                    // The UI will now reflect EXACTLY what the Firestore SDK sees (including its own pending writes)
+                    const serverData = [...data];
+                    
+                    setAtt(serverData.filter(r => r.date === date));
                 });
                 const unsubscribeAct = onSnapshot(getCollectionRef('activities'), (snapshot) => {
                     const data = snapshot.docs.map(doc => doc.data());
@@ -935,88 +936,6 @@
                 </div>
             );
         };
-
-        const Scanner = ({ user }) => {
-            const [status, setStatus] = useState({ type: 'idle', msg: '' });
-            const [manual, setManual] = useState(false);
-            const [txt, setTxt] = useState('');
-            const ref = useRef(null);
-            
-            const onScan = (code) => {
-                if (status.type !== 'idle') return;
-                const cleanCode = typeof code === 'string' ? code.trim() : code;
-                const users = DB.get(STORAGE.USERS, DEFAULT_USERS);
-                const u = users.find(x => x.qrCode === cleanCode || x.id === cleanCode || x.name.toLowerCase() === cleanCode.toLowerCase());
-                
-                if (!u) setStatus({ type: 'err', msg: 'Data Tidak Ditemukan' });
-                else {
-                    let isAllowed = user.role === 'ADMIN' ? true : (user.role === 'TEACHER' && u.role === 'STUDENT' && u.className === user.className);
-                    if (isAllowed) {
-                        const result = DB.att.add({ id: Date.now(), userId: u.id, userName: u.name, className: u.className || '-', role: u.role, date: getLocalDate(), timestamp: new Date().toISOString(), avatarSeed: u.avatarSeed, avatarStyle: u.avatarStyle || 'avataaars' });
-                        if (result.success) {
-                            DB.activities.add(user.name, `Memindai ${u.name}`);
-                            setStatus({ type: 'ok', msg: `Berhasil: ${u.name}` });
-                        } else {
-                            setStatus({ type: 'err', msg: 'Sudah Absen' });
-                        }
-                    } else setStatus({ type: 'err', msg: 'Akses Ditolak' });
-                }
-                setTimeout(() => setStatus({ type: 'idle', msg: '' }), 2000);
-            };
-
-            useEffect(() => {
-                if(manual) return;
-                const init = async () => { try { const scanner = new Html5Qrcode("reader"); ref.current = scanner; await scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, onScan); } catch { setManual(true); } };
-                init();
-                return () => { if(ref.current) ref.current.stop().catch(()=>{}); };
-            }, [manual]);
-
-            return (
-                <div className="p-6 pb-40 animate-slide-up min-h-full flex flex-col max-w-lg mx-auto">
-                    <h2 className="text-2xl font-black text-slate-800 text-center mb-6">Scanner Presensi</h2>
-                    <div className="glass-panel p-3 rounded-[2.5rem] shadow-2xl relative overflow-hidden bg-slate-900 mb-6">
-                        <div className="relative w-full aspect-square rounded-[2rem] overflow-hidden flex items-center justify-center bg-black/20">
-                            {manual ? (
-                                <div className="w-full px-6 text-center text-white"><p className="mb-4">Input Manual ID/Nama</p><input value={txt} onChange={e=>setTxt(e.target.value)} className="w-full p-4 rounded-xl bg-white/10 text-white text-center mb-4"/><Button onClick={()=>onScan(txt)}>Proses</Button></div>
-                            ) : (
-                                <div id="reader" className="w-full h-full object-cover"></div>
-                            )}
-                            {status.type !== 'idle' && (
-                                <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60"><div className="bg-white p-6 rounded-3xl text-center"><h4 className={`text-lg font-black ${status.type === 'ok' ? 'text-emerald-600' : 'text-red-600'}`}>{status.msg}</h4></div></div>
-                            )}
-                        </div>
-                    </div>
-                    <button onClick={() => setManual(!manual)} className="w-full py-4 rounded-2xl bg-white font-bold text-indigo-600 shadow-lg">{manual ? 'Gunakan Kamera' : 'Input Manual'}</button>
-                </div>
-            );
-        };
-
-        const StudentDashboard = ({ user }) => {
-            const [tab, setTab] = useState('card');
-            const [history, setHistory] = useState([]);
-            const [materials, setMaterials] = useState([]);
-            const [schedules, setSchedules] = useState([]);
-
-            useEffect(() => {
-                const uAtt = onSnapshot(collection(db, 'attendance'), (s) => setHistory(s.docs.map(d=>d.data()).filter(a=>a.userId===user.id).sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp))));
-                const uMat = onSnapshot(collection(db, 'materials'), (s) => setMaterials(s.docs.map(d=>d.data()).filter(m=>m.className===user.className)));
-                const uSch = onSnapshot(collection(db, 'schedules'), (s) => setSchedules(s.docs.map(d=>d.data()).filter(x=>x.className===user.className||x.className==='ALL')));
-                return () => { uAtt(); uMat(); uSch(); };
-            }, [user]);
-
-            return (
-                <div className="p-6 pb-24 max-w-md mx-auto animate-slide-up">
-                    <h2 className="text-xl font-bold mb-6">Halo, {user.name.split(' ')[0]}!</h2>
-                    <div className="flex bg-white/50 p-1 rounded-2xl mb-6">{['card', 'history', 'materials', 'schedule'].map(t => <button key={t} onClick={() => setTab(t)} className={`flex-1 py-2 text-[10px] font-bold rounded-xl ${tab === t ? 'bg-white text-indigo-600 shadow' : 'text-slate-500'}`}>{t.toUpperCase()}</button>)}</div>
-                    {tab === 'card' && <div className="bg-gradient-to-tr from-indigo-600 to-purple-600 rounded-[2.5rem] p-8 text-center text-white shadow-xl"><Avatar name={user.name} seed={user.avatarSeed} style={user.avatarStyle} size="xl" className="mx-auto mb-4 border-4 border-white/20"/><h2 className="text-2xl font-black">{user.name}</h2><p className="opacity-80 mb-6">{user.className}</p><div className="bg-white p-4 rounded-2xl inline-block"><QRCode value={user.qrCode} size={150} /></div></div>}
-                    {tab === 'history' && <div className="space-y-3">{history.map(h => <div key={h.id} className="bg-white p-4 rounded-xl shadow-sm flex justify-between"><p className="font-bold text-sm">{new Date(h.timestamp).toLocaleDateString()}</p><span className="text-emerald-600 font-bold text-xs">Hadir</span></div>)}</div>}
-                    {/* Simplified Materials & Schedule view for brevity */}
-                    {tab === 'materials' && <div className="space-y-3">{materials.map(m => <div key={m.id} className="bg-white p-4 rounded-xl shadow-sm"><h4 className="font-bold">{m.theme}</h4><p className="text-xs text-slate-500">{m.verse}</p></div>)}</div>}
-                    {tab === 'schedule' && <div className="space-y-3">{schedules.map(s => <div key={s.id} className="bg-white p-4 rounded-xl shadow-sm"><h4 className="font-bold">{s.activity}</h4><p className="text-xs">{s.time}</p></div>)}</div>}
-                </div>
-            );
-        };
-
         const MainApp = ({ user, onLogout, onUpdateUser }) => {
             const nav = useNavigate();
             const loc = useLocation();
