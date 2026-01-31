@@ -253,7 +253,7 @@
             }
         }
         
-        // --- AUDIO HELPER (NEW) ---
+        // --- AUDIO HELPER ---
         const playSound = (type) => {
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
             const oscillator = audioContext.createOscillator();
@@ -1324,21 +1324,10 @@ Gunakan Bahasa Indonesia yang mudah dipahami anak.`;
 
                 const unsubscribeAtt = onSnapshot(getCollectionRef('attendance'), (snapshot) => {
                     const serverData = snapshot.docs.map(doc => doc.data());
-                    
-                    // --- SMART MERGE LOGIC ---
-                    const localData = DB.get(STORAGE.ATTENDANCE, []);
-                    const serverIds = new Set(serverData.map(d => String(d.id)));
-                    const mergedData = [...serverData];
-                    const todayStr = getLocalDate();
-                    
-                    localData.forEach(localItem => {
-                        if (localItem.date === todayStr && !serverIds.has(String(localItem.id))) {
-                            mergedData.push(localItem);
-                        }
-                    });
-
-                    localStorage.setItem(STORAGE.ATTENDANCE, JSON.stringify(mergedData));
-                    setAtt(mergedData.filter(r => r.date === date));
+                    // PERBAIKAN SINKRONISASI: Paksa gunakan data server saat online
+                    // Ini memperbaiki masalah dimana HP dan Laptop beda data
+                    localStorage.setItem(STORAGE.ATTENDANCE, JSON.stringify(serverData)); 
+                    setAtt(serverData.filter(r => r.date === date));
                 }, (error) => { console.error("Error fetching attendance:", error); });
 
                 const unsubscribeAct = onSnapshot(getCollectionRef('activities'), (snapshot) => {
@@ -1359,6 +1348,7 @@ Gunakan Bahasa Indonesia yang mudah dipahami anak.`;
                     setUsers(DB.get(STORAGE.USERS, DEFAULT_USERS));
                 }
 
+                // Initial Load (fallback)
                 const allAtt = DB.get(STORAGE.ATTENDANCE, []);
                 setAtt(allAtt.filter(r => r.date === date));
                 setActivities(DB.activities.get());
@@ -1812,23 +1802,6 @@ Format output JSON: { "insight": "...", "recommendation": "..." }`;
                                 <div className="h-full flex flex-col items-center justify-center text-slate-400 opacity-60"><BarChart3 size={48} className="mb-2"/><p className="font-medium">Belum ada data</p></div>
                             )}
                         </div>
-                    </div>
-
-                    <div className="space-y-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <h3 className="font-bold text-slate-700 px-2 col-span-full">Baru Hadir</h3>
-                        {att.map((r, i) => (
-                            <div key={i} className="glass-card p-4 rounded-2xl flex items-center justify-between animate-pop">
-                                <div className="flex items-center gap-4">
-                                    <Avatar name={r.userName} seed={r.avatarSeed} style={r.avatarStyle} size="sm" />
-                                    <div>
-                                        <p className="font-bold text-slate-800 text-sm">{r.userName}</p>
-                                        <p className="text-xs text-slate-500 font-semibold">{r.className}</p>
-                                    </div>
-                                </div>
-                                <span className="bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full text-xs font-bold">{new Date(r.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
-                            </div>
-                        ))}
-                        {att.length === 0 && <p className="text-center text-slate-400 py-8 text-sm col-span-full">Menunggu scan pertama...</p>}
                     </div>
 
                     {isMatModalOpen && <MaterialModal user={user} onClose={() => setIsMatModalOpen(false)} />}
