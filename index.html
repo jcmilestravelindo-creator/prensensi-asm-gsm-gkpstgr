@@ -154,13 +154,13 @@
         import { BarChart, Bar, ResponsiveContainer, PieChart, Pie, Cell, Tooltip, XAxis, YAxis, CartesianGrid } from 'recharts';
         import QRCode from 'react-qr-code';
         
-        // --- FIREBASE INTEGRATION (UPDATED CONFIG: ss-gksptangerang) ---
+        // --- FIREBASE INTEGRATION ---
         import { initializeApp } from "firebase/app";
         import { getAnalytics } from "firebase/analytics";
         import { getAuth, signInAnonymously } from "firebase/auth";
         import { getFirestore, collection, getDocs, setDoc, doc, addDoc, updateDoc, deleteDoc, onSnapshot } from "firebase/firestore";
 
-        // Konfigurasi Baru untuk ss-gksptangerang
+        // Konfigurasi Baru: ss-gksptangerang
         const firebaseConfig = {
           apiKey: "AIzaSyBhlFeG_TcKP42Xjk5rV71YZKIlR6PljGw",
           authDomain: "ss-gksptangerang.firebaseapp.com",
@@ -177,35 +177,23 @@
         const db = getFirestore(app);
         
         // --- APP ID FOR PATHING ---
-        // Kita gunakan ID ini agar data tersimpan di folder yang rapi
-        const appId = 'gkps-tangerang-production';
+        const appId = 'gkps-tangerang-v3-prod';
 
-        // Helper untuk mendapatkan referensi koleksi di path yang benar
-        const getCollectionRef = (colName) => {
-            return collection(db, 'artifacts', appId, 'public', 'data', colName);
-        };
+        const getCollectionRef = (colName) => collection(db, 'artifacts', appId, 'public', 'data', colName);
+        const getDocRef = (colName, docId) => doc(db, 'artifacts', appId, 'public', 'data', colName, String(docId));
 
-        // Helper untuk mendapatkan referensi dokumen di path yang benar
-        const getDocRef = (colName, docId) => {
-            return doc(db, 'artifacts', appId, 'public', 'data', colName, String(docId));
-        };
-
-        // --- TIMEZONE FIX HELPER ---
         const getLocalDate = () => {
             const now = new Date();
             const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
             const wibTime = new Date(utc + (7 * 3600000));
-            
             const year = wibTime.getFullYear();
             const month = String(wibTime.getMonth() + 1).padStart(2, '0');
             const day = String(wibTime.getDate()).padStart(2, '0');
             return `${year}-${month}-${day}`;
         };
 
-        // --- FIREBASE HELPERS ---
         const syncFromFirestore = async () => {
             if (!auth.currentUser) return false; 
-            
             const collections = [
                 { name: 'users', key: 'gkps_users_v3' },
                 { name: 'attendance', key: 'gkps_att_v3' },
@@ -214,89 +202,54 @@
                 { name: 'activities', key: 'gkps_act_v3' },
                 { name: 'notifications', key: 'gkps_notif_v3' }
             ];
-            let hasData = false;
             let totalDocs = 0; 
             try {
                 for (const col of collections) {
                     const querySnapshot = await getDocs(getCollectionRef(col.name));
                     const data = [];
-                    querySnapshot.forEach((doc) => {
-                        data.push(doc.data());
-                    });
-                    
+                    querySnapshot.forEach((doc) => data.push(doc.data()));
                     if (data.length > 0) {
                         localStorage.setItem(col.key, JSON.stringify(data));
-                        hasData = true;
                         totalDocs += data.length;
                     }
                 }
-                console.log(`Sync complete. Fetched ${totalDocs} documents.`);
                 return totalDocs; 
             } catch (e) {
                 console.error("Gagal sinkronisasi data:", e);
-                // Jangan throw error di sini agar aplikasi tetap jalan offline
                 return -1;
             }
         };
 
         const pushToFirestore = async (collectionName, data, id) => {
             try {
-                if (auth.currentUser) {
-                    await setDoc(getDocRef(collectionName, id), data);
-                    console.log(`Berhasil simpan ke ${collectionName}:`, id);
-                } else {
-                    console.warn("Offline: Data disimpan lokal saja.");
-                }
-            } catch (e) {
-                console.error(`Gagal push ke Firestore (${collectionName}):`, e);
-            }
+                if (auth.currentUser) await setDoc(getDocRef(collectionName, id), data);
+            } catch (e) { console.error(`Gagal push ke Firestore (${collectionName}):`, e); }
         };
 
         const deleteFromFirestore = async (collectionName, id) => {
             try {
-                if (auth.currentUser) {
-                    await deleteDoc(getDocRef(collectionName, id));
-                }
-            } catch (e) {
-                console.error("Gagal hapus di Firestore:", e);
-            }
+                if (auth.currentUser) await deleteDoc(getDocRef(collectionName, id));
+            } catch (e) { console.error("Gagal hapus di Firestore:", e); }
         }
 
-        // --- DATA & CONFIG ---
         const MOCK_VERSES = [
             "Amsal 1:7 - Takut akan TUHAN adalah permulaan pengetahuan.",
-            "Filipi 4:13 - Segala perkara dapat kutanggung di dalam Dia.",
-            "Yosua 1:9 - Bukankah telah Kuperintahkan kepadamu: kuatkan dan teguhkanlah hatimu?",
-            "Yeremia 29:11 - Sebab Aku ini mengetahui rancangan-rancangan apa yang ada pada-Ku mengenai kamu."
+            "Filipi 4:13 - Segala perkara dapat kutanggung di dalam Dia."
         ];
         
-        const ML_HEROES = [
-            "Alucard", "Miya", "Layla", "Zilong", "Tigreal", "Nana", "Eudora", "Gord",
-            "Saber", "Balmond", "Akai", "Franco", "Chou", "Gusion", "Fanny", "Lesley"
-        ];
-
-        const JACOB_SONS = [
-            "Ruben", "Simeon", "Lewi", "Yehuda", "Dan", "Naftali", 
-            "Gad", "Asyer", "Isakhar", "Zebulon", "Yusuf", "Benyamin"
-        ];
+        const ML_HEROES = ["Alucard", "Miya", "Layla", "Zilong", "Tigreal", "Nana"];
+        const JACOB_SONS = ["Ruben", "Simeon", "Lewi", "Yehuda", "Dan", "Naftali"];
 
         const UserRole = { ADMIN: 'ADMIN', TEACHER: 'TEACHER', STUDENT: 'STUDENT' };
         const STORAGE = { 
-            USERS: 'gkps_users_v3', 
-            ATTENDANCE: 'gkps_att_v3', 
-            CLASSES: 'gkps_cls_v3', 
-            SESSION: 'gkps_sess_v3', 
-            MATERIALS: 'gkps_mat_v3',
-            ACTIVITIES: 'gkps_act_v3', 
-            NOTIFICATIONS: 'gkps_notif_v3', 
-            SCHEDULES: 'gkps_sched_v3' 
+            USERS: 'gkps_users_v3', ATTENDANCE: 'gkps_att_v3', CLASSES: 'gkps_cls_v3', 
+            SESSION: 'gkps_sess_v3', MATERIALS: 'gkps_mat_v3', ACTIVITIES: 'gkps_act_v3', 
+            NOTIFICATIONS: 'gkps_notif_v3', SCHEDULES: 'gkps_sched_v3' 
         };
         
         const DEFAULT_USERS = [
             { id: '1', name: 'Admin Utama', role: 'ADMIN', qrCode: 'ADMIN-001', gender: 'Laki-Laki', pin: 'admin123', isActive: true, lastLogin: new Date().toISOString() },
             { id: '2', name: 'Guru Sekolah Minggu', role: 'TEACHER', className: 'Kelas Daud', qrCode: 'GURU-001', gender: 'Perempuan', pin: '123456', isActive: true },
-            { id: '3', name: 'Timothy Simanjuntak', role: 'STUDENT', className: 'Kelas Daud', qrCode: 'S-001', gender: 'Laki-Laki', pin: '123456', isActive: true },
-            { id: '4', name: 'Sarah Damanik', role: 'STUDENT', className: 'Kelas Ester', qrCode: 'S-002', gender: 'Perempuan', pin: '123456', isActive: true },
         ];
         const DEFAULT_CLASSES = [
             { id: 'c1', name: 'Kelas Daud', desc: '4-6 Tahun' },
@@ -304,59 +257,37 @@
             { id: 'c3', name: 'Kelas Paulus', desc: '10-12 Tahun' },
             { id: 'c4', name: 'Kelas Ester', desc: '13+ Tahun' }
         ];
-        const DEFAULT_SCHEDULES = [
-            { id: 's1', className: 'Kelas Daud', date: getLocalDate(), time: '08:00 - 09:30', activity: 'Ibadah Minggu', theme: 'Tuhan Yesus Baik', speaker: 'Kak Lisa', location: 'R. Daud Lt. 1', status: 'upcoming' },
-            { id: 's2', className: 'Kelas Daniel', date: getLocalDate(), time: '08:00 - 09:30', activity: 'Ibadah & Aktivitas', theme: 'Daud Melawan Goliat', speaker: 'Kak Budi', location: 'R. Daniel Lt. 1', status: 'upcoming' },
-        ];
+        const DEFAULT_SCHEDULES = [];
 
-        // --- GEMINI AI SERVICE ---
         const GeminiService = {
             call: async (prompt) => {
                 const apiKey = "AIzaSyDR3b9r0Z7s_nd_I-ir0ywgIJlP0TGKpgs";
                 const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-                const payload = {
-                    contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: { responseMimeType: "application/json" }
-                };
-
-                const delays = [1000, 2000, 4000];
-                for (let i = 0; i <= 3; i++) {
-                    try {
-                        const response = await fetch(url, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(payload)
-                        });
-                        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                        
-                        const data = await response.json();
-                        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                        return JSON.parse(text);
-                    } catch (error) {
-                        if (i === 3) throw error;
-                        await new Promise(resolve => setTimeout(resolve, delays[i]));
-                    }
-                }
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ parts: [{ text: prompt }] }],
+                            generationConfig: { responseMimeType: "application/json" }
+                        })
+                    });
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    const data = await response.json();
+                    return JSON.parse(data.candidates?.[0]?.content?.parts?.[0]?.text);
+                } catch (error) { return null; }
             }
         };
 
-        // --- SERVICES (MODIFIED FOR FIREBASE) ---
         const DB = {
-            get: (key, def) => {
-                try { return JSON.parse(localStorage.getItem(key)) || def; } catch { return def; }
-            },
+            get: (key, def) => { try { return JSON.parse(localStorage.getItem(key)) || def; } catch { return def; } },
             set: (key, val) => localStorage.setItem(key, JSON.stringify(val)),
             users: {
                 update: (updatedUser) => {
                     const users = DB.get(STORAGE.USERS, DEFAULT_USERS);
                     const index = users.findIndex(u => u.id === updatedUser.id);
-                    if (index !== -1) {
-                        users[index] = updatedUser;
-                        DB.set(STORAGE.USERS, users);
-                        pushToFirestore('users', updatedUser, updatedUser.id);
-                        return true;
-                    }
-                    users.push(updatedUser);
+                    if (index !== -1) users[index] = updatedUser;
+                    else users.push(updatedUser);
                     DB.set(STORAGE.USERS, users);
                     pushToFirestore('users', updatedUser, updatedUser.id);
                     return true;
@@ -375,28 +306,18 @@
                 }
             },
             att: {
-                // REBUILD: Logika untuk menambah kehadiran dengan pengecekan ganda yang kuat
                 add: (record) => {
                     const all = DB.get(STORAGE.ATTENDANCE, []);
-                    // Cek duplikat berdasarkan ID user dan TANGGAL HARI INI
-                    const isDuplicate = all.some(r => r.userId === record.userId && r.date === record.date);
-                    
-                    if (isDuplicate) {
-                        return { success: false, reason: 'duplicate' };
-                    }
-                    
-                    // Simpan data
-                    const newAttendance = [...all, record];
-                    DB.set(STORAGE.ATTENDANCE, newAttendance);
+                    if (all.some(r => r.userId === record.userId && r.date === record.date)) return false;
+                    DB.set(STORAGE.ATTENDANCE, [...all, record]);
                     pushToFirestore('attendance', record, record.id);
-                    return { success: true, reason: 'ok' };
+                    return true;
                 }
             },
             materials: {
                 getLatest: (className) => {
                     const all = DB.get(STORAGE.MATERIALS, []);
-                    const classMaterials = all.filter(m => m.className === className);
-                    return classMaterials.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
+                    return all.filter(m => m.className === className).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
                 },
                 save: (material) => {
                     const all = DB.get(STORAGE.MATERIALS, []);
@@ -417,10 +338,7 @@
                 broadcast: (title, message, sender, scheduledTime = null) => {
                     const all = DB.get(STORAGE.NOTIFICATIONS, []);
                     const newNotif = { 
-                        id: Date.now(), 
-                        title, 
-                        message, 
-                        sender, 
+                        id: Date.now(), title, message, sender, 
                         timestamp: new Date().toISOString(),
                         scheduledTime: scheduledTime ? scheduledTime : new Date().toISOString(),
                         status: scheduledTime && new Date(scheduledTime) > new Date() ? 'scheduled' : 'sent'
@@ -460,7 +378,6 @@
             }
         };
 
-        // --- COMPONENTS ---
         const Background = () => (
             <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10 bg-[#f3f4f6]">
                 <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-indigo-50/50 via-purple-50/50 to-pink-50/50"></div>
@@ -491,12 +408,7 @@
             return (
                 <div onClick={onClick} className={`${s} rounded-full bg-gradient-to-tr from-indigo-400 to-pink-400 p-0.5 shadow-lg ${className} ${onClick ? 'cursor-pointer hover:scale-105 transition-transform' : ''}`}>
                     <div className="w-full h-full bg-white rounded-full flex items-center justify-center overflow-hidden">
-                        <img 
-                            src={src} 
-                            alt={name} 
-                            className="w-full h-full object-cover"
-                            onError={(e) => {e.target.src = `https://api.dicebear.com/7.x/initials/svg?seed=${name}`}}
-                        />
+                        <img src={src} alt={name} className="w-full h-full object-cover" onError={(e) => {e.target.src = `https://api.dicebear.com/7.x/initials/svg?seed=${name}`}} />
                     </div>
                 </div>
             );
@@ -512,21 +424,15 @@
             </div>
         );
 
-        // --- NEW COMPONENT: LIVE ATTENDANCE VIEW ---
         const LiveAttendanceView = ({ onClose }) => {
             const [logs, setLogs] = useState([]);
             const [stats, setStats] = useState({ total: 0, students: 0, teachers: 0 });
             const today = getLocalDate();
 
             useEffect(() => {
-                // Gunakan listener langsung ke Firebase (tanpa local storage) untuk data realtime murni
                 const unsubscribe = onSnapshot(getCollectionRef('attendance'), (snapshot) => {
                     const data = snapshot.docs.map(doc => doc.data());
-                    
-                    // Filter hanya data hari ini
                     const todaysData = data.filter(d => d.date === today);
-                    
-                    // Urutkan dari yang terbaru (timestamp descending)
                     todaysData.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
                     
                     setLogs(todaysData);
@@ -535,11 +441,7 @@
                         students: todaysData.filter(d => d.role === 'STUDENT').length,
                         teachers: todaysData.filter(d => d.role === 'TEACHER').length
                     });
-                }, (error) => {
-                    console.error("Live View Error:", error);
-                    // Silent fail for UI but log for debugging
                 });
-
                 return () => unsubscribe();
             }, []);
 
@@ -547,54 +449,33 @@
                 <div className="fixed inset-0 z-[100] bg-slate-100 flex flex-col animate-slide-up">
                     <div className="bg-white p-4 shadow-sm flex justify-between items-center z-10 border-b border-slate-100">
                         <div>
-                            <h2 className="text-2xl font-black text-indigo-600 flex items-center gap-2">
-                                <Radio className="animate-pulse text-red-500" /> Live Attendance
-                            </h2>
+                            <h2 className="text-2xl font-black text-indigo-600 flex items-center gap-2"><Radio className="animate-pulse text-red-500" /> Live Attendance</h2>
                             <p className="text-xs text-slate-500 font-bold">{new Date().toLocaleDateString('id-ID', {weekday:'long', day:'numeric', month:'long', year:'numeric'})}</p>
                         </div>
-                        <button onClick={onClose} className="bg-slate-100 p-2 rounded-full hover:bg-slate-200 transition-colors">
-                            <X size={24} className="text-slate-600" />
-                        </button>
+                        <button onClick={onClose} className="bg-slate-100 p-2 rounded-full hover:bg-slate-200 transition-colors"><X size={24} className="text-slate-600" /></button>
                     </div>
-
                     <div className="flex-1 overflow-hidden flex flex-col md:flex-row">
-                        {/* Stats Panel */}
                         <div className="md:w-1/3 p-6 bg-white border-r border-slate-100 flex flex-col gap-4">
                             <div className="p-6 rounded-3xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-200">
                                 <p className="text-indigo-100 text-xs font-bold uppercase tracking-wider mb-2">Total Hadir</p>
                                 <h3 className="text-6xl font-black">{stats.total}</h3>
                                 <div className="flex gap-4 mt-4 pt-4 border-t border-white/20">
-                                    <div>
-                                        <p className="text-xs opacity-80">Siswa</p>
-                                        <p className="text-xl font-bold">{stats.students}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-xs opacity-80">Guru</p>
-                                        <p className="text-xl font-bold">{stats.teachers}</p>
-                                    </div>
+                                    <div><p className="text-xs opacity-80">Siswa</p><p className="text-xl font-bold">{stats.students}</p></div>
+                                    <div><p className="text-xs opacity-80">Guru</p><p className="text-xl font-bold">{stats.teachers}</p></div>
                                 </div>
                             </div>
-                            
-                            {/* Kotak Animasi Terbaru */}
                             <div className="flex-1 bg-slate-50 rounded-3xl border border-slate-100 p-4 relative overflow-hidden flex items-center justify-center">
                                 {logs.length > 0 ? (
                                     <div className="text-center animate-pop">
                                         <Avatar name={logs[0].userName} seed={logs[0].avatarSeed} style={logs[0].avatarStyle} size="xl" className="mx-auto mb-3 shadow-xl border-4 border-white" />
                                         <h4 className="text-xl font-bold text-slate-800">{logs[0].userName}</h4>
-                                        <span className="inline-block mt-2 px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold animate-pulse">
-                                            Baru Saja Masuk
-                                        </span>
+                                        <span className="inline-block mt-2 px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold animate-pulse">Baru Saja Masuk</span>
                                     </div>
                                 ) : (
-                                    <div className="text-center">
-                                        <div className="loader mx-auto mb-2 opacity-50"></div>
-                                        <p className="text-slate-400 text-sm font-medium">Menunggu scan...</p>
-                                    </div>
+                                    <div className="text-center"><div className="loader mx-auto mb-2 opacity-50"></div><p className="text-slate-400 text-sm font-medium">Menunggu scan...</p></div>
                                 )}
                             </div>
                         </div>
-
-                        {/* List Panel */}
                         <div className="flex-1 p-6 overflow-y-auto bg-slate-50/50">
                             <h3 className="font-bold text-slate-700 mb-4 text-lg">Log Kedatangan</h3>
                             <div className="space-y-3">
@@ -619,12 +500,7 @@
                                     </div>
                                 ))}
                                 {logs.length === 0 && (
-                                    <div className="text-center py-20">
-                                        <div className="w-16 h-16 bg-slate-200 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400">
-                                            <Clock size={24} />
-                                        </div>
-                                        <p className="text-slate-500 font-medium">Belum ada data absensi hari ini.</p>
-                                    </div>
+                                    <div className="text-center py-20"><div className="w-16 h-16 bg-slate-200 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400"><Clock size={24} /></div><p className="text-slate-500 font-medium">Belum ada data absensi hari ini.</p></div>
                                 )}
                             </div>
                         </div>
@@ -633,7 +509,6 @@
             );
         };
 
-        // --- LOGIN SCREEN ---
         const LoginScreen = ({ onLogin }) => {
             const [mode, setMode] = useState('TEACHER');
             const [users, setUsers] = useState([]);
@@ -651,34 +526,18 @@
                 setIsSyncing(true);
                 try {
                     const count = await syncFromFirestore();
-                    // syncFromFirestore throws if permissions error
-                    
                     if (count >= 0) {
-                        // Refresh user list from updated storage
                         const updatedUsers = DB.get(STORAGE.USERS, DEFAULT_USERS);
                         setUsers(updatedUsers);
                         alert(`Berhasil Sinkronisasi! Data dimuat: ${count} items.\nSilakan pilih nama Anda sekarang.`);
-                    }
-                } catch(e) {
-                    if (e.code === 'permission-denied') {
-                        alert("Gagal: Izin Ditolak. Pastikan 'Rules' di Firebase sudah diganti ke 'if request.auth != null'");
-                    } else {
-                        alert("Gagal koneksi ke server. Pastikan internet lancar.");
-                    }
-                } finally {
-                    setIsSyncing(false);
-                }
+                    } else alert("Gagal koneksi ke server. Pastikan internet lancar.");
+                } catch(e) { alert("Error sync."); } finally { setIsSyncing(false); }
             };
 
             const handleSecretTrigger = () => {
                 if (showAdmin) return;
-                const newCount = secretCount + 1;
-                setSecretCount(newCount);
-                if (newCount >= 5) {
-                    setShowAdmin(true);
-                    setMode('ADMIN');
-                    alert("🔓 Admin Mode Terbuka!");
-                }
+                setSecretCount(s => s + 1);
+                if (secretCount + 1 >= 5) { setShowAdmin(true); setMode('ADMIN'); alert("🔓 Admin Mode Terbuka!"); }
             };
             const handleLogin = (e) => {
                 e.preventDefault();
@@ -688,25 +547,16 @@
                      DB.activities.add(loggedInUser.name, 'Login ke sistem');
                      onLogin(updated);
                 };
-
                 if (mode === 'ADMIN') {
-                    if (pw === 'admin123') {
-                        const adminUser = { id: 'admin', name: 'Administrator', role: 'ADMIN', lastLogin: new Date().toISOString() };
-                        recordLogin(adminUser);
-                    }
+                    if (pw === 'admin123') recordLogin({ id: 'admin', name: 'Administrator', role: 'ADMIN', lastLogin: new Date().toISOString() });
                     else alert('Password salah!');
                 } else {
                     const u = users.find(x => x.id === selected);
                     if (u) {
                         if (u.isActive === false) return alert("Akun ini telah dinonaktifkan oleh Admin.");
-                        if (u.pin && u.pin === pw) {
-                            recordLogin(u);
-                        } else {
-                            alert('PIN Salah! Silakan coba lagi. (Default: 123456)');
-                        }
-                    } else {
-                        alert('Silakan pilih nama pengguna terlebih dahulu.');
-                    }
+                        if (u.pin && u.pin === pw) recordLogin(u);
+                        else alert('PIN Salah! (Default: 123456)');
+                    } else alert('Silakan pilih nama pengguna terlebih dahulu.');
                 }
             };
 
@@ -714,91 +564,61 @@
                 if (recoveryKey === 'GKPS2025') { 
                     const admin = users.find(u => u.role === 'ADMIN');
                     if(admin) {
-                        alert("Reset Berhasil! Password Admin kembali ke: admin123");
-                        const updatedAdmin = { ...admin, pin: 'admin123' };
-                        DB.users.update(updatedAdmin);
-                    } else {
-                        alert("Reset ke Default: Gunakan 'admin123'");
-                    }
+                        DB.users.update({ ...admin, pin: 'admin123' });
+                        alert("Reset Berhasil! Password Admin: admin123");
+                    } else alert("Reset ke Default: Gunakan 'admin123'");
                     setShowForgot(false);
-                } else {
-                    alert("Recovery Key Salah!");
-                }
+                } else alert("Recovery Key Salah!");
             };
 
-            const modes = showAdmin ? ['TEACHER', 'STUDENT', 'ADMIN'] : ['TEACHER', 'STUDENT'];
             return (
                 <div className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden">
                     <Background />
                     <div className="glass-panel p-8 rounded-[2.5rem] w-full max-w-sm animate-slide-up relative z-10">
                         <div className="flex justify-center mb-6">
-                            <button onClick={handleSecretTrigger} className="w-20 h-20 bg-gradient-to-tr from-indigo-500 to-pink-500 rounded-3xl flex items-center justify-center shadow-xl shadow-indigo-500/20 animate-float active:scale-90 transition-transform cursor-pointer">
-                                <Church className="text-white w-10 h-10" />
-                            </button>
+                            <button onClick={handleSecretTrigger} className="w-20 h-20 bg-gradient-to-tr from-indigo-500 to-pink-500 rounded-3xl flex items-center justify-center shadow-xl shadow-indigo-500/20 animate-float active:scale-90 transition-transform cursor-pointer"><Church className="text-white w-10 h-10" /></button>
                         </div>
                         <div className="text-center mb-8">
                             <h1 className="text-2xl font-extrabold text-slate-800 tracking-tight mb-2 leading-tight">Presensi ASM-GSM<br/>GKPS Tangerang</h1>
                             <p className="text-slate-500 font-medium flex items-center justify-center gap-1"><Cloud size={14}/> Online Database System</p>
                         </div>
                         <div className="bg-white/50 p-1.5 rounded-2xl flex mb-6 backdrop-blur-sm">
-                            {modes.map(m => (
-                                <button key={m} onClick={() => { setMode(m); setSelected(''); setPw(''); }}
-                                    className={`flex-1 py-3 text-[10px] font-bold rounded-xl transition-all ${mode === m ? 'bg-white text-indigo-600 shadow-md scale-100' : 'text-slate-400 hover:text-slate-600'}`}>
-                                    {m === 'TEACHER' ? 'GURU' : m === 'STUDENT' ? 'SISWA' : 'ADMIN'}
-                                </button>
+                            {(showAdmin ? ['TEACHER', 'STUDENT', 'ADMIN'] : ['TEACHER', 'STUDENT']).map(m => (
+                                <button key={m} onClick={() => { setMode(m); setSelected(''); setPw(''); }} className={`flex-1 py-3 text-[10px] font-bold rounded-xl transition-all ${mode === m ? 'bg-white text-indigo-600 shadow-md scale-100' : 'text-slate-400 hover:text-slate-600'}`}>{m === 'TEACHER' ? 'GURU' : m === 'STUDENT' ? 'SISWA' : 'ADMIN'}</button>
                             ))}
                         </div>
                         <form onSubmit={handleLogin} className="space-y-4">
                             {mode !== 'ADMIN' ? (
                                 <div className="space-y-3">
                                     <div className="relative group">
-                                        <select value={selected} onChange={e => setSelected(e.target.value)}
-                                            className="w-full p-4 pl-5 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-700 appearance-none shadow-sm transition-all hover:border-indigo-300">
+                                        <select value={selected} onChange={e => setSelected(e.target.value)} className="w-full p-4 pl-5 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-700 appearance-none shadow-sm transition-all hover:border-indigo-300">
                                             <option value="">Pilih Nama Anda...</option>
                                             {users.filter(u => u.role === mode && u.isActive !== false).map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
                                         </select>
                                         <div className="absolute right-5 top-4 pointer-events-none text-slate-400"><ChevronRight className="rotate-90"/></div>
                                     </div>
-                                    <input 
-                                        type="password" 
-                                        placeholder="Masukkan PIN (Default: 123456)" 
-                                        value={pw} 
-                                        onChange={e => setPw(e.target.value)}
-                                        className="w-full p-4 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-700 shadow-sm" 
-                                    />
+                                    <input type="password" placeholder="Masukkan PIN (Default: 123456)" value={pw} onChange={e => setPw(e.target.value)} className="w-full p-4 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-700 shadow-sm" />
                                 </div>
                             ) : (
                                 <div>
-                                    <input type="password" placeholder="Password Admin" value={pw} onChange={e => setPw(e.target.value)}
-                                        className="w-full p-4 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-700 shadow-sm" />
-                                    <div className="text-right mt-2">
-                                        <button type="button" onClick={() => setShowForgot(true)} className="text-xs text-indigo-500 font-bold hover:underline">Lupa Password?</button>
-                                    </div>
+                                    <input type="password" placeholder="Password Admin" value={pw} onChange={e => setPw(e.target.value)} className="w-full p-4 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-700 shadow-sm" />
+                                    <div className="text-right mt-2"><button type="button" onClick={() => setShowForgot(true)} className="text-xs text-indigo-500 font-bold hover:underline">Lupa Password?</button></div>
                                 </div>
                             )}
                             <Button variant="primary">Masuk Aplikasi <Sparkles size={18} /></Button>
                         </form>
-                        
                         <div className="mt-6 text-center">
                             <button onClick={handleManualSync} disabled={isSyncing} className="text-xs font-bold text-indigo-500 bg-indigo-50 px-4 py-2 rounded-xl flex items-center gap-2 mx-auto active:scale-95 transition-transform">
-                                {isSyncing ? <RefreshCw size={14} className="animate-spin"/> : <Cloud size={14}/>}
-                                {isSyncing ? 'Sedang Mengupdate...' : 'Paksa Update Data'}
+                                {isSyncing ? <RefreshCw size={14} className="animate-spin"/> : <Cloud size={14}/>} {isSyncing ? 'Sedang Mengupdate...' : 'Paksa Update Data'}
                             </button>
-                            <p className="text-[10px] text-slate-400 mt-2">Tekan tombol di atas jika nama user terbaru belum muncul.</p>
                         </div>
                     </div>
-                    <p className="absolute bottom-6 text-xs text-slate-400 font-medium opacity-60">GKPS Digital System v3.3 (Live Monitor)</p>
-
                     {showForgot && (
                         <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
                             <div className="bg-white p-6 rounded-3xl w-full max-w-xs animate-pop shadow-2xl">
                                 <h3 className="text-lg font-bold text-slate-800 mb-2">Reset Password Admin</h3>
-                                <p className="text-xs text-slate-500 mb-4">Masukkan Recovery Key dari Developer untuk mereset password ke default.</p>
                                 <input value={recoveryKey} onChange={e=>setRecoveryKey(e.target.value)} placeholder="Recovery Key" className="w-full p-3 border rounded-xl text-sm font-bold mb-4 outline-none focus:border-indigo-500"/>
-                                <div className="flex gap-2">
-                                    <Button onClick={handleForgot}>Reset</Button>
-                                    <Button variant="secondary" onClick={() => setShowForgot(false)}>Batal</Button>
-                                </div>
+                                <div className="flex gap-2"><Button onClick={handleForgot}>Reset</Button><Button variant="secondary" onClick={() => setShowForgot(false)}>Batal</Button></div>
                             </div>
                         </div>
                     )}
@@ -806,9 +626,6 @@
             );
         };
 
-        // --- COMPONENTS OMITTED FOR BREVITY BUT INCLUDED IN FULL FILE (UserManagement, Modals) ---
-        // (Saya menyertakan kode lengkap di bawah untuk komponen UserManagement, ScheduleManagerModal, dll)
-        
         const UserManagement = () => {
             const [users, setUsers] = useState([]);
             const [search, setSearch] = useState('');
@@ -825,32 +642,17 @@
                 if(!form.name) return;
                 
                 if (editingId) {
-                    const updatedUser = { 
-                        ...form, 
-                        id: editingId,
-                        ...users.find(u => u.id === editingId) 
-                    };
-                    updatedUser.name = form.name;
-                    updatedUser.role = form.role;
-                    updatedUser.className = (form.role === 'STUDENT' || form.role === 'TEACHER') ? form.className : '-';
-                    updatedUser.gender = form.gender;
-                    updatedUser.pin = form.pin;
-
+                    const updatedUser = { ...form, id: editingId, ...users.find(u => u.id === editingId), name: form.name, role: form.role, className: (form.role === 'STUDENT' || form.role === 'TEACHER') ? form.className : '-', gender: form.gender, pin: form.pin };
                     DB.users.update(updatedUser);
                     alert("Data user berhasil diperbarui!");
                     setEditingId(null);
                 } else {
                     const newUser = {
-                        id: Date.now().toString(), 
-                        name: form.name, 
-                        role: form.role,
+                        id: Date.now().toString(), name: form.name, role: form.role,
                         className: (form.role === 'STUDENT' || form.role === 'TEACHER') ? form.className : '-',
-                        gender: form.gender,
-                        pin: form.pin || '123456', 
+                        gender: form.gender, pin: form.pin || '123456', 
                         qrCode: `${form.role.substring(0,1)}-${Date.now().toString().slice(-4)}`,
-                        avatarStyle: 'avataaars',
-                        isActive: true,
-                        lastLogin: null
+                        avatarStyle: 'avataaars', isActive: true, lastLogin: null
                     };
                     DB.users.add(newUser); 
                     alert(`User ${newUser.name} berhasil ditambahkan!`);
@@ -860,123 +662,48 @@
                 setIsFormOpen(false);
             };
             
-            const handleEdit = (user) => {
-                setForm({
-                    name: user.name,
-                    role: user.role,
-                    className: user.className !== '-' ? user.className : 'Kelas Daud',
-                    gender: user.gender,
-                    pin: user.pin
-                });
-                setEditingId(user.id);
-                setIsFormOpen(true);
-            };
-
-            const handleResetPin = (user) => {
-                if(confirm(`Reset PIN untuk ${user.name}?`)) {
-                    const updatedUser = { ...user, pin: '123456' };
-                    DB.users.update(updatedUser);
-                    setUsers(DB.get(STORAGE.USERS));
-                    alert("PIN direset!");
-                }
-            };
-
-            const handleToggleStatus = (user) => {
-                if(confirm(`Ubah status ${user.name}?`)) {
-                    const updatedUser = { ...user, isActive: !user.isActive };
-                    DB.users.update(updatedUser);
-                    setUsers(DB.get(STORAGE.USERS));
-                }
-            };
-
-            const handleImportClick = () => {
-                fileInputRef.current.click();
-            };
-
-            const handleFileChange = (event) => {
-                const file = event.target.files[0];
-                if (!file) return;
-
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const text = e.target.result;
-                    processCSV(text);
-                };
-                reader.readAsText(file);
-                event.target.value = ''; 
-            };
-
+            const handleEdit = (user) => { setForm({ name: user.name, role: user.role, className: user.className !== '-' ? user.className : 'Kelas Daud', gender: user.gender, pin: user.pin }); setEditingId(user.id); setIsFormOpen(true); };
+            const handleResetPin = (user) => { if(confirm(`Reset PIN untuk ${user.name}?`)) { DB.users.update({ ...user, pin: '123456' }); setUsers(DB.get(STORAGE.USERS)); alert("PIN direset!"); } };
+            const handleToggleStatus = (user) => { if(confirm(`Ubah status ${user.name}?`)) { DB.users.update({ ...user, isActive: !user.isActive }); setUsers(DB.get(STORAGE.USERS)); } };
+            const handleImportClick = () => fileInputRef.current.click();
+            const handleFileChange = (e) => { const file = e.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (ev) => processCSV(ev.target.result); reader.readAsText(file); e.target.value = ''; };
             const processCSV = async (csvText) => {
                 setIsUploading(true);
                 const lines = csvText.split('\n');
                 let successCount = 0;
-                
                 for (let i = 0; i < lines.length; i++) {
                     const line = lines[i];
                     const [name, role, className, genderRaw] = line.split(',').map(item => item?.trim());
-                    
                     if (name && role) {
                         const normalizedRole = role.toUpperCase();
                         if (['STUDENT', 'TEACHER', 'ADMIN'].includes(normalizedRole)) {
                              const newUser = {
-                                id: Date.now().toString() + i, 
-                                name: name, role: normalizedRole, 
+                                id: Date.now().toString() + i, name: name, role: normalizedRole, 
                                 className: (normalizedRole === 'STUDENT' || normalizedRole === 'TEACHER') && className ? className : '-',
                                 gender: (genderRaw && genderRaw.toLowerCase().startsWith('p')) ? 'Perempuan' : 'Laki-Laki',
-                                pin: '123456', 
-                                qrCode: `${normalizedRole.substring(0,1)}-${Date.now().toString().slice(-4)}-${i}`,
-                                avatarStyle: 'avataaars',
-                                isActive: true
+                                pin: '123456', qrCode: `${normalizedRole.substring(0,1)}-${Date.now().toString().slice(-4)}-${i}`,
+                                avatarStyle: 'avataaars', isActive: true
                             };
-                            try {
-                                await pushToFirestore('users', newUser, newUser.id);
-                                const currentUsers = JSON.parse(localStorage.getItem(STORAGE.USERS)) || [];
-                                currentUsers.push(newUser);
-                                localStorage.setItem(STORAGE.USERS, JSON.stringify(currentUsers));
-                                successCount++;
-                            } catch (err) {
-                                console.error("Gagal upload user:", name, err);
-                            }
+                            try { await pushToFirestore('users', newUser, newUser.id); successCount++; } catch (err) {}
                         }
                     }
                 }
-
-                if (successCount > 0) {
-                    setUsers(DB.get(STORAGE.USERS));
-                    DB.activities.add('Admin', `Import ${successCount} user baru via CSV`);
-                    alert(`SUKSES! ${successCount} data berhasil diupload ke Cloud. Silakan buka HP Anda.`);
-                } else {
-                    alert("Gagal membaca data. Gunakan format: Nama,Role,Kelas,Gender");
-                }
+                if (successCount > 0) { setUsers(DB.get(STORAGE.USERS)); alert(`SUKSES! ${successCount} data diupload.`); } else alert("Gagal membaca data.");
                 setIsUploading(false);
             };
-            const handleDelete = (id) => {
-                if(window.confirm('Hapus user ini?')) {
-                    DB.users.delete(id);
-                    const updated = DB.get(STORAGE.USERS);
-                    setUsers(updated);
-                    DB.activities.add('Admin', `Menghapus user ID: ${id}`);
-                }
-            };
-
+            const handleDelete = (id) => { if(window.confirm('Hapus user ini?')) { DB.users.delete(id); setUsers(DB.get(STORAGE.USERS)); } };
             const filtered = users.filter(u => u.name.toLowerCase().includes(search.toLowerCase()));
+
             return (
                 <div className="p-6 pb-32 animate-slide-up">
                     <div className="flex justify-between items-center mb-6">
                         <h2 className="text-2xl font-extrabold text-slate-800">Manajemen User</h2>
                         <div className="flex gap-2">
                             <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".csv" />
-                            <button onClick={handleImportClick} disabled={isUploading} className="bg-emerald-50 backdrop-blur border border-emerald-100 p-2 px-3 rounded-xl text-xs font-bold text-emerald-600 shadow-sm flex items-center gap-1 hover:bg-emerald-100 transition-colors">
-                                {isUploading ? <RefreshCw size={14} className="animate-spin"/> : <Upload size={14}/>} 
-                                <span className="hidden md:inline">Import</span>
-                            </button>
-                            <button onClick={() => { setIsFormOpen(!isFormOpen); setEditingId(null); setForm({name: '', role: 'STUDENT', className: 'Kelas Daud', gender: 'Laki-Laki', pin: '123456'}); }} className="bg-white/80 backdrop-blur border border-white p-2 px-3 rounded-xl text-xs font-bold text-indigo-600 shadow-sm flex items-center gap-1 hover:bg-indigo-50 transition-colors">
-                                {isFormOpen ? <X size={14}/> : <Plus size={14}/>} 
-                                <span className="hidden md:inline">{isFormOpen ? 'Tutup' : 'Tambah'}</span>
-                            </button>
+                            <button onClick={handleImportClick} disabled={isUploading} className="bg-emerald-50 backdrop-blur border border-emerald-100 p-2 px-3 rounded-xl text-xs font-bold text-emerald-600 shadow-sm flex items-center gap-1">{isUploading ? <RefreshCw size={14} className="animate-spin"/> : <Upload size={14}/>} Import</button>
+                            <button onClick={() => { setIsFormOpen(!isFormOpen); setEditingId(null); setForm({name: '', role: 'STUDENT', className: 'Kelas Daud', gender: 'Laki-Laki', pin: '123456'}); }} className="bg-white/80 backdrop-blur border border-white p-2 px-3 rounded-xl text-xs font-bold text-indigo-600 shadow-sm flex items-center gap-1">{isFormOpen ? <X size={14}/> : <Plus size={14}/>} {isFormOpen ? 'Tutup' : 'Tambah'}</button>
                         </div>
                     </div>
-
                     {isFormOpen && (
                         <div className="glass-card p-5 rounded-[2rem] mb-6 animate-pop">
                             <h3 className="font-bold text-slate-700 mb-4">{editingId ? 'Edit Data User' : 'Data User Baru'}</h3>
@@ -984,67 +711,25 @@
                                 <input value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="Nama Lengkap" className="w-full p-3 rounded-xl bg-white/50 border border-white focus:ring-2 focus:ring-indigo-500 outline-none font-semibold text-slate-700" />
                                 <input value={form.pin} onChange={e => setForm({...form, pin: e.target.value})} placeholder="Set PIN (Default: 123456)" className="w-full p-3 rounded-xl bg-white/50 border border-white focus:ring-2 focus:ring-indigo-500 outline-none font-semibold text-slate-700" />
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                    <div className="relative">
-                                        <select value={form.gender} onChange={e => setForm({...form, gender: e.target.value})} className="w-full p-3 rounded-xl bg-white/50 border border-white outline-none font-semibold text-slate-600 text-sm appearance-none">
-                                            <option value="Laki-Laki">Laki-Laki</option>
-                                            <option value="Perempuan">Perempuan</option>
-                                        </select>
-                                        <ChevronRight className="absolute right-3 top-3.5 rotate-90 text-slate-400 w-4 h-4 pointer-events-none"/>
-                                    </div>
-                                    <div className="relative">
-                                        <select value={form.role} onChange={e => setForm({...form, role: e.target.value})} className="w-full p-3 rounded-xl bg-white/50 border border-white outline-none font-semibold text-slate-600 text-sm appearance-none">
-                                            <option value="STUDENT">Siswa</option><option value="TEACHER">Guru</option><option value="ADMIN">Admin</option>
-                                        </select>
-                                        <ChevronRight className="absolute right-3 top-3.5 rotate-90 text-slate-400 w-4 h-4 pointer-events-none"/>
-                                    </div>
+                                    <select value={form.gender} onChange={e => setForm({...form, gender: e.target.value})} className="w-full p-3 rounded-xl bg-white/50 border border-white outline-none font-semibold text-slate-600 text-sm"><option value="Laki-Laki">Laki-Laki</option><option value="Perempuan">Perempuan</option></select>
+                                    <select value={form.role} onChange={e => setForm({...form, role: e.target.value})} className="w-full p-3 rounded-xl bg-white/50 border border-white outline-none font-semibold text-slate-600 text-sm"><option value="STUDENT">Siswa</option><option value="TEACHER">Guru</option><option value="ADMIN">Admin</option></select>
                                 </div>
                                 {(form.role === 'STUDENT' || form.role === 'TEACHER') && (
-                                    <div className="relative">
-                                        <select value={form.className} onChange={e => setForm({...form, className: e.target.value})} className="w-full p-3 rounded-xl bg-white/50 border border-white outline-none font-semibold text-slate-600 text-sm appearance-none">
-                                            {DEFAULT_CLASSES.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-                                        </select>
-                                        <ChevronRight className="absolute right-3 top-3.5 rotate-90 text-slate-400 w-4 h-4 pointer-events-none"/>
-                                    </div>
+                                    <select value={form.className} onChange={e => setForm({...form, className: e.target.value})} className="w-full p-3 rounded-xl bg-white/50 border border-white outline-none font-semibold text-slate-600 text-sm">{DEFAULT_CLASSES.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}</select>
                                 )}
                                 <Button onClick={handleSubmit}>{editingId ? 'Update Data' : 'Simpan Data'}</Button>
                             </div>
                         </div>
                     )}
-
-                    <div className="relative mb-6">
-                        <Search className="absolute left-4 top-3.5 text-slate-400" size={20}/>
-                        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari nama user..." className="w-full p-3 pl-12 rounded-2xl bg-white/60 border border-white/40 focus:bg-white transition-all outline-none font-medium text-slate-700 placeholder-slate-400" />
-                    </div>
-
+                    <div className="relative mb-6"><Search className="absolute left-4 top-3.5 text-slate-400" size={20}/><input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari nama user..." className="w-full p-3 pl-12 rounded-2xl bg-white/60 border border-white/40 focus:bg-white outline-none font-medium text-slate-700" /></div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {filtered.length === 0 ? <div className="col-span-full text-center py-10 text-slate-400 font-medium">Tidak ada user ditemukan</div> : filtered.map(u => (
-                            <div key={u.id} className={`glass-card p-4 rounded-2xl flex flex-col gap-3 group animate-pop hover:shadow-lg transition-all ${u.isActive === false ? 'opacity-60 grayscale' : ''}`}>
+                        {filtered.map(u => (
+                            <div key={u.id} className={`glass-card p-4 rounded-2xl flex flex-col gap-3 ${u.isActive === false ? 'opacity-60 grayscale' : ''}`}>
                                 <div className="flex items-center justify-between w-full">
-                                    <div className="flex items-center gap-3">
-                                        <Avatar name={u.name} seed={u.avatarSeed} style={u.avatarStyle} size="sm" />
-                                        <div>
-                                            <p className="font-bold text-slate-800 text-sm">{u.name}</p>
-                                            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${u.role === 'ADMIN' ? 'bg-rose-100 text-rose-600' : u.role === 'TEACHER' ? 'bg-amber-100 text-amber-600' : 'bg-indigo-100 text-indigo-600'}`}>{u.role}</span>
-                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${u.gender === 'Perempuan' ? 'bg-pink-100 text-pink-600' : 'bg-blue-100 text-blue-600'}`}>{u.gender === 'Perempuan' ? 'P' : 'L'}</span>
-                                                {(u.role === 'STUDENT' || u.role === 'TEACHER') && <span className="text-[10px] text-slate-400 font-medium">• {u.className}</span>}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="flex gap-1">
-                                        <button onClick={() => handleEdit(u)} className="w-8 h-8 flex items-center justify-center rounded-full bg-blue-50 text-blue-500 hover:bg-blue-100 transition-colors" title="Edit User"><Edit size={14}/></button>
-                                        <button onClick={() => handleDelete(u.id)} className="w-8 h-8 flex items-center justify-center rounded-full bg-red-50 text-red-500 hover:bg-red-100 transition-colors" title="Hapus User"><Trash2 size={14}/></button>
-                                    </div>
+                                    <div className="flex items-center gap-3"><Avatar name={u.name} seed={u.avatarSeed} style={u.avatarStyle} size="sm" /><div><p className="font-bold text-slate-800 text-sm">{u.name}</p><span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">{u.role}</span></div></div>
+                                    <div className="flex gap-1"><button onClick={() => handleEdit(u)} className="w-8 h-8 flex items-center justify-center rounded-full bg-blue-50 text-blue-500"><Edit size={14}/></button><button onClick={() => handleDelete(u.id)} className="w-8 h-8 flex items-center justify-center rounded-full bg-red-50 text-red-500"><Trash2 size={14}/></button></div>
                                 </div>
-                                
-                                <div className="grid grid-cols-2 gap-2 border-t border-slate-100 pt-3">
-                                    <button onClick={() => handleResetPin(u)} className="flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-slate-50 text-[10px] font-bold text-slate-600 hover:bg-slate-100">
-                                        <Key size={12}/> Reset PIN
-                                    </button>
-                                    <button onClick={() => handleToggleStatus(u)} className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[10px] font-bold ${u.isActive !== false ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' : 'bg-slate-200 text-slate-500 hover:bg-slate-300'}`}>
-                                        {u.isActive !== false ? <><Power size={12}/> Aktif</> : <><Power size={12}/> Nonaktif</>}
-                                    </button>
-                                </div>
+                                <div className="grid grid-cols-2 gap-2 border-t border-slate-100 pt-3"><button onClick={() => handleResetPin(u)} className="flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-slate-50 text-[10px] font-bold text-slate-600"><Key size={12}/> Reset PIN</button><button onClick={() => handleToggleStatus(u)} className="flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-slate-50 text-[10px] font-bold text-slate-600"><Power size={12}/> {u.isActive !== false ? 'Aktif' : 'Nonaktif'}</button></div>
                             </div>
                         ))}
                     </div>
@@ -1054,272 +739,36 @@
 
         const ScheduleManagerModal = ({ user, onClose }) => {
             const [schedules, setSchedules] = useState([]);
-            const [form, setForm] = useState({
-                className: user.role === 'TEACHER' ? user.className : DEFAULT_CLASSES[0].name,
-                date: getLocalDate(), 
-                time: '', activity: '', theme: '', speaker: '', location: ''
-            });
+            const [form, setForm] = useState({ className: user.role === 'TEACHER' ? user.className : DEFAULT_CLASSES[0].name, date: getLocalDate(), time: '', activity: '', theme: '', speaker: '', location: '' });
             const [filterClass, setFilterClass] = useState(user.role === 'TEACHER' ? user.className : 'ALL');
-            const [confirmId, setConfirmId] = useState(null);
             const [editingId, setEditingId] = useState(null);
 
-            useEffect(() => {
-                const data = DB.schedules.get(filterClass);
-                data.sort((a, b) => new Date(b.date) - new Date(a.date));
-                setSchedules(data);
-            }, [filterClass]);
-
+            useEffect(() => { const data = DB.schedules.get(filterClass); data.sort((a, b) => new Date(b.date) - new Date(a.date)); setSchedules(data); }, [filterClass]);
             const handleSubmit = () => {
-                if(!form.activity || !form.time || !form.date) return alert("Mohon lengkapi tanggal, aktivitas dan waktu");
-                if (editingId) {
-                    const updatedSched = { ...form, id: editingId, status: 'upcoming' };
-                    DB.schedules.update(updatedSched);
-                    DB.activities.add(user.name, `Mengubah jadwal: ${form.activity}`);
-                    alert("Jadwal berhasil diperbarui!");
-                    setEditingId(null);
-                } else {
-                    const newSched = { ...form, id: Date.now().toString(), status: 'upcoming' };
-                    DB.schedules.add(newSched);
-                    DB.activities.add(user.name, `Membuat jadwal: ${form.activity}`);
-                    alert("Jadwal ditambahkan!");
-                }
-                
-                const data = DB.schedules.get(filterClass);
-                data.sort((a, b) => new Date(b.date) - new Date(a.date));
-                setSchedules(data);
-                
-                setForm({
-                    className: user.role === 'TEACHER' ? user.className : DEFAULT_CLASSES[0].name,
-                    date: getLocalDate(), 
-                    time: '', activity: '', theme: '', speaker: '', location: ''
-                }); 
+                if(!form.activity) return;
+                const sched = { ...form, id: editingId || Date.now().toString(), status: 'upcoming' };
+                editingId ? DB.schedules.update(sched) : DB.schedules.add(sched);
+                alert("Jadwal tersimpan!"); setEditingId(null); setSchedules(DB.schedules.get(filterClass));
             };
-
-            const handleEdit = (sched) => {
-                setForm(sched);
-                setEditingId(sched.id);
-            };
-
-            const handleCancelEdit = () => {
-                setEditingId(null);
-                setForm({
-                    className: user.role === 'TEACHER' ? user.className : DEFAULT_CLASSES[0].name,
-                    date: getLocalDate(), 
-                    time: '', activity: '', theme: '', speaker: '', location: ''
-                });
-            };
-
-            const handleDelete = (id, activityName) => {
-                DB.schedules.delete(id);
-                DB.activities.add(user.name, `Menghapus jadwal: ${activityName}`);
-                const data = DB.schedules.get(filterClass);
-                data.sort((a, b) => new Date(b.date) - new Date(a.date));
-                setSchedules(data);
-                setConfirmId(null);
-                if (editingId === id) handleCancelEdit();
-            };
-
             return (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose}></div>
-                    <div className="bg-white rounded-[2rem] p-6 w-full max-w-md relative z-10 shadow-2xl animate-pop h-[80vh] flex flex-col">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2"><CalendarDays size={20} className="text-indigo-500"/> {editingId ? 'Edit Jadwal' : 'Kelola Jadwal'}</h3>
-                            <button onClick={onClose}><X size={20} className="text-slate-400 hover:text-slate-600"/></button>
-                        </div>
-
-                        <div className="space-y-3 mb-6 bg-slate-50 p-4 rounded-2xl border border-slate-100 relative">
-                            {editingId && <div className="absolute top-0 right-0 bg-amber-100 text-amber-600 text-[10px] font-bold px-2 py-1 rounded-bl-xl rounded-tr-xl">Mode Edit</div>}
-                            
-                            {user.role === 'ADMIN' && (
-                                <select value={form.className} onChange={e=>setForm({...form, className: e.target.value})} className="w-full p-2 rounded-xl border text-sm font-semibold text-slate-600">
-                                    {DEFAULT_CLASSES.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-                                </select>
-                            )}
-                            
-                            <div className="grid grid-cols-2 gap-2">
-                                <input type="date" value={form.date} onChange={e=>setForm({...form, date: e.target.value})} className="p-2 rounded-xl border text-sm text-slate-600 font-semibold"/>
-                                <input value={form.time} onChange={e=>setForm({...form, time: e.target.value})} placeholder="Jam (08:00 - 10:00)" className="p-2 rounded-xl border text-sm"/>
-                            </div>
-                            <input value={form.activity} onChange={e=>setForm({...form, activity: e.target.value})} placeholder="Nama Kegiatan" className="w-full p-2 rounded-xl border text-sm"/>
-                            <input value={form.theme} onChange={e=>setForm({...form, theme: e.target.value})} placeholder="Tema (Opsional)" className="w-full p-2 rounded-xl border text-sm"/>
-                            <div className="grid grid-cols-2 gap-2">
-                                <input value={form.speaker} onChange={e=>setForm({...form, speaker: e.target.value})} placeholder="Pengajar" className="p-2 rounded-xl border text-sm"/>
-                                <input value={form.location} onChange={e=>setForm({...form, location: e.target.value})} placeholder="Lokasi" className="p-2 rounded-xl border text-sm"/>
-                            </div>
-                            
-                            <div className="flex gap-2">
-                                <Button onClick={handleSubmit} className="py-2 text-sm flex-1">{editingId ? 'Simpan Perubahan' : 'Tambah Jadwal'}</Button>
-                                {editingId && <Button onClick={handleCancelEdit} variant="secondary" className="py-2 text-sm w-1/3">Batal</Button>}
-                            </div>
-                        </div>
-
-                        {user.role === 'ADMIN' && (
-                            <div className="mb-4">
-                                <select value={filterClass} onChange={e=>setFilterClass(e.target.value)} className="w-full p-2 rounded-xl border bg-white text-sm font-bold text-slate-600">
-                                    <option value="ALL">Semua Kelas</option>
-                                    {DEFAULT_CLASSES.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-                                </select>
-                            </div>
-                        )}
-
-                        <div className="flex-1 overflow-y-auto space-y-3 pb-4">
-                            {schedules.length === 0 ? <p className="text-center text-slate-400 text-sm mt-4">Belum ada jadwal.</p> : schedules.map(s => (
-                                <div key={s.id} className={`p-3 border rounded-xl flex justify-between items-start bg-white shadow-sm transition-colors ${editingId === s.id ? 'border-indigo-500 ring-2 ring-indigo-100' : 'border-slate-100 hover:border-indigo-200'}`}>
-                                    <div className="flex-1">
-                                        <p className="text-[10px] font-bold text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded w-fit mb-1">{s.className}</p>
-                                        <h4 className="font-bold text-slate-800 text-sm">{s.activity}</h4>
-                                        <p className="text-xs text-slate-500 flex items-center gap-1 mt-1">
-                                            <Calendar size={10}/> {formatDateIndo(s.date)} • {s.time}
-                                        </p>
-                                    </div>
-                                    <div className="flex flex-col gap-1 ml-2">
-                                        <button onClick={()=>handleEdit(s)} className="p-2 bg-slate-50 text-slate-400 rounded-lg hover:bg-blue-50 hover:text-blue-500 transition-all" title="Edit Jadwal"><Edit size={16}/></button>
-                                        {confirmId === s.id ? (
-                                            <div className="flex flex-col gap-1 mt-1">
-                                                <button onClick={()=>handleDelete(s.id, s.activity)} className="px-2 py-1 bg-red-500 text-white text-[10px] font-bold rounded hover:bg-red-600">Hapus!</button>
-                                                <button onClick={()=>setConfirmId(null)} className="px-2 py-1 bg-slate-200 text-slate-600 text-[10px] font-bold rounded hover:bg-slate-300">Batal</button>
-                                            </div>
-                                        ) : (
-                                            <button onClick={()=>setConfirmId(s.id)} className="p-2 bg-slate-50 text-slate-400 rounded-lg hover:bg-red-50 hover:text-red-500 transition-all" title="Hapus Jadwal"><Trash2 size={16}/></button>
-                                        )}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4"><div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose}></div><div className="bg-white rounded-[2rem] p-6 w-full max-w-md relative z-10 shadow-2xl animate-pop h-[80vh] flex flex-col"><div className="flex justify-between items-center mb-4"><h3 className="text-xl font-bold text-slate-800">Kelola Jadwal</h3><button onClick={onClose}><X size={20}/></button></div><div className="space-y-3 mb-6 bg-slate-50 p-4 rounded-2xl border border-slate-100"><input value={form.activity} onChange={e=>setForm({...form, activity: e.target.value})} placeholder="Kegiatan" className="w-full p-2 rounded-xl border text-sm"/><div className="grid grid-cols-2 gap-2"><input type="date" value={form.date} onChange={e=>setForm({...form, date: e.target.value})} className="p-2 rounded-xl border text-sm"/><input value={form.time} onChange={e=>setForm({...form, time: e.target.value})} placeholder="Jam" className="p-2 rounded-xl border text-sm"/></div><Button onClick={handleSubmit}>Simpan</Button></div><div className="flex-1 overflow-y-auto space-y-3">{schedules.map(s => <div key={s.id} className="p-3 border rounded-xl bg-white" onClick={()=>setEditingId(s.id)}><h4 className="font-bold">{s.activity}</h4><p className="text-xs">{s.date} - {s.time}</p></div>)}</div></div></div>
             );
         };
 
         const NotificationModal = ({ onClose }) => {
             const [notifs, setNotifs] = useState([]);
-            useEffect(() => {
-                const all = DB.notifications.get();
-                const visible = all.filter(n => isNotifVisible(n));
-                setNotifs(visible);
-            }, []);
-
+            useEffect(() => { setNotifs(DB.notifications.get()); }, []);
             return (
-                <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose}></div>
-                    <div className="bg-white rounded-[2rem] p-6 w-full max-w-sm relative z-10 shadow-2xl animate-pop h-[60vh] flex flex-col">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2"><Bell size={20} className="text-indigo-500"/> Notifikasi</h3>
-                            <button onClick={onClose}><X size={20} className="text-slate-400 hover:text-slate-600"/></button>
-                        </div>
-                        <div className="flex-1 overflow-y-auto space-y-3">
-                            {notifs.length === 0 ? (
-                                <p className="text-center text-slate-400 mt-10 text-sm">Belum ada pengumuman.</p>
-                            ) : (
-                                notifs.map(n => (
-                                    <div key={n.id} className="p-3 bg-indigo-50 border border-indigo-100 rounded-xl">
-                                        <div className="flex justify-between items-start mb-1">
-                                            <h4 className="font-bold text-indigo-900 text-sm">{n.title}</h4>
-                                            <span className="text-[10px] text-indigo-400">{new Date(n.timestamp).toLocaleDateString()}</span>
-                                        </div>
-                                        <p className="text-slate-600 text-xs leading-relaxed">{n.message}</p>
-                                        <p className="text-[10px] text-indigo-400 mt-2 font-medium">Oleh: {n.sender}</p>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-                    </div>
-                </div>
+                <div className="fixed inset-0 z-[70] flex items-center justify-center p-4"><div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose}></div><div className="bg-white rounded-[2rem] p-6 w-full max-w-sm relative z-10 shadow-2xl animate-pop h-[60vh] flex flex-col"><div className="flex justify-between items-center mb-4"><h3 className="text-xl font-bold text-slate-800">Notifikasi</h3><button onClick={onClose}><X size={20}/></button></div><div className="flex-1 overflow-y-auto space-y-3">{notifs.map(n => <div key={n.id} className="p-3 bg-indigo-50 border border-indigo-100 rounded-xl"><h4 className="font-bold text-indigo-900 text-sm">{n.title}</h4><p className="text-slate-600 text-xs">{n.message}</p></div>)}</div></div></div>
             );
         };
 
         const ProfileModal = ({ user, onClose, onUpdate }) => {
             const [seed, setSeed] = useState(user.avatarSeed || user.name);
-            const [style, setStyle] = useState(user.avatarStyle || 'avataaars'); 
-            const [collection, setCollection] = useState('random'); 
             const [newPin, setNewPin] = useState(user.pin || '123456');
-
-            const handleSave = () => { 
-                if (!newPin) return alert("PIN tidak boleh kosong!");
-                if (newPin.length !== 6 || isNaN(newPin)) return alert("PIN harus 6 digit angka!");
-                onUpdate({ ...user, avatarSeed: seed, avatarStyle: style, pin: newPin });
-                alert("Profil diperbarui!");
-                onClose(); 
-            };
-
-            const selectPreset = (name, presetStyle) => {
-                setSeed(name);
-                setStyle(presetStyle);
-            };
-
+            const handleSave = () => { onUpdate({ ...user, avatarSeed: seed, pin: newPin }); alert("Profil diperbarui!"); onClose(); };
             return (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose}></div>
-                    <div className="bg-white rounded-[2rem] p-6 w-full max-w-sm relative z-10 shadow-2xl animate-pop max-h-[85vh] flex flex-col">
-                        <button onClick={onClose} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><X size={24} /></button>
-                        
-                        <div className="text-center mb-4">
-                            <h3 className="text-xl font-bold text-slate-800">Edit Profil</h3>
-                            <p className="text-slate-500 text-sm">Pilih avatar favoritmu</p>
-                        </div>
-
-                        <div className="flex justify-center mb-6">
-                            <div className="flex flex-col items-center">
-                                <Avatar name={user.name} seed={seed} style={style} size="xl" className="border-4 border-white shadow-xl mb-2" />
-                                <div className="bg-white p-2 rounded-xl shadow-inner border border-slate-100">
-                                    <QRCode value={user.qrCode || user.id} size={80} />
-                                </div>
-                                <p className="text-[10px] text-slate-400 mt-1 font-mono">{user.qrCode}</p>
-                            </div>
-                        </div>
-
-                        <div className="flex-1 overflow-y-auto pr-1">
-                            <div className="flex gap-2 mb-4 overflow-x-auto pb-2 no-scrollbar">
-                                <button onClick={() => setCollection('random')} className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-colors ${collection === 'random' ? 'bg-indigo-500 text-white' : 'bg-slate-100 text-slate-500'}`}>Acak</button>
-                                <button onClick={() => setCollection('ml')} className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-colors ${collection === 'ml' ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-500'}`}>Mobile Legends</button>
-                                <button onClick={() => setCollection('jacob')} className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-colors ${collection === 'jacob' ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-500'}`}>Anak Yakub</button>
-                            </div>
-
-                            <div className="bg-slate-50 rounded-2xl p-3 border border-slate-100 mb-6 min-h-[150px]">
-                                {collection === 'random' && (
-                                    <div className="text-center py-4">
-                                        <p className="text-xs text-slate-400 mb-3">Klik tombol di bawah untuk mengacak tampilan unikmu.</p>
-                                        <button onClick={() => { setSeed(Math.random().toString(36)); setStyle('avataaars'); }} className="bg-white border border-slate-200 text-slate-600 px-4 py-2 rounded-xl text-xs font-bold shadow-sm hover:bg-slate-50 flex items-center gap-2 mx-auto">
-                                            <RefreshCw size={14}/> Acak Avatar
-                                        </button>
-                                    </div>
-                                )}
-
-                                {collection === 'ml' && (
-                                    <div className="grid grid-cols-4 gap-2">
-                                        {ML_HEROES.map(hero => (
-                                            <div key={hero} onClick={() => selectPreset(hero, 'micah')} className={`cursor-pointer rounded-xl p-1 border-2 transition-all ${seed === hero ? 'border-blue-500 bg-blue-50' : 'border-transparent hover:bg-white'}`}>
-                                                <img src={`https://api.dicebear.com/7.x/micah/svg?seed=${hero}`} className="w-full h-full rounded-lg" alt={hero} />
-                                                <p className="text-[8px] text-center font-bold text-slate-500 mt-1 truncate">{hero}</p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-
-                                {collection === 'jacob' && (
-                                    <div className="grid grid-cols-4 gap-2">
-                                        {JACOB_SONS.map(son => (
-                                            <div key={son} onClick={() => selectPreset(son, 'adventurer')} className={`cursor-pointer rounded-xl p-1 border-2 transition-all ${seed === son ? 'border-emerald-500 bg-emerald-50' : 'border-transparent hover:bg-white'}`}>
-                                                <img src={`https://api.dicebear.com/7.x/adventurer/svg?seed=${son}`} className="w-full h-full rounded-lg" alt={son} />
-                                                <p className="text-[8px] text-center font-bold text-slate-500 mt-1 truncate">{son}</p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="mb-4">
-                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">
-                                    {user.role === 'ADMIN' ? 'Ganti Password/PIN Admin' : 'PIN Keamanan (6 Digit)'}
-                                </label>
-                                <input type="text" maxLength="6" value={newPin} onChange={e => setNewPin(e.target.value.replace(/\D/g, ''))} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-center font-bold text-slate-700 tracking-[0.5em] focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="000000" />
-                            </div>
-                        </div>
-
-                        <Button onClick={handleSave}>Simpan Profil</Button>
-                    </div>
-                </div>
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4"><div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose}></div><div className="bg-white rounded-[2rem] p-6 w-full max-w-sm relative z-10 shadow-2xl animate-pop"><h3 className="text-xl font-bold text-slate-800 mb-4 text-center">Edit Profil</h3><div className="flex justify-center mb-4"><Avatar name={user.name} seed={seed} size="xl" /></div><button onClick={()=>setSeed(Math.random().toString())} className="mb-4 text-xs font-bold text-indigo-500 w-full text-center">Acak Avatar</button><input value={newPin} onChange={e=>setNewPin(e.target.value)} placeholder="PIN Baru" className="w-full p-3 border rounded-xl mb-4 text-center font-bold tracking-widest"/><Button onClick={handleSave}>Simpan</Button></div></div>
             );
         };
 
@@ -1329,73 +778,17 @@
             const [aiTopic, setAiTopic] = useState('');
             const [isGenerating, setIsGenerating] = useState(false);
             const handleSave = () => {
-                if(!theme || !verse) return alert("Mohon isi Tema dan Ayat");
-                DB.materials.save({
-                    id: Date.now().toString(),
-                    className: user.className,
-                    teacherName: user.name,
-                    theme,
-                    verse,
-                    createdAt: new Date().toISOString()
-                });
-                DB.activities.add(user.name, `Membuat materi: ${theme}`);
-                alert("Materi berhasil disimpan!");
-                onClose();
+                DB.materials.save({ id: Date.now().toString(), className: user.className, teacherName: user.name, theme, verse, createdAt: new Date().toISOString() });
+                alert("Materi disimpan!"); onClose();
             };
-
             const handleGenerateAI = async () => {
-                if (!aiTopic) return alert("Masukkan topik cerita Alkitab terlebih dahulu!");
                 setIsGenerating(true);
-                try {
-                    const prompt = `Buatkan materi sekolah minggu singkat untuk anak sekolah dasar tentang topik: "${aiTopic}". Berikan output JSON dengan format: { "theme": "Judul Tema Menarik & Ceria", "verse": "Ayat Alkitab (Kitab Pasal:Ayat - Isi Singkat)" }. Gunakan Bahasa Indonesia yang mudah dipahami anak.`;
-                    const result = await GeminiService.call(prompt);
-                    if (result) {
-                        setTheme(result.theme);
-                        setVerse(result.verse);
-                    }
-                } catch (error) {
-                    alert("Gagal menggunakan AI. Pastikan koneksi aman.");
-                    console.error(error);
-                } finally {
-                    setIsGenerating(false);
-                }
+                const res = await GeminiService.call(`Buat materi sekolah minggu topik: ${aiTopic}. JSON: {theme, verse}`);
+                if(res) { setTheme(res.theme); setVerse(res.verse); }
+                setIsGenerating(false);
             };
             return (
-                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose}></div>
-                    <div className="bg-white rounded-[2rem] p-6 w-full max-w-sm relative z-10 shadow-2xl animate-pop">
-                        <button onClick={onClose} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><X size={24} /></button>
-                        <div className="text-center mb-6">
-                            <h3 className="text-xl font-bold text-slate-800">Materi Minggu Ini</h3>
-                            <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">{user.className}</p>
-                        </div>
-
-                        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 rounded-2xl mb-4 border border-indigo-100">
-                            <label className="block text-[10px] font-bold text-indigo-500 mb-1 uppercase tracking-wider flex items-center gap-1">
-                                <Sparkles size={12}/> AI Assistant
-                            </label>
-                            <div className="flex gap-2">
-                                <input value={aiTopic} onChange={e=>setAiTopic(e.target.value)} placeholder="Topik (misal: Kesabaran Ayub)" className="flex-1 p-2 bg-white border border-indigo-100 rounded-xl text-xs font-semibold outline-none focus:border-indigo-400"/>
-                                <button onClick={handleGenerateAI} disabled={isGenerating} className="bg-indigo-500 text-white px-3 py-2 rounded-xl font-bold text-xs shadow-md hover:bg-indigo-600 disabled:opacity-50 transition-all flex items-center gap-1">
-                                    {isGenerating ? <RefreshCw size={14} className="animate-spin"/> : <Zap size={14}/>}
-                                    {isGenerating ? '...' : 'Buat'}
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="space-y-4 mb-6">
-                            <div>
-                                <label className="block text-xs font-bold text-slate-500 mb-1 ml-1">Tema Pengajaran</label>
-                                <input value={theme} onChange={e=>setTheme(e.target.value)} placeholder="Contoh: Kasih Tuhan" className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none font-semibold text-slate-700"/>
-                            </div>
-                            <div>
-                                <label className="block text-xs font-bold text-slate-500 mb-1 ml-1">Ayat Hafalan / Bacaan</label>
-                                <textarea value={verse} onChange={e=>setVerse(e.target.value)} rows="3" placeholder="Contoh: Yohanes 3:16 - Karena begitu besar..." className="w-full p-3 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none font-semibold text-slate-700"></textarea>
-                            </div>
-                        </div>
-                        <Button onClick={handleSave}>Publikasikan Materi</Button>
-                    </div>
-                </div>
+                <div className="fixed inset-0 z-[60] flex items-center justify-center p-4"><div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose}></div><div className="bg-white rounded-[2rem] p-6 w-full max-w-sm relative z-10 shadow-2xl animate-pop"><h3 className="text-xl font-bold text-slate-800 mb-4 text-center">Materi Minggu Ini</h3><div className="bg-indigo-50 p-3 rounded-xl mb-4"><input value={aiTopic} onChange={e=>setAiTopic(e.target.value)} placeholder="Topik AI..." className="w-full p-2 border rounded-lg text-sm mb-2"/><button onClick={handleGenerateAI} disabled={isGenerating} className="text-xs font-bold text-indigo-600">{isGenerating ? 'Loading...' : 'Generate AI'}</button></div><input value={theme} onChange={e=>setTheme(e.target.value)} placeholder="Tema" className="w-full p-3 border rounded-xl mb-3"/><textarea value={verse} onChange={e=>setVerse(e.target.value)} placeholder="Ayat" className="w-full p-3 border rounded-xl mb-4"/><Button onClick={handleSave}>Publikasikan</Button></div></div>
             );
         };
 
@@ -1408,214 +801,53 @@
             const [isSchedModalOpen, setIsSchedModalOpen] = useState(false);
             const [isSyncing, setIsSyncing] = useState(false);
             const [showLive, setShowLive] = useState(false);
-            
-            const [bcTitle, setBcTitle] = useState('');
-            const [bcMsg, setBcMsg] = useState('');
-            const [bcDate, setBcDate] = useState(getLocalDate()); 
-            const [bcTime, setBcTime] = useState(new Date().toTimeString().slice(0,5)); 
-            const [pendingBroadcasts, setPendingBroadcasts] = useState([]); 
-
             const [aiAnalysis, setAiAnalysis] = useState(null);
             const [isAnalyzing, setIsAnalyzing] = useState(false);
-            const [aiDevotional, setAiDevotional] = useState(null);
-            const [loadingDevo, setLoadingDevo] = useState(false);
-            
+
             useEffect(() => {
                 if (!auth.currentUser) return; 
-
                 const unsubscribeAtt = onSnapshot(getCollectionRef('attendance'), (snapshot) => {
-                    // 1. Ambil data terbaru dari Server
-                    const serverData = snapshot.docs.map(doc => doc.data());
-                    
-                    // --- SMART MERGE LOGIC (PERBAIKAN) ---
-                    // Tujuannya: Mencegah data hilang (reset ke 0) saat koneksi lambat
-                    
-                    // 2. Ambil data lokal saat ini
+                    const data = snapshot.docs.map(doc => doc.data());
                     const localData = DB.get(STORAGE.ATTENDANCE, []);
-                    
-                    // 3. Buat daftar ID dari server untuk pengecekan cepat
-                    const serverIds = new Set(serverData.map(d => String(d.id)));
-                    
-                    // 4. Gunakan data server sebagai basis utama (Source of Truth)
-                    const mergedData = [...serverData];
-                    
-                    // 5. Cek data lokal: Jika ada data HARI INI yang belum masuk server (Pending), pertahankan!
-                    const todayStr = getLocalDate();
-                    
-                    localData.forEach(localItem => {
-                        // Syarat mempertahankan data lokal:
-                        // a. Tanggalnya hari ini (agar tidak memunculkan data lama yang sudah dihapus)
-                        // b. ID-nya belum ada di list server
-                        if (localItem.date === todayStr && !serverIds.has(String(localItem.id))) {
-                            mergedData.push(localItem);
-                        }
-                    });
-
-                    // 6. Simpan hasil gabungan (Server + Pending Local) ke localStorage
+                    const serverIds = new Set(data.map(d => String(d.id)));
+                    const mergedData = [...data];
+                    localData.forEach(item => { if (item.date === getLocalDate() && !serverIds.has(String(item.id))) mergedData.push(item); });
                     localStorage.setItem(STORAGE.ATTENDANCE, JSON.stringify(mergedData));
-                    
-                    // 7. Update tampilan UI dengan data gabungan
                     setAtt(mergedData.filter(r => r.date === date));
-                }, (error) => { console.error("Error fetching attendance:", error); });
-
+                });
                 const unsubscribeAct = onSnapshot(getCollectionRef('activities'), (snapshot) => {
                     const data = snapshot.docs.map(doc => doc.data());
                     data.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
-                    localStorage.setItem(STORAGE.ACTIVITIES, JSON.stringify(data));
                     setActivities(data);
-                }, (error) => { console.error("Error fetching activities:", error); });
-
+                });
                 let unsubscribeUsers = () => {};
                 if (user.role === 'ADMIN') {
                      unsubscribeUsers = onSnapshot(getCollectionRef('users'), (snapshot) => {
                         const data = snapshot.docs.map(doc => doc.data());
                         localStorage.setItem(STORAGE.USERS, JSON.stringify(data));
                         setUsers(data);
-                    }, (error) => { console.error("Error fetching users:", error); });
-                } else {
-                    setUsers(DB.get(STORAGE.USERS, DEFAULT_USERS));
-                }
-
-                const allAtt = DB.get(STORAGE.ATTENDANCE, []);
-                setAtt(allAtt.filter(r => r.date === date));
-                setActivities(DB.activities.get());
-                
-                const allNotifs = DB.notifications.get();
-                setPendingBroadcasts(allNotifs.filter(n => n.status === 'scheduled' && new Date(n.scheduledTime) > new Date()));
-
-                return () => {
-                    if(unsubscribeAtt) unsubscribeAtt();
-                    if(unsubscribeAct) unsubscribeAct();
-                    if(unsubscribeUsers) unsubscribeUsers();
-                };
+                    });
+                } else { setUsers(DB.get(STORAGE.USERS, DEFAULT_USERS)); }
+                return () => { unsubscribeAtt(); unsubscribeAct(); unsubscribeUsers(); };
             }, [date, user.role]); 
+
+            const handleManualSync = async () => { if(!confirm("Update data?")) return; setIsSyncing(true); await syncFromFirestore(); setIsSyncing(false); alert("Updated!"); };
+            const handleAnalyze = async () => { setIsAnalyzing(true); const res = await GeminiService.call(`Analisa presensi total ${users.length}, hadir ${att.length}. JSON: {insight, recommendation}`); if(res) setAiAnalysis(res); setIsAnalyzing(false); };
 
             const stats = useMemo(() => {
                 const grouped = {};
                 att.filter(x => x.role === 'STUDENT').forEach(x => grouped[x.className] = (grouped[x.className] || 0) + 1);
                 return Object.entries(grouped).map(([k,v]) => ({ name: k, value: v }));
             }, [att]);
-            const weeklyData = [
-                { name: 'Sen', hadir: 12 }, { name: 'Sel', hadir: 15 }, { name: 'Rab', hadir: 8 },
-                { name: 'Kam', hadir: 20 }, { name: 'Jum', hadir: 18 }, { name: 'Sab', hadir: 25 }, { name: 'Min', hadir: 40 }
-            ];
-
-            const handleBroadcast = () => {
-                if(!bcTitle || !bcMsg) return alert("Mohon isi judul dan pesan");
-                
-                const scheduleDateTime = new Date(`${bcDate}T${bcTime}`);
-                const isScheduled = scheduleDateTime > new Date();
-                
-                DB.notifications.broadcast(bcTitle, bcMsg, user.name, scheduleDateTime.toISOString());
-                
-                const actionText = isScheduled ? `Menjadwalkan broadcast: ${bcTitle} pada ${scheduleDateTime.toLocaleString()}` : `Mengirim broadcast: ${bcTitle}`;
-                DB.activities.add(user.name, actionText);
-                
-                setBcTitle(''); setBcMsg('');
-                
-                const allNotifs = DB.notifications.get();
-                setPendingBroadcasts(allNotifs.filter(n => n.status === 'scheduled' && new Date(n.scheduledTime) > new Date()));
-
-                alert(isScheduled ? "Broadcast berhasil dijadwalkan!" : "Broadcast berhasil dikirim!");
-            };
-
-            const handleAnalyze = async () => {
-                setIsAnalyzing(true);
-                try {
-                    const prompt = `Analisa data absensi berikut dan berikan insight singkat (maks 3 kalimat) serta 1 rekomendasi konkret.
-                    Total Siswa: ${users.filter(u => u.role === 'STUDENT').length}. Hadir Hari Ini: ${att.length}. Kelas dengan kehadiran tertinggi: ${stats.sort((a,b)=>b.value-a.value)[0]?.name || '-'}.
-                    Format output JSON: { "insight": "...", "recommendation": "..." }`;
-                    const result = await GeminiService.call(prompt);
-                    if (result) setAiAnalysis(result);
-                } catch (error) {
-                    console.error("AI Error", error);
-                    alert("Gagal melakukan analisa AI.");
-                } finally {
-                    setIsAnalyzing(false);
-                }
-            };
-            
-            const handleManualSync = async () => {
-                if(!confirm("Update data terbaru dari server?")) return;
-                setIsSyncing(true);
-                await syncFromFirestore();
-                
-                // Force reload state locally
-                const allAtt = DB.get(STORAGE.ATTENDANCE, []);
-                setAtt(allAtt.filter(r => r.date === date));
-                setUsers(DB.get(STORAGE.USERS, DEFAULT_USERS));
-                
-                setIsSyncing(false);
-                alert("Data berhasil diperbarui!");
-            };
-
-            const generateDevotional = async () => {
-                setLoadingDevo(true);
-                try {
-                    const prompt = "Berikan satu renungan singkat dan motivasi untuk guru sekolah minggu yang inspiratif. Format JSON: { \"title\": \"Judul\", \"content\": \"Isi Renungan\" }";
-                    const res = await GeminiService.call(prompt);
-                    if(res) setAiDevotional(res);
-                } catch(e) { console.error(e); } finally { setLoadingDevo(false);
-                }
-            };
-            
-            const handleExportExcel = () => {
-                const allAtt = DB.get(STORAGE.ATTENDANCE, []);
-                if(allAtt.length === 0) return alert("Belum ada data absensi untuk diexport.");
-                const ws = XLSX.utils.json_to_sheet(allAtt.map(a => ({
-                    Tanggal: a.date, Waktu: new Date(a.timestamp).toLocaleTimeString(), Nama: a.userName, Role: a.role, Kelas: a.className
-                })));
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "Kehadiran");
-                XLSX.writeFile(wb, "Laporan_Kehadiran_GKPS.xlsx");
-            };
-            const handleExportPDF = () => {
-                 const allAtt = DB.get(STORAGE.ATTENDANCE, []);
-                 if(allAtt.length === 0) return alert("Belum ada data absensi untuk diexport.");
-                 const doc = new jspdf.jsPDF();
-                 doc.text("Laporan Kehadiran Sekolah Minggu GKPS", 14, 20);
-                 doc.setFontSize(10);
-                 doc.text(`Dicetak pada: ${new Date().toLocaleString()}`, 14, 28);
-                 const tableColumn = ["Tanggal", "Waktu", "Nama", "Role", "Kelas"];
-                 const tableRows = [];
-                 allAtt.forEach(a => {
-                     const row = [a.date, new Date(a.timestamp).toLocaleTimeString(), a.userName, a.role, a.className];
-                     tableRows.push(row);
-                 });
-                 doc.autoTable({ head: [tableColumn], body: tableRows, startY: 35 });
-                 doc.save("Laporan_Kehadiran_GKPS.pdf");
-            };
 
             const COLORS = ['#6366f1', '#ec4899', '#a855f7', '#f43f5e'];
-            
-            const recentLogins = useMemo(() => {
-                return users
-                    .filter(u => u.lastLogin)
-                    .sort((a,b) => new Date(b.lastLogin) - new Date(a.lastLogin))
-                    .slice(0, 5); 
-            }, [users]); 
 
             if (user.role === 'ADMIN') {
-                const studentCount = users.filter(u => u.role === 'STUDENT').length;
-                const teacherCount = users.filter(u => u.role === 'TEACHER').length;
-
                 return (
                     <div className="p-6 pb-32 animate-slide-up">
                         <header className="mb-8 flex justify-between items-center">
-                            <div>
-                                <p className="text-slate-500 font-medium text-sm mb-1 uppercase tracking-wider">Dashboard</p>
-                                <h2 className="text-3xl font-extrabold text-slate-800">Admin Control</h2>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <button onClick={handleManualSync} disabled={isSyncing} className="bg-white p-2 rounded-2xl shadow-sm border border-slate-100 text-indigo-500 hover:bg-indigo-50 active:scale-95 transition-all">
-                                    {isSyncing ? <RefreshCw size={18} className="animate-spin"/> : <RefreshCw size={18}/>}
-                                </button>
-                                <div className="hidden md:flex items-center gap-2 bg-white px-4 py-2 rounded-2xl shadow-sm">
-                                    <Calendar size={18} className="text-indigo-500" />
-                                    <span className="text-sm font-bold text-slate-600">{new Date().toLocaleDateString('id-ID', { 
-                                        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
-                                </div>
-                            </div>
+                            <div><p className="text-slate-500 font-medium text-sm">Dashboard</p><h2 className="text-3xl font-extrabold text-slate-800">Admin Control</h2></div>
+                            <button onClick={handleManualSync} disabled={isSyncing} className="bg-white p-2 rounded-xl shadow-sm text-indigo-500">{isSyncing ? <RefreshCw size={18} className="animate-spin"/> : <RefreshCw size={18}/>}</button>
                         </header>
 
                         {/* LIVE ATTENDANCE BUTTON FOR ADMIN */}
@@ -1632,222 +864,30 @@
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                            <div className="glass-card p-5 rounded-3xl relative overflow-hidden group hover:shadow-lg transition-shadow">
-                                <div className="absolute right-[-10px] top-[-10px] w-20 h-20 bg-blue-100 rounded-full opacity-50 group-hover:scale-110 transition-transform"></div>
-                                <div className="flex items-center gap-3 mb-2">
-                                    <div className="p-2 bg-blue-50 text-blue-600 rounded-xl"><GraduationCap size={24}/></div>
-                                    <p className="text-slate-500 font-bold text-xs uppercase tracking-wider">Total Siswa</p>
-                                </div>
-                                <h3 className="text-3xl font-black text-slate-800">{studentCount}</h3>
-                                <p className="text-xs text-blue-500 font-medium mt-1">Terdaftar Aktif</p>
-                            </div>
-                            <div className="glass-card p-5 rounded-3xl relative overflow-hidden group hover:shadow-lg transition-shadow">
-                                <div className="absolute right-[-10px] top-[-10px] w-20 h-20 bg-amber-100 rounded-full opacity-50 group-hover:scale-110 transition-transform"></div>
-                                <div className="flex items-center gap-3 mb-2">
-                                    <div className="p-2 bg-amber-50 text-amber-600 rounded-xl"><Briefcase size={24}/></div>
-                                    <p className="text-slate-500 font-bold text-xs uppercase tracking-wider">Total Guru</p>
-                                </div>
-                                <h3 className="text-3xl font-black text-slate-800">{teacherCount}</h3>
-                                <p className="text-xs text-amber-500 font-medium mt-1">Pengajar Aktif</p>
-                            </div>
-                            <div className="glass-card p-5 rounded-3xl relative overflow-hidden group hover:shadow-lg transition-shadow">
-                                <div className="absolute right-[-10px] top-[-10px] w-20 h-20 bg-emerald-100 rounded-full opacity-50 group-hover:scale-110 transition-transform"></div>
-                                <div className="flex items-center gap-3 mb-2">
-                                    <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl"><CheckCircle size={24}/></div>
-                                    <p className="text-slate-500 font-bold text-xs uppercase tracking-wider">Hadir Hari Ini</p>
-                                </div>
-                                <h3 className="text-3xl font-black text-slate-800">{att.length}</h3>
-                                <p className="text-xs text-emerald-500 font-medium mt-1">Siswa & Guru</p>
-                            </div>
-                            <div className="glass-card p-5 rounded-3xl relative overflow-hidden group hover:shadow-lg transition-shadow">
-                                <div className="absolute right-[-10px] top-[-10px] w-20 h-20 bg-indigo-100 rounded-full opacity-50 group-hover:scale-110 transition-transform"></div>
-                                <div className="flex items-center gap-3 mb-2">
-                                    <div className="p-2 bg-indigo-50 text-indigo-600 rounded-xl"><Church size={24}/></div>
-                                    <p className="text-slate-500 font-bold text-xs uppercase tracking-wider">Total Kelas</p>
-                                </div>
-                                <h3 className="text-3xl font-black text-slate-800">{DEFAULT_CLASSES.length}</h3>
-                                <p className="text-xs text-indigo-500 font-medium mt-1">Ruang Belajar</p>
-                            </div>
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                            <div className="glass-card p-4 rounded-3xl"><p className="text-xs font-bold text-slate-500">Total Siswa</p><h3 className="text-2xl font-black">{users.filter(u => u.role === 'STUDENT').length}</h3></div>
+                            <div className="glass-card p-4 rounded-3xl"><p className="text-xs font-bold text-slate-500">Total Guru</p><h3 className="text-2xl font-black">{users.filter(u => u.role === 'TEACHER').length}</h3></div>
+                            <div className="glass-card p-4 rounded-3xl"><p className="text-xs font-bold text-slate-500">Hadir Hari Ini</p><h3 className="text-2xl font-black text-emerald-600">{att.length}</h3></div>
+                            <div className="glass-card p-4 rounded-3xl"><p className="text-xs font-bold text-slate-500">Total Kelas</p><h3 className="text-2xl font-black">{DEFAULT_CLASSES.length}</h3></div>
                         </div>
 
-                        <div className="mb-8 flex gap-4">
-                            <button onClick={handleExportExcel} className="flex-1 bg-green-600 text-white p-4 rounded-2xl shadow-lg hover:bg-green-700 transition-all flex items-center justify-center gap-2 font-bold">
-                                <FileSpreadsheet size={24}/> Export Excel
-                            </button>
-                            <button onClick={handleExportPDF} className="flex-1 bg-red-600 text-white p-4 rounded-2xl shadow-lg hover:bg-red-700 transition-all flex items-center justify-center gap-2 font-bold">
-                                <File size={24}/> Export PDF
-                            </button>
-                        </div>
-                        
-                        <div className="mb-8">
-                             <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2">
-                                <Eye size={20} className="text-indigo-500"/> Pantauan Login User (5 Terakhir)
-                            </h3>
-                            <div className="glass-card p-0 rounded-[1.5rem] overflow-hidden">
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-left text-sm text-slate-600">
-                                        <thead className="bg-slate-50 border-b border-slate-100">
-                                            <tr>
-                                                <th className="p-4 font-bold text-xs uppercase tracking-wider">User</th>
-                                                <th className="p-4 font-bold text-xs uppercase tracking-wider">Role</th>
-                                                <th className="p-4 font-bold text-xs uppercase tracking-wider">Waktu Login</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-slate-100">
-                                            {recentLogins.length > 0 ? recentLogins.map(u => (
-                                                <tr key={u.id} className="hover:bg-slate-50/50">
-                                                    <td className="p-4 font-bold text-slate-800">{u.name}</td>
-                                                    <td className="p-4">
-                                                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                                                            u.role === 'ADMIN' ? 'bg-rose-100 text-rose-600' : 
-                                                            u.role === 'TEACHER' ? 'bg-amber-100 text-amber-600' : 'bg-indigo-100 text-indigo-600'
-                                                        }`}>{u.role}</span>
-                                                    </td>
-                                                    <td className="p-4 text-xs font-mono">{new Date(u.lastLogin).toLocaleString()}</td>
-                                                </tr>
-                                            )) : (
-                                                <tr><td colSpan="3" className="p-4 text-center text-slate-400">Belum ada data login baru.</td></tr>
-                                            )}
-                                        </tbody>
-                                    </table>
-                                </div>
+                        <div className="glass-card p-6 rounded-[2rem] mb-8 bg-gradient-to-r from-purple-500 to-indigo-600 text-white">
+                            <div className="flex justify-between items-start mb-4">
+                                <div><h3 className="text-xl font-bold flex gap-2"><BrainCircuit/> Analisa AI</h3><p className="text-xs text-indigo-100">Insight data kehadiran.</p></div>
+                                <button onClick={handleAnalyze} disabled={isAnalyzing} className="bg-white text-indigo-600 px-3 py-1.5 rounded-lg text-xs font-bold">{isAnalyzing ? '...' : 'Analisa'}</button>
                             </div>
+                            {aiAnalysis && <div className="bg-white/10 p-3 rounded-xl text-sm"><p className="font-bold mb-1">Insight:</p><p className="mb-2">{aiAnalysis.insight}</p><p className="font-bold mb-1">Saran:</p><p>{aiAnalysis.recommendation}</p></div>}
                         </div>
 
-                        <div className="mb-8">
-                            <div className="glass-card p-6 rounded-[2rem] bg-gradient-to-r from-purple-500 to-indigo-600 text-white relative overflow-hidden">
-                                <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl -mr-16 -mt-16"></div>
-                                <div className="relative z-10">
-                                    <div className="flex justify-between items-start mb-4">
-                                        <div>
-                                            <h3 className="text-2xl font-bold flex items-center gap-2"><BrainCircuit size={24}/> Analisa Cerdas AI</h3>
-                                            <p className="text-indigo-100 text-sm mt-1">Dapatkan wawasan mendalam tentang data kehadiran.</p>
-                                        </div>
-                                        <button onClick={handleAnalyze} disabled={isAnalyzing} className="bg-white text-indigo-600 px-4 py-2 rounded-xl font-bold text-sm shadow-lg hover:bg-indigo-50 transition-colors disabled:opacity-70 flex items-center gap-2">
-                                            {isAnalyzing ? <RefreshCw size={16} className="animate-spin"/> : <Sparkles size={16}/>}
-                                            {isAnalyzing ? 'Menganalisa...' : 'Analisa Sekarang'}
-                                        </button>
-                                    </div>
-                                    {aiAnalysis && (
-                                        <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20 animate-slide-up">
-                                            <div className="mb-3">
-                                                <p className="text-xs font-bold text-indigo-200 uppercase mb-1">Insight</p>
-                                                <p className="text-sm font-medium leading-relaxed">{aiAnalysis.insight}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-xs font-bold text-emerald-200 uppercase mb-1">Rekomendasi</p>
-                                                <p className="text-sm font-medium leading-relaxed">{aiAnalysis.recommendation}</p>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
+                        <div className="glass-card p-6 rounded-[2rem] h-[300px] flex flex-col">
+                            <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2"><Activity size={20}/> Log Aktivitas</h3>
+                            <div className="flex-1 overflow-y-auto space-y-4">
+                                {activities.map((act, i) => (
+                                    <div key={act.id} className="flex gap-3 text-xs"><div className="w-2 h-2 bg-indigo-500 rounded-full mt-1"></div><div><p className="font-bold">{act.userName}</p><p className="text-slate-500">{act.action}</p></div></div>
+                                ))}
                             </div>
                         </div>
-
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                            <div className="lg:col-span-2 space-y-6">
-                                <div className="glass-card p-6 rounded-[2rem]">
-                                    <div className="flex justify-between items-center mb-6">
-                                        <h3 className="font-bold text-slate-700 flex items-center gap-2">
-                                            <TrendingUp size={20} className="text-indigo-500"/> Tren Kehadiran Mingguan
-                                        </h3>
-                                    </div>
-                                    <div className="h-64 w-full">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <BarChart data={weeklyData}>
-                                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dy={10} />
-                                                <Tooltip cursor={{fill: '#f1f5f9'}} contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.1)'}} />
-                                                <Bar dataKey="hadir" fill="#6366f1" radius={[6, 6, 0, 0]} barSize={32} />
-                                            </BarChart>
-                                        </ResponsiveContainer>
-                                    </div>
-                                </div>
-
-                                <div className="glass-card p-6 rounded-[2rem] border-l-4 border-l-pink-500">
-                                    <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2"><Radio size={20} className="text-pink-500"/> Kirim Pengumuman (Broadcast)</h3>
-                                    <div className="space-y-4">
-                                        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                                            <input value={bcTitle} onChange={e=>setBcTitle(e.target.value)} placeholder="Judul Pengumuman" className="w-full bg-transparent outline-none font-bold text-slate-700 mb-2 border-b border-slate-200 pb-2 focus:border-pink-500 transition-colors"/>
-                                            <textarea value={bcMsg} onChange={e=>setBcMsg(e.target.value)} rows="2" placeholder="Tulis pesan untuk semua guru dan murid..." className="w-full bg-transparent outline-none text-slate-600 text-sm resize-none mb-3"></textarea>
-                                            
-                                            <div className="flex items-center gap-2 pt-2 border-t border-slate-200">
-                                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Jadwalkan:</span>
-                                                <input type="date" value={bcDate} onChange={e=>setBcDate(e.target.value)} className="bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold text-slate-600"/>
-                                                <input type="time" value={bcTime} onChange={e=>setBcTime(e.target.value)} className="bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold text-slate-600"/>
-                                            </div>
-                                        </div>
-                                        <div className="flex justify-between items-center">
-                                            <p className="text-xs text-slate-400 italic">
-                                                *Set waktu ke masa depan untuk menjadwalkan.
-                                            </p>
-                                            <button onClick={handleBroadcast} className="bg-pink-500 text-white px-6 py-2 rounded-xl font-bold shadow-lg shadow-pink-500/30 active:scale-95 transition-all flex items-center gap-2">
-                                                Kirim / Jadwalkan <Send size={16}/>
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    {pendingBroadcasts.length > 0 && (
-                                        <div className="mt-4 pt-4 border-t border-slate-100">
-                                            <h4 className="text-xs font-bold text-slate-500 uppercase mb-2 flex items-center gap-1"><Timer size={12}/> Antrean Broadcast Terjadwal</h4>
-                                            <div className="space-y-2">
-                                                {pendingBroadcasts.map(pb => (
-                                                    <div key={pb.id} className="bg-yellow-50 border border-yellow-100 p-2 rounded-xl flex justify-between items-center">
-                                                        <div>
-                                                            <p className="text-xs font-bold text-slate-700">{pb.title}</p>
-                                                            <p className="text-[10px] text-slate-500">Tayang: {new Date(pb.scheduledTime).toLocaleString()}</p>
-                                                        </div>
-                                                        <span className="text-[10px] font-bold bg-yellow-100 text-yellow-700 px-2 py-1 rounded">Waiting</span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="space-y-6">
-                                <div className="glass-card p-6 rounded-[2rem]">
-                                    <h3 className="font-bold text-slate-700 mb-4">Proporsi Kelas</h3>
-                                    <div className="h-48 w-full relative">
-                                        {stats.length > 0 ? (
-                                            <ResponsiveContainer>
-                                                <PieChart>
-                                                    <Pie data={stats} innerRadius={50} outerRadius={70} paddingAngle={5} dataKey="value">
-                                                        {stats.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} strokeWidth={0} />)}
-                                                    </Pie>
-                                                    <Tooltip />
-                                                </PieChart>
-                                            </ResponsiveContainer>
-                                        ) : (
-                                            <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400">
-                                                <p className="text-xs">Belum ada data hari ini</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <div className="glass-card p-6 rounded-[2rem] h-[400px] flex flex-col">
-                                    <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2"><Activity size={20} className="text-indigo-500"/> Log Aktivitas</h3>
-                                    <div className="flex-1 overflow-y-auto space-y-4 pr-2">
-                                        {activities.map((act, i) => (
-                                            <div key={act.id} className="flex gap-3 relative pb-4 border-l-2 border-slate-100 last:border-0 pl-4 last:pb-0">
-                                                <div className="absolute -left-[9px] top-0 w-4 h-4 bg-white border-2 border-indigo-500 rounded-full"></div>
-                                                <div>
-                                                    <p className="text-xs font-bold text-slate-800">{act.userName}</p>
-                                                    <p className="text-[11px] text-slate-500 leading-tight mb-1">{act.action}</p>
-                                                    <span className="text-[10px] text-indigo-400 font-medium bg-indigo-50 px-2 py-0.5 rounded-md">
-                                                        {new Date(act.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        ))}
-                                        {activities.length === 0 && <p className="text-center text-slate-400 text-xs mt-10">Belum ada aktivitas.</p>}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        {showLive && <LiveAttendanceView onClose={() => setShowLive(false)} />}
                     </div>
                 );
             }
@@ -1855,96 +895,26 @@
             return (
                 <div className="p-6 pb-32 animate-slide-up">
                     <header className="flex justify-between items-center mb-8">
-                        <div>
-                            <p className="text-slate-500 font-medium text-sm mb-1">Overview</p>
-                            <h2 className="text-3xl font-extrabold text-slate-800">Statistik</h2>
-                        </div>
-                        <div className="flex items-center gap-2">
-                             <button onClick={handleManualSync} disabled={isSyncing} className="bg-white p-2 rounded-2xl shadow-sm border border-slate-100 text-indigo-500 hover:bg-indigo-50 active:scale-95 transition-all">
-                                {isSyncing ? <RefreshCw size={18} className="animate-spin"/> : <RefreshCw size={18}/>}
-                             </button>
-                             {user.role === 'TEACHER' && (
-                                <button onClick={generateDevotional} className="bg-gradient-to-tr from-yellow-400 to-orange-500 text-white p-2 rounded-xl shadow-lg hover:scale-105 transition-transform" title="Renungan Harian Guru AI">
-                                    {loadingDevo ? <RefreshCw size={20} className="animate-spin"/> : <Sparkles size={20}/>}
-                                </button>
-                             )}
-                            <div className="bg-white p-2 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-2">
-                                <Calendar size={18} className="text-indigo-500 ml-2" />
-                                <input type="date" value={date} onChange={e => setDate(e.target.value)} className="bg-transparent font-bold text-slate-600 outline-none text-sm w-32" />
-                            </div>
-                        </div>
+                        <div><p className="text-slate-500 font-medium text-sm">Overview</p><h2 className="text-3xl font-extrabold text-slate-800">Statistik</h2></div>
+                        <button onClick={handleManualSync} disabled={isSyncing} className="bg-white p-2 rounded-xl shadow-sm text-indigo-500">{isSyncing ? <RefreshCw size={18} className="animate-spin"/> : <RefreshCw size={18}/>}</button>
                     </header>
-
-                    {aiDevotional && user.role === 'TEACHER' && (
-                        <div className="mb-6 bg-gradient-to-r from-yellow-50 to-orange-50 p-4 rounded-2xl border border-orange-100 shadow-sm animate-pop relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-16 h-16 bg-yellow-200 rounded-full blur-2xl opacity-50 -mr-4 -mt-4"></div>
-                            <div className="relative z-10">
-                                <h4 className="font-bold text-orange-600 text-sm flex items-center gap-2 mb-1">
-                                    <Sparkles size={12}/> {aiDevotional.title} (Edisi Guru)
-                                </h4>
-                                <p className="text-xs text-slate-700 italic">"{aiDevotional.content}"</p>
-                            </div>
-                            <button onClick={()=>setAiDevotional(null)} className="absolute top-2 right-2 text-orange-300 hover:text-orange-500"><X size={14}/></button>
-                        </div>
-                    )}
 
                     {user.role === 'TEACHER' && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                            <div onClick={() => setIsMatModalOpen(true)} className="glass-card p-5 rounded-3xl bg-gradient-to-r from-indigo-500 to-purple-500 text-white cursor-pointer hover:shadow-xl hover:shadow-indigo-500/30 transition-all active:scale-95 group relative overflow-hidden">
-                                <div className="absolute right-[-10px] bottom-[-20px] opacity-20"><BookOpen size={100} /></div>
-                                <div className="relative z-10 flex items-center gap-4">
-                                    <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-sm"><PenTool size={24}/></div>
-                                    <div>
-                                        <h3 className="font-bold text-lg">Materi Mingguan</h3>
-                                        <p className="text-indigo-100 text-xs font-medium opacity-90">Klik untuk buat tema & ayat baru</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div onClick={() => setIsSchedModalOpen(true)} className="glass-card p-5 rounded-3xl bg-gradient-to-r from-blue-500 to-cyan-500 text-white cursor-pointer hover:shadow-xl hover:shadow-blue-500/30 transition-all active:scale-95 group relative overflow-hidden">
-                                <div className="absolute right-[-10px] bottom-[-20px] opacity-20"><CalendarDays size={100} /></div>
-                                <div className="relative z-10 flex items-center gap-4">
-                                    <div className="p-3 bg-white/20 rounded-2xl backdrop-blur-sm"><Clock size={24}/></div>
-                                    <div>
-                                        <h3 className="font-bold text-lg">Kelola Jadwal</h3>
-                                        <p className="text-blue-100 text-xs font-medium opacity-90">Atur kegiatan kelas anda</p>
-                                    </div>
-                                </div>
-                            </div>
+                            <div onClick={() => setIsMatModalOpen(true)} className="glass-card p-5 rounded-3xl bg-gradient-to-r from-indigo-500 to-purple-500 text-white cursor-pointer"><h3 className="font-bold text-lg">Materi Mingguan</h3><p className="text-xs opacity-80">Buat materi baru</p></div>
+                            <div onClick={() => setIsSchedModalOpen(true)} className="glass-card p-5 rounded-3xl bg-gradient-to-r from-blue-500 to-cyan-500 text-white cursor-pointer"><h3 className="font-bold text-lg">Kelola Jadwal</h3><p className="text-xs opacity-80">Atur kegiatan kelas</p></div>
                         </div>
                     )}
 
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                        <div className="glass-card p-5 rounded-3xl relative overflow-hidden group">
-                            <div className="absolute right-[-20px] top-[-20px] w-24 h-24 bg-indigo-100 rounded-full opacity-50 group-hover:scale-110 transition-transform"></div>
-                            <p className="text-slate-500 font-bold text-xs uppercase tracking-wider mb-2">Total Hadir</p>
-                            <h3 className="text-4xl font-extrabold text-indigo-600">{att.length}</h3>
-                            <p className="text-xs text-indigo-400 font-medium mt-1">Jiwat</p>
-                        </div>
-                        <div className="glass-card p-5 rounded-3xl relative overflow-hidden group">
-                            <div className="absolute right-[-20px] top-[-20px] w-24 h-24 bg-pink-100 rounded-full opacity-50 group-hover:scale-110 transition-transform"></div>
-                            <p className="text-slate-500 font-bold text-xs uppercase tracking-wider mb-2">Kelas Terbanyak</p>
-                            <h3 className="text-xl font-extrabold text-pink-600 leading-tight">
-                                {stats.sort((a,b) => b.value - a.value)[0]?.name.replace('Kelas ','') || '-'}
-                            </h3>
-                            <p className="text-xs text-pink-400 font-medium mt-1">Dominasi</p>
-                        </div>
+                    <div className="grid grid-cols-2 gap-4 mb-6">
+                        <div className="glass-card p-5 rounded-3xl"><p className="text-slate-500 font-bold text-xs">Total Hadir</p><h3 className="text-4xl font-extrabold text-indigo-600">{att.length}</h3></div>
+                        <div className="glass-card p-5 rounded-3xl"><p className="text-slate-500 font-bold text-xs">Dominasi</p><h3 className="text-xl font-extrabold text-pink-600">{stats.sort((a,b) => b.value - a.value)[0]?.name.replace('Kelas ','') || '-'}</h3></div>
                     </div>
 
                     <div className="glass-card p-6 rounded-[2rem] mb-6">
-                        <h3 className="font-bold text-slate-700 mb-6 flex items-center gap-2"><span className="w-2 h-6 bg-indigo-500 rounded-full"></span>Distribusi Kelas</h3>
-                        <div className="h-64 w-full">
-                            {stats.length > 0 ? (
-                                <ResponsiveContainer>
-                                    <PieChart>
-                                        <Pie data={stats} innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
-                                            {stats.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} strokeWidth={0} />)}
-                                        </Pie>
-                                        <Tooltip contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.1)'}} />
-                                    </PieChart>
-                                </ResponsiveContainer>
-                            ) : (
-                                <div className="h-full flex flex-col items-center justify-center text-slate-400 opacity-60"><BarChart3 size={48} className="mb-2"/><p className="font-medium">Belum ada data</p></div>
-                            )}
+                        <h3 className="font-bold text-slate-700 mb-6">Distribusi Kelas</h3>
+                        <div className="h-48 w-full">
+                            <ResponsiveContainer><PieChart><Pie data={stats} innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">{stats.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} strokeWidth={0} />)}</Pie><Tooltip /></PieChart></ResponsiveContainer>
                         </div>
                     </div>
 
@@ -1952,16 +922,137 @@
                         <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
                         <div className="relative z-10">
                             <h3 className="text-2xl font-bold mb-2">Monitor Kehadiran</h3>
-                            <p className="text-slate-400 text-sm mb-6">Pantau data scan masuk secara real-time di layar penuh.</p>
-                            <button onClick={() => setShowLive(true)} className="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-emerald-500/30 transition-all active:scale-95 flex items-center justify-center gap-2 mx-auto">
-                                <Radio size={20} className="animate-pulse"/> Buka Live Attendance
-                            </button>
+                            <button onClick={() => setShowLive(true)} className="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 mx-auto"><Radio size={20} className="animate-pulse"/> Buka Live Attendance</button>
                         </div>
                     </div>
 
                     {isMatModalOpen && <MaterialModal user={user} onClose={() => setIsMatModalOpen(false)} />}
                     {isSchedModalOpen && <ScheduleManagerModal user={user} onClose={() => setIsSchedModalOpen(false)} />}
                     {showLive && <LiveAttendanceView onClose={() => setShowLive(false)} />}
+                </div>
+            );
+        };
+
+        const Scanner = ({ user }) => {
+            const [status, setStatus] = useState({ type: 'idle', msg: '' });
+            const [manual, setManual] = useState(false);
+            const [txt, setTxt] = useState('');
+            const ref = useRef(null);
+            
+            const onScan = (code) => {
+                if (status.type !== 'idle') return;
+                const cleanCode = typeof code === 'string' ? code.trim() : code;
+                const users = DB.get(STORAGE.USERS, DEFAULT_USERS);
+                const u = users.find(x => x.qrCode === cleanCode || x.id === cleanCode || x.name.toLowerCase() === cleanCode.toLowerCase());
+                
+                if (!u) setStatus({ type: 'err', msg: 'Data Tidak Ditemukan' });
+                else {
+                    let isAllowed = user.role === 'ADMIN' ? true : (user.role === 'TEACHER' && u.role === 'STUDENT' && u.className === user.className);
+                    if (isAllowed) {
+                        const ok = DB.att.add({ id: Date.now(), userId: u.id, userName: u.name, className: u.className || '-', role: u.role, date: getLocalDate(), timestamp: new Date().toISOString(), avatarSeed: u.avatarSeed, avatarStyle: u.avatarStyle || 'avataaars' });
+                        if (ok) DB.activities.add(user.name, `Memindai ${u.name}`);
+                        setStatus(ok ? { type: 'ok', msg: `Berhasil: ${u.name}` } : { type: 'err', msg: 'Sudah Absen' });
+                    } else setStatus({ type: 'err', msg: 'Akses Ditolak' });
+                }
+                setTimeout(() => setStatus({ type: 'idle', msg: '' }), 2000);
+            };
+
+            useEffect(() => {
+                if(manual) return;
+                const init = async () => { try { const scanner = new Html5Qrcode("reader"); ref.current = scanner; await scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, onScan); } catch { setManual(true); } };
+                init();
+                return () => { if(ref.current) ref.current.stop().catch(()=>{}); };
+            }, [manual]);
+
+            return (
+                <div className="p-6 pb-40 animate-slide-up min-h-full flex flex-col max-w-lg mx-auto">
+                    <h2 className="text-2xl font-black text-slate-800 text-center mb-6">Scanner Presensi</h2>
+                    <div className="glass-panel p-3 rounded-[2.5rem] shadow-2xl relative overflow-hidden bg-slate-900 mb-6">
+                        <div className="relative w-full aspect-square rounded-[2rem] overflow-hidden flex items-center justify-center bg-black/20">
+                            {manual ? (
+                                <div className="w-full px-6 text-center text-white"><p className="mb-4">Input Manual ID/Nama</p><input value={txt} onChange={e=>setTxt(e.target.value)} className="w-full p-4 rounded-xl bg-white/10 text-white text-center mb-4"/><Button onClick={()=>onScan(txt)}>Proses</Button></div>
+                            ) : (
+                                <div id="reader" className="w-full h-full object-cover"></div>
+                            )}
+                            {status.type !== 'idle' && (
+                                <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60"><div className="bg-white p-6 rounded-3xl text-center"><h4 className={`text-lg font-black ${status.type === 'ok' ? 'text-emerald-600' : 'text-red-600'}`}>{status.msg}</h4></div></div>
+                            )}
+                        </div>
+                    </div>
+                    <button onClick={() => setManual(!manual)} className="w-full py-4 rounded-2xl bg-white font-bold text-indigo-600 shadow-lg">{manual ? 'Gunakan Kamera' : 'Input Manual'}</button>
+                </div>
+            );
+        };
+
+        const StudentDashboard = ({ user }) => {
+            const [tab, setTab] = useState('card');
+            const [history, setHistory] = useState([]);
+            const [materials, setMaterials] = useState([]);
+            const [schedules, setSchedules] = useState([]);
+
+            useEffect(() => {
+                const uAtt = onSnapshot(collection(db, 'attendance'), (s) => setHistory(s.docs.map(d=>d.data()).filter(a=>a.userId===user.id).sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp))));
+                const uMat = onSnapshot(collection(db, 'materials'), (s) => setMaterials(s.docs.map(d=>d.data()).filter(m=>m.className===user.className)));
+                const uSch = onSnapshot(collection(db, 'schedules'), (s) => setSchedules(s.docs.map(d=>d.data()).filter(x=>x.className===user.className||x.className==='ALL')));
+                return () => { uAtt(); uMat(); uSch(); };
+            }, [user]);
+
+            return (
+                <div className="p-6 pb-24 max-w-md mx-auto animate-slide-up">
+                    <h2 className="text-xl font-bold mb-6">Halo, {user.name.split(' ')[0]}!</h2>
+                    <div className="flex bg-white/50 p-1 rounded-2xl mb-6">{['card', 'history', 'materials', 'schedule'].map(t => <button key={t} onClick={() => setTab(t)} className={`flex-1 py-2 text-[10px] font-bold rounded-xl ${tab === t ? 'bg-white text-indigo-600 shadow' : 'text-slate-500'}`}>{t.toUpperCase()}</button>)}</div>
+                    {tab === 'card' && <div className="bg-gradient-to-tr from-indigo-600 to-purple-600 rounded-[2.5rem] p-8 text-center text-white shadow-xl"><Avatar name={user.name} seed={user.avatarSeed} style={user.avatarStyle} size="xl" className="mx-auto mb-4 border-4 border-white/20"/><h2 className="text-2xl font-black">{user.name}</h2><p className="opacity-80 mb-6">{user.className}</p><div className="bg-white p-4 rounded-2xl inline-block"><QRCode value={user.qrCode} size={150} /></div></div>}
+                    {tab === 'history' && <div className="space-y-3">{history.map(h => <div key={h.id} className="bg-white p-4 rounded-xl shadow-sm flex justify-between"><p className="font-bold text-sm">{new Date(h.timestamp).toLocaleDateString()}</p><span className="text-emerald-600 font-bold text-xs">Hadir</span></div>)}</div>}
+                    {/* Simplified Materials & Schedule view for brevity */}
+                    {tab === 'materials' && <div className="space-y-3">{materials.map(m => <div key={m.id} className="bg-white p-4 rounded-xl shadow-sm"><h4 className="font-bold">{m.theme}</h4><p className="text-xs text-slate-500">{m.verse}</p></div>)}</div>}
+                    {tab === 'schedule' && <div className="space-y-3">{schedules.map(s => <div key={s.id} className="bg-white p-4 rounded-xl shadow-sm"><h4 className="font-bold">{s.activity}</h4><p className="text-xs">{s.time}</p></div>)}</div>}
+                </div>
+            );
+        };
+
+        const MainApp = ({ user, onLogout, onUpdateUser }) => {
+            const nav = useNavigate();
+            const loc = useLocation();
+            const [isProfileOpen, setIsProfileOpen] = useState(false);
+            const menus = [
+                { path: '/', icon: LayoutDashboard, label: 'Home', roles: ['ADMIN', 'TEACHER'] },
+                { path: '/scan', icon: QrCode, label: 'Scan', roles: ['ADMIN', 'TEACHER'] },
+                { path: '/', icon: CreditCard, label: 'Kartu', roles: ['STUDENT'] },
+                { path: '/users', icon: Users, label: 'Users', roles: ['ADMIN'] },
+            ];
+            const myMenus = menus.filter(m => m.roles.includes(user.role));
+
+            useEffect(() => {
+                if (user.role === 'STUDENT' && loc.pathname !== '/') nav('/', { replace: true });
+                if (user.role === 'TEACHER' && loc.pathname === '/users') nav('/', { replace: true });
+            }, [user, loc.pathname, nav]);
+            
+            return (
+                <div className="h-screen flex flex-col relative w-full md:max-w-7xl mx-auto bg-white/30 shadow-2xl overflow-hidden border-x border-white/40">
+                    <Background />
+                    <div className="glass-nav px-6 py-4 flex justify-between items-center sticky top-0 z-50">
+                        <div className="flex items-center gap-3 cursor-pointer" onClick={() => setIsProfileOpen(true)}><Avatar name={user.name} seed={user.avatarSeed} style={user.avatarStyle} /><div className="hidden sm:block"><h3 className="font-bold text-slate-800 text-sm">{user.name.split(' ')[0]}</h3><span className="text-[10px] font-bold text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-md">{user.role}</span></div></div>
+                        <button onClick={onLogout} className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-red-50 hover:text-red-500"><LogOut size={18} /></button>
+                    </div>
+                    <div className="flex-1 overflow-y-auto z-0">
+                        <Routes>
+                            <Route path="/" element={user.role === 'STUDENT' ? <StudentDashboard user={user}/> : <Dashboard user={user}/>} />
+                            {user.role !== 'STUDENT' && <Route path="/scan" element={<Scanner user={user} />} />}
+                            {user.role === 'ADMIN' && <Route path="/users" element={<UserManagement />} />}
+                            <Route path="*" element={<div className="p-10 text-center text-slate-500">Halaman tidak ditemukan.</div>} />
+                        </Routes>
+                    </div>
+                    {user.role !== 'STUDENT' && (
+                        <div className="absolute bottom-6 left-0 right-0 z-50 flex justify-center pointer-events-none">
+                            <div className="glass-nav rounded-[2rem] p-2 flex justify-between shadow-2xl w-[90%] max-w-md pointer-events-auto">
+                                {myMenus.map((m, i) => {
+                                    const active = loc.pathname === m.path;
+                                    return <button key={i} onClick={() => nav(m.path)} className={`flex-1 h-14 rounded-[1.8rem] flex items-center justify-center transition-all relative ${active ? 'text-white' : 'text-slate-400'}`}>{active && <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500 to-pink-500 rounded-[1.8rem] shadow-lg -z-10"></div>}<m.icon size={22} strokeWidth={active ? 2.5 : 2} /></button>;
+                                })}
+                            </div>
+                        </div>
+                    )}
+                    {isProfileOpen && <ProfileModal user={user} onClose={() => setIsProfileOpen(false)} onUpdate={onUpdateUser} />}
                 </div>
             );
         };
@@ -1973,9 +1064,20 @@
             useEffect(() => {
                 const initApp = async () => {
                     try {
-                        // MODIFIED: Kita gunakan signInAnonymously sebagai default untuk aplikasi publik/shared ini
-                        // agar tidak ada konflik antara token environment (Sandbox) dan config manual (Real DB).
-                        await signInAnonymously(auth);
+                        let signedIn = false;
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            try {
+                                await signInWithCustomToken(auth, __initial_auth_token);
+                                signedIn = true;
+                            } catch (err) {
+                                console.warn("Token mismatch or invalid, falling back to anonymous auth", err);
+                            }
+                        }
+                        
+                        if (!signedIn) {
+                            await signInAnonymously(auth);
+                        }
+                        
                         await syncFromFirestore(); 
                     } catch (e) {
                         console.error("Initialization Error:", e);
