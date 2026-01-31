@@ -154,30 +154,24 @@
         import { BarChart, Bar, ResponsiveContainer, PieChart, Pie, Cell, Tooltip, XAxis, YAxis, CartesianGrid } from 'recharts';
         import QRCode from 'react-qr-code';
         
-        // ========================================
-        // ✅ FIREBASE CONFIGURATION - SUDAH LENGKAP
-        // ========================================
-        // 🔥 FIREBASE CONFIG SUDAH VALID - TIDAK PERLU DIUBAH!
-        // Konfigurasi ini untuk project: gkps-presensi
-        // Data akan otomatis sync antar device secara realtime
-//         // --- FIREBASE INTEGRATION ---
-//         import { initializeApp } from "firebase/app";
-//         import { getAnalytics } from "firebase/analytics";
-//         import { getAuth, signInAnonymously } from "firebase/auth";
-//         import { getFirestore, collection, getDocs, setDoc, doc, deleteDoc, onSnapshot } from "firebase/firestore";
-// 
-//         // --- KONFIGURASI DATABASE (ONLINE) ---
-//         // PENTING: Ganti konfigurasi di bawah ini dengan milik Anda sendiri dari Firebase Console.
-//         const firebaseConfig = {
-//             
-//   apiKey: "AIzaSyBQ-MyLw4_HfYtxMND-9fnCQheGsLlSNMk",
-//   authDomain: "gkps-presensi.firebaseapp.com",
-//   projectId: "gkps-presensi",
-//   storageBucket: "gkps-presensi.firebasestorage.app",
-//   messagingSenderId: "733824830232",
-//   appId: "1:733824830232:web:40fac80695bc0daf31ec6d",
-//   measurementId: "G-99SXQPD3B6"
-//         };
+        // --- FIREBASE INTEGRATION ---
+        import { initializeApp } from "firebase/app";
+        import { getAnalytics } from "firebase/analytics";
+        import { getAuth, signInAnonymously } from "firebase/auth";
+        import { getFirestore, collection, getDocs, setDoc, doc, deleteDoc, onSnapshot } from "firebase/firestore";
+
+        // --- KONFIGURASI DATABASE (ONLINE) ---
+        // PENTING: Ganti konfigurasi di bawah ini dengan milik Anda sendiri dari Firebase Console.
+        const firebaseConfig = {
+            
+  apiKey: "AIzaSyBQ-MyLw4_HfYtxMND-9fnCQheGsLlSNMk",
+  authDomain: "gkps-presensi.firebaseapp.com",
+  projectId: "gkps-presensi",
+  storageBucket: "gkps-presensi.firebasestorage.app",
+  messagingSenderId: "733824830232",
+  appId: "1:733824830232:web:40fac80695bc0daf31ec6d",
+  measurementId: "G-99SXQPD3B6"
+        };
 
         const app = initializeApp(firebaseConfig);
         const analytics = getAnalytics(app);
@@ -313,28 +307,11 @@
             { id: 's2', className: 'Kelas Daniel', date: getLocalDate(), time: '08:00 - 09:30', activity: 'Ibadah & Aktivitas', theme: 'Daud Melawan Goliat', speaker: 'Kak Budi', location: 'R. Daniel Lt. 1', status: 'upcoming' },
         ];
 
-        // ========================================
-        // ⚠️ GEMINI AI API KEY - ISI DI SINI!
-        // ========================================
-        // 🚨 PENTING: Isi API Key Gemini AI di bawah ini agar fitur AI berfungsi!
-        // Cara mendapatkan:
-        // 1. Buka: https://aistudio.google.com/app/apikey
-        // 2. Login dengan Google Account
-        // 3. Klik "Create API Key"
-        // 4. Copy dan paste di bawah (ganti "" dengan "YOUR_API_KEY")
-        
-        const GEMINI_API_KEY = ""; // 👈 ISI API KEY ANDA DI SINI!
-        
         // --- GEMINI AI SERVICE ---
         const GeminiService = {
             call: async (prompt) => {
-                // Validasi API Key
-                if (!GEMINI_API_KEY || GEMINI_API_KEY.trim() === "") {
-                    console.warn("⚠️ Gemini API Key belum diisi! Fitur AI tidak akan berfungsi.");
-                    throw new Error("Gemini API Key belum dikonfigurasi. Silakan isi GEMINI_API_KEY di kode.");
-                }
-                
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`;
+                const apiKey = "AIzaSyA5WySHIJWlfHMacpdY9ba-m1JO5dp1jqM"; // API Key
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
                 const payload = {
                     contents: [{ parts: [{ text: prompt }] }],
                     generationConfig: { responseMimeType: "application/json" }
