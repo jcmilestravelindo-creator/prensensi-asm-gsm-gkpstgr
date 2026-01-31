@@ -310,7 +310,7 @@
         // --- GEMINI AI SERVICE ---
         const GeminiService = {
             call: async (prompt) => {
-                const apiKey = "AIzaSyA5WySHIJWlfHMacpdY9ba-m1JO5dp1jqM"; // API Key
+                const apiKey = ""; // API Key
                 const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
                 const payload = {
                     contents: [{ parts: [{ text: prompt }] }],
@@ -1278,6 +1278,7 @@
         const Dashboard = ({ user }) => {
             const [date, setDate] = useState(getLocalDate());
             const [att, setAtt] = useState([]);
+            const [allAttendance, setAllAttendance] = useState([]); // State untuk semua data attendance (realtime)
             const [activities, setActivities] = useState([]);
             const [users, setUsers] = useState([]);
             const [isMatModalOpen, setIsMatModalOpen] = useState(false);
@@ -1330,7 +1331,10 @@
                     localStorage.setItem(STORAGE.ATTENDANCE, JSON.stringify(mergedData));
                     
                     // 7. Update tampilan UI dengan data gabungan
-                    setAtt(mergedData.filter(r => r.date === date));
+                    setAllAttendance(mergedData); // Update semua data
+                    
+                    // 🔥 PERBAIKAN REALTIME: Tambah log untuk debug
+                    console.log(`✅ Realtime Update: ${mergedData.length} total, ${mergedData.filter(r => r.date === date).length} untuk tanggal ${date}`);
                 }, (error) => { console.error("Error fetching attendance:", error); });
 
                 const unsubscribeAct = onSnapshot(getCollectionRef('activities'), (snapshot) => {
@@ -1366,6 +1370,13 @@
             }, [date, user.role]); 
 
             const stats = useMemo(() => {
+
+            // useEffect untuk filter data berdasarkan date yang dipilih
+            useEffect(() => {
+                const filtered = allAttendance.filter(r => r.date === date);
+                setAtt(filtered);
+                console.log(`📅 Filter untuk tanggal ${date}: ${filtered.length} records`);
+            }, [date, allAttendance]);
                 const grouped = {};
                 att.filter(x => x.role === 'STUDENT').forEach(x => grouped[x.className] = (grouped[x.className] || 0) + 1);
                 return Object.entries(grouped).map(([k,v]) => ({ name: k, value: v }));
