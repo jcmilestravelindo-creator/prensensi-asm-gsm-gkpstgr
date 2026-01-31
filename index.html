@@ -149,7 +149,7 @@
             LayoutDashboard, QrCode, Users, BarChart3, LogOut, Church, CreditCard,
             CheckCircle, AlertCircle, Camera, Trash2, Download, Search, Upload,
             ChevronRight, Calendar, User, ShieldCheck, Sparkles, Zap, Plus, X, RefreshCw, BookOpen, PenTool,
-            Bell, Activity, MessageSquare, Send, Radio, TrendingUp, Briefcase, GraduationCap, Clock, FileText, CalendarDays, MapPin, Edit, BrainCircuit, Cloud, CloudOff, FileSpreadsheet, File, Lock, Key, Power, Eye, Timer
+            Bell, Activity, MessageSquare, Send, Radio, TrendingUp, Briefcase, GraduationCap, Clock, FileText, CalendarDays, MapPin, Edit, BrainCircuit, Cloud, CloudOff, FileSpreadsheet, File, Lock, Key, Power, Eye, Timer, Wifi, WifiOff
         } from 'lucide-react';
         import { BarChart, Bar, ResponsiveContainer, PieChart, Pie, Cell, Tooltip, XAxis, YAxis, CartesianGrid } from 'recharts';
         import QRCode from 'react-qr-code';
@@ -157,20 +157,19 @@
         // --- FIREBASE INTEGRATION ---
         import { initializeApp } from "firebase/app";
         import { getAnalytics } from "firebase/analytics";
-        import { getAuth, signInAnonymously } from "firebase/auth";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
         import { getFirestore, collection, getDocs, setDoc, doc, deleteDoc, onSnapshot } from "firebase/firestore";
 
         // --- KONFIGURASI DATABASE (ONLINE) ---
-        // PENTING: Ganti konfigurasi di bawah ini dengan milik Anda sendiri dari Firebase Console.
+        // PENTING: Ganti dengan konfigurasi Firebase Anda sendiri!
         const firebaseConfig = {
-            
-  apiKey: "AIzaSyBQ-MyLw4_HfYtxMND-9fnCQheGsLlSNMk",
-  authDomain: "gkps-presensi.firebaseapp.com",
-  projectId: "gkps-presensi",
-  storageBucket: "gkps-presensi.firebasestorage.app",
-  messagingSenderId: "733824830232",
-  appId: "1:733824830232:web:40fac80695bc0daf31ec6d",
-  measurementId: "G-99SXQPD3B6"
+            apiKey: "AIzaSyDDtjCJO09qP3kwOcoctObU-qOg-GTnrTE", // GANTI DENGAN API KEY ANDA
+            authDomain: "sundayschoolattendance-58661.firebaseapp.com", // GANTI DENGAN AUTH DOMAIN ANDA
+            projectId: "sundayschoolattendance-58661", // GANTI DENGAN PROJECT ID ANDA
+            storageBucket: "sundayschoolattendance-58661.firebasestorage.app", // GANTI
+            messagingSenderId: "1055300658311", // GANTI
+            appId: "1:1055300658311:web:2db2708b0c8bfa5aa54422", // GANTI
+            measurementId: "G-PCB8J7RRHJ"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -181,12 +180,10 @@
         // --- APP ID FOR PATHING (FIXED) ---
         const appId = 'gkps-tangerang-v3-prod';
 
-        // Helper untuk mendapatkan referensi koleksi di path yang benar
         const getCollectionRef = (colName) => {
             return collection(db, 'artifacts', appId, 'public', 'data', colName);
         };
 
-        // Helper untuk mendapatkan referensi dokumen di path yang benar
         const getDocRef = (colName, docId) => {
             return doc(db, 'artifacts', appId, 'public', 'data', colName, String(docId));
         };
@@ -205,7 +202,7 @@
 
         // --- FIREBASE HELPERS ---
         const syncFromFirestore = async () => {
-            if (!auth.currentUser) return false; 
+            if (!auth.currentUser) return -1;
             
             const collections = [
                 { name: 'users', key: 'gkps_users_v3' },
@@ -223,13 +220,11 @@
                     querySnapshot.forEach((doc) => {
                         data.push(doc.data());
                     });
-                    
                     if (data.length > 0) {
                         localStorage.setItem(col.key, JSON.stringify(data));
                         totalDocs += data.length;
                     }
                 }
-                console.log(`Sync complete. Fetched ${totalDocs} documents.`);
                 return totalDocs; 
             } catch (e) {
                 console.error("Gagal sinkronisasi data:", e);
@@ -243,10 +238,11 @@
                     await setDoc(getDocRef(collectionName, id), data);
                     console.log(`Berhasil simpan ke ${collectionName}:`, id);
                 } else {
-                    console.warn("Offline: Data disimpan lokal saja.");
+                    alert("OFFLINE: Data disimpan lokal. Cek koneksi internet Anda.");
                 }
             } catch (e) {
                 console.error(`Gagal push ke Firestore (${collectionName}):`, e);
+                alert(`GAGAL SYNC CLOUD: ${e.message}\nCek Konfigurasi Firebase Anda!`);
             }
         };
 
@@ -257,6 +253,7 @@
                 }
             } catch (e) {
                 console.error("Gagal hapus di Firestore:", e);
+                alert(`Gagal Hapus Cloud: ${e.message}`);
             }
         }
 
@@ -1283,6 +1280,7 @@
             const [isMatModalOpen, setIsMatModalOpen] = useState(false);
             const [isSchedModalOpen, setIsSchedModalOpen] = useState(false);
             const [isSyncing, setIsSyncing] = useState(false);
+            const [isOnline, setIsOnline] = useState(navigator.onLine);
             
             const [bcTitle, setBcTitle] = useState('');
             const [bcMsg, setBcMsg] = useState('');
@@ -1296,49 +1294,40 @@
             const [loadingDevo, setLoadingDevo] = useState(false);
             
             useEffect(() => {
+                const handleOnline = () => setIsOnline(true);
+                const handleOffline = () => setIsOnline(false);
+                window.addEventListener('online', handleOnline);
+                window.addEventListener('offline', handleOffline);
+
                 if (!auth.currentUser) return; 
 
+                // Listen to Attendance
                 const unsubscribeAtt = onSnapshot(getCollectionRef('attendance'), (snapshot) => {
-                    // 1. Ambil data terbaru dari Server
+                    // TRUST SERVER FIRST: Ambil data dari server
                     const serverData = snapshot.docs.map(doc => doc.data());
                     
-                    // --- SMART MERGE LOGIC (PERBAIKAN) ---
-                    // Tujuannya: Mencegah data hilang (reset ke 0) saat koneksi lambat
+                    // FALLBACK: Gabungkan dengan lokal JIKA server kosong (pertama kali load mungkin)
+                    // Tapi prioritas serverData.
+                    const finalData = serverData.length > 0 ? serverData : DB.get(STORAGE.ATTENDANCE, []);
                     
-                    // 2. Ambil data lokal saat ini
-                    const localData = DB.get(STORAGE.ATTENDANCE, []);
+                    // Simpan ke local agar saat offline masih bisa lihat data terakhir
+                    if(serverData.length > 0) {
+                        localStorage.setItem(STORAGE.ATTENDANCE, JSON.stringify(serverData));
+                    }
                     
-                    // 3. Buat daftar ID dari server untuk pengecekan cepat
-                    const serverIds = new Set(serverData.map(d => String(d.id)));
-                    
-                    // 4. Gunakan data server sebagai basis utama (Source of Truth)
-                    const mergedData = [...serverData];
-                    
-                    // 5. Cek data lokal: Jika ada data HARI INI yang belum masuk server (Pending), pertahankan!
-                    const todayStr = getLocalDate();
-                    
-                    localData.forEach(localItem => {
-                        // Syarat mempertahankan data lokal:
-                        // a. Tanggalnya hari ini (agar tidak memunculkan data lama yang sudah dihapus)
-                        // b. ID-nya belum ada di list server
-                        if (localItem.date === todayStr && !serverIds.has(String(localItem.id))) {
-                            mergedData.push(localItem);
-                        }
-                    });
-
-                    // 6. Simpan hasil gabungan (Server + Pending Local) ke localStorage
-                    localStorage.setItem(STORAGE.ATTENDANCE, JSON.stringify(mergedData));
-                    
-                    // 7. Update tampilan UI dengan data gabungan
-                    setAtt(mergedData.filter(r => r.date === date));
-                }, (error) => { console.error("Error fetching attendance:", error); });
+                    // Filter sesuai tanggal yang dipilih di UI
+                    setAtt(finalData.filter(r => r.date === date));
+                }, (error) => { 
+                    console.error("Error fetching attendance:", error); 
+                    setIsOnline(false); // Assume offline if fetch fails
+                });
 
                 const unsubscribeAct = onSnapshot(getCollectionRef('activities'), (snapshot) => {
                     const data = snapshot.docs.map(doc => doc.data());
                     data.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
                     localStorage.setItem(STORAGE.ACTIVITIES, JSON.stringify(data));
                     setActivities(data);
-                }, (error) => { console.error("Error fetching activities:", error); });
+                });
 
                 let unsubscribeUsers = () => {};
                 if (user.role === 'ADMIN') {
@@ -1346,11 +1335,12 @@
                         const data = snapshot.docs.map(doc => doc.data());
                         localStorage.setItem(STORAGE.USERS, JSON.stringify(data));
                         setUsers(data);
-                    }, (error) => { console.error("Error fetching users:", error); });
+                    });
                 } else {
                     setUsers(DB.get(STORAGE.USERS, DEFAULT_USERS));
                 }
 
+                // Initial local load to show something immediately
                 const allAtt = DB.get(STORAGE.ATTENDANCE, []);
                 setAtt(allAtt.filter(r => r.date === date));
                 setActivities(DB.activities.get());
@@ -1359,6 +1349,8 @@
                 setPendingBroadcasts(allNotifs.filter(n => n.status === 'scheduled' && new Date(n.scheduledTime) > new Date()));
 
                 return () => {
+                    window.removeEventListener('online', handleOnline);
+                    window.removeEventListener('offline', handleOffline);
                     if(unsubscribeAtt) unsubscribeAtt();
                     if(unsubscribeAct) unsubscribeAct();
                     if(unsubscribeUsers) unsubscribeUsers();
@@ -1478,7 +1470,12 @@
                     <div className="p-6 pb-32 animate-slide-up">
                         <header className="mb-8 flex justify-between items-center">
                             <div>
-                                <p className="text-slate-500 font-medium text-sm mb-1 uppercase tracking-wider">Dashboard</p>
+                                <div className="flex items-center gap-2 mb-1">
+                                    <p className="text-slate-500 font-medium text-sm uppercase tracking-wider">Dashboard</p>
+                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 ${isOnline ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
+                                        {isOnline ? <><Wifi size={10}/> Online</> : <><WifiOff size={10}/> Offline</>}
+                                    </span>
+                                </div>
                                 <h2 className="text-3xl font-extrabold text-slate-800">Admin Control</h2>
                             </div>
                             <div className="flex items-center gap-2">
@@ -1717,7 +1714,12 @@
                 <div className="p-6 pb-32 animate-slide-up">
                     <header className="flex justify-between items-center mb-8">
                         <div>
-                            <p className="text-slate-500 font-medium text-sm mb-1">Overview</p>
+                            <div className="flex items-center gap-2 mb-1">
+                                <p className="text-slate-500 font-medium text-sm">Overview</p>
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 ${isOnline ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
+                                    {isOnline ? <><Wifi size={10}/> Online</> : <><WifiOff size={10}/> Offline</>}
+                                </span>
+                            </div>
                             <h2 className="text-3xl font-extrabold text-slate-800">Statistik</h2>
                         </div>
                         <div className="flex items-center gap-2">
@@ -1831,561 +1833,3 @@
                 </div>
             );
         };
-        const Scanner = ({ user }) => {
-            const [status, setStatus] = useState({ type: 'idle', msg: '' });
-            const [manual, setManual] = useState(false);
-            const [txt, setTxt] = useState('');
-            const ref = useRef(null);
-            
-            const onScan = (code) => {
-                if (status.type !== 'idle' || !code) return;
-                
-                try {
-                    if(ref.current && ref.current.getState() === 2) {
-                        ref.current.pause();
-                    }
-                } catch(e) { console.log("Pause error:", e); }
-
-                const cleanCode = typeof code === 'string' ? code.trim() : code;
-                const users = DB.get(STORAGE.USERS, DEFAULT_USERS);
-                
-                const u = users.find(x => 
-                    x.qrCode === cleanCode || 
-                    x.id === cleanCode || 
-                    x.name.toLowerCase() === cleanCode.toLowerCase()
-                );
-                
-                if (!u) {
-                    setStatus({ type: 'err', msg: 'Data Tidak Ditemukan' });
-                } else {
-                    let isAllowed = false;
-                    if (user.role === 'ADMIN') {
-                        isAllowed = true;
-                    } else if (user.role === 'TEACHER') {
-                        if (u.role === 'STUDENT' && u.className === user.className) {
-                            isAllowed = true;
-                        } else if (u.role === 'TEACHER') {
-                             setStatus({ type: 'err', msg: 'Hanya Admin yang bisa scan Guru.' });
-                             setTimeout(() => { setStatus({ type: 'idle', msg: '' }); try { if(ref.current && ref.current.getState() === 3) ref.current.resume(); } catch(e){} }, 2000);
-                             return;
-                        } else {
-                            setStatus({ type: 'err', msg: 'Siswa beda kelas / Akses ditolak' });
-                             setTimeout(() => { setStatus({ type: 'idle', msg: '' }); try { if(ref.current && ref.current.getState() === 3) ref.current.resume(); } catch(e){} }, 2000);
-                             return;
-                        }
-                    } else {
-                         isAllowed = false;
-                    }
-
-                    if (isAllowed) {
-                        const result = DB.att.add({
-                            id: Date.now(), 
-                            userId: u.id, 
-                            userName: u.name, 
-                            className: u.className || '-', 
-                            role: u.role,
-                            date: getLocalDate(), 
-                            timestamp: new Date().toISOString(),
-                            avatarSeed: u.avatarSeed,
-                            avatarStyle: u.avatarStyle || 'avataaars'
-                        });
-
-                        if (result.success) {
-                             DB.activities.add(user.name, `Memindai kehadiran ${u.name} (${u.role})`);
-                             setStatus({ type: 'ok', msg: `Berhasil: ${u.name}` });
-                        } else {
-                             setStatus({ type: 'err', msg: result.reason === 'duplicate' ? 'Sudah Absen Hari Ini' : 'Gagal Menyimpan' });
-                        }
-                    }
-                }
-                
-                setTimeout(() => { 
-                    setStatus({ type: 'idle', msg: '' }); 
-                    try { 
-                        if(ref.current && ref.current.getState() === 3) {
-                            ref.current.resume();
-                        }
-                    } catch(e) { console.log("Resume error:", e); }
-                }, 2000);
-            };
-
-            useEffect(() => {
-                if(manual) return;
-                if (ref.current) {
-                    ref.current.stop().then(() => { ref.current.clear(); }).catch(() => {});
-                }
-                const init = async () => {
-                    try {
-                        const devs = await Html5Qrcode.getCameras();
-                        if(devs && devs.length) {
-                            const scanner = new Html5Qrcode("reader");
-                            ref.current = scanner;
-                            await scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, onScan);
-                        }
-                    } catch { setManual(true); }
-                };
-                const timer = setTimeout(init, 500);
-                return () => { 
-                    clearTimeout(timer);
-                    if(ref.current) {
-                        try {
-                            ref.current.stop().then(() => ref.current.clear()).catch(()=>{});
-                        } catch (e) {}
-                    }
-                };
-            }, [manual]);
-
-            return (
-                <div className="p-6 pb-40 animate-slide-up min-h-full flex flex-col max-w-lg mx-auto">
-                    <div className="text-center mb-6">
-                        <h2 className="text-2xl font-black text-slate-800 tracking-tight">Scanner Presensi</h2>
-                        {user.role === 'TEACHER' ? (
-                            <div className="inline-block mt-2 px-3 py-1 bg-indigo-50 border border-indigo-100 rounded-full">
-                                <p className="text-indigo-600 text-xs font-bold flex items-center gap-1">
-                                    <ShieldCheck size={12}/> Mode Guru: {user.className}
-                                </p>
-                            </div>
-                        ) : (
-                            <p className="text-slate-500 text-sm font-medium">Mode Admin: Scan Guru & Siswa</p>
-                        )}
-                    </div>
-                    <div className="flex flex-col gap-6 w-full">
-                        <div className="glass-panel p-3 rounded-[2.5rem] shadow-2xl shadow-indigo-200/50 border-4 border-white/50 relative overflow-hidden bg-slate-900 group z-10">
-                            <div className="relative w-full aspect-[3/4] sm:aspect-square rounded-[2rem] overflow-hidden flex items-center justify-center bg-black/20">
-                                {manual ? (
-                                    <div className="w-full px-6 text-center relative z-10 animate-pop">
-                                        <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-md border border-white/20">
-                                            <PenTool size={28} className="text-white"/>
-                                        </div>
-                                        <p className="text-white/60 text-xs font-medium mb-4">Mode Input Manual</p>
-                                        <input 
-                                            value={txt} 
-                                            onChange={e => setTxt(e.target.value)} 
-                                            placeholder="Ketik ID / Nama" 
-                                            className="w-full p-4 rounded-2xl bg-white/10 border border-white/20 text-white font-bold text-center mb-4 placeholder-white/40 focus:bg-white/20 focus:border-white/50 outline-none transition-all backdrop-blur-sm" 
-                                        />
-                                        <Button onClick={() => { onScan(txt); setTxt(''); }} className="bg-white text-indigo-900 hover:bg-indigo-50 w-full py-3 text-sm">
-                                            Proses Absen
-                                        </Button>
-                                    </div>
-                                ) : (
-                                    <>
-                                        <div id="reader" className="w-full h-full opacity-90 object-cover absolute inset-0"></div>
-                                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                            <div className="w-56 h-56 relative">
-                                                <div className="absolute top-0 left-0 w-10 h-10 border-l-4 border-t-4 border-white/80 rounded-tl-3xl"></div>
-                                                <div className="absolute top-0 right-0 w-10 h-10 border-r-4 border-t-4 border-white/80 rounded-tr-3xl"></div>
-                                                <div className="absolute bottom-0 left-0 w-10 h-10 border-l-4 border-b-4 border-white/80 rounded-bl-3xl"></div>
-                                                <div className="absolute bottom-0 right-0 w-10 h-10 border-r-4 border-b-4 border-white/80 rounded-br-3xl"></div>
-                                                <div className="absolute inset-x-0 top-1/2 h-0.5 bg-red-500/50 shadow-[0_0_10px_rgba(239,68,68,0.8)] animate-scan"></div>
-                                            </div>
-                                        </div>
-                                        <div className="absolute bottom-4 left-0 right-0 text-center">
-                                            <span className="bg-black/40 backdrop-blur-md text-white/80 text-[10px] px-3 py-1 rounded-full border border-white/10">Scanning...</span>
-                                        </div>
-                                    </>
-                                )}
-
-                                {status.type !== 'idle' && (
-                                    <div className={`absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm transition-all duration-300`}>
-                                        <div className={`p-6 rounded-3xl shadow-2xl text-center transform scale-110 animate-pop border-4 ${
-                                            status.type === 'ok' ? 'bg-white border-emerald-400' : 'bg-white border-rose-400'
-                                        }`}>
-                                            <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 ${
-                                                status.type === 'ok' ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'
-                                            }`}>
-                                                {status.type === 'ok' ? <CheckCircle size={32}/> : <AlertCircle size={32}/>}
-                                            </div>
-                                            <h4 className={`text-lg font-black mb-1 ${status.type === 'ok' ? 'text-emerald-700' : 'text-rose-700'}`}>
-                                                {status.type === 'ok' ? 'Berhasil!' : 'Gagal!'}
-                                            </h4>
-                                            <p className="text-slate-600 text-xs font-bold px-4">{status.msg}</p>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="z-20">
-                            <button 
-                                onClick={() => setManual(!manual)} 
-                                className={`w-full py-4 rounded-2xl font-bold text-sm transition-all flex items-center justify-center gap-2 border shadow-lg active:scale-95 ${
-                                    manual 
-                                    ? 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200' 
-                                    : 'bg-white text-indigo-600 border-white hover:bg-indigo-50'
-                                }`}
-                            >
-                                {manual ? <Camera size={18} /> : <PenTool size={18} />}
-                                {manual ? 'Kembali ke Kamera' : 'Input Manual ID'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
-        const StudentDashboard = ({ user }) => {
-            const [tab, setTab] = useState('card');
-            const [history, setHistory] = useState([]);
-            const [materials, setMaterials] = useState([]);
-            const [schedules, setSchedules] = useState([]);
-            const [aiDevotional, setAiDevotional] = useState(null);
-            const [loadingDevo, setLoadingDevo] = useState(false);
-            
-            // Menggunakan onSnapshot juga untuk Siswa agar melihat update realtime (Jadwal/Materi/History)
-            useEffect(() => {
-                // Listener Attendance
-                const unsubAtt = onSnapshot(getCollectionRef('attendance'), (snap) => {
-                    const data = snap.docs.map(d => d.data());
-                    const myAtt = data.filter(a => a.userId === user.id).sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
-                    setHistory(myAtt);
-                });
-                
-                // Listener Materials
-                const unsubMat = onSnapshot(getCollectionRef('materials'), (snap) => {
-                    const data = snap.docs.map(d => d.data());
-                    const myMat = data.filter(m => m.className === user.className).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
-                    setMaterials(myMat);
-                });
-
-                // Listener Schedules
-                const unsubSched = onSnapshot(getCollectionRef('schedules'), (snap) => {
-                    const data = snap.docs.map(d => d.data());
-                    const mySched = data.filter(s => s.className === user.className || s.className === 'ALL');
-                    setSchedules(mySched);
-                });
-
-                return () => { unsubAtt(); unsubMat(); unsubSched(); };
-            }, [user]);
-
-            const generateDevotional = async () => {
-                setLoadingDevo(true);
-                try {
-                    const prompt = "Berikan satu renungan sangat singkat (1 kalimat) dan motivasi untuk anak sekolah minggu yang ceria. Format JSON: { \"title\": \"Judul Ceria\", \"content\": \"Isi Renungan\" }";
-                    const res = await GeminiService.call(prompt);
-                    if(res) setAiDevotional(res);
-                } catch(e) { console.error(e); } finally { setLoadingDevo(false); }
-            };
-            const verse = useMemo(() => {
-                if(materials.length > 0) return `${materials[0].verse}`;
-                return MOCK_VERSES[Math.floor(Math.random()*MOCK_VERSES.length)];
-            }, [materials]);
-            const theme = materials.length > 0 ? materials[0].theme : "Sekolah Minggu GKPS";
-            return (
-                <div className="p-6 h-full flex flex-col pb-24 max-w-md mx-auto animate-slide-up">
-                    <div className="flex justify-between items-center mb-6">
-                        <div>
-                            <h2 className="text-xl font-bold text-slate-800">Halo, {user.name.split(' ')[0]}! 👋</h2>
-                            <p className="text-xs text-slate-500 font-medium">Selamat datang di {user.className}</p>
-                        </div>
-                        <button 
-                            onClick={generateDevotional}
-                            className="bg-gradient-to-tr from-yellow-400 to-orange-500 text-white p-2 rounded-xl shadow-lg hover:scale-105 transition-transform"
-                            title="Renungan Harian AI"
-                        >
-                            {loadingDevo ? <RefreshCw size={20} className="animate-spin"/> : <Sparkles size={20}/>}
-                        </button>
-                    </div>
-
-                    {aiDevotional && (
-                        <div className="mb-6 bg-gradient-to-r from-yellow-50 to-orange-50 p-4 rounded-2xl border border-orange-100 shadow-sm animate-pop relative overflow-hidden">
-                            <div className="absolute top-0 right-0 w-16 h-16 bg-yellow-200 rounded-full blur-2xl opacity-50 -mr-4 -mt-4"></div>
-                            <div className="relative z-10">
-                                <h4 className="font-bold text-orange-600 text-sm flex items-center gap-2 mb-1">
-                                    <Sparkles size={12}/> {aiDevotional.title}
-                                </h4>
-                                <p className="text-xs text-slate-700 italic">"{aiDevotional.content}"</p>
-                            </div>
-                            <button onClick={()=>setAiDevotional(null)} className="absolute top-2 right-2 text-orange-300 hover:text-orange-500"><X size={14}/></button>
-                        </div>
-                    )}
-                    
-                    <div className="flex bg-white/50 p-1 rounded-2xl mb-6 backdrop-blur-sm shadow-sm border border-white/60 overflow-x-auto no-scrollbar">
-                        {['card', 'history', 'materials', 'schedule'].map(t => (
-                            <button key={t} onClick={() => setTab(t)}
-                                className={`flex-1 min-w-[70px] py-2.5 text-[11px] font-bold rounded-xl transition-all whitespace-nowrap ${
-                                    tab === t ? 'bg-white text-indigo-600 shadow-md scale-105' : 'text-slate-500 hover:text-slate-700'
-                                }`}>
-                                {t === 'card' ? 'Kartu' : t === 'history' ? 'Riwayat' : t === 'materials' ? 'Materi' : 'Jadwal'}
-                            </button>
-                        ))}
-                    </div>
-
-                    <div className="flex-1 overflow-y-auto no-scrollbar">
-                        {tab === 'card' && (
-                            <div className="relative w-full perspective group animate-pop">
-                                <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500 to-pink-500 rounded-[2.5rem] blur-xl opacity-40 group-hover:opacity-60 transition-opacity"></div>
-                                <div className="relative bg-white/90 backdrop-blur-xl rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/50">
-                                    <div className="h-32 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 p-6 relative">
-                                        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20 mix-blend-overlay"></div>
-                                        <div className="flex justify-between items-start relative z-10 text-white">
-                                            <h1 className="font-extrabold tracking-tight">GKPS CARD</h1>
-                                            <ShieldCheck size={24} className="opacity-80"/>
-                                        </div>
-                                    </div>
-                                    <div className="px-6 pb-8 flex flex-col items-center -mt-16 relative z-10">
-                                        <Avatar name={user.name} seed={user.avatarSeed} style={user.avatarStyle} size="xl" className="border-4 border-white mb-4" />
-                                        <h2 className="text-2xl font-black text-slate-800 text-center mb-1 leading-tight">{user.name}</h2>
-                                        <span className="bg-indigo-50 text-indigo-600 px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-6 border border-indigo-100">{user.className}</span>
-                                        <div className="p-4 bg-white rounded-3xl border-2 border-dashed border-slate-200 shadow-inner mb-4 group-hover:border-indigo-300 transition-colors">
-                                            <QRCode value={user.qrCode} size={160} />
-                                        </div>
-                                        <p className="font-mono text-xs text-slate-400 font-bold tracking-widest">{user.qrCode}</p>
-                                    </div>
-                                    <div className="bg-slate-50 p-6 border-t border-slate-100">
-                                        <p className="text-center text-xs font-bold text-indigo-600 uppercase tracking-wider mb-1">{theme}</p>
-                                        <p className="text-center text-sm font-medium text-slate-600 italic">"{verse}"</p>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {tab === 'history' && (
-                            <div className="space-y-4 animate-pop">
-                                <h3 className="font-bold text-slate-700 mb-2 flex items-center gap-2">
-                                    <Clock size={18} className="text-indigo-500"/> Riwayat Kehadiran
-                                </h3>
-                                {history.length === 0 ? (
-                                    <div className="text-center py-10 text-slate-400 text-sm">Belum ada riwayat kehadiran.</div>
-                                ) : (
-                                    history.map((h, i) => (
-                                        <div key={h.id} className="glass-card p-4 rounded-2xl flex justify-between items-center border-l-4 border-l-emerald-500">
-                                            <div>
-                                                <p className="font-bold text-slate-800 text-sm">{new Date(h.date).toLocaleDateString('id-ID', {weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'})}</p>
-                                                <p className="text-xs text-slate-500">Hadir di kelas {h.className}</p>
-                                            </div>
-                                            <span className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-xs font-bold font-mono">
-                                                {new Date(h.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                                            </span>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                        )}
-
-                        {tab === 'materials' && (
-                            <div className="space-y-4 animate-pop">
-                                <h3 className="font-bold text-slate-700 mb-2 flex items-center gap-2">
-                                    <BookOpen size={18} className="text-indigo-500"/> Materi Pembelajaran
-                                </h3>
-                                {materials.length === 0 ? (
-                                    <div className="text-center py-10 text-slate-400 text-sm">Belum ada materi dari guru.</div>
-                                ) : (
-                                    materials.map((m, i) => (
-                                        <div key={m.id} className="glass-card p-5 rounded-2xl relative overflow-hidden">
-                                            <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-indigo-500 to-purple-500"></div>
-                                            <div className="mb-3">
-                                                <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider bg-indigo-50 px-2 py-1 rounded-md mb-2 inline-block">
-                                                    {new Date(m.createdAt).toLocaleDateString()}
-                                                </span>
-                                                <h4 className="text-lg font-extrabold text-slate-800 leading-tight">{m.theme}</h4>
-                                                <p className="text-xs text-slate-500 mt-1">Oleh: {m.teacherName}</p>
-                                            </div>
-                                            <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                                                <p className="text-sm font-medium text-slate-600 italic leading-relaxed">"{m.verse}"</p>
-                                            </div>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                        )}
-
-                        {tab === 'schedule' && (
-                            <div className="space-y-4 animate-pop">
-                                <h3 className="font-bold text-slate-700 mb-2 flex items-center gap-2">
-                                    <CalendarDays size={18} className="text-indigo-500"/> Jadwal {user.className}
-                                </h3>
-                                {schedules.length === 0 ? (
-                                    <div className="text-center py-10 text-slate-400 text-sm">Belum ada jadwal untuk kelas ini.</div>
-                                ) : (
-                                    <div className="space-y-4">
-                                        {schedules.map((s, i) => (
-                                            <div key={s.id} className="glass-card p-0 rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-white/60">
-                                                <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-4 border-b border-indigo-100 flex justify-between items-center">
-                                                    <div>
-                                                        <h4 className="font-extrabold text-slate-800 text-sm">{s.activity}</h4>
-                                                        <p className="text-xs text-indigo-500 font-bold uppercase tracking-wider mt-0.5">{formatDateIndo(s.date)}</p>
-                                                    </div>
-                                                    <span className="text-[10px] font-bold bg-white text-indigo-600 px-2 py-1 rounded-lg border border-indigo-100 shadow-sm">
-                                                        {s.status === 'upcoming' ? 'Akan Datang' : 'Selesai'}
-                                                    </span>
-                                                </div>
-                                                <div className="p-4 space-y-3">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-indigo-500">
-                                                            <BookOpen size={16} />
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-[10px] text-slate-400 font-bold uppercase">Tema</p>
-                                                            <p className="text-xs font-bold text-slate-700">{s.theme}</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="grid grid-cols-2 gap-2">
-                                                        <div className="flex items-center gap-2">
-                                                            <Clock size={14} className="text-slate-400"/>
-                                                            <span className="text-xs font-medium text-slate-600">{s.time}</span>
-                                                        </div>
-                                                        <div className="flex items-center gap-2">
-                                                            <MapPin size={14} className="text-slate-400"/>
-                                                            <span className="text-xs font-medium text-slate-600">{s.location}</span>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex items-center gap-2 pt-2 border-t border-slate-50">
-                                                        <User size={14} className="text-slate-400"/>
-                                                        <span className="text-xs text-slate-500">Pengajar: <b>{s.speaker}</b></span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                </div>
-            );
-        };
-
-        const MainApp = ({ user, onLogout, onUpdateUser }) => {
-            const nav = useNavigate();
-            const loc = useLocation();
-            const [isProfileOpen, setIsProfileOpen] = useState(false);
-            const [isNotifOpen, setIsNotifOpen] = useState(false);
-            const [hasNewNotif, setHasNewNotif] = useState(false);
-            const menus = [
-                { path: '/', icon: LayoutDashboard, label: 'Home', roles: ['ADMIN', 'TEACHER'] },
-                { path: '/scan', icon: QrCode, label: 'Scan', roles: ['ADMIN', 'TEACHER'] },
-                { path: '/', icon: CreditCard, label: 'Kartu', roles: ['STUDENT'] },
-                { path: '/users', icon: Users, label: 'Users', roles: ['ADMIN'] },
-            ];
-            const myMenus = menus.filter(m => m.roles.includes(user.role));
-
-            useEffect(() => {
-                if (user.role === 'STUDENT' && loc.pathname !== '/') {
-                    nav('/', { replace: true });
-                }
-                if (user.role === 'TEACHER' && loc.pathname === '/users') {
-                    nav('/', { replace: true });
-                }
-            }, [user, loc.pathname, nav]);
-            
-            // Listen notif realtime
-            useEffect(() => {
-                if (!auth.currentUser) return; // Guard
-                const unsubNotif = onSnapshot(getCollectionRef('notifications'), (snap) => {
-                    const data = snap.docs.map(d => d.data());
-                    localStorage.setItem(STORAGE.NOTIFICATIONS, JSON.stringify(data));
-                    
-                    if (data.length > 0) {
-                        const lastNotif = data.sort((a,b)=> new Date(b.timestamp) - new Date(a.timestamp))[0];
-                        const today = new Date();
-                        if(new Date(lastNotif.timestamp).toDateString() === today.toDateString() && isNotifVisible(lastNotif)) {
-                             setHasNewNotif(true);
-                        }
-                    }
-                }, (e) => console.error(e));
-                return () => { if(unsubNotif) unsubNotif(); };
-            }, []);
-            
-            return (
-                <div className="h-screen flex flex-col relative w-full md:max-w-7xl mx-auto bg-white/30 shadow-2xl overflow-hidden border-x border-white/40">
-                    <Background />
-                    <div className="glass-nav px-6 py-4 flex justify-between items-center sticky top-0 z-50">
-                        <div className="flex items-center gap-3">
-                            <Avatar name={user.name} seed={user.avatarSeed} style={user.avatarStyle} onClick={() => setIsProfileOpen(true)} />
-                            <div className="cursor-pointer" onClick={() => setIsProfileOpen(true)}>
-                                <h3 className="font-bold text-slate-800 text-sm leading-tight">{user.name.split(' ')[0]}</h3>
-                                <span className="text-[10px] font-bold text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-md">{user.role}</span>
-                            </div>
-                        </div>
-                        <div className="flex gap-2">
-                            <button onClick={() => { setIsNotifOpen(true); setHasNewNotif(false); }} className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-slate-400 hover:text-indigo-500 transition-colors relative">
-                                <Bell size={18} />
-                                {hasNewNotif && <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>}
-                            </button>
-                            <button onClick={onLogout} className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors"><LogOut size={18} /></button>
-                        </div>
-                    </div>
-                    <div className="flex-1 overflow-y-auto z-0">
-                        <Routes>
-                            <Route path="/" element={user.role === 'STUDENT' ? <StudentDashboard user={user}/> : <Dashboard user={user}/>} />
-                            {user.role !== 'STUDENT' && <Route path="/scan" element={<Scanner user={user} />} />}
-                            {user.role === 'ADMIN' && <Route path="/users" element={<UserManagement />} />}
-                            <Route path="*" element={<div className="p-10 text-center text-slate-500">Halaman tidak ditemukan atau akses ditolak.</div>} />
-                        </Routes>
-                    </div>
-                    {user.role !== 'STUDENT' && (
-                        <div className="absolute bottom-6 left-0 right-0 z-50 flex justify-center pointer-events-none">
-                            <div className="glass-nav rounded-[2rem] p-2 flex justify-between shadow-2xl shadow-indigo-500/10 w-[90%] max-w-md pointer-events-auto">
-                                {myMenus.map((m, i) => {
-                                    const active = loc.pathname === m.path;
-                                    return (
-                                        <button key={i} onClick={() => nav(m.path)}
-                                            className={`flex-1 h-14 rounded-[1.8rem] flex items-center justify-center transition-all duration-300 relative ${active ? 'text-white' : 'text-slate-400 hover:bg-slate-50'}`}>
-                                            {active && <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500 to-pink-500 rounded-[1.8rem] shadow-lg shadow-indigo-500/30 animate-pop -z-10"></div>}
-                                            <m.icon size={22} strokeWidth={active ? 2.5 : 2} className={active ? 'scale-110' : ''} />
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    )}
-                    {isProfileOpen && <ProfileModal user={user} onClose={() => setIsProfileOpen(false)} onUpdate={onUpdateUser} />}
-                    {isNotifOpen && <NotificationModal onClose={() => setIsNotifOpen(false)} />}
-                </div>
-            );
-        };
-
-        const App = () => {
-            const [user, setUser] = useState(null);
-            const [isReady, setIsReady] = useState(false);
-            
-            useEffect(() => {
-                const initApp = async () => {
-                    try {
-                        // START ONLINE
-                        await signInAnonymously(auth);
-                        await syncFromFirestore(); 
-                    } catch (e) {
-                        console.error("Initialization Error:", e);
-                        if (e.code === 'auth/configuration-not-found' || e.code === 'auth/admin-restricted-operation') {
-                            alert("PERINGATAN: Mode Offline (Cek Config Firebase).");
-                        }
-                    } finally {
-                        setIsReady(true);
-                    }
-                    
-                    const s = DB.get(STORAGE.SESSION); 
-                    if(s) {
-                        const users = DB.get(STORAGE.USERS, DEFAULT_USERS);
-                        const freshUser = users.find(u => u.id === s.id);
-                        if(freshUser && freshUser.isActive !== false) {
-                            setUser(freshUser || s);
-                        } else {
-                            localStorage.removeItem(STORAGE.SESSION);
-                        }
-                    } 
-                };
-                initApp();
-            }, []);
-
-            const login = (u) => { setUser(u); DB.set(STORAGE.SESSION, u); };
-            const logout = () => { 
-                setUser(null);
-                localStorage.removeItem(STORAGE.SESSION);
-                window.location.hash = '/'; 
-            };
-            const handleUpdateUser = (updatedUser) => {
-                const success = DB.users.update(updatedUser);
-                if (success) { setUser(updatedUser); DB.set(STORAGE.SESSION, updatedUser); }
-            };
-            
-            if (!isReady) return <LoadingScreen />;
-            if (!user) return <LoginScreen onLogin={login} />;
-            return <HashRouter><MainApp user={user} onLogout={logout} onUpdateUser={handleUpdateUser} /></HashRouter>;
-        };
-
-        createRoot(document.getElementById('root')).render(<App />);
-    </script>
-</body>
-</html>
