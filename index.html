@@ -1,399 +1,538 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Attendance Sekolah Minggu GKPS Tangerang</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance GKPS Tangerang</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.5/JsBarcode.all.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Import Font */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        
+        /* Global Styles */
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%); /* Soft Pastel Gradient BG */
+            min-height: 100vh;
+        }
 
-  <!-- =================== STYLE =================== -->
-  <style>
-    :root {
-      --primary: #1e3a8a;
-      --secondary: #fbbf24;
-      --bg: #f3f4f6;
-      --card: #ffffff;
-    }
+        /* Custom Card Style (Soft UI) */
+        .soft-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 2rem; /* Super rounded corners */
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            position: relative;
+            overflow: hidden;
+        }
 
-    * { box-sizing: border-box; }
+        /* Navigation Button Styles */
+        .nav-btn {
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+        }
+        .nav-btn.active {
+            background: linear-gradient(to right, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            box-shadow: 0 10px 20px -10px rgba(79, 172, 254, 0.5);
+        }
+        .nav-btn.inactive {
+            background: rgba(255, 255, 255, 0.7);
+            color: #64748b;
+        }
+        .nav-btn.inactive:hover { background: white; color: #4facfe; }
 
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', Tahoma, sans-serif;
-      background: var(--bg);
-      color: #111827;
-    }
+        /* ID Card Design (Updated to match reference) */
+        .id-card-wrap {
+            background: linear-gradient(120deg, #89f7fe 0%, #66a6ff 100%);
+            width: 340px;
+            height: 500px;
+            border-radius: 25px;
+            padding: 2rem;
+            color: white;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 15px 35px rgba(0, 114, 255, 0.3);
+        }
+        /* Decorative circles on ID Card */
+        .id-card-wrap::before, .id-card-wrap::after {
+            content: ''; position: absolute; border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+        }
+        .id-card-wrap::before { width: 200px; height: 200px; top: -50px; right: -50px; }
+        .id-card-wrap::after { width: 150px; height: 150px; bottom: 100px; left: -50px; }
 
-    header {
-      background: var(--primary);
-      color: #fff;
-      padding: 16px;
-      text-align: center;
-    }
+        .avatar-circle-large {
+            width: 120px; height: 120px;
+            border: 5px solid rgba(255,255,255,0.8);
+            border-radius: 50%; background: #fff;
+            overflow: hidden; margin: 0 auto;
+             box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
 
-    header h1 { margin: 0; font-size: 1.4rem; }
-    header p { margin: 4px 0 0; font-size: 0.9rem; opacity: 0.9; }
+        /* Colorful Header Badges */
+        .badge-icon {
+            position: absolute; top: 1rem; right: 1rem;
+            width: 3rem; height: 3rem; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: white; box-shadow: 0 10px 15px -5px rgba(0,0,0,0.1);
+        }
+        .badge-purple { background: linear-gradient(to br, #a855f7, #d946ef); }
+        .badge-blue { background: linear-gradient(to br, #3b82f6, #06b6d4); }
+        .badge-green { background: linear-gradient(to br, #22c55e, #10b981); }
 
-    main {
-      padding: 16px;
-      max-width: 1100px;
-      margin: auto;
-    }
+        /* Form Input Styling */
+        .input-soft {
+            background: #f8fafc; border: 2px solid #e2e8f0;
+            border-radius: 1rem; padding: 0.75rem 1rem;
+            transition: all 0.2s;
+        }
+        .input-soft:focus { border-color: #3b82f6; background: white; outline: none; }
 
-    .tabs {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-bottom: 16px;
-    }
-
-    .tab-btn {
-      flex: 1;
-      padding: 10px;
-      border: none;
-      border-radius: 8px;
-      background: #e5e7eb;
-      cursor: pointer;
-      font-weight: 600;
-    }
-
-    .tab-btn.active {
-      background: var(--primary);
-      color: #fff;
-    }
-
-    .card {
-      background: var(--card);
-      border-radius: 12px;
-      padding: 16px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-      margin-bottom: 16px;
-    }
-
-    h2 {
-      margin-top: 0;
-      font-size: 1.2rem;
-      color: var(--primary);
-    }
-
-    label {
-      display: block;
-      font-size: 0.85rem;
-      margin-top: 8px;
-      margin-bottom: 4px;
-    }
-
-    input, select {
-      width: 100%;
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid #d1d5db;
-    }
-
-    button.primary {
-      margin-top: 12px;
-      width: 100%;
-      padding: 12px;
-      background: var(--primary);
-      color: #fff;
-      border: none;
-      border-radius: 10px;
-      font-size: 1rem;
-      cursor: pointer;
-    }
-
-    button.secondary {
-      margin-top: 8px;
-      width: 100%;
-      padding: 10px;
-      background: var(--secondary);
-      color: #000;
-      border: none;
-      border-radius: 10px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 16px;
-    }
-
-    /* =================== ID CARD =================== */
-    .id-card {
-      background: linear-gradient(135deg, #1e3a8a, #2563eb);
-      color: #fff;
-      border-radius: 16px;
-      padding: 16px;
-      text-align: center;
-      position: relative;
-    }
-
-    .id-card .avatar {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      background: #fff;
-      margin: auto;
-      overflow: hidden;
-      margin-bottom: 8px;
-    }
-
-    .id-card .avatar img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .id-card h3 { margin: 6px 0 2px; font-size: 1rem; }
-    .id-card p { margin: 0; font-size: 0.75rem; opacity: 0.9; }
-
-    .barcode {
-      margin-top: 10px;
-      background: #fff;
-      padding: 6px;
-      border-radius: 8px;
-    }
-
-    .barcode canvas { width: 100%; height: auto; }
-
-    /* =================== TABLE =================== */
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.85rem;
-    }
-
-    th, td {
-      padding: 8px;
-      border-bottom: 1px solid #e5e7eb;
-      text-align: left;
-    }
-
-    th { background: #f9fafb; }
-
-    .status-hadir { color: green; font-weight: 600; }
-
-    .footer {
-      text-align: center;
-      font-size: 0.75rem;
-      opacity: 0.7;
-      margin-top: 20px;
-    }
-
-    @media print {
-      body * { visibility: hidden; }
-      .id-card, .id-card * { visibility: visible; }
-      .id-card { position: absolute; left: 0; top: 0; width: 100%; }
-    }
-  </style>
+        /* Buttons */
+        .btn-gradient-primary {
+            background: linear-gradient(to right, #4facfe 0%, #00f2fe 100%);
+            color: white; font-weight: bold; border-radius: 1rem;
+            padding: 0.75rem; transition: transform 0.2s;
+        }
+        .btn-gradient-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -10px rgba(79, 172, 254, 0.5); }
+    </style>
 </head>
-<body>
+<body class="p-4 md:p-8 md:py-12">
 
-<header>
-  <h1>Sistem Attendance Sekolah Minggu</h1>
-  <p>GKPS Tangerang – Online & Offline (Single File)</p>
-</header>
+    <div class="max-w-5xl mx-auto">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl font-extrabold text-blue-900 tracking-tight mb-2">GKPS TANGERANG</h1>
+            <p class="text-blue-700 font-medium opacity-80">Sistem Absensi Sekolah Minggu</p>
+        </header>
 
-<main>
-  <!-- =================== LOGIN =================== -->
-  <div id="login" class="card tab">
-    <h2>Login Admin</h2>
-    <label>Password Admin</label>
-    <input id="adminPass" type="password" placeholder="Masukkan password admin" />
-    <button class="primary" onclick="loginAdmin()">Login</button>
-    <p style="font-size:0.8rem;opacity:0.7">Default password: <b>gkps123</b> (bisa diubah di kode)</p>
-  </div>
+        <nav class="flex flex-wrap justify-center gap-3 mb-12 p-2 bg-white/50 backdrop-blur-md rounded-full max-w-fit mx-auto">
+            <button onclick="switchNav('home')" id="nav-home" class="nav-btn active px-6 py-3 rounded-full">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" /></svg>
+                Beranda
+            </button>
+            <button onclick="switchNav('register')" id="nav-register" class="nav-btn inactive px-6 py-3 rounded-full">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" /></svg>
+                Pendaftaran
+            </button>
+            <button onclick="switchNav('scan')" id="nav-scan" class="nav-btn inactive px-6 py-3 rounded-full">
+               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 4a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm2 2V5h1v1H5zm9-3a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1V4zm2 2V5h1v1h-1zM3 13a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1v-3zm2 2v-1h1v1H5zm9-3a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-3zm2 2v-1h1v1h-1z" clip-rule="evenodd" /></svg>
+                Scan Barcode
+            </button>
+            <button onclick="switchNav('admin')" id="nav-admin" class="nav-btn inactive px-6 py-3 rounded-full">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 4a3 3 0 00-3 3v6a3 3 0 003 3h10a3 3 0 003-3V7a3 3 0 00-3-3H5zm-1 9v-1h5v2H5a1 1 0 01-1-1zm7 1h4a1 1 0 001-1v-1h-5v2zm0-4h5V8h-5v2zM9 8H4v2h5V8z" clip-rule="evenodd" /></svg>
+                Data Absensi
+            </button>
+        </nav>
 
-  <!-- =================== REGISTRASI =================== -->
-  <div id="register" class="card tab">
-    <h2>Registrasi Anak / Guru Sekolah Minggu</h2>
-    <label>Nama Lengkap</label>
-    <input id="name" placeholder="Nama" />
+        <section id="home" class="section">
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="soft-card p-8 text-center flex flex-col items-center justify-center">
+                     <div class="badge-icon badge-purple">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    </div>
+                    <h3 class="text-2xl font-extrabold text-gray-800 mb-2">Halo, Selamat Hari Minggu! 👋</h3>
+                    <p class="text-gray-500 mb-6">Silakan scan ID Card kamu di pos kehadiran ya.</p>
+                    <img src="https://cdn-icons-png.flaticon.com/512/9761/9761111.png" class="w-40 mx-auto drop-shadow-xl" alt="Icon">
+                </div>
 
-    <label>Peran</label>
-    <select id="role">
-      <option value="Anak">Anak Sekolah Minggu</option>
-      <option value="Guru">Guru Sekolah Minggu</option>
-    </select>
+                <div class="soft-card p-8">
+                    <div class="badge-icon badge-blue">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-700 mb-1">Statistik Kehadiran Hari Ini</h3>
+                    <div class="flex items-baseline mt-4">
+                        <span class="text-5xl font-extrabold text-blue-600" id="stat-count">0</span>
+                        <span class="ml-2 text-gray-500 font-medium">Orang sudah hadir</span>
+                    </div>
 
-    <label>Kelas / Kelompok</label>
-    <input id="class" placeholder="Contoh: Balita / Kelas 1 / Guru" />
+                    <div class="mt-8">
+                        <p class="text-sm font-bold text-gray-700 mb-3 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-green-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
+                            Peserta Hari Ini:
+                        </p>
+                        <div class="flex flex-wrap gap-2" id="today-avatars-list">
+                            <span class="text-gray-400 text-sm italic">Belum ada yang hadir..</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-    <label>Avatar (Foto)</label>
-    <input id="avatar" type="file" accept="image/*" />
+        <section id="register" class="section hidden">
+            <div class="grid md:grid-cols-2 gap-8 items-start">
+                <div class="soft-card p-8">
+                     <div class="badge-icon badge-purple">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" /></svg>
+                    </div>
+                    <h2 class="text-2xl font-extrabold mb-6 text-gray-800">Registrasi Baru</h2>
+                    <div class="space-y-5">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-2">Nama Lengkap</label>
+                            <input type="text" id="reg-name" class="input-soft w-full" placeholder="Contoh: Felicia Damanik">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-2">Peran</label>
+                            <select id="reg-role" class="input-soft w-full">
+                                <option value="Anak">Anak Sekolah Minggu</option>
+                                <option value="Guru">Guru Sekolah Minggu</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-2">Pilih Avatar Lucu</label>
+                            <div class="flex gap-3 mt-2 overflow-x-auto pb-3 p-1" id="avatar-list">
+                                </div>
+                        </div>
+                        <button onclick="registerUser()" class="btn-gradient-primary w-full mt-6">Buat ID Card Sekarang</button>
+                    </div>
+                </div>
+                
+                <div id="id-card-result" class="flex flex-col items-center justify-center hidden">
+                     <h3 class="text-xl font-bold text-blue-900 mb-4">Preview ID Card</h3>
+                    <div class="id-card-wrap flex flex-col items-center text-center">
+                        <div class="text-xs font-bold tracking-[0.2em] mb-6 opacity-80">GKPS TANGERANG</div>
+                        <div class="avatar-circle-large mb-4 shadow-xl">
+                            <img id="card-avatar" src="" alt="Avatar" class="w-full h-full object-cover">
+                        </div>
+                        <h2 id="card-name" class="text-2xl font-black uppercase leading-tight mb-1 drop-shadow-sm">Nama Peserta</h2>
+                        <p id="card-role" class="text-blue-100 font-medium mb-auto text-lg">ROLE</p>
+                        
+                        <div class="bg-white p-4 rounded-xl mt-6 w-full shadow-lg">
+                            <svg id="barcode" class="w-full"></svg>
+                        </div>
+                    </div>
+                    <button onclick="window.print()" class="mt-6 bg-white text-blue-600 font-bold px-8 py-3 rounded-full shadow-md hover:shadow-lg transition flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v2a2 2 0 002 2h6a2 2 0 002-2v-2h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zm0 8H7v4h6v-4z" clip-rule="evenodd" /></svg>
+                        Cetak / Simpan ID Card
+                    </button>
+                </div>
+            </div>
+        </section>
 
-    <button class="primary" onclick="registerUser()">Simpan & Generate Barcode</button>
-  </div>
+        <section id="scan" class="section hidden">
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="soft-card p-6 overflow-hidden">
+                    <div class="badge-icon badge-green">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                    </div>
+                    <h2 class="text-2xl font-extrabold mb-4 text-center text-gray-800">Scan Barcode Kehadiran</h2>
+                    <div id="reader" class="rounded-2xl overflow-hidden border-4 border-blue-100 shadow-inner"></div>
+                    <div id="scan-result" class="mt-4 text-center p-4 rounded-xl hidden font-bold"></div>
+                </div>
 
-  <!-- =================== ID CARD =================== -->
-  <div id="idcard" class="card tab" style="display:none">
-    <h2>ID Card Barcode</h2>
-    <div id="cardList" class="grid"></div>
-  </div>
+                 <div class="soft-card p-6">
+                    <h3 class="text-lg font-bold text-gray-700 mb-4">Scan Terbaru Hari Ini</h3>
+                    <div class="overflow-y-auto max-h-[400px] pr-2">
+                         <table class="w-full text-left text-sm">
+                            <tbody id="recent-scan-table">
+                                <tr><td class="text-gray-400 italic">Belum ada scan hari ini.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-  <!-- =================== SCAN =================== -->
-  <div id="scan" class="card tab" style="display:none">
-    <h2>Scan Attendance</h2>
-    <p>Gunakan kamera HP / Tablet / Laptop untuk scan barcode.</p>
-    <div id="reader" style="width:100%; max-width:400px; margin:auto"></div>
-    <button class="secondary" onclick="startScanner()">Mulai Scan</button>
-  </div>
+        <section id="admin" class="section hidden">
+            <div class="soft-card p-8">
+                 <div class="badge-icon badge-blue">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clip-rule="evenodd" /></svg>
+                </div>
+                <div class="flex flex-wrap justify-between items-center mb-8">
+                    <div>
+                        <h2 class="text-2xl font-extrabold text-gray-800">Data Absensi</h2>
+                        <p class="text-gray-500">Rekap kehadiran sekolah minggu.</p>
+                    </div>
+                    <button onclick="exportData()" class="mt-4 md:mt-0 bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-full font-bold shadow-md transition flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0 1 1 0 002 0zM7 8a1 1 0 000 2h6a1 1 0 100-2H7z" clip-rule="evenodd" /></svg>
+                        Export Excel (CSV)
+                    </button>
+                </div>
+                <div class="overflow-x-auto bg-white rounded-xl shadow-sm border border-gray-100">
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-50 border-b border-gray-200">
+                            <tr>
+                                <th class="py-4 px-6 font-bold text-gray-600">Nama</th>
+                                <th class="py-4 px-6 font-bold text-gray-600">Peran</th>
+                                <th class="py-4 px-6 font-bold text-gray-600">Waktu Absen</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attendance-table-body" class="divide-y divide-gray-100">
+                            </tbody>
+                    </table>
+                </div>
+                <button onclick="clearAttendance()" class="mt-8 text-red-400 hover:text-red-600 text-sm font-medium flex items-center transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
+                    Hapus Semua Data
+                </button>
+            </div>
+        </section>
 
-  <!-- =================== REPORT =================== -->
-  <div id="report" class="card tab" style="display:none">
-    <h2>Laporan Kehadiran</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Nama</th>
-          <th>Peran</th>
-          <th>Kelas</th>
-          <th>Waktu Hadir</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody id="reportBody"></tbody>
-    </table>
-  </div>
+    </div>
 
-  <div class="footer">© GKPS Tangerang – Attendance System (Offline Ready)</div>
-</main>
+    <script>
+        // Database Sederhana
+        let users = JSON.parse(localStorage.getItem('gkps_users')) || [];
+        let attendance = JSON.parse(localStorage.getItem('gkps_attendance')) || [];
+        let selectedAvatar = 'https://api.dicebear.com/7.x/adventurer/svg?seed=Felix';
 
-<!-- =================== LIBRARY (CDN, auto cache browser) =================== -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js"></script>
-<script src="https://unpkg.com/html5-qrcode"></script>
+        // Avatar Options (Expanded list for more variety)
+        const avatarSeeds = ['Felix', 'Aneka', 'Boo', 'Buddy', 'Cookie', 'Daisy', 'Tigger', 'Molly', 'Coco', 'Simba', 'Ginger'];
+        const avatarListDiv = document.getElementById('avatar-list');
+        avatarSeeds.forEach((seed, index) => {
+            const url = `https://api.dicebear.com/7.x/adventurer/svg?seed=${seed}`;
+            const img = document.createElement('img');
+            img.src = url;
+            // Default select first one
+            if (index === 0) img.classList.add('border-blue-500', 'scale-110');
+            
+            img.className = `w-14 h-14 rounded-full cursor-pointer border-4 border-transparent hover:border-blue-300 transition-all hover:scale-110 ${index === 0 ? 'border-blue-500 scale-110' : ''}`;
+            
+            img.onclick = () => {
+                selectedAvatar = url;
+                document.querySelectorAll('#avatar-list img').forEach(i => i.classList.remove('border-blue-500', 'scale-110'));
+                img.classList.add('border-blue-500', 'scale-110');
+            };
+            avatarListDiv.appendChild(img);
+        });
 
-<!-- =================== SCRIPT =================== -->
-<script>
-  /* =================== ADMIN AUTH =================== */
-  const ADMIN_PASSWORD = localStorage.getItem('gkps_admin_pass') || 'gkps123';
-  let isAdmin = false;
+        // Navigation Logic (Updated for new UI classes)
+        function switchNav(id) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+            // Show targeted section
+            document.getElementById(id).classList.remove('hidden');
+            
+            // Update Nav Button Styles
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+                btn.classList.add('inactive');
+            });
+            document.getElementById('nav-' + id).classList.remove('inactive');
+            document.getElementById('nav-' + id).classList.add('active');
 
-  function loginAdmin() {
-    const pass = document.getElementById('adminPass').value;
-    if (pass === ADMIN_PASSWORD) {
-      isAdmin = true;
-      alert('Login admin berhasil');
-      openTab('register');
-    } else {
-      alert('Password salah');
-    }
-  }
+            // Trigger section specific functions
+            if(id === 'admin') renderAttendance();
+            if(id === 'home') updateStats();
+            if(id === 'scan') {
+                startScanner();
+                renderRecentScansTable();
+            } else {
+                stopScanner();
+            }
+        }
 
-  function requireAdmin() {
-    if (!isAdmin) {
-      alert('Akses khusus admin');
-      openTab('login');
-      return false;
-    }
-    return true;
-  }
+        // Register Logic
+        function registerUser() {
+            const name = document.getElementById('reg-name').value;
+            const role = document.getElementById('reg-role').value;
+            if(!name) return alert('Nama harus diisi!');
 
-  /* =================== OFFLINE STORAGE =================== */
-  const users = JSON.parse(localStorage.getItem('gkps_users') || '[]');
-  const attendance = JSON.parse(localStorage.getItem('gkps_attendance') || '[]');
+            const id = 'GKPS-' + Date.now();
+            const newUser = { id, name, role, avatar: selectedAvatar };
+            users.push(newUser);
+            localStorage.setItem('gkps_users', JSON.stringify(users));
 
-  function saveData() {
-    localStorage.setItem('gkps_users', JSON.stringify(users));
-    localStorage.setItem('gkps_attendance', JSON.stringify(attendance));
-  }
+            // Generate ID Card Preview
+            const resultSection = document.getElementById('id-card-result');
+            resultSection.classList.remove('hidden');
+            // Scroll to preview
+            resultSection.scrollIntoView({ behavior: 'smooth' });
 
-  /* =================== TAB =================== */
-  function openTab(id) {
-    document.querySelectorAll('.tab').forEach(t => t.style.display = 'none');
-    document.getElementById(id).style.display = 'block';
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    event.target.classList.add('active');
-    if (id !== 'login' && !isAdmin) return;
-    if (id === 'idcard') renderCards();
-    if (id === 'report') renderReport();
-  }
+            document.getElementById('card-name').innerText = name;
+            document.getElementById('card-role').innerText = role;
+            document.getElementById('card-avatar').src = selectedAvatar;
+            
+            JsBarcode("#barcode", id, {
+                format: "CODE128",
+                width: 2,
+                height: 60,
+                displayValue: true,
+                fontSize: 14,
+                margin: 0
+            });
 
-  /* =================== REGISTER =================== */
-  function registerUser() {
-    if (!requireAdmin()) return;
-    const name = document.getElementById('name').value;
-    const role = document.getElementById('role').value;
-    const cls = document.getElementById('class').value;
-    const avatarFile = document.getElementById('avatar').files[0];
+            // Reset form
+            document.getElementById('reg-name').value = '';
+        }
 
-    if (!name) return alert('Nama wajib diisi');
+        // Scanner Logic
+        let html5QrcodeScanner;
+        function startScanner() {
+            // Ensure scanner isn't already running
+            if(html5QrcodeScanner) return;
+            
+            html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
+                fps: 10, 
+                qrbox: 250,
+                aspectRatio: 1.0
+            });
+            html5QrcodeScanner.render((decodedText) => {
+                processAttendance(decodedText);
+            }, (errorMessage) => {
+                // parse error, ignore it.
+            });
+        }
 
-    const id = 'GKPS-' + Date.now();
+        function stopScanner() {
+            if(html5QrcodeScanner) {
+                html5QrcodeScanner.clear().then(() => {
+                    html5QrcodeScanner = null;
+                }).catch(error => {
+                    console.error("Failed to clear scanner badge", error);
+                });
+            }
+        }
 
-    if (avatarFile) {
-      const reader = new FileReader();
-      reader.onload = () => {
-        users.push({ id, name, role, cls, avatar: reader.result });
-        saveData();
-        alert('Registrasi berhasil');
-      };
-      reader.readAsDataURL(avatarFile);
-    } else {
-      users.push({ id, name, role, cls, avatar: '' });
-      saveData();
-      alert('Registrasi berhasil');
-    }
-  }
+        function processAttendance(barcodeId) {
+            const user = users.find(u => u.id === barcodeId);
+            const resultDiv = document.getElementById('scan-result');
+            resultDiv.classList.remove('hidden');
 
-  /* =================== ID CARD =================== */
-  function renderCards() {
-    if (!requireAdmin()) return;
-    const container = document.getElementById('cardList');
-    container.innerHTML = '';
+            if(user) {
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const dateStr = now.toLocaleDateString();
 
-    users.forEach(u => {
-      const div = document.createElement('div');
-      div.className = 'id-card';
-      div.innerHTML = `
-        <div class="avatar">${u.avatar ? `<img src="${u.avatar}">` : ''}</div>
-        <h3>${u.name}</h3>
-        <p>${u.role} – ${u.cls}</p>
-        <div class="barcode"><svg id="${u.id}"></svg></div>
-      `;
-      container.appendChild(div);
-      JsBarcode('#' + u.id, u.id, { displayValue: false, height: 50 });
-    });
-  }
+                const already = attendance.find(a => a.id === barcodeId && a.date === dateStr);
+                if(already) {
+                    resultDiv.className = "mt-4 text-center p-4 rounded-xl bg-yellow-100 text-yellow-800 border-2 border-yellow-300 shake";
+                    resultDiv.innerHTML = `⚠️ <b>${user.name}</b> sudah absen tadi pukul ${already.time}`;
+                } else {
+                    // Add Avatar to attendance record
+                    attendance.push({ id: barcodeId, name: user.name, role: user.role, time: timeStr, date: dateStr, avatar: user.avatar });
+                    localStorage.setItem('gkps_attendance', JSON.stringify(attendance));
+                    resultDiv.className = "mt-4 text-center p-4 rounded-xl bg-green-100 text-green-800 border-2 border-green-300";
+                    resultDiv.innerHTML = `✅ Berhasil! Selamat Datang, <b>${user.name}</b>`;
+                    
+                    // Refresh recent scans table immediately
+                    renderRecentScansTable();
+                }
+            } else {
+                resultDiv.className = "mt-4 text-center p-4 rounded-xl bg-red-100 text-red-800 border-2 border-red-300";
+                resultDiv.innerHTML = `❌ Barcode tidak terdaftar dalam sistem.`;
+            }
 
-  /* =================== SCANNER =================== */
-  let html5QrCode;
-  function startScanner() {
-    html5QrCode = new Html5Qrcode('reader');
-    html5QrCode.start(
-      { facingMode: 'environment' },
-      { fps: 10, qrbox: 250 },
-      onScanSuccess
-    );
-  }
+             // Hide result message after 3 seconds
+             setTimeout(() => {
+                 resultDiv.classList.add('hidden');
+             }, 3000);
+        }
 
-  function onScanSuccess(decodedText) {
-    const user = users.find(u => u.id === decodedText);
-    if (!user) return;
+        // Admin & Stats Logic
+        function renderAttendance() {
+            const tbody = document.getElementById('attendance-table-body');
+            tbody.innerHTML = '';
+            if(attendance.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="text-center py-4 text-gray-400">Belum ada data absensi.</td></tr>';
+                return;
+            }
+            attendance.slice().reverse().forEach(record => {
+                tbody.innerHTML += `
+                    <tr class="text-sm hover:bg-gray-50 transition">
+                        <td class="py-4 px-6 font-bold text-gray-800 flex items-center">
+                             <img src="${record.avatar || 'https://api.dicebear.com/7.x/adventurer/svg?seed=default'}" class="w-8 h-8 rounded-full mr-3 border border-gray-200">
+                            ${record.name}
+                        </td>
+                        <td class="py-4 px-6">
+                            <span class="${record.role === 'Guru' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'} px-3 py-1 rounded-full text-xs font-bold">
+                                ${record.role}
+                            </span>
+                        </td>
+                        <td class="py-4 px-6 text-gray-500 font-medium">${record.date} - ${record.time}</td>
+                    </tr>
+                `;
+            });
+        }
 
-    const time = new Date().toLocaleString();
-    attendance.push({ ...user, time });
-    saveData();
-    alert('Hadir: ' + user.name);
-  }
+        function updateStats() {
+            const today = new Date().toLocaleDateString();
+            const todayAttendance = attendance.filter(a => a.date === today);
+            document.getElementById('stat-count').innerText = todayAttendance.length;
 
-  /* =================== REPORT =================== */
-  function renderReport() {
-    if (!requireAdmin()) return;
-    const body = document.getElementById('reportBody');
-    body.innerHTML = '';
-    attendance.forEach(a => {
-      body.innerHTML += `
-        <tr>
-          <td>${a.name}</td>
-          <td>${a.role}</td>
-          <td>${a.cls}</td>
-          <td>${a.time}</td>
-          <td class="status-hadir">Hadir</td>
-        </tr>`;
-    });
-  }
-</script>
+            // Update Avatars on Home Page
+            const avatarsContainer = document.getElementById('today-avatars-list');
+            avatarsContainer.innerHTML = '';
+            
+            if(todayAttendance.length > 0) {
+                // Get unique avatars for today
+                const uniqueAvatars = [...new Map(todayAttendance.map(item => [item.avatar, item])).values()];
+                
+                uniqueAvatars.slice(0, 8).forEach(record => { // Show max 8 avatars
+                     const img = document.createElement('img');
+                     img.src = record.avatar;
+                     img.className = "w-10 h-10 rounded-full border-2 border-white shadow-sm tooltip";
+                     img.title = record.name; // Basic tooltip
+                     avatarsContainer.appendChild(img);
+                });
+                if(todayAttendance.length > 8) {
+                     const more = document.createElement('span');
+                     more.className = "flex items-center justify-center w-10 h-10 rounded-full bg-gray-100 text-gray-600 font-bold text-xs border-2 border-white shadow-sm";
+                     more.innerText = `+${todayAttendance.length - 8}`;
+                     avatarsContainer.appendChild(more);
+                }
+            } else {
+                 avatarsContainer.innerHTML = '<span class="text-gray-400 text-sm italic">Belum ada yang hadir..</span>';
+            }
+        }
+
+        // New Function: Render Recent Scans on Scan Page
+        function renderRecentScansTable() {
+            const today = new Date().toLocaleDateString();
+            const recentTbody = document.getElementById('recent-scan-table');
+            recentTbody.innerHTML = '';
+
+            const todayTodays = attendance.filter(a => a.date === today).reverse().slice(0, 5); // Last 5 today
+
+            if(todayTodays.length === 0) {
+                 recentTbody.innerHTML = '<tr><td class="text-gray-400 italic py-2">Belum ada scan hari ini.</td></tr>';
+            } else {
+                todayTodays.forEach(record => {
+                    recentTbody.innerHTML += `
+                        <tr class="border-b border-gray-100 last:border-0">
+                            <td class="py-3 flex items-center">
+                                <img src="${record.avatar}" class="w-10 h-10 rounded-full mr-3 border border-gray-200 shadow-sm">
+                                <div>
+                                    <div class="font-bold text-gray-800">${record.name}</div>
+                                    <div class="text-xs text-gray-500">${record.role} - ${record.time}</div>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+        }
+
+
+        function exportData() {
+            let csv = "Nama,Peran,Tanggal,Jam\n";
+            attendance.forEach(row => {
+                csv += `"${row.name}","${row.role}","${row.date}","${row.time}"\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', `Absensi_GKPS_${new Date().toLocaleDateString().replace(/\//g, '-')}.csv`);
+            a.click();
+        }
+
+        function clearAttendance() {
+            if(confirm('Yakin ingin menghapus SEMUA data absensi? Data tidak bisa dikembalikan.')) {
+                attendance = [];
+                localStorage.setItem('gkps_attendance', JSON.stringify(attendance));
+                renderAttendance();
+                updateStats();
+            }
+        }
+
+        // Init Landing Page
+        switchNav('home');
+    </script>
 </body>
 </html>
