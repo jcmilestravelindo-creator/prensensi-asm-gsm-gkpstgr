@@ -1,283 +1,399 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Attendance GKPS Tangerang</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.5/JsBarcode.all.min.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
-        
-        body { font-family: 'Poppins', sans-serif; background: #f0f2f5; }
-        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
-        .id-card {
-            width: 320px;
-            height: 480px;
-            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
-            border-radius: 20px;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-        }
-        .avatar-circle {
-            width: 100px;
-            height: 100px;
-            border: 4px solid white;
-            border-radius: 50%;
-            background: #eee;
-            margin: 0 auto;
-            overflow: hidden;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Attendance Sekolah Minggu GKPS Tangerang</title>
+
+  <!-- =================== STYLE =================== -->
+  <style>
+    :root {
+      --primary: #1e3a8a;
+      --secondary: #fbbf24;
+      --bg: #f3f4f6;
+      --card: #ffffff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: var(--bg);
+      color: #111827;
+    }
+
+    header {
+      background: var(--primary);
+      color: #fff;
+      padding: 16px;
+      text-align: center;
+    }
+
+    header h1 { margin: 0; font-size: 1.4rem; }
+    header p { margin: 4px 0 0; font-size: 0.9rem; opacity: 0.9; }
+
+    main {
+      padding: 16px;
+      max-width: 1100px;
+      margin: auto;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      background: #e5e7eb;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .tab-btn.active {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      margin-bottom: 16px;
+    }
+
+    h2 {
+      margin-top: 0;
+      font-size: 1.2rem;
+      color: var(--primary);
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      margin-top: 8px;
+      margin-bottom: 4px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+    }
+
+    button.primary {
+      margin-top: 12px;
+      width: 100%;
+      padding: 12px;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    button.secondary {
+      margin-top: 8px;
+      width: 100%;
+      padding: 10px;
+      background: var(--secondary);
+      color: #000;
+      border: none;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    /* =================== ID CARD =================== */
+    .id-card {
+      background: linear-gradient(135deg, #1e3a8a, #2563eb);
+      color: #fff;
+      border-radius: 16px;
+      padding: 16px;
+      text-align: center;
+      position: relative;
+    }
+
+    .id-card .avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: #fff;
+      margin: auto;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .id-card .avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .id-card h3 { margin: 6px 0 2px; font-size: 1rem; }
+    .id-card p { margin: 0; font-size: 0.75rem; opacity: 0.9; }
+
+    .barcode {
+      margin-top: 10px;
+      background: #fff;
+      padding: 6px;
+      border-radius: 8px;
+    }
+
+    .barcode canvas { width: 100%; height: auto; }
+
+    /* =================== TABLE =================== */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+
+    th, td {
+      padding: 8px;
+      border-bottom: 1px solid #e5e7eb;
+      text-align: left;
+    }
+
+    th { background: #f9fafb; }
+
+    .status-hadir { color: green; font-weight: 600; }
+
+    .footer {
+      text-align: center;
+      font-size: 0.75rem;
+      opacity: 0.7;
+      margin-top: 20px;
+    }
+
+    @media print {
+      body * { visibility: hidden; }
+      .id-card, .id-card * { visibility: visible; }
+      .id-card { position: absolute; left: 0; top: 0; width: 100%; }
+    }
+  </style>
 </head>
-<body class="p-4 md:p-8">
+<body>
 
-    <div class="max-w-4xl mx-auto">
-        <header class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-blue-900">GKPS TANGERANG</h1>
-            <p class="text-gray-600">Sistem Absensi Sekolah Minggu</p>
-        </header>
+<header>
+  <h1>Sistem Attendance Sekolah Minggu</h1>
+  <p>GKPS Tangerang – Online & Offline (Single File)</p>
+</header>
 
-        <nav class="flex flex-wrap justify-center gap-2 mb-8">
-            <button onclick="showSection('home')" class="bg-blue-600 text-white px-6 py-2 rounded-full shadow-md">Beranda</button>
-            <button onclick="showSection('register')" class="bg-white text-blue-600 px-6 py-2 rounded-full shadow-md border border-blue-600">Pendaftaran</button>
-            <button onclick="showSection('scan')" class="bg-green-600 text-white px-6 py-2 rounded-full shadow-md">Scan Barcode</button>
-            <button onclick="showSection('admin')" class="bg-gray-800 text-white px-6 py-2 rounded-full shadow-md">Data Absensi</button>
-        </nav>
+<main>
+  <!-- =================== LOGIN =================== -->
+  <div id="login" class="card tab">
+    <h2>Login Admin</h2>
+    <label>Password Admin</label>
+    <input id="adminPass" type="password" placeholder="Masukkan password admin" />
+    <button class="primary" onclick="loginAdmin()">Login</button>
+    <p style="font-size:0.8rem;opacity:0.7">Default password: <b>gkps123</b> (bisa diubah di kode)</p>
+  </div>
 
-        <section id="home" class="section">
-            <div class="grid md:grid-cols-2 gap-6">
-                <div class="glass p-6 rounded-3xl shadow-lg border border-white text-center">
-                    <h3 class="text-xl font-bold mb-4">Halo, Selamat Hari Minggu!</h3>
-                    <p class="text-gray-600 mb-4">Silakan scan ID Card kamu untuk absen hari ini.</p>
-                    <img src="https://cdn-icons-png.flaticon.com/512/3652/3652191.png" class="w-32 mx-auto mb-4" alt="Icon">
-                </div>
-                <div id="latest-stats" class="glass p-6 rounded-3xl shadow-lg border border-white">
-                    <h3 class="text-lg font-bold mb-2">Statistik Hari Ini</h3>
-                    <div class="text-3xl font-bold text-blue-600" id="stat-count">0</div>
-                    <p class="text-sm text-gray-500">Orang sudah hadir</p>
-                </div>
-            </div>
-        </section>
+  <!-- =================== REGISTRASI =================== -->
+  <div id="register" class="card tab">
+    <h2>Registrasi Anak / Guru Sekolah Minggu</h2>
+    <label>Nama Lengkap</label>
+    <input id="name" placeholder="Nama" />
 
-        <section id="register" class="section hidden">
-            <div class="glass p-8 rounded-3xl shadow-lg border border-white max-w-md mx-auto">
-                <h2 class="text-2xl font-bold mb-6 text-center">Registrasi Baru</h2>
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium">Nama Lengkap</label>
-                        <input type="text" id="reg-name" class="w-full p-3 rounded-xl border border-gray-300">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium">Peran</label>
-                        <select id="reg-role" class="w-full p-3 rounded-xl border border-gray-300">
-                            <option value="Anak">Anak Sekolah Minggu</option>
-                            <option value="Guru">Guru Sekolah Minggu</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium">Pilih Avatar</label>
-                        <div class="flex gap-2 mt-2 overflow-x-auto pb-2" id="avatar-list">
-                            </div>
-                    </div>
-                    <button onclick="registerUser()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold mt-4 hover:bg-blue-700 transition">Buat ID Card</button>
-                </div>
-            </div>
-            
-            <div id="id-card-result" class="mt-8 flex flex-col items-center hidden">
-                <div class="id-card text-white p-6 flex flex-col items-center">
-                    <div class="text-sm font-bold tracking-widest mb-4">ID CARD GKPS TANGERANG</div>
-                    <div class="avatar-circle mb-4">
-                        <img id="card-avatar" src="" alt="Avatar" class="w-full h-full object-cover">
-                    </div>
-                    <h2 id="card-name" class="text-xl font-bold uppercase mb-1 text-center">Nama Peserta</h2>
-                    <p id="card-role" class="text-blue-200 text-sm mb-6">ROLE</p>
-                    <div class="bg-white p-3 rounded-lg mt-auto">
-                        <svg id="barcode"></svg>
-                    </div>
-                </div>
-                <button onclick="window.print()" class="mt-4 bg-gray-200 px-4 py-2 rounded-lg text-sm">Cetak / Simpan ID Card</button>
-            </div>
-        </section>
+    <label>Peran</label>
+    <select id="role">
+      <option value="Anak">Anak Sekolah Minggu</option>
+      <option value="Guru">Guru Sekolah Minggu</option>
+    </select>
 
-        <section id="scan" class="section hidden">
-            <div class="glass p-6 rounded-3xl shadow-lg border border-white overflow-hidden">
-                <h2 class="text-2xl font-bold mb-4 text-center">Scan Barcode Anda</h2>
-                <div id="reader" class="rounded-xl overflow-hidden"></div>
-                <div id="scan-result" class="mt-4 text-center p-4 rounded-xl hidden"></div>
-            </div>
-        </section>
+    <label>Kelas / Kelompok</label>
+    <input id="class" placeholder="Contoh: Balita / Kelas 1 / Guru" />
 
-        <section id="admin" class="section hidden">
-            <div class="glass p-6 rounded-3xl shadow-lg border border-white">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold">Data Absensi</h2>
-                    <button onclick="exportData()" class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm">Export Excel (CSV)</button>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left">
-                        <thead>
-                            <tr class="border-b">
-                                <th class="py-2">Nama</th>
-                                <th class="py-2">Peran</th>
-                                <th class="py-2">Waktu Absen</th>
-                            </tr>
-                        </thead>
-                        <tbody id="attendance-table-body">
-                            </tbody>
-                    </table>
-                </div>
-                <button onclick="clearAttendance()" class="mt-8 text-red-500 text-sm underline">Hapus Semua Data</button>
-            </div>
-        </section>
+    <label>Avatar (Foto)</label>
+    <input id="avatar" type="file" accept="image/*" />
 
-    </div>
+    <button class="primary" onclick="registerUser()">Simpan & Generate Barcode</button>
+  </div>
 
-    <script>
-        // Database Sederhana
-        let users = JSON.parse(localStorage.getItem('gkps_users')) || [];
-        let attendance = JSON.parse(localStorage.getItem('gkps_attendance')) || [];
-        let selectedAvatar = 'https://api.dicebear.com/7.x/adventurer/svg?seed=Felix';
+  <!-- =================== ID CARD =================== -->
+  <div id="idcard" class="card tab" style="display:none">
+    <h2>ID Card Barcode</h2>
+    <div id="cardList" class="grid"></div>
+  </div>
 
-        // Avatar Options
-        const avatarSeeds = ['Felix', 'Aneka', 'Boo', 'Buddy', 'Cookie', 'Daisy', 'Tigger'];
-        const avatarListDiv = document.getElementById('avatar-list');
-        avatarSeeds.forEach(seed => {
-            const url = `https://api.dicebear.com/7.x/adventurer/svg?seed=${seed}`;
-            const img = document.createElement('img');
-            img.src = url;
-            img.className = "w-12 h-12 rounded-full cursor-pointer border-2 border-transparent hover:border-blue-500";
-            img.onclick = () => {
-                selectedAvatar = url;
-                document.querySelectorAll('#avatar-list img').forEach(i => i.classList.remove('border-blue-500'));
-                img.classList.add('border-blue-500');
-            };
-            avatarListDiv.appendChild(img);
-        });
+  <!-- =================== SCAN =================== -->
+  <div id="scan" class="card tab" style="display:none">
+    <h2>Scan Attendance</h2>
+    <p>Gunakan kamera HP / Tablet / Laptop untuk scan barcode.</p>
+    <div id="reader" style="width:100%; max-width:400px; margin:auto"></div>
+    <button class="secondary" onclick="startScanner()">Mulai Scan</button>
+  </div>
 
-        // Navigation Logic
-        function showSection(id) {
-            document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
-            document.getElementById(id).classList.remove('hidden');
-            if(id === 'admin') renderAttendance();
-            if(id === 'home') updateStats();
-            if(id === 'scan') startScanner();
-            else stopScanner();
-        }
+  <!-- =================== REPORT =================== -->
+  <div id="report" class="card tab" style="display:none">
+    <h2>Laporan Kehadiran</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Nama</th>
+          <th>Peran</th>
+          <th>Kelas</th>
+          <th>Waktu Hadir</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="reportBody"></tbody>
+    </table>
+  </div>
 
-        // Register Logic
-        function registerUser() {
-            const name = document.getElementById('reg-name').value;
-            const role = document.getElementById('reg-role').value;
-            if(!name) return alert('Nama harus diisi!');
+  <div class="footer">© GKPS Tangerang – Attendance System (Offline Ready)</div>
+</main>
 
-            const id = 'GKPS-' + Date.now();
-            const newUser = { id, name, role, avatar: selectedAvatar };
-            users.push(newUser);
-            localStorage.setItem('gkps_users', JSON.stringify(users));
+<!-- =================== LIBRARY (CDN, auto cache browser) =================== -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.6/JsBarcode.all.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode"></script>
 
-            // Generate ID Card
-            document.getElementById('id-card-result').classList.remove('hidden');
-            document.getElementById('card-name').innerText = name;
-            document.getElementById('card-role').innerText = role;
-            document.getElementById('card-avatar').src = selectedAvatar;
-            
-            JsBarcode("#barcode", id, {
-                format: "CODE128",
-                width: 2,
-                height: 50,
-                displayValue: true
-            });
-        }
+<!-- =================== SCRIPT =================== -->
+<script>
+  /* =================== ADMIN AUTH =================== */
+  const ADMIN_PASSWORD = localStorage.getItem('gkps_admin_pass') || 'gkps123';
+  let isAdmin = false;
 
-        // Scanner Logic
-        let html5QrcodeScanner;
-        function startScanner() {
-            html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
-            html5QrcodeScanner.render((decodedText) => {
-                processAttendance(decodedText);
-            });
-        }
+  function loginAdmin() {
+    const pass = document.getElementById('adminPass').value;
+    if (pass === ADMIN_PASSWORD) {
+      isAdmin = true;
+      alert('Login admin berhasil');
+      openTab('register');
+    } else {
+      alert('Password salah');
+    }
+  }
 
-        function stopScanner() {
-            if(html5QrcodeScanner) html5QrcodeScanner.clear();
-        }
+  function requireAdmin() {
+    if (!isAdmin) {
+      alert('Akses khusus admin');
+      openTab('login');
+      return false;
+    }
+    return true;
+  }
 
-        function processAttendance(barcodeId) {
-            const user = users.find(u => u.id === barcodeId);
-            const resultDiv = document.getElementById('scan-result');
-            resultDiv.classList.remove('hidden');
+  /* =================== OFFLINE STORAGE =================== */
+  const users = JSON.parse(localStorage.getItem('gkps_users') || '[]');
+  const attendance = JSON.parse(localStorage.getItem('gkps_attendance') || '[]');
 
-            if(user) {
-                const now = new Date();
-                const timeStr = now.toLocaleTimeString();
-                const dateStr = now.toLocaleDateString();
+  function saveData() {
+    localStorage.setItem('gkps_users', JSON.stringify(users));
+    localStorage.setItem('gkps_attendance', JSON.stringify(attendance));
+  }
 
-                // Cek apakah sudah absen hari ini
-                const already = attendance.find(a => a.id === barcodeId && a.date === dateStr);
-                if(already) {
-                    resultDiv.className = "mt-4 text-center p-4 rounded-xl bg-yellow-100 text-yellow-800";
-                    resultDiv.innerText = `${user.name} sudah absen tadi pada ${already.time}`;
-                } else {
-                    attendance.push({ id: barcodeId, name: user.name, role: user.role, time: timeStr, date: dateStr });
-                    localStorage.setItem('gkps_attendance', JSON.stringify(attendance));
-                    resultDiv.className = "mt-4 text-center p-4 rounded-xl bg-green-100 text-green-800";
-                    resultDiv.innerText = `Berhasil! Selamat Datang ${user.name}`;
-                    updateStats();
-                }
-            } else {
-                resultDiv.className = "mt-4 text-center p-4 rounded-xl bg-red-100 text-red-800";
-                resultDiv.innerText = "Barcode tidak terdaftar!";
-            }
-        }
+  /* =================== TAB =================== */
+  function openTab(id) {
+    document.querySelectorAll('.tab').forEach(t => t.style.display = 'none');
+    document.getElementById(id).style.display = 'block';
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+    if (id !== 'login' && !isAdmin) return;
+    if (id === 'idcard') renderCards();
+    if (id === 'report') renderReport();
+  }
 
-        // Admin & Stats Logic
-        function renderAttendance() {
-            const tbody = document.getElementById('attendance-table-body');
-            tbody.innerHTML = '';
-            attendance.slice().reverse().forEach(record => {
-                tbody.innerHTML += `
-                    <tr class="border-b text-sm">
-                        <td class="py-2 font-bold">${record.name}</td>
-                        <td class="py-2">${record.role}</td>
-                        <td class="py-2 text-gray-500">${record.date} ${record.time}</td>
-                    </tr>
-                `;
-            });
-        }
+  /* =================== REGISTER =================== */
+  function registerUser() {
+    if (!requireAdmin()) return;
+    const name = document.getElementById('name').value;
+    const role = document.getElementById('role').value;
+    const cls = document.getElementById('class').value;
+    const avatarFile = document.getElementById('avatar').files[0];
 
-        function updateStats() {
-            const today = new Date().toLocaleDateString();
-            const todayCount = attendance.filter(a => a.date === today).length;
-            document.getElementById('stat-count').innerText = todayCount;
-        }
+    if (!name) return alert('Nama wajib diisi');
 
-        function exportData() {
-            let csv = "Nama,Peran,Tanggal,Jam\n";
-            attendance.forEach(row => {
-                csv += `${row.name},${row.role},${row.date},${row.time}\n`;
-            });
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.setAttribute('href', url);
-            a.setAttribute('download', `Absensi_GKPS_${new Date().toLocaleDateString()}.csv`);
-            a.click();
-        }
+    const id = 'GKPS-' + Date.now();
 
-        function clearAttendance() {
-            if(confirm('Hapus semua data absensi?')) {
-                attendance = [];
-                localStorage.setItem('gkps_attendance', JSON.stringify(attendance));
-                renderAttendance();
-                updateStats();
-            }
-        }
+    if (avatarFile) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        users.push({ id, name, role, cls, avatar: reader.result });
+        saveData();
+        alert('Registrasi berhasil');
+      };
+      reader.readAsDataURL(avatarFile);
+    } else {
+      users.push({ id, name, role, cls, avatar: '' });
+      saveData();
+      alert('Registrasi berhasil');
+    }
+  }
 
-        // Init
-        updateStats();
-    </script>
+  /* =================== ID CARD =================== */
+  function renderCards() {
+    if (!requireAdmin()) return;
+    const container = document.getElementById('cardList');
+    container.innerHTML = '';
+
+    users.forEach(u => {
+      const div = document.createElement('div');
+      div.className = 'id-card';
+      div.innerHTML = `
+        <div class="avatar">${u.avatar ? `<img src="${u.avatar}">` : ''}</div>
+        <h3>${u.name}</h3>
+        <p>${u.role} – ${u.cls}</p>
+        <div class="barcode"><svg id="${u.id}"></svg></div>
+      `;
+      container.appendChild(div);
+      JsBarcode('#' + u.id, u.id, { displayValue: false, height: 50 });
+    });
+  }
+
+  /* =================== SCANNER =================== */
+  let html5QrCode;
+  function startScanner() {
+    html5QrCode = new Html5Qrcode('reader');
+    html5QrCode.start(
+      { facingMode: 'environment' },
+      { fps: 10, qrbox: 250 },
+      onScanSuccess
+    );
+  }
+
+  function onScanSuccess(decodedText) {
+    const user = users.find(u => u.id === decodedText);
+    if (!user) return;
+
+    const time = new Date().toLocaleString();
+    attendance.push({ ...user, time });
+    saveData();
+    alert('Hadir: ' + user.name);
+  }
+
+  /* =================== REPORT =================== */
+  function renderReport() {
+    if (!requireAdmin()) return;
+    const body = document.getElementById('reportBody');
+    body.innerHTML = '';
+    attendance.forEach(a => {
+      body.innerHTML += `
+        <tr>
+          <td>${a.name}</td>
+          <td>${a.role}</td>
+          <td>${a.cls}</td>
+          <td>${a.time}</td>
+          <td class="status-hadir">Hadir</td>
+        </tr>`;
+    });
+  }
+</script>
 </body>
 </html>
