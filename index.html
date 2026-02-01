@@ -2,1709 +2,563 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Attendance GKPS Tangerang - Sekolah Minggu</title>
-    <!-- Libraries -->
-    <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance GKPS Tangerang - Picasso Cubism Style</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.5/JsBarcode.all.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 
+        /* =========================================
+           === GLOBAL PICASSO CUBISM THEME ===
+           ========================================= */
+        
         :root {
-            --primary-color: #0d3b66;
-            --secondary-color: #f4a261;
-            --accent-color: #e63946;
-            --light-color: #f8f9fa;
-            --dark-color: #1d3557;
-            --success-color: #2a9d8f;
-            --warning-color: #e9c46a;
-            --danger-color: #e76f51;
-            --shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            --border-radius: 16px;
+            --picasso-blue: #1e3a8a; /* Biru Kobalt Gelap */
+            --picasso-yellow: #fbbf24; /* Kuning Oker */
+            --picasso-red: #b91c1c; /* Merah Bata */
+            --picasso-orange: #ea580c; /* Oranye Terbakar */
+            --picasso-cream: #fef3c7; /* Putih Tulang */
+            --picasso-black: #18181b; /* Hitam Arang */
         }
 
-        body {
-            font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #1d3557 0%, #4a6fa5 100%);
+        body { 
+            font-family: 'Space Mono', monospace;
+            color: var(--picasso-black);
+            background-color: var(--picasso-cream);
+            /* Latar belakang geometris abstrak */
+            background-image: 
+                linear-gradient(45deg, var(--picasso-blue) 25%, transparent 25%), 
+                linear-gradient(-45deg, var(--picasso-yellow) 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, var(--picasso-red) 75%), 
+                linear-gradient(-45deg, transparent 75%, var(--picasso-orange) 75%);
+            background-size: 100px 100px;
+            background-position: 0 0, 0 50px, 50px -50px, -50px 0px;
             min-height: 100vh;
-            padding: 15px;
-            color: #333;
-            line-height: 1.5;
+            padding-bottom: 3rem;
+            overflow-x: hidden;
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
+        /* --- Typography --- */
+        h1, h2, h3, .picasso-title {
+            font-family: 'Bebas Neue', cursive;
+            letter-spacing: 2px;
+            text-transform: uppercase;
         }
-
-        header {
-            text-align: center;
-            margin-bottom: 25px;
-            padding: 20px;
-            background: rgba(255, 255, 255, 0.97);
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow);
-            position: relative;
-            overflow: hidden;
+        /* Efek teks bergeser (glitch/cubist) */
+        .picasso-glitch-text {
+            position: relative; display: inline-block;
+            color: var(--picasso-black);
         }
-
-        header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 5px;
-            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color), var(--accent-color));
+        .picasso-glitch-text::before, .picasso-glitch-text::after {
+            content: attr(data-text); position: absolute; top: 0; left: 0; opacity: 0.8; z-index: -1;
         }
+        .picasso-glitch-text::before { color: var(--picasso-blue); transform: translate(-4px, 4px); }
+        .picasso-glitch-text::after { color: var(--picasso-red); transform: translate(4px, -2px); }
 
-        .logo {
-            font-size: 2.2em;
-            font-weight: 800;
-            color: var(--primary-color);
-            letter-spacing: 1px;
-            margin-bottom: 8px;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
-        }
-
-        .logo span {
-            color: var(--accent-color);
-        }
-
-        .subtitle {
-            font-size: 1.3em;
-            color: var(--dark-color);
-            font-weight: 600;
-            margin-top: 5px;
-        }
-
-        .church-name {
-            font-size: 0.95em;
-            color: var(--primary-color);
-            margin-top: 5px;
-            font-style: italic;
-        }
-
-        .app-container {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 25px;
-            margin-bottom: 25px;
-        }
-
-        @media (min-width: 900px) {
-            .app-container {
-                grid-template-columns: 1fr 1fr;
-            }
-        }
-
-        .card {
-            background: rgba(255, 255, 255, 0.98);
-            border-radius: var(--border-radius);
-            padding: 25px;
-            box-shadow: var(--shadow);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 5px;
-            height: 100%;
-            background: linear-gradient(to bottom, var(--primary-color), var(--secondary-color));
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-        }
-
-        .card-title {
-            font-size: 1.8em;
-            color: var(--primary-color);
-            margin-bottom: 25px;
-            text-align: center;
-            padding-bottom: 15px;
-            border-bottom: 2px solid rgba(13, 59, 102, 0.2);
-            position: relative;
-        }
-
-        .card-title::after {
-            content: '';
-            position: absolute;
-            bottom: -2px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 60px;
-            height: 3px;
-            background: var(--secondary-color);
-        }
-
-        .form-group {
-            margin-bottom: 22px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 10px;
-            font-weight: 600;
-            color: var(--dark-color);
-            font-size: 1.05em;
-        }
-
-        input[type="text"],
-        input[type="email"],
-        input[type="date"],
-        input[type="number"],
-        select,
-        textarea {
-            width: 100%;
-            padding: 14px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 16px;
+        /* --- Main Container Card (The Canvas Shard) --- */
+        .picasso-card {
+            background-color: white;
+            border: 4px solid var(--picasso-black);
+            /* Bentuk poligon asimetris "pecahan kaca" */
+            clip-path: polygon(2% 0%, 98% 2%, 100% 95%, 0% 100%);
+            padding: 3rem 2.5rem; position: relative;
+            box-shadow: 15px 15px 0px var(--picasso-black); /* Bayangan keras dan datar */
             transition: all 0.3s ease;
-            background: #fafafa;
+        }
+        /* Elemen dekoratif latar belakang kartu */
+        .picasso-card::before {
+            content: ''; position: absolute; top: -20px; left: -20px; width: 50%; height: 50%;
+            background: var(--picasso-yellow); z-index: -1; transform: rotate(-10deg); border: 3px solid var(--picasso-black);
+        }
+        .picasso-card::after {
+            content: ''; position: absolute; bottom: -20px; right: -20px; width: 40%; height: 60%;
+            background: var(--picasso-blue); z-index: -2; transform: rotate(5deg); border: 3px solid var(--picasso-black);
         }
 
-        input[type="text"]:focus,
-        input[type="email"]:focus,
-        input[type="date"]:focus,
-        select:focus,
-        textarea:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(13, 59, 102, 0.15);
-            background: white;
+        /* --- Navigation (Geometric Blocks) --- */
+        .picasso-nav-container {
+            display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;
+            padding: 1rem; background: var(--picasso-black);
+            transform: skewY(-2deg); border-bottom: 5px solid var(--picasso-red);
+        }
+        .nav-btn {
+            font-family: 'Bebas Neue', cursive; font-size: 1.2rem; padding: 0.8rem 1.5rem;
+            background: white; color: var(--picasso-black); border: 3px solid var(--picasso-black);
+            /* Bentuk tombol yang tidak beraturan */
+            clip-path: polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%);
+            transition: all 0.2s; transform: skewX(-10deg);
+        }
+        .nav-btn.active {
+            background: var(--picasso-yellow); color: var(--picasso-black);
+            transform: skewX(-10deg) translateY(-5px);
+            box-shadow: 5px 5px 0px var(--picasso-red);
+        }
+        .nav-btn.inactive:hover { background: var(--picasso-blue); color: white; transform: skewX(-10deg) translateY(-3px); }
+
+        /* --- Buttons & Inputs (Constructivist Style) --- */
+        .picasso-btn {
+            font-family: 'Bebas Neue', cursive; font-size: 1.4rem;
+            background: var(--picasso-red); color: white; border: 4px solid var(--picasso-black);
+            padding: 1rem 2rem; cursor: pointer; transition: all 0.2s;
+            /* Bentuk tombol asimetris */
+            clip-path: polygon(0 0, 100% 5%, 98% 100%, 2% 95%);
+        }
+        .picasso-btn:hover { background: var(--picasso-orange); transform: scale(1.05) rotate(2deg); box-shadow: 8px 8px 0px var(--picasso-black); }
+
+        .picasso-input, .picasso-select {
+            width: 100%; padding: 1rem; border: 4px solid var(--picasso-black);
+            font-family: 'Space Mono', monospace; font-weight: 700;
+            background: white; outline: none; transition: all 0.2s;
+            /* Input sedikit miring */
+            transform: skewX(-5deg);
+        }
+        .picasso-input:focus, .picasso-select:focus {
+            border-color: var(--picasso-blue); background: var(--picasso-cream);
+            transform: skewX(-5deg) translate(-4px, -4px); box-shadow: 6px 6px 0px var(--picasso-black);
         }
 
-        .btn {
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 14px 25px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 17px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            display: inline-block;
-            width: 100%;
-            margin-top: 10px;
-            letter-spacing: 0.5px;
-            position: relative;
-            overflow: hidden;
+        /* --- Avatars (Polygon Style) --- */
+        .picasso-avatar {
+            width: 60px; height: 60px; object-fit: cover;
+            border: 3px solid var(--picasso-black);
+            /* Bentuk heksagon/poligon tidak beraturan */
+            clip-path: polygon(20% 0%, 80% 0%, 100% 50%, 80% 100%, 20% 100%, 0% 50%);
+            filter: contrast(1.2) saturate(1.5); /* Warna lebih tajam */
+            transition: all 0.3s; cursor: pointer; background: white;
+        }
+        .picasso-avatar:hover, .picasso-avatar.selected {
+            transform: scale(1.2) rotate(10deg);
+            filter: contrast(1.3) saturate(2) drop-shadow(5px 5px 0px var(--picasso-yellow));
+            z-index: 10;
         }
 
-        .btn::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.2);
-            transition: left 0.6s;
+        /* --- ID Card Preview (Cubist Collage) --- */
+        .picasso-id-card-container {
+            position: relative; width: 320px; height: 480px;
+            perspective: 1000px;
         }
-
-        .btn:hover::after {
-            left: 100%;
+        .picasso-id-card {
+            width: 100%; height: 100%;
+            background: white; border: 5px solid var(--picasso-black);
+            padding: 2rem; text-align: center; position: relative; overflow: hidden;
+            /* Rotasi 3D agar terlihat seperti potongan kertas melayang */
+            transform: rotateY(-10deg) rotateX(5deg);
+            box-shadow: 20px 20px 0px rgba(0,0,0,0.2);
         }
+        /* Layer kolase di belakang ID card */
+        .picasso-id-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 40%; background: var(--picasso-blue); clip-path: polygon(0 0, 100% 0, 100% 80%, 0 100%); z-index: -1; }
+        .picasso-id-card::after { content: ''; position: absolute; bottom: 0; right: 0; width: 70%; height: 50%; background: var(--picasso-red); clip-path: polygon(20% 0, 100% 20%, 100% 100%, 0 100%); z-index: -1; }
 
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(13, 59, 102, 0.3);
+        .avatar-polygon-large {
+            width: 130px; height: 130px; margin: 0 auto 1rem;
+            clip-path: polygon(50% 0%, 100% 25%, 85% 100%, 15% 100%, 0% 25%);
+            background: var(--picasso-yellow); padding: 5px; border: 4px solid var(--picasso-black);
+            transform: rotate(-5deg);
         }
-
-        .btn:active {
-            transform: translateY(1px);
+        
+        /* --- Abstract Icons --- */
+        .abstract-icon {
+            width: 50px; height: 50px; background: var(--picasso-black);
+            display: flex; align-items: center; justify-content: center; color: var(--picasso-yellow);
+            clip-path: polygon(0% 15%, 15% 15%, 15% 0%, 85% 0%, 85% 15%, 100% 15%, 100% 85%, 85% 85%, 85% 100%, 15% 100%, 15% 85%, 0% 85%);
+            transform: rotate(45deg); border: 2px solid white;
         }
+        .abstract-icon svg { transform: rotate(-45deg); }
 
-        .btn-success {
-            background: var(--success-color);
+        /* --- Admin Table (Constructivist Grid) --- */
+        .picasso-table-container {
+            border: 5px solid var(--picasso-black); background: white;
+            box-shadow: 10px 10px 0px var(--picasso-blue);
+            transform: skewX(-2deg);
         }
-
-        .btn-success:hover {
-            background: #21867a;
+        .picasso-table thead th {
+            font-family: 'Bebas Neue'; font-size: 1.3rem; letter-spacing: 1px;
+            background: var(--picasso-black); color: white; padding: 1rem;
+            border-right: 3px solid white;
         }
-
-        .btn-warning {
-            background: var(--warning-color);
-            color: #333;
+        .picasso-table tbody tr { border-bottom: 4px solid var(--picasso-black); }
+        .picasso-table tbody td {
+            padding: 1rem; font-weight: bold; border-right: 3px solid var(--picasso-black);
         }
-
-        .btn-warning:hover {
-            background: #d6b34a;
-        }
-
-        .btn-danger {
-            background: var(--danger-color);
-        }
-
-        .btn-danger:hover {
-            background: #d45a43;
-        }
-
-        .btn-secondary {
-            background: var(--secondary-color);
-        }
-
-        .btn-secondary:hover {
-            background: #e5954a;
-        }
-
-        .scanner-container {
-            width: 100%;
-            min-height: 350px;
-            background: #000;
-            border-radius: 12px;
-            margin-bottom: 25px;
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 3px solid var(--secondary-color);
-        }
-
-        #reader {
-            width: 100%;
-            height: 100%;
-        }
-
-        .scanner-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-
+        .picasso-table tbody tr:hover { background: var(--picasso-yellow); color: var(--picasso-black) !important;}
+        
+        /* Scanner Frame (Broken Viewfinder) */
         .scanner-frame {
-            width: 250px;
-            height: 250px;
-            border: 3px solid var(--secondary-color);
-            position: relative;
-            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6);
+            border: 8px dashed var(--picasso-black); padding: 10px; background: var(--picasso-red);
+            clip-path: polygon(0 0, 100% 5%, 95% 100%, 5% 95%); transform: rotate(2deg);
         }
+        #reader { border: 4px solid white; filter: grayscale(1) contrast(1.5); }
 
-        .scanner-line {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 3px;
-            background: var(--secondary-color);
-            animation: scan 2s infinite linear;
-        }
-
-        @keyframes scan {
-            0% { top: 0; }
-            100% { top: 247px; }
-        }
-
-        .scanner-hint {
-            position: absolute;
-            bottom: 20px;
-            color: white;
-            text-align: center;
-            font-size: 16px;
-            font-weight: 600;
-            text-shadow: 0 0 5px black;
-            padding: 8px 15px;
-            background: rgba(0,0,0,0.5);
-            border-radius: 20px;
-            width: 90%;
-        }
-
-        .barcode-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 25px;
-            margin-top: 20px;
-        }
-
-        .barcode-card {
-            background: white;
-            border-radius: 16px;
-            padding: 22px;
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.12);
-            text-align: center;
-            border: 2px solid rgba(13, 59, 102, 0.15);
-            position: relative;
-            overflow: hidden;
-            transition: transform 0.3s ease;
-        }
-
-        .barcode-card:hover {
-            transform: scale(1.03);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-        }
-
-        .barcode-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 6px;
-            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
-        }
-
-        .id-card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 18px;
-            padding-bottom: 12px;
-            border-bottom: 2px dashed rgba(13, 59, 102, 0.2);
-        }
-
-        .role-badge {
-            background: var(--primary-color);
-            color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 600;
-        }
-
-        .role-badge.teacher {
-            background: var(--accent-color);
-        }
-
-        .avatar-container {
-            width: 90px;
-            height: 90px;
-            margin: 0 auto 18px;
-            border-radius: 50%;
-            overflow: hidden;
-            border: 4px solid var(--secondary-color);
-            background: #f0f5ff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 42px;
-            color: var(--primary-color);
-            font-weight: 700;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
-
-        .barcode-image-container {
-            margin: 15px 0;
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            display: inline-block;
-        }
-
-        .barcode-image {
-            max-width: 100%;
-            height: auto;
-        }
-
-        .barcode-info {
-            margin-top: 15px;
-        }
-
-        .barcode-name {
-            font-weight: 800;
-            font-size: 1.35em;
-            color: var(--dark-color);
-            margin-bottom: 6px;
-            line-height: 1.3;
-        }
-
-        .barcode-id {
-            font-size: 1.1em;
-            color: var(--primary-color);
-            font-family: 'Courier New', monospace;
-            letter-spacing: 2px;
-            margin: 8px 0;
-            padding: 6px;
-            background: rgba(13, 59, 102, 0.05);
-            border-radius: 6px;
-            font-weight: 600;
-        }
-
-        .qr-display {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.95);
-            z-index: 2000;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .qr-container {
-            background: white;
-            padding: 25px;
-            border-radius: 20px;
-            display: inline-block;
-            text-align: center;
-            max-width: 90%;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        }
-
-        #qrCanvas {
-            width: 280px !important;
-            height: 280px !important;
-            margin: 0 auto 20px;
-        }
-
-        .qr-title {
-            font-size: 1.6em;
-            color: var(--primary-color);
-            margin-bottom: 15px;
-            font-weight: 700;
-        }
-
-        .qr-id {
-            font-size: 1.4em;
-            font-family: 'Courier New', monospace;
-            color: var(--dark-color);
-            margin: 10px 0;
-            letter-spacing: 2px;
-        }
-
-        .qr-instruction {
-            background: #e3f2fd;
-            padding: 15px;
-            border-radius: 12px;
-            margin-top: 20px;
-            color: var(--primary-color);
-            font-size: 1.1em;
-            font-weight: 600;
-        }
-
-        .close-qr {
-            background: var(--danger-color);
-            color: white;
-            border: none;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            font-size: 24px;
-            position: absolute;
-            top: 25px;
-            right: 25px;
-            cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        }
-
-        .tabs {
-            display: flex;
-            margin-bottom: 25px;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: var(--shadow);
-        }
-
-        .tab-btn {
-            flex: 1;
-            padding: 18px 10px;
-            border: none;
-            background: none;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 700;
-            transition: all 0.3s ease;
-            color: #666;
-            position: relative;
-        }
-
-        .tab-btn::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%) scaleX(0);
-            width: 70%;
-            height: 3px;
-            background: var(--secondary-color);
-            transition: all 0.3s ease;
-        }
-
-        .tab-btn:hover {
-            color: var(--primary-color);
-        }
-
-        .tab-btn:hover::after {
-            transform: translateX(-50%) scaleX(1);
-        }
-
-        .tab-btn.active {
-            color: var(--primary-color);
-        }
-
-        .tab-btn.active::after {
-            transform: translateX(-50%) scaleX(1);
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-            animation: fadeIn 0.4s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .attendance-list {
-            max-height: 450px;
-            overflow-y: auto;
-            border-radius: 12px;
-            padding: 15px;
-            background: #f9fbfd;
-            margin-top: 15px;
-        }
-
-        .attendance-item {
-            padding: 16px;
-            border-radius: 12px;
-            margin-bottom: 12px;
-            background: white;
-            box-shadow: 0 3px 8px rgba(0,0,0,0.08);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: transform 0.2s;
-        }
-
-        .attendance-item:hover {
-            transform: translateX(5px);
-        }
-
-        .attendance-name {
-            font-weight: 700;
-            font-size: 1.1em;
-            color: var(--dark-color);
-        }
-
-        .attendance-role {
-            font-size: 0.9em;
-            color: var(--primary-color);
-            margin-top: 4px;
-        }
-
-        .attendance-time {
-            text-align: right;
-            font-size: 0.95em;
-            color: #666;
-            font-weight: 600;
-            min-width: 90px;
-        }
-
-        .status-present {
-            display: inline-block;
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            background: var(--success-color);
-            margin-right: 8px;
-        }
-
-        .stats-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-
-        .stat-card {
-            background: white;
-            padding: 22px;
-            border-radius: 16px;
-            text-align: center;
-            box-shadow: var(--shadow);
-            transition: transform 0.3s ease;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .stat-number {
-            font-size: 2.8em;
-            font-weight: 800;
-            color: var(--primary-color);
-            margin: 12px 0;
-            line-height: 1;
-        }
-
-        .stat-label {
-            color: #555;
-            font-size: 1.1em;
-            font-weight: 600;
-        }
-
-        .notification {
-            position: fixed;
-            top: 25px;
-            right: 25px;
-            padding: 18px 30px;
-            border-radius: 14px;
-            color: white;
-            font-weight: 700;
-            font-size: 1.05em;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.25);
-            transform: translateX(450px);
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            z-index: 3000;
-            max-width: 90%;
-            text-align: center;
-        }
-
-        .notification.show {
-            transform: translateX(0);
-        }
-
-        .notification.success {
-            background: var(--success-color);
-        }
-
-        .notification.error {
-            background: var(--danger-color);
-        }
-
-        .notification.warning {
-            background: var(--warning-color);
-            color: #333;
-        }
-
-        .notification.info {
-            background: var(--primary-color);
-        }
-
-        .offline-indicator {
-            position: fixed;
-            bottom: 25px;
-            right: 25px;
-            padding: 14px 28px;
-            background: var(--warning-color);
-            color: #333;
-            border-radius: 50px;
-            font-weight: 700;
-            font-size: 1.1em;
-            box-shadow: var(--shadow);
-            display: none;
-            z-index: 2500;
-            animation: pulse 2s infinite;
-        }
-
-        .offline-indicator.show {
-            display: block;
-        }
-
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(233, 196, 106, 0.7); }
-            70% { box-shadow: 0 0 0 12px rgba(233, 196, 106, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(233, 196, 106, 0); }
-        }
-
-        .how-to-scan {
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 16px;
-            padding: 25px;
-            margin-top: 25px;
-            box-shadow: var(--shadow);
-        }
-
-        .how-to-title {
-            text-align: center;
-            font-size: 1.8em;
-            color: var(--primary-color);
-            margin-bottom: 20px;
-            font-weight: 800;
-        }
-
-        .steps-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 25px;
-            margin-top: 20px;
-        }
-
-        .step-card {
-            background: #f0f7ff;
-            border-radius: 14px;
-            padding: 25px;
-            text-align: center;
-            border-left: 4px solid var(--primary-color);
-            transition: transform 0.3s ease;
-        }
-
-        .step-card:hover {
-            transform: scale(1.03);
-        }
-
-        .step-number {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 45px;
-            height: 45px;
-            background: var(--primary-color);
-            color: white;
-            border-radius: 50%;
-            font-size: 1.8em;
-            font-weight: 800;
-            margin: 0 auto 18px;
-        }
-
-        .step-title {
-            font-size: 1.35em;
-            font-weight: 700;
-            color: var(--dark-color);
-            margin-bottom: 12px;
-        }
-
-        .step-desc {
-            color: #555;
-            line-height: 1.6;
-        }
-
-        footer {
-            text-align: center;
-            margin-top: 35px;
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 1.05em;
-            padding: 25px;
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 16px;
-            backdrop-filter: blur(10px);
-        }
-
-        .footer-note {
-            font-size: 0.95em;
-            margin-top: 10px;
-            color: rgba(255, 255, 255, 0.85);
-            line-height: 1.6;
-        }
-
-        @media (max-width: 768px) {
-            .logo {
-                font-size: 1.9em;
-            }
-            
-            .subtitle {
-                font-size: 1.15em;
-            }
-            
-            .card {
-                padding: 20px;
-            }
-            
-            .card-title {
-                font-size: 1.6em;
-            }
-            
-            .scanner-container {
-                min-height: 300px;
-            }
-            
-            .barcode-container {
-                grid-template-columns: 1fr;
-            }
-            
-            .steps-container {
-                grid-template-columns: 1fr;
-            }
-            
-            .btn {
-                padding: 16px;
-                font-size: 18px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .logo {
-                font-size: 1.7em;
-            }
-            
-            .subtitle {
-                font-size: 1.05em;
-            }
-            
-            .card-title {
-                font-size: 1.5em;
-            }
-            
-            .scanner-frame {
-                width: 220px;
-                height: 220px;
-            }
-            
-            .notification {
-                padding: 15px 25px;
-                font-size: 0.95em;
-            }
-            
-            .tabs {
-                flex-direction: column;
-            }
-            
-            .tab-btn {
-                padding: 15px;
-            }
-        }
-
-        @media print {
-            body {
-                background: white;
-                padding: 0;
-            }
-            
-            .tabs, .scanner-container, .btn, .form-group, .how-to-scan, footer {
-                display: none !important;
-            }
-            
-            .card {
-                box-shadow: none;
-                padding: 15px;
-                border-radius: 0;
-            }
-            
-            .barcode-container {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 20px;
-            }
-            
-            .barcode-card {
-                page-break-inside: avoid;
-                break-inside: avoid;
-                box-shadow: none;
-                border: 1px solid #ddd;
-            }
-            
-            header {
-                box-shadow: none;
-                border-bottom: 3px solid var(--primary-color);
-            }
-        }
     </style>
 </head>
-<body>
-    <div class="container">
-        <header>
-            <div class="logo">GKPS <span>TANGERANG</span></div>
-            <div class="subtitle">Sistem Attendance Sekolah Minggu</div>
-            <div class="church-name">Gereja Kristen Protestan Simalungun</div>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-6xl mx-auto relative">
+        <header class="text-center mb-12 relative z-10">
+            <div class="absolute inset-0 bg-yellow-400 transform -skew-y-3 scale-110 z-[-1] border-4 border-black clip-path-polygon(0 0, 100% 10%, 95% 100%, 5% 90%)"></div>
+            <h1 class="text-6xl md:text-7xl font-extrabold mb-2 text-black picasso-glitch-text" data-text="GKPS TANGERANG">GKPS TANGERANG</h1>
+            <p class="font-bold text-xl bg-black text-white inline-block px-4 py-1 transform skew-x-[-10deg]">Sistem Absensi Sekolah Minggu</p>
         </header>
 
-        <div class="tabs">
-            <button class="tab-btn active" data-tab="registration">📱 Registrasi</button>
-            <button class="tab-btn" data-tab="scanner">📷 Scanner</button>
-            <button class="tab-btn" data-tab="attendance">📋 Absen Hari Ini</button>
-            <button class="tab-btn" data-tab="statistics">📊 Statistik</button>
-        </div>
+        <nav class="picasso-nav-container mb-16 max-w-fit mx-auto relative z-20">
+            <button onclick="switchNav('home')" id="nav-home" class="nav-btn active">Beranda</button>
+            <button onclick="switchNav('register')" id="nav-register" class="nav-btn inactive">Pendaftaran</button>
+            <button onclick="switchNav('scan')" id="nav-scan" class="nav-btn inactive">Scan Barcode</button>
+            <button onclick="switchNav('admin')" id="nav-admin" class="nav-btn inactive">Data Absensi</button>
+        </nav>
 
-        <div class="app-container">
-            <!-- Registration Tab -->
-            <div class="tab-content active" id="registration">
-                <div class="card">
-                    <h2 class="card-title">Registrasi Peserta Baru</h2>
-                    <div class="form-group">
-                        <label for="name">Nama Lengkap</label>
-                        <input type="text" id="name" placeholder="Contoh: Daniel Siregar" autocomplete="off">
+        <section id="home" class="section">
+            <div class="grid md:grid-cols-2 gap-12 items-center">
+                <div class="picasso-card flex flex-col items-center text-center transform rotate-[-2deg]">
+                    <div class="abstract-icon mb-6">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                     </div>
-                    <div class="form-group">
-                        <label for="role">Peran</label>
-                        <select id="role">
-                            <option value="student">Anak Sekolah Minggu</option>
-                            <option value="teacher">Guru Sekolah Minggu</option>
-                        </select>
+                    <h2 class="picasso-title text-4xl mb-4 bg-blue-900 text-white px-4 py-1 transform skew-x-[-5deg]">Selamat Hari Minggu!</h2>
+                    <p class="text-lg font-bold mb-4 leading-relaxed">"Biarkan bentuk dan warna memuji Tuhan. Siapkan barcodemu!"</p>
+                    <div class="w-full h-4 bg-black my-4 clip-path-polygon(0 0, 100% 20%, 95% 100%, 5% 80%)"></div>
+                </div>
+
+                <div class="picasso-card transform rotate-[3deg] relative" style="z-index: 5;">
+                    <h3 class="picasso-title text-3xl text-center mb-6 border-b-4 border-black inline-block mx-auto">Statistik Kubisme</h3>
+                    
+                    <div class="flex flex-col items-center mb-8">
+                        <span class="picasso-title" style="font-size: 7rem; line-height: 1; color: var(--picasso-red); text-shadow: 5px 5px 0px var(--picasso-black); transform: skewX(-10deg);" id="stat-count">0</span>
+                        <span class="font-bold text-xl bg-yellow-400 px-3 border-2 border-black transform skew-x-[-5deg]">Jiwa Hadir</span>
                     </div>
-                    <div class="form-group">
-                        <label for="birthYear">Tahun Lahir / Angkatan</label>
-                        <input type="number" id="birthYear" placeholder="Contoh: 2015 atau 2024" min="1950" max="2025">
-                    </div>
-                    <div class="form-group">
-                        <label>Avatar (Opsional)</label>
-                        <div class="avatar-container" id="avatarPreview" style="margin: 0 auto 15px; cursor: pointer;" onclick="document.getElementById('avatarInput').click()">
-                            👤
-                        </div>
-                        <input type="file" id="avatarInput" accept="image/*" style="display: none;">
-                        <p style="text-align: center; color: #777; font-size: 0.9em; margin-top: 8px;">
-                            Klik avatar untuk upload foto
+
+                    <div class="pt-6 border-t-4 border-dashed border-black">
+                        <p class="font-bold mb-4 flex items-center justify-center uppercase tracking-widest bg-black text-white py-1">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-yellow-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
+                            Wajah Hari Ini
                         </p>
+                        <div class="flex flex-wrap gap-3 justify-center" id="today-avatars-list">
+                            <span class="font-bold italic opacity-60 bg-white p-2 border-2 border-black">Belum ada fragmen wajah...</span>
+                        </div>
                     </div>
-                    <button class="btn btn-secondary" onclick="registerParticipant()">
-                        <i>✓</i> Daftar Sekarang
+                </div>
+            </div>
+        </section>
+
+        <section id="register" class="section hidden">
+            <div class="grid md:grid-cols-2 gap-12 items-start">
+                <div class="picasso-card transform rotate-[1deg]">
+                    <h2 class="picasso-title text-4xl mb-8 bg-red-700 text-white inline-block px-6 py-2 transform skew-x-[-10deg] border-4 border-black">Registrasi Baru</h2>
+                    <div class="space-y-8">
+                        <div>
+                            <label class="block text-xl font-bold mb-2 uppercase bg-black text-white inline-block px-2 transform skew-x-[-5deg]">Nama Lengkap</label>
+                            <input type="text" id="reg-name" class="picasso-input" placeholder="Contoh: Felicia Damanik">
+                        </div>
+                        <div>
+                            <label class="block text-xl font-bold mb-2 uppercase bg-blue-900 text-white inline-block px-2 transform skew-x-[-5deg]">Peran</label>
+                            <select id="reg-role" class="picasso-select">
+                                <option value="Anak">Anak Sekolah Minggu</option>
+                                <option value="Guru">Guru Sekolah Minggu</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xl font-bold mb-3 uppercase bg-yellow-400 text-black border-2 border-black inline-block px-2 transform skew-x-[-5deg]">Pilih Avatar Kubis</label>
+                            <div class="flex gap-4 mt-2 overflow-x-auto pb-4 p-4 bg-white border-4 border-black justify-start transform skew-x-[-2deg]" id="avatar-list">
+                                </div>
+                        </div>
+                        <button onclick="registerUser()" class="picasso-btn w-full">Konstruksi ID Card</button>
+                    </div>
+                </div>
+                
+                <div id="id-card-result" class="flex flex-col items-center justify-center hidden">
+                     <h3 class="picasso-title text-3xl mb-6 bg-black text-white px-4 py-1 transform rotate-[-2deg]">Pratinjau Kolase ID</h3>
+                    
+                     <div class="picasso-id-card-container">
+                        <div class="picasso-id-card flex flex-col items-center">
+                            <div class="text-xl font-bold tracking-widest mb-4 picasso-title bg-yellow-400 px-4 border-2 border-black transform skew-x-[-10deg]">GKPS TANGERANG</div>
+                            
+                            <div class="avatar-polygon-large mb-4 relative z-10">
+                                <img id="card-avatar" src="" alt="Avatar" class="w-full h-full object-cover clip-path-polygon(50% 0%, 100% 25%, 85% 100%, 15% 100%, 0% 25%) filter contrast(1.2)">
+                            </div>
+                            
+                            <h2 id="card-name" class="text-4xl font-extrabold uppercase leading-none mb-2 picasso-title text-black bg-white border-2 border-black px-2 transform rotate-[-3deg] relative z-10">Nama Peserta</h2>
+                            <p id="card-role" class="text-white bg-red-700 font-bold mb-auto text-2xl uppercase px-4 py-1 border-2 border-black transform skew-x-[-10deg] relative z-10">ROLE</p>
+                            
+                            <div class="bg-white p-2 mt-6 w-full border-4 border-black transform rotate-[2deg] relative z-10">
+                                <svg id="barcode" class="w-full"></svg>
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="window.print()" class="mt-10 picasso-btn flex items-center px-8 bg-blue-900 hover:bg-blue-800">
+                        Cetak Karya Ini
                     </button>
                 </div>
             </div>
+        </section>
 
-            <!-- Scanner Tab -->
-            <div class="tab-content" id="scanner">
-                <div class="card">
-                    <h2 class="card-title">Scan Barcode / QR Code</h2>
-                    <div class="scanner-container">
+        <section id="scan" class="section hidden">
+            <div class="grid md:grid-cols-2 gap-10">
+                <div class="picasso-card transform rotate-[-1deg]">
+                    <h2 class="picasso-title text-3xl mb-6 text-center bg-black text-white py-2 border-4 border-yellow-400 transform skew-x-[-5deg]">Pemindai Wajah & Kode</h2>
+                    
+                    <div class="scanner-frame">
                         <div id="reader"></div>
-                        <div class="scanner-overlay">
-                            <div class="scanner-frame">
-                                <div class="scanner-line"></div>
-                            </div>
-                            <div class="scanner-hint">Arahkan kamera ke barcode atau QR code</div>
-                        </div>
                     </div>
-                    <div style="display: flex; gap: 15px; margin-top: 20px;">
-                        <button class="btn btn-success" onclick="startScanner()" id="startBtn">
-                            ▶️ Mulai Scan
-                        </button>
-                        <button class="btn btn-warning" onclick="stopScanner()" id="stopBtn" disabled>
-                            ⏹️ Stop Scan
-                        </button>
+
+                    <div id="scan-result" class="mt-6 text-center p-4 font-bold text-lg border-4 border-black bg-white transform skew-x-[-2deg] hidden shadow-[8px_8px_0px_black]"></div>
+                </div>
+
+                 <div class="picasso-card transform rotate-[2deg]">
+                    <h3 class="picasso-title text-2xl mb-6 text-center border-b-4 border-black pb-2 inline-block mx-auto bg-yellow-400 px-4">Catatan Fragmen Terkini</h3>
+                    <div class="overflow-y-auto max-h-[400px] pr-2 border-4 border-black bg-white p-2">
+                         <table class="w-full text-left">
+                            <tbody id="recent-scan-table" class="divide-y-4 divide-black">
+                                <tr><td class="text-black italic py-4 text-center font-bold bg-gray-100">Belum ada fragmen hari ini.</td></tr>
+                            </tbody>
+                        </table>
                     </div>
-                    <div id="scanResult" style="margin-top: 20px; text-align: center; min-height: 30px; font-weight: 700; font-size: 1.2em;"></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="admin" class="section hidden">
+            <div class="picasso-card transform rotate-[1deg]">
+                <div class="flex flex-wrap justify-between items-end mb-10 pt-4">
+                    <div>
+                        <h2 class="picasso-title text-5xl bg-black text-white px-6 py-2 inline-block transform skew-x-[-10deg] border-r-8 border-yellow-400">Grid Data Kehadiran</h2>
+                    </div>
+                    <button onclick="exportData()" class="mt-6 md:mt-0 picasso-btn flex items-center text-xl px-6 py-3 bg-green-600 hover:bg-green-700 clip-path-polygon(5% 0, 100% 0, 95% 100%, 0% 100%)">
+                        Ekspor CSV
+                    </button>
                 </div>
                 
-                <div class="how-to-scan">
-                    <h3 class="how-to-title">📱 Cara Scan di HP / Smartphone</h3>
-                    <div class="steps-container">
-                        <div class="step-card">
-                            <div class="step-number">1</div>
-                            <div class="step-title">Buka Aplikasi</div>
-                            <div class="step-desc">Buka file HTML ini di browser (Chrome/Safari) pada HP Anda</div>
-                        </div>
-                        <div class="step-card">
-                            <div class="step-number">2</div>
-                            <div class="step-title">Izinkan Kamera</div>
-                            <div class="step-desc">Klik "Mulai Scan" dan izinkan akses kamera saat diminta</div>
-                        </div>
-                        <div class="step-card">
-                            <div class="step-number">3</div>
-                            <div class="step-title">Scan Barcode</div>
-                            <div class="step-desc">Arahkan kamera ke barcode/QR code peserta yang ingin absen</div>
-                        </div>
-                        <div class="step-card">
-                            <div class="step-number">4</div>
-                            <div class="step-title">Selesai!</div>
-                            <div class="step-desc">Sistem otomatis mencatat kehadiran dengan notifikasi sukses</div>
-                        </div>
-                    </div>
+                <div class="picasso-table-container overflow-x-auto">
+                    <table class="w-full text-left picasso-table">
+                        <thead>
+                            <tr>
+                                <th class="py-4 px-6">Subjek</th>
+                                <th class="py-4 px-6">Kategori</th>
+                                <th class="py-4 px-6">Dimensi Waktu</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attendance-table-body" class="bg-white">
+                            </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-12 pt-6 border-t-8 border-black flex justify-end">
+                    <button onclick="clearAttendance()" class="picasso-btn bg-red-800 hover:bg-red-900 text-lg flex items-center uppercase tracking-widest px-6 py-4 clip-path-polygon(10% 0, 100% 10%, 90% 100%, 0% 90%)">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
+                        Dekonstruksi Semua Data
+                    </button>
                 </div>
             </div>
+        </section>
 
-            <!-- Attendance Tab -->
-            <div class="tab-content" id="attendance">
-                <div class="card">
-                    <h2 class="card-title">Daftar Hadir Hari Ini</h2>
-                    <div class="stats-container">
-                        <div class="stat-card">
-                            <div class="stat-label">Total Hadir</div>
-                            <div class="stat-number" id="todayCount">0</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-label">Anak SM</div>
-                            <div class="stat-number" id="todayStudents">0</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-label">Guru SM</div>
-                            <div class="stat-number" id="todayTeachers">0</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-label">Jam</div>
-                            <div class="stat-number" id="currentTime">--:--</div>
-                        </div>
-                    </div>
-                    <div class="attendance-list" id="attendanceList">
-                        <p style="text-align: center; color: #999; padding: 20px; font-size: 1.1em;">
-                            📋 Belum ada data absen hari ini
-                        </p>
-                    </div>
-                    <div style="display: flex; gap: 15px; margin-top: 20px;">
-                        <button class="btn btn-warning" onclick="exportAttendance()">
-                            💾 Export Data
-                        </button>
-                        <button class="btn btn-danger" onclick="clearTodayAttendance()">
-                            🗑️ Clear Hari Ini
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Statistics Tab -->
-            <div class="tab-content" id="statistics">
-                <div class="card">
-                    <h2 class="card-title">Statistik & Barcode ID</h2>
-                    <div class="stats-container">
-                        <div class="stat-card">
-                            <div class="stat-label">Total Terdaftar</div>
-                            <div class="stat-number" id="totalRegistered">0</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-label">Anak Sekolah Minggu</div>
-                            <div class="stat-number" id="totalStudents">0</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-label">Guru Sekolah Minggu</div>
-                            <div class="stat-number" id="totalTeachers">0</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-label">Total Absen</div>
-                            <div class="stat-number" id="totalAttendance">0</div>
-                        </div>
-                    </div>
-                    <div style="text-align: center; margin: 25px 0;">
-                        <button class="btn btn-secondary" onclick="showAllBarcodes()">
-                            👁️ Tampilkan Semua Barcode
-                        </button>
-                    </div>
-                    <div class="barcode-container" id="barcodeContainer">
-                        <!-- Barcodes will be populated here -->
-                    </div>
-                    <div style="text-align: center; margin-top: 25px;">
-                        <button class="btn" onclick="window.print()">
-                            🖨️ Print Semua ID Card
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- QR Code Display for Sharing -->
-        <div class="qr-display" id="qrDisplay">
-            <button class="close-qr" onclick="closeQR()">×</button>
-            <div class="qr-container">
-                <div class="qr-title">QR Code Attendance</div>
-                <div id="qrContainer"></div>
-                <div class="qr-id" id="qrIdDisplay">SM-XXXXX</div>
-                <div class="qr-instruction">
-                    🔍 Scan QR code ini dengan HP lain untuk absen otomatis
-                </div>
-            </div>
-        </div>
-
-        <div class="notification" id="notification"></div>
-        <div class="offline-indicator" id="offlineIndicator">✈️ Mode Offline</div>
-
-        <footer>
-            <p>© 2026 GKPS Tangerang - Sistem Attendance Sekolah Minggu</p>
-            <p class="footer-note">✅ Berfungsi Online & Offline | 💾 Data tersimpan otomatis di browser</p>
-        </footer>
     </div>
 
     <script>
-        // Initialize data storage
-        let participants = JSON.parse(localStorage.getItem('gkps_participants')) || [];
-        let attendanceRecords = JSON.parse(localStorage.getItem('gkps_attendance')) || [];
-        let html5QrCode = null;
-        let isScanning = false;
-        let currentStream = null;
+        // Database Sederhana
+        let users = JSON.parse(localStorage.getItem('gkps_users')) || [];
+        let attendance = JSON.parse(localStorage.getItem('gkps_attendance')) || [];
+        let selectedAvatar = 'https://api.dicebear.com/7.x/adventurer/svg?seed=Felix';
 
-        // DOM Elements
-        const tabBtns = document.querySelectorAll('.tab-btn');
-        const tabContents = document.querySelectorAll('.tab-content');
-        const notification = document.getElementById('notification');
-        const offlineIndicator = document.getElementById('offlineIndicator');
-        const qrDisplay = document.getElementById('qrDisplay');
-
-        // Initialize clock
-        setInterval(updateClock, 1000);
-        updateClock();
-
-        // Check offline status
-        window.addEventListener('online', updateOnlineStatus);
-        window.addEventListener('offline', updateOnlineStatus);
-        updateOnlineStatus();
-
-        function updateOnlineStatus() {
-            if (navigator.onLine) {
-                offlineIndicator.classList.remove('show');
-            } else {
-                offlineIndicator.classList.add('show');
-                showNotification('✈️ Mode offline aktif. Data akan tersimpan lokal.', 'warning');
-            }
-        }
-
-        function updateClock() {
-            const now = new Date();
-            document.getElementById('currentTime').textContent = now.toLocaleTimeString('id-ID', {
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-        }
-
-        // Tab switching
-        tabBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                const tabId = btn.getAttribute('data-tab');
-                
-                // Remove active class from all buttons and contents
-                tabBtns.forEach(b => b.classList.remove('active'));
-                tabContents.forEach(c => c.classList.remove('active'));
-                
-                // Add active class to clicked button and corresponding content
-                btn.classList.add('active');
-                document.getElementById(tabId).classList.add('active');
-                
-                // Refresh data when switching tabs
-                if (tabId === 'statistics') {
-                    renderStatistics();
-                    renderBarcodes();
-                } else if (tabId === 'attendance') {
-                    renderAttendanceList();
-                } else if (tabId === 'scanner') {
-                    // Auto start scanner on mobile
-                    if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) && !isScanning) {
-                        setTimeout(() => {
-                            showNotification('📱 Ketuk "Mulai Scan" untuk aktifkan kamera', 'info');
-                        }, 1000);
-                    }
-                }
-            });
+        // Avatar Options (Updated to Picasso Polygon Style)
+        const avatarSeeds = ['Felix', 'Aneka', 'Boo', 'Buddy', 'Cookie', 'Daisy', 'Tigger', 'Molly', 'Coco', 'Simba', 'Ginger'];
+        const avatarListDiv = document.getElementById('avatar-list');
+        avatarSeeds.forEach((seed, index) => {
+            const url = `https://api.dicebear.com/7.x/adventurer/svg?seed=${seed}`;
+            const img = document.createElement('img');
+            img.src = url;
+            img.className = `picasso-avatar ${index === 0 ? 'selected' : ''}`;
+            
+            img.onclick = () => {
+                selectedAvatar = url;
+                document.querySelectorAll('#avatar-list img').forEach(i => i.classList.remove('selected'));
+                img.classList.add('selected');
+            };
+            avatarListDiv.appendChild(img);
         });
 
-        // Register participant
-        function registerParticipant() {
-            const name = document.getElementById('name').value.trim();
-            const role = document.getElementById('role').value;
-            const birthYear = document.getElementById('birthYear').value.trim();
-            const avatarFile = document.getElementById('avatarInput').files[0];
+        // Navigation Logic
+        function switchNav(id) {
+            document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+                btn.classList.add('inactive');
+            });
+            document.getElementById('nav-' + id).classList.remove('inactive');
+            document.getElementById('nav-' + id).classList.add('active');
 
-            if (!name) {
-                showNotification('⚠️ Nama tidak boleh kosong!', 'error');
-                return;
+            if(id === 'admin') renderAttendance();
+            if(id === 'home') updateStats();
+            if(id === 'scan') {
+                startScanner();
+                renderRecentScansTable();
+            } else {
+                stopScanner();
             }
-
-            if (!birthYear) {
-                showNotification('⚠️ Tahun lahir/angkatan wajib diisi!', 'error');
-                return;
-            }
-
-            // Generate unique ID: SM + tahun + 4 digit random
-            const year = new Date().getFullYear().toString().slice(-2);
-            const randomNum = Math.floor(1000 + Math.random() * 9000);
-            const id = `SM${year}${randomNum}`;
-
-            // Create avatar initial
-            const avatarInitial = name.charAt(0).toUpperCase();
-            
-            // Create participant object
-            const participant = {
-                id: id,
-                name: name,
-                role: role,
-                birthYear: birthYear,
-                avatar: avatarFile ? URL.createObjectURL(avatarFile) : null,
-                avatarInitial: avatarInitial,
-                createdAt: new Date().toISOString(),
-                registeredAt: new Date().toLocaleDateString('id-ID')
-            };
-
-            // Add to participants array
-            participants.push(participant);
-            
-            // Save to localStorage
-            localStorage.setItem('gkps_participants', JSON.stringify(participants));
-            
-            // Clear form
-            document.getElementById('name').value = '';
-            document.getElementById('birthYear').value = '';
-            document.getElementById('avatarInput').value = '';
-            document.getElementById('avatarPreview').innerHTML = '👤';
-            
-            showNotification(`✅ Registrasi berhasil!\nID: ${id}\nNama: ${name}`, 'success');
-            
-            // Refresh statistics
-            renderStatistics();
-            renderBarcodes();
         }
 
-        // Start barcode scanner
+        // Register Logic
+        function registerUser() {
+            const name = document.getElementById('reg-name').value;
+            const role = document.getElementById('reg-role').value;
+            if(!name) return alert('Mohon isi Nama Lengkap untuk memulai konstruksi.');
+
+            const id = 'GKPS-' + Date.now();
+            const newUser = { id, name, role, avatar: selectedAvatar };
+            users.push(newUser);
+            localStorage.setItem('gkps_users', JSON.stringify(users));
+
+            const resultSection = document.getElementById('id-card-result');
+            resultSection.classList.remove('hidden');
+            resultSection.scrollIntoView({ behavior: 'smooth' });
+
+            document.getElementById('card-name').innerText = name;
+            document.getElementById('card-role').innerText = role;
+            document.getElementById('card-avatar').src = selectedAvatar;
+            
+            // Barcode generation - bold and stark
+            JsBarcode("#barcode", id, { format: "CODE128", width: 4, height: 80, displayValue: true, fontSize: 20, margin: 5, lineColor: "#18181b", background: "transparent", font: "Space Mono" });
+            document.getElementById('reg-name').value = '';
+        }
+
+        // Scanner Logic
+        let html5QrcodeScanner;
         function startScanner() {
-            if (isScanning) {
-                showNotification('ℹ️ Scanner sudah aktif!', 'warning');
-                return;
-            }
-
-            // Check camera availability
-            if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
-                showNotification('❌ Browser tidak mendukung akses kamera!', 'error');
-                return;
-            }
-
-            const startBtn = document.getElementById('startBtn');
-            const stopBtn = document.getElementById('stopBtn');
-            startBtn.disabled = true;
-            startBtn.innerHTML = '🔄 Mengaktifkan...';
-            
-            Html5Qrcode.getCameras().then(devices => {
-                if (devices && devices.length > 0) {
-                    const cameraId = devices[0].id;
-                    
-                    html5QrCode = new Html5Qrcode("reader");
-                    
-                    html5QrCode.start(
-                        cameraId,
-                        {
-                            fps: 10,
-                            qrbox: { width: 250, height: 250 },
-                            disableFlip: false,
-                            formatsToSupport: [
-                                Html5QrcodeSupportedFormats.QR_CODE,
-                                Html5QrcodeSupportedFormats.CODE_128,
-                                Html5QrcodeSupportedFormats.CODE_39,
-                                Html5QrcodeSupportedFormats.EAN_13
-                            ]
-                        },
-                        (decodedText, decodedResult) => {
-                            processScanResult(decodedText);
-                            // Don't stop scanner automatically - allow continuous scanning
-                        },
-                        (errorMessage) => {
-                            // Silent error handling for scanning process
-                        }
-                    ).then(() => {
-                        isScanning = true;
-                        startBtn.disabled = true;
-                        stopBtn.disabled = false;
-                        startBtn.innerHTML = '▶️ Mulai Scan';
-                        showNotification('✅ Scanner aktif! Arahkan ke barcode/QR', 'success');
-                    }).catch(err => {
-                        startBtn.disabled = false;
-                        startBtn.innerHTML = '▶️ Mulai Scan';
-                        showNotification(`❌ Gagal aktifkan kamera: ${err.message || err}`, 'error');
-                        console.error('Scanner error:', err);
-                    });
-                } else {
-                    startBtn.disabled = false;
-                    startBtn.innerHTML = '▶️ Mulai Scan';
-                    showNotification('❌ Tidak ada kamera yang tersedia!', 'error');
-                }
-            }).catch(err => {
-                startBtn.disabled = false;
-                startBtn.innerHTML = '▶️ Mulai Scan';
-                showNotification(`❌ Error akses kamera: ${err.message || err}`, 'error');
-                console.error('Camera error:', err);
-            });
+            if(html5QrcodeScanner) return;
+            html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250, aspectRatio: 1.0 });
+            html5QrcodeScanner.render((decodedText) => { processAttendance(decodedText); }, (errorMessage) => {});
         }
 
-        // Stop scanner
         function stopScanner() {
-            if (html5QrCode && isScanning) {
-                html5QrCode.stop().then(() => {
-                    html5QrCode.clear();
-                    isScanning = false;
-                    document.getElementById('startBtn').disabled = false;
-                    document.getElementById('stopBtn').disabled = true;
-                    showNotification('⏹️ Scanner dihentikan', 'warning');
-                }).catch(err => {
-                    console.error('Stop error:', err);
-                });
+            if(html5QrcodeScanner) {
+                html5QrcodeScanner.clear().then(() => { html5QrcodeScanner = null; }).catch(error => { console.error("Failed to clear scanner", error); });
             }
         }
 
-        // Process scan result
-        function processScanResult(code) {
-            // Clean the scanned code (remove special characters)
-            const cleanCode = code.trim().toUpperCase().replace(/[^A-Z0-9\-]/g, '');
-            
-            // Find participant by ID
-            const participant = participants.find(p => 
-                p.id === cleanCode || 
-                cleanCode.includes(p.id) ||
-                p.id.includes(cleanCode)
-            );
-            
-            if (participant) {
-                // Record attendance
+        function processAttendance(barcodeId) {
+            const user = users.find(u => u.id === barcodeId);
+            const resultDiv = document.getElementById('scan-result');
+            resultDiv.classList.remove('hidden');
+
+            if(user) {
                 const now = new Date();
-                const today = now.toDateString();
-                
-                // Check if already recorded today
-                const existingRecord = attendanceRecords.find(r => 
-                    r.id === participant.id && new Date(r.time).toDateString() === today
-                );
-                
-                if (existingRecord) {
-                    document.getElementById('scanResult').innerHTML = 
-                        `<span style="color: #e9c46a;">⚠️ ${participant.name} sudah absen hari ini</span>`;
-                    showNotification(`⚠️ ${participant.name} sudah absen hari ini!`, 'warning');
-                    return;
+                const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const dateStr = now.toLocaleDateString();
+
+                const already = attendance.find(a => a.id === barcodeId && a.date === dateStr);
+                if(already) {
+                    // Picasso Warning Style
+                    resultDiv.className = "mt-6 text-center p-4 border-4 border-black bg-yellow-400 text-black font-bold text-xl transform skew-x-[-5deg] shadow-[8px_8px_0px_var(--picasso-red)]";
+                    resultDiv.innerHTML = `⚠️ SUBJEK <span class="picasso-title bg-black text-white px-2">${user.name}</span> SUDAH TERCATAT PUKUL ${already.time}.`;
+                } else {
+                    attendance.push({ id: barcodeId, name: user.name, role: user.role, time: timeStr, date: dateStr, avatar: user.avatar });
+                    localStorage.setItem('gkps_attendance', JSON.stringify(attendance));
+                    // Picasso Success Style
+                    resultDiv.className = "mt-6 text-center p-4 border-4 border-black bg-blue-900 text-white font-bold text-xl transform skew-x-[-5deg] shadow-[8px_8px_0px_var(--picasso-yellow)]";
+                    resultDiv.innerHTML = `✅ KONSTRUKSI BERHASIL. SELAMAT DATANG, <span class="picasso-title bg-yellow-400 text-black px-2">${user.name}</span>.`;
+                    renderRecentScansTable();
                 }
-                
-                const attendanceRecord = {
-                    id: participant.id,
-                    name: participant.name,
-                    role: participant.role,
-                    time: now.toISOString(),
-                    date: now.toLocaleDateString('id-ID'),
-                    timestamp: now.toLocaleTimeString('id-ID')
-                };
-                
-                attendanceRecords.push(attendanceRecord);
-                localStorage.setItem('gkps_attendance', JSON.stringify(attendanceRecords));
-                
-                // Visual feedback
-                document.getElementById('scanResult').innerHTML = 
-                    `<span style="color: #2a9d8f;">✓ ${participant.name} - Hadir ${attendanceRecord.timestamp}</span>`;
-                
-                showNotification(`✅ Absen berhasil!\n${participant.name}\n${participant.role === 'student' ? 'Anak SM' : 'Guru SM'}`, 'success');
-                
-                // Haptic feedback on mobile
-                if (window.navigator.vibrate) {
-                    window.navigator.vibrate([100, 50, 100]);
-                }
-                
-                // Update UI
-                renderAttendanceList();
-                renderStatistics();
-                
-                // Play sound (optional)
-                try {
-                    const audio = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=');
-                    audio.volume = 0.3;
-                    audio.play().catch(e => console.log('Audio play blocked:', e));
-                } catch (e) {
-                    console.log('Sound not supported');
-                }
-                
             } else {
-                document.getElementById('scanResult').innerHTML = 
-                    `<span style="color: #e76f51;">✗ Barcode tidak terdaftar</span>`;
-                showNotification(`❌ ID tidak dikenali: ${cleanCode}`, 'error');
+                // Picasso Error Style
+                resultDiv.className = "mt-6 text-center p-4 border-4 border-black bg-red-700 text-white font-bold text-xl transform skew-x-[-5deg] shadow-[8px_8px_0px_black]";
+                resultDiv.innerHTML = `❌ KODE TIDAK DIKENALI DALAM STRUKTUR.`;
             }
+             setTimeout(() => { resultDiv.classList.add('hidden'); }, 4000);
         }
 
-        // Render attendance list
-        function renderAttendanceList() {
-            const listElement = document.getElementById('attendanceList');
-            const now = new Date();
-            const today = now.toDateString();
-            
-            // Filter today's attendance
-            const todayRecords = attendanceRecords.filter(r => 
-                new Date(r.time).toDateString() === today
-            ).sort((a, b) => new Date(b.time) - new Date(a.time));
-            
-            // Update counters
-            document.getElementById('todayCount').textContent = todayRecords.length;
-            document.getElementById('todayStudents').textContent = todayRecords.filter(r => r.role === 'student').length;
-            document.getElementById('todayTeachers').textContent = todayRecords.filter(r => r.role === 'teacher').length;
-            
-            if (todayRecords.length === 0) {
-                listElement.innerHTML = `
-                    <p style="text-align: center; color: #999; padding: 25px; font-size: 1.2em;">
-                        📋 Belum ada data absen hari ini<br>
-                        <span style="font-size: 0.95em; display: block; margin-top: 10px; color: #777;">
-                            Mulai scan barcode peserta untuk mencatat kehadiran
-                        </span>
-                    </p>
-                `;
+        // Admin & Stats Logic (Updated for Picasso Grid)
+        function renderAttendance() {
+            const tbody = document.getElementById('attendance-table-body');
+            tbody.innerHTML = '';
+            if(attendance.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="text-center py-8 text-black font-bold bg-yellow-200 border-4 border-black m-4 transform rotate-1">GRID DATA MASIH KOSONG.</td></tr>';
                 return;
             }
-            
-            let html = '';
-            todayRecords.forEach((record, index) => {
-                const participant = participants.find(p => p.id === record.id);
-                const avatarInitial = participant?.avatarInitial || '👤';
-                
-                html += `
-                    <div class="attendance-item">
-                        <div>
-                            <div class="attendance-name">${record.name}</div>
-                            <div class="attendance-role">
-                                ${record.role === 'student' ? 'Anak Sekolah Minggu' : 'Guru Sekolah Minggu'}
-                                ${participant?.birthYear ? ` • ${participant.birthYear}` : ''}
-                            </div>
-                        </div>
-                        <div style="text-align: right;">
-                            <div class="attendance-time">${record.timestamp}</div>
-                            <div style="display: flex; align-items: center; justify-content: flex-end; margin-top: 4px;">
-                                <span class="status-present"></span>
-                                <span style="font-size: 0.9em; color: #2a9d8f; font-weight: 600;">Hadir</span>
-                            </div>
-                        </div>
-                    </div>
+            attendance.slice().reverse().forEach(record => {
+                tbody.innerHTML += `
+                    <tr class="transition-all font-bold">
+                        <td class="py-4 px-6 flex items-center border-r-4 border-black bg-white">
+                             <img src="${record.avatar || 'https://api.dicebear.com/7.x/adventurer/svg?seed=default'}" class="w-12 h-12 border-2 border-black mr-4 clip-path-polygon(20% 0%, 80% 0%, 100% 50%, 80% 100%, 20% 100%, 0% 50%) bg-yellow-400">
+                            <span class="text-lg uppercase">${record.name}</span>
+                        </td>
+                        <td class="py-4 px-6 border-r-4 border-black bg-gray-50">
+                            <span class="px-4 py-1 text-sm font-bold border-2 border-black transform skew-x-[-10deg] inline-block ${record.role === 'Guru' ? 'bg-blue-900 text-white' : 'bg-yellow-400 text-black'}">
+                                ${record.role.toUpperCase()}
+                            </span>
+                        </td>
+                        <td class="py-4 px-6 text-black font-mono text-lg bg-white">${record.date} // ${record.time}</td>
+                    </tr>
                 `;
             });
-            
-            listElement.innerHTML = html;
         }
 
-        // Render statistics
-        function renderStatistics() {
-            const totalRegistered = participants.length;
-            const totalStudents = participants.filter(p => p.role === 'student').length;
-            const totalTeachers = participants.filter(p => p.role === 'teacher').length;
-            const totalAttendanceCount = attendanceRecords.length;
-            
-            document.getElementById('totalRegistered').textContent = totalRegistered;
-            document.getElementById('totalStudents').textContent = totalStudents;
-            document.getElementById('totalTeachers').textContent = totalTeachers;
-            document.getElementById('totalAttendance').textContent = totalAttendanceCount;
-        }
+        function updateStats() {
+            const today = new Date().toLocaleDateString();
+            const todayAttendance = attendance.filter(a => a.date === today);
+            document.getElementById('stat-count').innerText = todayAttendance.length;
 
-        // Render barcodes
-        function renderBarcodes() {
-            const container = document.getElementById('barcodeContainer');
+            const avatarsContainer = document.getElementById('today-avatars-list');
+            avatarsContainer.innerHTML = '';
             
-            if (participants.length === 0) {
-                container.innerHTML = `
-                    <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #999;">
-                        <div style="font-size: 5em; margin-bottom: 20px;">📭</div>
-                        <h3 style="font-size: 1.8em; color: var(--dark-color); margin-bottom: 15px;">Belum Ada Peserta Terdaftar</h3>
-                        <p style="font-size: 1.1em; max-width: 500px; margin: 0 auto;">
-                            Daftarkan peserta baru di tab "Registrasi" untuk membuat ID Card barcode
-                        </p>
-                    </div>
-                `;
-                return;
-            }
-            
-            let html = '';
-            participants.forEach(participant => {
-                const avatarContent = participant.avatar ? 
-                    `<img src="${participant.avatar}" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">` : 
-                    participant.avatarInitial;
-                    
-                const roleText = participant.role === 'student' ? 'Anak Sekolah Minggu' : 'Guru Sekolah Minggu';
-                const roleClass = participant.role === 'student' ? 'student' : 'teacher';
-                
-                // Generate unique barcode ID
-                const barcodeId = `barcode-${participant.id}`;
-                
-                html += `
-                    <div class="barcode-card">
-                        <div class="id-card-header">
-                            <div class="role-badge ${roleClass}">${roleText}</div>
-                            <div style="font-size: 0.85em; color: #777;">${participant.registeredAt}</div>
-                        </div>
-                        <div class="avatar-container">
-                            ${avatarContent}
-                        </div>
-                        <div class="barcode-name">${participant.name}</div>
-                        <div class="barcode-id">${participant.id}</div>
-                        <div class="barcode-image-container">
-                            <svg id="${barcodeId}" 
-                                style="width: 100%; height: 60px; margin: 0 auto;"
-                                data-barcode="${participant.id}">
-                            </svg>
-                        </div>
-                        <div style="margin-top: 15px;">
-                            <button class="btn btn-secondary" style="padding: 8px 15px; font-size: 14px;" 
-                                onclick="showQR('${participant.id}', '${participant.name}')">
-                                🔍 Scan via QR Code
-                            </button>
-                        </div>
-                    </div>
-                `;
-            });
-            
-            container.innerHTML = html;
-            
-            // Generate actual barcodes using JsBarcode
-            setTimeout(() => {
-                document.querySelectorAll('.barcode-card svg').forEach(svg => {
-                    const id = svg.getAttribute('data-barcode');
-                    try {
-                        JsBarcode(svg, id, {
-                            format: "CODE128",
-                            lineColor: "#1d3557",
-                            width: 2,
-                            height: 50,
-                            displayValue: false,
-                            margin: 5
-                        });
-                    } catch (e) {
-                        console.error('Barcode error:', e);
-                    }
+            if(todayAttendance.length > 0) {
+                const uniqueAvatars = [...new Map(todayAttendance.map(item => [item.avatar, item])).values()];
+                uniqueAvatars.slice(0, 10).forEach((record, index) => {
+                     const img = document.createElement('img');
+                     img.src = record.avatar;
+                     img.className = "picasso-avatar tooltip w-12 h-12";
+                     img.title = record.name;
+                     // Sedikit variasi rotasi untuk setiap avatar
+                     img.style.transform = `rotate(${index % 2 === 0 ? '5deg' : '-5deg'})`;
+                     avatarsContainer.appendChild(img);
                 });
-            }, 100);
-        }
-
-        // Show QR code for scanning from another device
-        function showQR(participantId, participantName) {
-            // Clear previous QR
-            document.getElementById('qrContainer').innerHTML = '';
-            
-            // Generate QR code
-            new QRCode(document.getElementById('qrContainer'), {
-                text: participantId,
-                width: 280,
-                height: 280,
-                correctLevel: QRCode.CorrectLevel.H
-            });
-            
-            // Update display
-            document.getElementById('qrIdDisplay').textContent = participantId;
-            document.querySelector('.qr-title').textContent = `Absen: ${participantName}`;
-            
-            // Show QR display
-            qrDisplay.style.display = 'flex';
-            
-            // Prevent body scroll
-            document.body.style.overflow = 'hidden';
-        }
-
-        // Close QR display
-        function closeQR() {
-            qrDisplay.style.display = 'none';
-            document.body.style.overflow = 'auto';
-        }
-
-        // Show all barcodes in print-friendly format
-        function showAllBarcodes() {
-            if (participants.length === 0) {
-                showNotification('ℹ️ Belum ada peserta terdaftar', 'warning');
-                return;
-            }
-            
-            showNotification('🖨️ Klik tombol Print di bagian bawah untuk cetak semua ID Card', 'info');
-            
-            // Scroll to barcode container
-            document.getElementById('statistics').scrollIntoView({ behavior: 'smooth' });
-        }
-
-        // Export attendance
-        function exportAttendance() {
-            // Group by date
-            const grouped = {};
-            attendanceRecords.forEach(record => {
-                const date = new Date(record.time).toLocaleDateString('id-ID');
-                if (!grouped[date]) grouped[date] = [];
-                grouped[date].push(record);
-            });
-            
-            // Create formatted data
-            const exportData = {
-                generatedAt: new Date().toISOString(),
-                church: "GKPS Tangerang",
-                department: "Sekolah Minggu",
-                totalRecords: attendanceRecords.length,
-                records: attendanceRecords,
-                summary: Object.entries(grouped).map(([date, records]) => ({
-                    date: date,
-                    total: records.length,
-                    students: records.filter(r => r.role === 'student').length,
-                    teachers: records.filter(r => r.role === 'teacher').length
-                }))
-            };
-            
-            const dataStr = JSON.stringify(exportData, null, 2);
-            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-            
-            const exportFileDefaultName = `attendance-gkps-${new Date().toISOString().slice(0,10)}.json`;
-            
-            const linkElement = document.createElement('a');
-            linkElement.setAttribute('href', dataUri);
-            linkElement.setAttribute('download', exportFileDefaultName);
-            linkElement.click();
-            
-            showNotification(`✅ Data berhasil diexport (${attendanceRecords.length} records)`, 'success');
-        }
-
-        // Clear today's attendance
-        function clearTodayAttendance() {
-            if (!confirm('⚠️ Hapus semua data absen HARI INI?\nData yang sudah dihapus tidak bisa dikembalikan.')) {
-                return;
-            }
-            
-            const today = new Date().toDateString();
-            const beforeCount = attendanceRecords.length;
-            
-            attendanceRecords = attendanceRecords.filter(r => 
-                new Date(r.time).toDateString() !== today
-            );
-            
-            localStorage.setItem('gkps_attendance', JSON.stringify(attendanceRecords));
-            
-            renderAttendanceList();
-            renderStatistics();
-            
-            showNotification(`✅ ${beforeCount - attendanceRecords.length} data absen hari ini dihapus`, 'success');
-        }
-
-        // Show notification
-        function showNotification(message, type) {
-            notification.textContent = message;
-            notification.className = 'notification ' + type;
-            notification.classList.add('show');
-            
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, type === 'error' ? 4000 : 3000);
-        }
-
-        // Handle avatar upload
-        document.getElementById('avatarInput').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    document.getElementById('avatarPreview').innerHTML = 
-                        '<img src="' + event.target.result + '" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover;">';
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-
-        // Handle back button on mobile to close QR
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && qrDisplay.style.display === 'flex') {
-                closeQR();
-            }
-        });
-
-        // Initialize the app
-        function initApp() {
-            renderStatistics();
-            renderAttendanceList();
-            renderBarcodes();
-            
-            // Welcome message on first load
-            if (participants.length === 0 && attendanceRecords.length === 0) {
-                setTimeout(() => {
-                    showNotification('👋 Selamat datang di Sistem Attendance GKPS Tangerang!', 'info');
-                }, 800);
+                if(todayAttendance.length > 10) {
+                     const more = document.createElement('span');
+                     more.className = "flex items-center justify-center w-14 h-14 bg-blue-900 text-white font-bold text-xl border-4 border-black shadow-[4px_4px_0px_var(--picasso-yellow)] picasso-title clip-path-polygon(0% 0%, 100% 0%, 100% 75%, 75% 75%, 75% 100%, 50% 75%, 0% 75%)";
+                     more.innerText = `+${todayAttendance.length - 10}`;
+                     avatarsContainer.appendChild(more);
+                }
+            } else {
+                 avatarsContainer.innerHTML = '<span class="font-bold text-lg bg-white p-2 border-2 border-black transform skew-x-[-5deg]">Area ini masih kosong dari bentuk...</span>';
             }
         }
 
-        // Start app when page loaded
-        window.addEventListener('DOMContentLoaded', initApp);
+        function renderRecentScansTable() {
+            const today = new Date().toLocaleDateString();
+            const recentTbody = document.getElementById('recent-scan-table');
+            recentTbody.innerHTML = '';
+            const todayTodays = attendance.filter(a => a.date === today).reverse().slice(0, 5);
+            if(todayTodays.length === 0) {
+                 recentTbody.innerHTML = '<tr><td class="text-black font-bold py-4 text-center bg-gray-100 border-b-4 border-black">Belum ada fragmen hari ini.</td></tr>';
+            } else {
+                todayTodays.forEach(record => {
+                    recentTbody.innerHTML += `
+                        <tr class="hover:bg-yellow-200 transition border-b-4 border-black bg-white"><td class="py-4 px-2 flex items-center"><img src="${record.avatar}" class="w-12 h-12 mr-4 border-2 border-black bg-blue-200 clip-path-polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)"><div><div class="font-bold text-black text-xl picasso-title">${record.name}</div><div class="text-sm font-bold uppercase bg-black text-white inline-block px-1 transform skew-x-[-5deg]">${record.role} // <span class="font-mono">${record.time}</span></div></div></td></tr>
+                    `;
+                });
+            }
+        }
 
-        // Make functions globally accessible
-        window.registerParticipant = registerParticipant;
-        window.startScanner = startScanner;
-        window.stopScanner = stopScanner;
-        window.exportAttendance = exportAttendance;
-        window.clearTodayAttendance = clearTodayAttendance;
-        window.showQR = showQR;
-        window.closeQR = closeQR;
-        window.showAllBarcodes = showAllBarcodes;
-        window.renderBarcodes = renderBarcodes;
+        function exportData() {
+            let csv = "SUBJEK,KATEGORI,TANGGAL,JAM\n";
+            attendance.forEach(row => { csv += `"${row.name}","${row.role}","${row.date}","${row.time}"\n`; });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', `FRAGMEN_DATA_GKPS_${new Date().toLocaleDateString().replace(/\//g, '-')}.csv`);
+            a.click();
+        }
+
+        function clearAttendance() {
+            if(confirm('PERINGATAN: TINDAKAN INI AKAN MEDEKONSTRUKSI SELURUH DATA. LANJUTKAN?')) {
+                attendance = []; localStorage.setItem('gkps_attendance', JSON.stringify(attendance)); renderAttendance(); updateStats();
+            }
+        }
+
+        // Init Landing Page
+        switchNav('home');
     </script>
 </body>
 </html>
