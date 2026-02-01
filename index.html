@@ -1,729 +1,93 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Presensi ASM-GSM GKPS Tangerang (Full Online)</title>
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        glass: 'rgba(255, 255, 255, 0.65)',
-                        glassBorder: 'rgba(255, 255, 255, 0.6)',
-                        primary: '#6366f1', 
-                    },
-                    fontFamily: {
-                        sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
-                    },
-                    animation: {
-                        'blob': 'blob 10s infinite',
-                        'float': 'float 6s ease-in-out infinite',
-                        'slide-up': 'slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
-                        'pop': 'pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                    },
-                    keyframes: {
-                        blob: {
-                            '0%': { transform: 'translate(0px, 0px) scale(1)' },
-                            '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
-                            '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
-                            '100%': { transform: 'translate(0px, 0px) scale(1)' },
-                        },
-                        float: {
-                            '0%, 100%': { transform: 'translateY(0)' },
-                            '50%': { transform: 'translateY(-10px)' },
-                        },
-                        slideUp: {
-                            'from': { opacity: 0, transform: 'translateY(40px)' },
-                            'to': { opacity: 1, transform: 'translateY(0)' },
-                        },
-                        pop: {
-                            '0%': { transform: 'scale(0.9)', opacity: 0 },
-                            '100%': { transform: 'scale(1)', opacity: 1 },
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-    
-    <!-- External Libs -->
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-    <script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js"></script>
-    
-    <!-- FIXED: Menggunakan Babel 7.21.4 secara eksplisit untuk menghindari bug .targets["esmodules"] -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.21.4/babel.min.js"></script>
-
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-        ::-webkit-scrollbar { width: 0px; background: transparent; }
-        
-        body { 
-            overscroll-behavior-y: none;
-            background-color: #f0f2f5; 
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.6);
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
-        }
-
-        .glass-card {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-        }
-
-        .glass-nav {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
-            border-top: 1px solid rgba(255, 255, 255, 0.5);
-            box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.05);
-        }
-
-        @keyframes scan-line {
-            0% { top: 10%; opacity: 0; }
-            50% { opacity: 1; }
-            100% { top: 90%; opacity: 0; }
-        }
-        .animate-scan { animation: scan-line 2.5s ease-in-out infinite; }
-
-        #reader video { 
-            object-fit: cover;
-            border-radius: 1.5rem; 
-            width: 100% !important;
-            height: 100% !important;
-        }
-
-        .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #6366f1;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        .pb-safe { padding-bottom: env(safe-area-inset-bottom, 24px); }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    </style>
-
-    <script type="importmap">
-    {
-        "imports": {
-            "react": "https://esm.sh/react@18.2.0",
-            "react-dom/client": "https://esm.sh/react-dom@18.2.0/client?deps=react@18.2.0",
-            "react-dom": "https://esm.sh/react-dom@18.2.0?deps=react@18.2.0",
-            "react-router-dom": "https://esm.sh/react-router-dom@6.22.0?deps=react@18.2.0,react-dom@18.2.0",
-            "lucide-react": "https://esm.sh/lucide-react@0.344.0?deps=react@18.2.0",
-            "recharts": "https://esm.sh/recharts@2.12.0?deps=react@18.2.0,react-dom@18.2.0",
-            "react-qr-code": "https://esm.sh/react-qr-code@2.0.12?deps=react@18.2.0",
-            "firebase/app": "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js",
-            "firebase/auth": "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js",
-            "firebase/firestore": "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js",
-            "firebase/analytics": "https://www.gstatic.com/firebasejs/10.13.1/firebase-analytics.js"
-        }
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GKPS Sekolah Minggu Manager</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    /* Artistic Global Styles */
+    body { 
+      font-family: 'Outfit', sans-serif; 
+      background-color: #f8fafc;
+      background-image: 
+        radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
+        radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%), 
+        radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
+      background-attachment: fixed;
+      background-size: cover;
+      color: #334155;
     }
-    </script>
+    
+    h1, h2, h3, h4, h5, h6 {
+      font-family: 'Quicksand', sans-serif;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.3); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.5); }
+    
+    .animate-spin { animation: spin 1s linear infinite; }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+    .glass {
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .glass-dark {
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    /* Animations from App Components */
+    .animate-blob {
+      animation: blob 7s infinite;
+    }
+    .animation-delay-2000 {
+      animation-delay: 2s;
+    }
+    .animation-delay-4000 {
+      animation-delay: 4s;
+    }
+    @keyframes blob {
+      0% { transform: translate(0px, 0px) scale(1); }
+      33% { transform: translate(30px, -50px) scale(1.1); }
+      66% { transform: translate(-20px, 20px) scale(0.9); }
+      100% { transform: translate(0px, 0px) scale(1); }
+    }
+  </style>
+<script type="importmap">
+{
+  "imports": {
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "react": "https://esm.sh/react@^19.2.4",
+    "@google/genai": "https://esm.sh/@google/genai@^1.39.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "recharts": "https://esm.sh/recharts@^3.7.0",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
+    "vite": "https://esm.sh/vite@^7.3.1",
+    "firebase/": "https://esm.sh/firebase@^12.8.0/",
+    "lucide-react": "https://esm.sh/lucide-react@^0.563.0",
+    "html5-qrcode": "https://esm.sh/html5-qrcode@^2.3.8"
+  }
+}
+</script>
 </head>
 <body>
-    <div id="root"></div>
-
-    <script type="text/babel" data-type="module" data-presets="react">
-        import React, { useState, useEffect, useRef, useMemo } from 'react';
-        import { createRoot } from 'react-dom/client';
-        import { HashRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
-        import { 
-            LayoutDashboard, QrCode, Users, BarChart3, LogOut, Church, CreditCard,
-            CheckCircle, AlertCircle, Camera, Trash2, Download, Search, Upload,
-            ChevronRight, Calendar, User, ShieldCheck, Sparkles, Zap, Plus, X, RefreshCw, BookOpen, PenTool,
-            Bell, Activity, MessageSquare, Send, Radio, TrendingUp, Briefcase, GraduationCap, Clock, FileText, CalendarDays, MapPin, Edit, BrainCircuit, Cloud, CloudOff, FileSpreadsheet, File, Lock, Key, Power, Eye, Timer, Wifi, WifiOff, Database
-        } from 'lucide-react';
-        import { BarChart, Bar, ResponsiveContainer, PieChart, Pie, Cell, Tooltip, XAxis, YAxis, CartesianGrid } from 'recharts';
-        import QRCode from 'react-qr-code';
-        
-        // --- FIREBASE SETUP ---
-        import { initializeApp } from "firebase/app";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
-        import { getFirestore, collection, getDocs, setDoc, doc, deleteDoc, onSnapshot, query, orderBy } from "firebase/firestore";
-
-        // --- KONFIGURASI (GANTI MILIK ANDA) ---
-        const firebaseConfig = {
-            apiKey: "AIzaSyDDtjCJO09qP3kwOcoctObU-qOg-GTnrTE", 
-            authDomain: "sundayschoolattendance-58661.firebaseapp.com", 
-            projectId: "sundayschoolattendance-58661",
-            storageBucket: "sundayschoolattendance-58661.firebasestorage.app",
-            messagingSenderId: "1055300658311", 
-            appId: "1:1055300658311:web:2db2708b0c8bfa5aa54422",
-            measurementId: "G-PCB8J7RRHJ"
-        };
-
-        // Init
-        let app, auth, db;
-        try {
-            app = initializeApp(firebaseConfig);
-            auth = getAuth(app); 
-            db = getFirestore(app);
-        } catch(e) { console.error("FB Error", e); }
-        
-        const APP_ID = 'gkps_prod_v5'; // Unique Room ID
-
-        // Refs
-        const getCol = (name) => collection(db, 'artifacts', APP_ID, 'public', 'data', name);
-        const getDoc = (name, id) => doc(db, 'artifacts', APP_ID, 'public', 'data', name, String(id));
-
-        // Timezone
-        const getLocalDate = () => {
-            const now = new Date();
-            const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-            const wib = new Date(utc + (7 * 3600000));
-            return wib.toISOString().split('T')[0];
-        };
-
-        // --- DB ACTIONS (WRITE ONLY - Reads via Listeners) ---
-        const DB = {
-            save: async (col, data) => {
-                if(!auth.currentUser) return alert("Offline!");
-                await setDoc(getDoc(col, data.id), data);
-            },
-            del: async (col, id) => {
-                if(!auth.currentUser) return alert("Offline!");
-                await deleteDoc(getDoc(col, id));
-            },
-            log: (user, action) => {
-                const id = Date.now().toString();
-                DB.save('activities', { id, user, action, timestamp: new Date().toISOString() });
-            }
-        };
-
-        // --- CONSTANTS ---
-        const DEFAULT_USERS = [
-            { id: '1', name: 'Admin Utama', role: 'ADMIN', qrCode: 'ADMIN-001', gender: 'Laki-Laki', pin: 'admin123', isActive: true, lastLogin: new Date().toISOString() },
-            { id: '2', name: 'Guru Sekolah Minggu', role: 'TEACHER', className: 'Kelas Daud', qrCode: 'GURU-001', gender: 'Perempuan', pin: '123456', isActive: true },
-            { id: '3', name: 'Timothy Simanjuntak', role: 'STUDENT', className: 'Kelas Daud', qrCode: 'S-001', gender: 'Laki-Laki', pin: '123456', isActive: true },
-        ];
-        const CLASSES = [
-            { id: 'c1', name: 'Kelas Daud', desc: '4-6 Thn' }, { id: 'c2', name: 'Kelas Daniel', desc: '7-9 Thn' },
-            { id: 'c3', name: 'Kelas Paulus', desc: '10-12 Thn' }, { id: 'c4', name: 'Kelas Ester', desc: '13+ Thn' }
-        ];
-        const MOCK_VERSES = ["Amsal 1:7 - Takut akan Tuhan", "Yohanes 3:16 - Kasih Allah", "Filipi 4:13 - Kekuatan Kristus"];
-
-        // --- COMPONENTS ---
-        const Loading = () => <div className="min-h-screen flex items-center justify-center bg-slate-50"><div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div></div>;
-        
-        const Avatar = ({ name, size='md' }) => {
-            const s = size==='lg'?'w-16 h-16':size==='xl'?'w-24 h-24':'w-10 h-10';
-            return (
-                <div className={`${s} rounded-full bg-indigo-100 flex items-center justify-center overflow-hidden border-2 border-white shadow-sm`}>
-                    <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${name}`} className="w-full h-full" onError={(e)=>e.target.src=`https://api.dicebear.com/7.x/initials/svg?seed=${name}`} />
-                </div>
-            );
-        };
-
-        const GeminiService = {
-            call: async (prompt) => {
-                const k = ""; // API Key
-                try {
-                    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${k}`, {
-                        method: 'POST', headers: {'Content-Type':'application/json'},
-                        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json" } })
-                    });
-                    const d = await res.json();
-                    return JSON.parse(d.candidates[0].content.parts[0].text);
-                } catch(e) { console.error(e); return null; }
-            }
-        };
-
-        // --- SCREENS ---
-
-        const LoginScreen = ({ onLogin }) => {
-            const [users, setUsers] = useState([]);
-            const [sel, setSel] = useState('');
-            const [pw, setPw] = useState('');
-            const [mode, setMode] = useState('TEACHER');
-            const [status, setStatus] = useState('Connecting...');
-
-            useEffect(() => {
-                if(!db) return;
-                const unsub = onSnapshot(getCol('users'), (snap) => {
-                    const data = snap.docs.map(d => d.data());
-                    if(data.length > 0) { setUsers(data); setStatus('Online'); }
-                    else { 
-                        // Seed default
-                        DEFAULT_USERS.forEach(u => DB.save('users', u)); 
-                        setUsers(DEFAULT_USERS); 
-                    }
-                });
-                return () => unsub();
-            }, []);
-
-            const handleSubmit = (e) => {
-                e.preventDefault();
-                if(mode === 'ADMIN') {
-                    if(pw === 'admin123') onLogin({ id: 'admin', name: 'Administrator', role: 'ADMIN' });
-                    else alert('Password Salah');
-                } else {
-                    const u = users.find(x => x.id === sel);
-                    if(u && u.pin === pw) onLogin(u);
-                    else alert('Login Gagal');
-                }
-            };
-
-            return (
-                <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6 relative overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 to-pink-50 -z-10"></div>
-                    <div className="bg-white/80 backdrop-blur-xl p-8 rounded-3xl w-full max-w-sm shadow-2xl border border-white">
-                        <div className="text-center mb-8">
-                            <div className="w-16 h-16 bg-indigo-600 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-lg text-white"><Church size={32}/></div>
-                            <h1 className="text-2xl font-black text-slate-800">Presensi GKPS</h1>
-                            <p className={`text-xs font-bold mt-2 ${status==='Online'?'text-emerald-600':'text-amber-600'}`}>Status: {status}</p>
-                        </div>
-                        
-                        <div className="flex bg-slate-100 p-1 rounded-xl mb-6">
-                            {['TEACHER', 'STUDENT', 'ADMIN'].map(m => (
-                                <button key={m} onClick={()=>{setMode(m); setSel(''); setPw('');}} 
-                                    className={`flex-1 py-2 text-[10px] font-bold rounded-lg transition-all ${mode===m ? 'bg-white shadow text-indigo-600' : 'text-slate-400'}`}>
-                                    {m}
-                                </button>
-                            ))}
-                        </div>
-
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            {mode !== 'ADMIN' ? (
-                                <select value={sel} onChange={e=>setSel(e.target.value)} className="w-full p-4 rounded-xl bg-slate-50 border border-slate-200 outline-none font-bold text-slate-700">
-                                    <option value="">Pilih Nama...</option>
-                                    {users.filter(u => u.role === mode && u.isActive !== false).map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
-                                </select>
-                            ) : null}
-                            <input type="password" value={pw} onChange={e=>setPw(e.target.value)} placeholder={mode==='ADMIN'?'Pass Admin':'PIN (Default: 123456)'} className="w-full p-4 rounded-xl bg-slate-50 border border-slate-200 outline-none font-bold" />
-                            <button className="w-full py-4 bg-indigo-600 text-white rounded-xl font-bold shadow-lg hover:bg-indigo-700 transition-all">Masuk</button>
-                        </form>
-                    </div>
-                </div>
-            );
-        };
-
-        const Dashboard = ({ user }) => {
-            const [att, setAtt] = useState([]);
-            const [date, setDate] = useState(getLocalDate());
-            const [users, setUsers] = useState([]);
-            const [acts, setActs] = useState([]);
-            const [isMatOpen, setMatOpen] = useState(false);
-            
-            // REALTIME SYNC
-            useEffect(() => {
-                const unsubAtt = onSnapshot(getCol('attendance'), snap => {
-                    const d = snap.docs.map(x => x.data());
-                    setAtt(d.filter(r => r.date === date));
-                });
-                const unsubUsers = onSnapshot(getCol('users'), snap => setUsers(snap.docs.map(x => x.data())));
-                const unsubActs = onSnapshot(query(getCol('activities'), orderBy('timestamp', 'desc')), snap => setActs(snap.docs.map(x => x.data()).slice(0,20)));
-                
-                return () => { unsubAtt(); unsubUsers(); unsubActs(); };
-            }, [date]);
-
-            const stats = useMemo(() => {
-                const g = {};
-                att.filter(a=>a.role==='STUDENT').forEach(a => g[a.className] = (g[a.className]||0)+1);
-                return Object.entries(g).map(([k,v]) => ({name:k, value:v}));
-            }, [att]);
-
-            const handleExport = () => {
-                const ws = XLSX.utils.json_to_sheet(att);
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "Data");
-                XLSX.writeFile(wb, `Presensi_${date}.xlsx`);
-            };
-
-            return (
-                <div className="p-6 pb-24 animate-slide-up">
-                    <div className="flex justify-between items-center mb-8">
-                        <div>
-                            <h2 className="text-2xl font-black text-slate-800">Dashboard</h2>
-                            <p className="text-xs text-slate-500 font-bold">{user.role === 'ADMIN' ? 'Administrator' : `Guru ${user.className || ''}`}</p>
-                        </div>
-                        <input type="date" value={date} onChange={e=>setDate(e.target.value)} className="bg-white p-2 rounded-xl shadow-sm font-bold text-slate-600 text-sm border-none outline-none"/>
-                    </div>
-
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                        <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100">
-                            <p className="text-slate-400 text-[10px] font-bold uppercase">Total Hadir</p>
-                            <h3 className="text-3xl font-black text-indigo-600">{att.length}</h3>
-                        </div>
-                        <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100">
-                            <p className="text-slate-400 text-[10px] font-bold uppercase">Siswa Terdaftar</p>
-                            <h3 className="text-3xl font-black text-slate-800">{users.filter(u=>u.role==='STUDENT').length}</h3>
-                        </div>
-                    </div>
-
-                    <div className="grid lg:grid-cols-3 gap-6 mb-6">
-                        <div className="lg:col-span-2 bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-                            <div className="flex justify-between mb-4">
-                                <h3 className="font-bold text-slate-700">Grafik Kehadiran</h3>
-                                <button onClick={handleExport} className="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-lg font-bold flex items-center gap-1"><FileSpreadsheet size={12}/> Excel</button>
-                            </div>
-                            <div className="h-64">
-                                <ResponsiveContainer>
-                                    <BarChart data={stats}>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                        <XAxis dataKey="name" axisLine={false} tickLine={false} fontSize={10} />
-                                        <Tooltip cursor={{fill: '#f8fafc'}} />
-                                        <Bar dataKey="value" fill="#6366f1" radius={[4,4,0,0]} barSize={40} />
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </div>
-                        
-                        <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 h-[350px] overflow-y-auto">
-                            <h3 className="font-bold text-slate-700 mb-4 sticky top-0 bg-white">Log Aktivitas</h3>
-                            <div className="space-y-4">
-                                {acts.map(a => (
-                                    <div key={a.id} className="flex gap-3 text-xs border-l-2 border-slate-100 pl-3">
-                                        <div>
-                                            <p className="font-bold text-slate-800">{a.user}</p>
-                                            <p className="text-slate-500">{a.action}</p>
-                                            <span className="text-[10px] text-indigo-400">{new Date(a.timestamp).toLocaleTimeString()}</span>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-                        <h3 className="font-bold text-slate-700 mb-4">List Kehadiran</h3>
-                        <div className="grid gap-3">
-                            {att.map(a => (
-                                <div key={a.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl">
-                                    <div className="flex items-center gap-3">
-                                        <Avatar name={a.userName} size="sm"/>
-                                        <div>
-                                            <p className="font-bold text-sm text-slate-800">{a.userName}</p>
-                                            <p className="text-[10px] font-bold text-slate-500 bg-white px-2 py-0.5 rounded-md inline-block mt-1">{a.className}</p>
-                                        </div>
-                                    </div>
-                                    <span className="text-xs font-bold text-indigo-600">{new Date(a.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
-                                </div>
-                            ))}
-                            {att.length === 0 && <p className="text-center text-slate-400 py-4 text-sm">Belum ada data masuk.</p>}
-                        </div>
-                    </div>
-                    
-                    {user.role === 'TEACHER' && (
-                        <div className="fixed bottom-24 right-6">
-                            <button onClick={()=>setMatOpen(true)} className="bg-indigo-600 text-white p-4 rounded-full shadow-xl hover:scale-110 transition-transform"><BookOpen/></button>
-                        </div>
-                    )}
-                    {isMatOpen && <MaterialModal user={user} onClose={()=>setMatOpen(false)} />}
-                </div>
-            );
-        };
-
-        const StudentDashboard = ({ user }) => {
-            const [history, setHistory] = useState([]);
-            const [materials, setMaterials] = useState([]);
-            
-            useEffect(() => {
-                const unsub1 = onSnapshot(getCol('attendance'), s => setHistory(s.docs.map(d=>d.data()).filter(x=>x.userId===user.id)));
-                const unsub2 = onSnapshot(getCol('materials'), s => setMaterials(s.docs.map(d=>d.data()).filter(x=>x.className===user.className)));
-                return () => { unsub1(); unsub2(); };
-            }, [user]);
-
-            return (
-                <div className="p-6 pb-32">
-                    <div className="mb-8">
-                        <h2 className="text-xl font-bold text-slate-800">Halo, {user.name.split(' ')[0]}! 👋</h2>
-                    </div>
-                    
-                    {/* DIGITAL CARD */}
-                    <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-[2rem] p-6 text-white shadow-xl shadow-indigo-200 mb-8 relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-3 opacity-20"><CreditCard size={100}/></div>
-                        <div className="relative z-10 text-center">
-                            <div className="w-20 h-20 bg-white rounded-full mx-auto mb-3 p-1">
-                                <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`} className="w-full h-full rounded-full"/>
-                            </div>
-                            <h2 className="font-bold text-lg">{user.name}</h2>
-                            <p className="text-xs opacity-80 mb-4">{user.className}</p>
-                            <div className="bg-white p-2 rounded-xl inline-block">
-                                <QRCode value={user.qrCode} size={100} />
-                            </div>
-                            <p className="mt-2 text-[10px] font-mono opacity-70">{user.qrCode}</p>
-                        </div>
-                    </div>
-
-                    <div className="space-y-6">
-                        <div>
-                            <h3 className="font-bold text-slate-700 mb-3">Materi Terbaru</h3>
-                            {materials.length===0 ? <p className="text-xs text-slate-400">Belum ada materi.</p> : materials.map(m => (
-                                <div key={m.id} className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 mb-2">
-                                    <h4 className="font-bold text-indigo-600 text-sm">{m.theme}</h4>
-                                    <p className="text-xs text-slate-600 mt-1 italic">"{m.verse}"</p>
-                                </div>
-                            ))}
-                        </div>
-                        <div>
-                            <h3 className="font-bold text-slate-700 mb-3">Riwayat Kehadiran</h3>
-                            {history.length===0 ? <p className="text-xs text-slate-400">Belum ada riwayat.</p> : history.map(h => (
-                                <div key={h.id} className="flex justify-between items-center bg-white p-3 rounded-xl border border-slate-50 mb-2">
-                                    <span className="text-xs font-bold text-slate-600">{new Date(h.date).toLocaleDateString()}</span>
-                                    <span className="text-[10px] bg-green-100 text-green-700 px-2 py-1 rounded-md font-bold">Hadir</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
-        const Scanner = ({ user }) => {
-            const [users, setUsers] = useState([]);
-            const [msg, setMsg] = useState({ type:'', text:'' });
-            
-            useEffect(() => {
-                const unsub = onSnapshot(getCol('users'), s => setUsers(s.docs.map(d=>d.data())));
-                const scanner = new Html5Qrcode("reader");
-                scanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, async (code) => {
-                    scanner.pause();
-                    const u = users.find(x => x.qrCode === code);
-                    
-                    if(!u) setMsg({type:'err', text:'User Tidak Dikenal'});
-                    else if(user.role === 'TEACHER' && u.className !== user.className && u.role === 'STUDENT') {
-                        setMsg({type:'err', text:'Siswa Salah Kelas!'});
-                    } else {
-                        const id = Date.now().toString();
-                        const record = {
-                            id, userId: u.id, userName: u.name, className: u.className||'-', role: u.role,
-                            date: getLocalDate(), timestamp: new Date().toISOString()
-                        };
-                        // Cek Duplikat di Server nanti (security rule), disini cek simple
-                        // Kita langsung push, kalau offline nanti di queue
-                        await DB.save('attendance', record);
-                        DB.log(user.name, `Scan ${u.name}`);
-                        setMsg({type:'ok', text:`Berhasil: ${u.name}`});
-                    }
-                    setTimeout(() => { setMsg({type:'', text:''}); scanner.resume(); }, 2000);
-                }).catch(()=>{}); // Ignore init errors
-                return () => unsub();
-            }, [users]);
-
-            return (
-                <div className="p-6 h-full flex flex-col items-center justify-center">
-                    <h2 className="text-xl font-bold mb-6 text-slate-800">Scan QR Code</h2>
-                    <div className="w-full max-w-sm aspect-square bg-black rounded-3xl overflow-hidden relative shadow-2xl">
-                        <div id="reader" className="w-full h-full object-cover"></div>
-                        {msg.text && (
-                            <div className={`absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm z-50`}>
-                                <div className="text-center p-6 bg-white rounded-3xl animate-pop">
-                                    <h3 className={`text-xl font-bold mb-1 ${msg.type==='ok'?'text-green-600':'text-red-600'}`}>{msg.type==='ok'?'SUKSES':'GAGAL'}</h3>
-                                    <p className="font-bold text-slate-700 text-sm">{msg.text}</p>
-                                </div>
-                            </div>
-                        )}
-                        <div className="absolute inset-0 border-4 border-white/30 rounded-3xl pointer-events-none"></div>
-                        <div className="absolute top-1/2 left-4 right-4 h-0.5 bg-red-500 shadow-[0_0_10px_red] animate-scan"></div>
-                    </div>
-                    <p className="mt-4 text-xs text-slate-400">Arahkan kamera ke QR Code Kartu</p>
-                </div>
-            );
-        };
-
-        const UserManagement = () => {
-            const [users, setUsers] = useState([]);
-            const [form, setForm] = useState({ name:'', role:'STUDENT', className:'Kelas Daud', gender:'Laki-Laki', pin:'123456' });
-            const [isEdit, setIsEdit] = useState(false);
-            const [search, setSearch] = useState('');
-
-            useEffect(() => {
-                const unsub = onSnapshot(getCol('users'), s => setUsers(s.docs.map(d=>d.data())));
-                return () => unsub();
-            }, []);
-
-            const save = () => {
-                if(!form.name) return;
-                const id = isEdit ? form.id : Date.now().toString();
-                const data = { ...form, id, qrCode: isEdit ? form.qrCode : `U-${Date.now()}` };
-                DB.save('users', data);
-                setForm({ name:'', role:'STUDENT', className:'Kelas Daud', gender:'Laki-Laki', pin:'123456' });
-                setIsEdit(false);
-            };
-
-            const handleCSV = (e) => {
-                const f = e.target.files[0];
-                if(!f) return;
-                const r = new FileReader();
-                r.onload = (ev) => {
-                    const lines = ev.target.result.split('\n');
-                    let c=0;
-                    lines.forEach(l => {
-                        const [n, r, cl, g] = l.split(',');
-                        if(n) {
-                            const id = Date.now().toString()+c;
-                            DB.save('users', { id, name:n.trim(), role:r.trim().toUpperCase(), className:cl?.trim()||'-', gender:g?.trim()||'Laki-Laki', pin:'123456', qrCode:`CSV-${id}` });
-                            c++;
-                        }
-                    });
-                    setUsers(DB.get(STORAGE.USERS));
-                    alert(`Import ${c} users success`);
-                };
-                r.readAsText(f);
-            };
-
-            const filtered = users.filter(u => u.name.toLowerCase().includes(search.toLowerCase()));
-
-            return (
-                <div className="p-6 pb-24">
-                    <div className="flex justify-between mb-6">
-                        <h2 className="text-2xl font-bold text-slate-800">Users</h2>
-                        <div className="flex gap-2">
-                            <label className="bg-green-100 text-green-700 p-2 rounded-xl cursor-pointer"><Upload size={20}/><input type="file" className="hidden" onChange={handleCSV}/></label>
-                        </div>
-                    </div>
-
-                    <div className="bg-white p-4 rounded-2xl shadow-sm mb-6 border border-slate-100">
-                        <h3 className="font-bold text-sm mb-3">{isEdit ? 'Edit User' : 'Tambah User'}</h3>
-                        <div className="grid gap-3">
-                            <input value={form.name} onChange={e=>setForm({...form, name:e.target.value})} placeholder="Nama Lengkap" className="p-3 bg-slate-50 rounded-xl text-sm font-bold"/>
-                            <div className="grid grid-cols-2 gap-2">
-                                <select value={form.role} onChange={e=>setForm({...form, role:e.target.value})} className="p-3 bg-slate-50 rounded-xl text-sm font-bold">
-                                    <option value="STUDENT">Siswa</option><option value="TEACHER">Guru</option><option value="ADMIN">Admin</option>
-                                </select>
-                                <select value={form.className} onChange={e=>setForm({...form, className:e.target.value})} className="p-3 bg-slate-50 rounded-xl text-sm font-bold">
-                                    {CLASSES.map(c=><option key={c.id} value={c.name}>{c.name}</option>)}
-                                </select>
-                            </div>
-                            <Button onClick={save}>{isEdit ? 'Update' : 'Simpan'}</Button>
-                        </div>
-                    </div>
-
-                    <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Cari user..." className="w-full p-3 rounded-2xl bg-white mb-4 shadow-sm"/>
-                    
-                    <div className="grid gap-3">
-                        {filtered.map(u => (
-                            <div key={u.id} className="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-50">
-                                <div className="flex items-center gap-3">
-                                    <Avatar name={u.name} size="sm"/>
-                                    <div><p className="font-bold text-sm">{u.name}</p><p className="text-xs text-slate-400">{u.role} • {u.className}</p></div>
-                                </div>
-                                <div className="flex gap-1">
-                                    <button onClick={()=>{setForm(u); setIsEdit(true);}} className="p-2 bg-blue-50 text-blue-500 rounded-lg"><Edit size={16}/></button>
-                                    <button onClick={()=>{if(confirm('Hapus?')) DB.del('users', u.id)}} className="p-2 bg-red-50 text-red-500 rounded-lg"><Trash2 size={16}/></button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            );
-        };
-
-        const MaterialModal = ({ user, onClose }) => {
-            const [data, setData] = useState({ theme:'', verse:'' });
-            const [ai, setAi] = useState('');
-            const [load, setLoad] = useState(false);
-
-            const gen = async () => {
-                setLoad(true);
-                const res = await GeminiService.call(`Buat materi sekolah minggu anak SD topik "${ai}". Output JSON: {theme, verse}`);
-                if(res) setData(res);
-                setLoad(false);
-            };
-
-            const save = () => {
-                DB.save('materials', { id:Date.now().toString(), ...data, className: user.className, createdAt: new Date().toISOString() });
-                onClose();
-            };
-
-            return (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-                    <div className="bg-white w-full max-w-sm rounded-3xl p-6 animate-pop">
-                        <div className="flex justify-between mb-4">
-                            <h3 className="font-bold text-lg">Materi {user.className}</h3>
-                            <button onClick={onClose}><X/></button>
-                        </div>
-                        <div className="bg-indigo-50 p-3 rounded-xl mb-4">
-                            <p className="text-xs font-bold text-indigo-500 mb-1 flex items-center gap-1"><Sparkles size={12}/> AI Generator</p>
-                            <div className="flex gap-2">
-                                <input value={ai} onChange={e=>setAi(e.target.value)} placeholder="Topik (misal: Kasih)" className="flex-1 p-2 rounded-lg text-sm"/>
-                                <button onClick={gen} className="bg-indigo-500 text-white p-2 rounded-lg">{load ? '...' : <Zap size={16}/>}</button>
-                            </div>
-                        </div>
-                        <input value={data.theme} onChange={e=>setData({...data, theme:e.target.value})} placeholder="Tema" className="w-full p-3 border rounded-xl mb-2 text-sm font-bold"/>
-                        <textarea value={data.verse} onChange={e=>setData({...data, verse:e.target.value})} placeholder="Ayat" className="w-full p-3 border rounded-xl mb-4 text-sm" rows="3"></textarea>
-                        <Button onClick={save}>Bagikan Materi</Button>
-                    </div>
-                </div>
-            );
-        };
-
-        // --- MAIN APP SHELL ---
-        const MainApp = ({ user, logout }) => {
-            const nav = useNavigate();
-            const loc = useLocation();
-            
-            const menus = [
-                { path:'/', icon:LayoutDashboard, roles:['ADMIN','TEACHER'] },
-                { path:'/', icon:CreditCard, roles:['STUDENT'] },
-                { path:'/scan', icon:QrCode, roles:['ADMIN','TEACHER'] },
-                { path:'/users', icon:Users, roles:['ADMIN'] }
-            ];
-
-            return (
-                <div className="max-w-md mx-auto h-screen bg-slate-50 relative shadow-2xl flex flex-col">
-                    <div className="flex-1 overflow-y-auto no-scrollbar">
-                        <Routes>
-                            <Route path="/" element={user.role==='STUDENT' ? <StudentDashboard user={user}/> : <Dashboard user={user}/>} />
-                            <Route path="/scan" element={<Scanner user={user}/>} />
-                            <Route path="/users" element={<UserManagement/>} />
-                        </Routes>
-                    </div>
-                    {/* Bottom Nav */}
-                    <div className="absolute bottom-6 left-6 right-6 bg-white/90 backdrop-blur-md rounded-2xl p-2 shadow-xl flex justify-between items-center border border-white/50">
-                        {menus.filter(m=>m.roles.includes(user.role)).map((m,i) => {
-                            const active = loc.pathname === m.path;
-                            return (
-                                <button key={i} onClick={()=>nav(m.path)} className={`p-3 rounded-xl transition-all ${active ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200' : 'text-slate-400 hover:bg-slate-100'}`}>
-                                    <m.icon size={24} strokeWidth={active?2.5:2} />
-                                </button>
-                            )
-                        })}
-                        <button onClick={logout} className="p-3 text-red-400 hover:bg-red-50 rounded-xl"><LogOut size={24}/></button>
-                    </div>
-                </div>
-            );
-        };
-
-        const App = () => {
-            const [user, setUser] = useState(null);
-            const [load, setLoad] = useState(true);
-
-            useEffect(() => {
-                const init = async () => {
-                    await signInAnonymously(auth); // Must Login to Read/Write
-                    setLoad(false);
-                };
-                init();
-            }, []);
-
-            if(load) return <Loading />;
-            if(!user) return <LoginScreen onLogin={setUser} />;
-            return <HashRouter><MainApp user={user} logout={()=>setUser(null)} /></HashRouter>;
-        };
-
-        const root = createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
+  <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
 </body>
 </html>
