@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Presensi ASM-GSM GKPS Tangerang (Online)</title>
+    <title>Presensi ASM-GSM GKPS Tangerang (Online Mode)</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -131,6 +131,7 @@
             "recharts": "https://esm.sh/recharts@2.12.0?deps=react@18.2.0,react-dom@18.2.0",
             "react-qr-code": "https://esm.sh/react-qr-code@2.0.12?deps=react@18.2.0",
             "firebase/app": "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js",
+            "firebase/auth": "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js",
             "firebase/firestore": "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js",
             "firebase/analytics": "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js"
         }
@@ -148,7 +149,7 @@
             LayoutDashboard, QrCode, Users, BarChart3, LogOut, Church, CreditCard,
             CheckCircle, AlertCircle, Camera, Trash2, Download, Search, Upload,
             ChevronRight, Calendar, User, ShieldCheck, Sparkles, Zap, Plus, X, RefreshCw, BookOpen, PenTool,
-            Bell, Activity, MessageSquare, Send, Radio, TrendingUp, Briefcase, GraduationCap, Clock, FileText, CalendarDays, MapPin, Edit, BrainCircuit, Cloud, CloudOff, FileSpreadsheet, File
+            Bell, Activity, MessageSquare, Send, Radio, TrendingUp, Briefcase, GraduationCap, Clock, FileText, CalendarDays, MapPin, Edit, BrainCircuit, Cloud, CloudOff, FileSpreadsheet, File, Lock, Key, Power, Eye, Timer
         } from 'lucide-react';
         import { BarChart, Bar, ResponsiveContainer, PieChart, Pie, Cell, Tooltip, XAxis, YAxis, CartesianGrid } from 'recharts';
         import QRCode from 'react-qr-code';
@@ -156,25 +157,56 @@
         // --- FIREBASE INTEGRATION ---
         import { initializeApp } from "firebase/app";
         import { getAnalytics } from "firebase/analytics";
-        import { getFirestore, collection, getDocs, setDoc, doc, addDoc, updateDoc, deleteDoc } from "firebase/firestore";
+        import { getAuth, signInAnonymously } from "firebase/auth";
+        import { getFirestore, collection, getDocs, setDoc, doc, deleteDoc, onSnapshot } from "firebase/firestore";
 
+        // --- KONFIGURASI DATABASE (ONLINE) ---
+        // PENTING: Ganti konfigurasi di bawah ini dengan milik Anda sendiri dari Firebase Console.
         const firebaseConfig = {
-            apiKey: "AIzaSyDDtjCJO09qP3kwOcoctObU-qOg-GTnrTE",
-            authDomain: "sundayschoolattendance-58661.firebaseapp.com",
-            databaseURL: "https://sundayschoolattendance-58661-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "sundayschoolattendance-58661",
-            storageBucket: "sundayschoolattendance-58661.firebasestorage.app",
-            messagingSenderId: "1055300658311",
-            appId: "1:1055300658311:web:2db2708b0c8bfa5aa54422",
-            measurementId: "G-PCB8J7RRHJ"
+            
+  apiKey: "AIzaSyBQ-MyLw4_HfYtxMND-9fnCQheGsLlSNMk",
+  authDomain: "gkps-presensi.firebaseapp.com",
+  projectId: "gkps-presensi",
+  storageBucket: "gkps-presensi.firebasestorage.app",
+  messagingSenderId: "733824830232",
+  appId: "1:733824830232:web:40fac80695bc0daf31ec6d",
+  measurementId: "G-99SXQPD3B6"
         };
 
         const app = initializeApp(firebaseConfig);
         const analytics = getAnalytics(app);
+        const auth = getAuth(app); 
         const db = getFirestore(app);
+        
+        // --- APP ID FOR PATHING (FIXED) ---
+        const appId = 'gkps-tangerang-v3-prod';
+
+        // Helper untuk mendapatkan referensi koleksi di path yang benar
+        const getCollectionRef = (colName) => {
+            return collection(db, 'artifacts', appId, 'public', 'data', colName);
+        };
+
+        // Helper untuk mendapatkan referensi dokumen di path yang benar
+        const getDocRef = (colName, docId) => {
+            return doc(db, 'artifacts', appId, 'public', 'data', colName, String(docId));
+        };
+
+        // --- TIMEZONE FIX HELPER ---
+        const getLocalDate = () => {
+            const now = new Date();
+            const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+            const wibTime = new Date(utc + (7 * 3600000));
+            
+            const year = wibTime.getFullYear();
+            const month = String(wibTime.getMonth() + 1).padStart(2, '0');
+            const day = String(wibTime.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
 
         // --- FIREBASE HELPERS ---
         const syncFromFirestore = async () => {
+            if (!auth.currentUser) return false; 
+            
             const collections = [
                 { name: 'users', key: 'gkps_users_v3' },
                 { name: 'attendance', key: 'gkps_att_v3' },
@@ -183,37 +215,46 @@
                 { name: 'activities', key: 'gkps_act_v3' },
                 { name: 'notifications', key: 'gkps_notif_v3' }
             ];
-            let hasData = false;
+            let totalDocs = 0; 
             try {
                 for (const col of collections) {
-                    const querySnapshot = await getDocs(collection(db, col.name));
+                    const querySnapshot = await getDocs(getCollectionRef(col.name));
                     const data = [];
                     querySnapshot.forEach((doc) => {
                         data.push(doc.data());
                     });
+                    
                     if (data.length > 0) {
                         localStorage.setItem(col.key, JSON.stringify(data));
-                        hasData = true;
+                        totalDocs += data.length;
                     }
                 }
-                console.log("Sync complete from Firestore");
+                console.log(`Sync complete. Fetched ${totalDocs} documents.`);
+                return totalDocs; 
             } catch (e) {
                 console.error("Gagal sinkronisasi data:", e);
+                return -1; 
             }
-            return hasData;
         };
 
         const pushToFirestore = async (collectionName, data, id) => {
             try {
-                await setDoc(doc(db, collectionName, String(id)), data);
+                if (auth.currentUser) {
+                    await setDoc(getDocRef(collectionName, id), data);
+                    console.log(`Berhasil simpan ke ${collectionName}:`, id);
+                } else {
+                    console.warn("Offline: Data disimpan lokal saja.");
+                }
             } catch (e) {
-                console.error("Gagal push ke Firestore:", e);
+                console.error(`Gagal push ke Firestore (${collectionName}):`, e);
             }
         };
 
         const deleteFromFirestore = async (collectionName, id) => {
             try {
-                await deleteDoc(doc(db, collectionName, String(id)));
+                if (auth.currentUser) {
+                    await deleteDoc(getDocRef(collectionName, id));
+                }
             } catch (e) {
                 console.error("Gagal hapus di Firestore:", e);
             }
@@ -227,7 +268,6 @@
             "Yeremia 29:11 - Sebab Aku ini mengetahui rancangan-rancangan apa yang ada pada-Ku mengenai kamu."
         ];
         
-        // --- DAFTAR AVATAR KHUSUS ---
         const ML_HEROES = [
             "Alucard", "Miya", "Layla", "Zilong", "Tigreal", "Nana", "Eudora", "Gord",
             "Saber", "Balmond", "Akai", "Franco", "Chou", "Gusion", "Fanny", "Lesley"
@@ -243,17 +283,18 @@
             USERS: 'gkps_users_v3', 
             ATTENDANCE: 'gkps_att_v3', 
             CLASSES: 'gkps_cls_v3', 
-            SESSION: 'gkps_sess_v3',
+            SESSION: 'gkps_sess_v3', 
             MATERIALS: 'gkps_mat_v3',
             ACTIVITIES: 'gkps_act_v3', 
-            NOTIFICATIONS: 'gkps_notif_v3',
+            NOTIFICATIONS: 'gkps_notif_v3', 
             SCHEDULES: 'gkps_sched_v3' 
         };
+        
         const DEFAULT_USERS = [
-            { id: '1', name: 'Admin Utama', role: 'ADMIN', qrCode: 'ADMIN-001', gender: 'Laki-Laki', pin: 'admin123' },
-            { id: '2', name: 'Guru Sekolah Minggu', role: 'TEACHER', className: 'Kelas Daud', qrCode: 'GURU-001', gender: 'Perempuan', pin: '123456' },
-            { id: '3', name: 'Timothy Simanjuntak', role: 'STUDENT', className: 'Kelas Daud', qrCode: 'S-001', gender: 'Laki-Laki', pin: '123456' },
-            { id: '4', name: 'Sarah Damanik', role: 'STUDENT', className: 'Kelas Ester', qrCode: 'S-002', gender: 'Perempuan', pin: '123456' },
+            { id: '1', name: 'Admin Utama', role: 'ADMIN', qrCode: 'ADMIN-001', gender: 'Laki-Laki', pin: 'admin123', isActive: true, lastLogin: new Date().toISOString() },
+            { id: '2', name: 'Guru Sekolah Minggu', role: 'TEACHER', className: 'Kelas Daud', qrCode: 'GURU-001', gender: 'Perempuan', pin: '123456', isActive: true },
+            { id: '3', name: 'Timothy Simanjuntak', role: 'STUDENT', className: 'Kelas Daud', qrCode: 'S-001', gender: 'Laki-Laki', pin: '123456', isActive: true },
+            { id: '4', name: 'Sarah Damanik', role: 'STUDENT', className: 'Kelas Ester', qrCode: 'S-002', gender: 'Perempuan', pin: '123456', isActive: true },
         ];
         const DEFAULT_CLASSES = [
             { id: 'c1', name: 'Kelas Daud', desc: '4-6 Tahun' },
@@ -262,14 +303,14 @@
             { id: 'c4', name: 'Kelas Ester', desc: '13+ Tahun' }
         ];
         const DEFAULT_SCHEDULES = [
-            { id: 's1', className: 'Kelas Daud', date: '2025-01-26', time: '08:00 - 09:30', activity: 'Ibadah Minggu', theme: 'Tuhan Yesus Baik', speaker: 'Kak Lisa', location: 'R. Daud Lt. 1', status: 'upcoming' },
-            { id: 's2', className: 'Kelas Daniel', date: '2025-01-26', time: '08:00 - 09:30', activity: 'Ibadah & Aktivitas', theme: 'Daud Melawan Goliat', speaker: 'Kak Budi', location: 'R. Daniel Lt. 1', status: 'upcoming' },
+            { id: 's1', className: 'Kelas Daud', date: getLocalDate(), time: '08:00 - 09:30', activity: 'Ibadah Minggu', theme: 'Tuhan Yesus Baik', speaker: 'Kak Lisa', location: 'R. Daud Lt. 1', status: 'upcoming' },
+            { id: 's2', className: 'Kelas Daniel', date: getLocalDate(), time: '08:00 - 09:30', activity: 'Ibadah & Aktivitas', theme: 'Daud Melawan Goliat', speaker: 'Kak Budi', location: 'R. Daniel Lt. 1', status: 'upcoming' },
         ];
 
         // --- GEMINI AI SERVICE ---
         const GeminiService = {
             call: async (prompt) => {
-                const apiKey = ""; // API Key
+                const apiKey = "AIzaSyA5WySHIJWlfHMacpdY9ba-m1JO5dp1jqM"; // API Key
                 const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
                 const payload = {
                     contents: [{ parts: [{ text: prompt }] }],
@@ -334,10 +375,16 @@
             att: {
                 add: (record) => {
                     const all = DB.get(STORAGE.ATTENDANCE, []);
-                    if (all.some(r => r.userId === record.userId && r.date === record.date)) return false;
-                    DB.set(STORAGE.ATTENDANCE, [...all, record]);
+                    const isDuplicate = all.some(r => r.userId === record.userId && r.date === record.date);
+                    
+                    if (isDuplicate) {
+                        return { success: false, reason: 'duplicate' };
+                    }
+                    
+                    const newAttendance = [...all, record];
+                    DB.set(STORAGE.ATTENDANCE, newAttendance);
                     pushToFirestore('attendance', record, record.id);
-                    return true;
+                    return { success: true, reason: 'ok' };
                 }
             },
             materials: {
@@ -362,9 +409,17 @@
                 get: () => DB.get(STORAGE.ACTIVITIES, [])
             },
             notifications: {
-                broadcast: (title, message, sender) => {
+                broadcast: (title, message, sender, scheduledTime = null) => {
                     const all = DB.get(STORAGE.NOTIFICATIONS, []);
-                    const newNotif = { id: Date.now(), title, message, sender, timestamp: new Date().toISOString() };
+                    const newNotif = { 
+                        id: Date.now(), 
+                        title, 
+                        message, 
+                        sender, 
+                        timestamp: new Date().toISOString(),
+                        scheduledTime: scheduledTime ? scheduledTime : new Date().toISOString(),
+                        status: scheduledTime && new Date(scheduledTime) > new Date() ? 'scheduled' : 'sent'
+                    };
                     DB.set(STORAGE.NOTIFICATIONS, [newNotif, ...all]);
                     pushToFirestore('notifications', newNotif, newNotif.id);
                 },
@@ -400,13 +455,7 @@
             }
         };
 
-        // --- HELPER ---
-        const formatDateIndo = (dateStr) => {
-            const date = new Date(dateStr);
-            return date.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-        };
-
-        // --- UI COMPONENTS ---
+        // --- COMPONENTS ---
         const Background = () => (
             <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10 bg-[#f3f4f6]">
                 <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-indigo-50/50 via-purple-50/50 to-pink-50/50"></div>
@@ -430,7 +479,6 @@
             );
         };
 
-        // --- MODIFIED AVATAR COMPONENT ---
         const Avatar = ({ name, seed, style = 'avataaars', size = 'md', className='', onClick }) => {
             const s = size === 'lg' ? 'w-16 h-16 text-2xl' : size === 'xl' ? 'w-24 h-24 text-4xl' : 'w-10 h-10 text-sm';
             const avatarSeed = seed || name;
@@ -459,12 +507,432 @@
             </div>
         );
 
-        // --- MODALS & SCREENS ---
+        // --- LOGIN SCREEN ---
+        const LoginScreen = ({ onLogin }) => {
+            const [mode, setMode] = useState('TEACHER');
+            const [users, setUsers] = useState([]);
+            const [selected, setSelected] = useState('');
+            const [pw, setPw] = useState('');
+            const [secretCount, setSecretCount] = useState(0);
+            const [showAdmin, setShowAdmin] = useState(false); 
+            const [showForgot, setShowForgot] = useState(false);
+            const [recoveryKey, setRecoveryKey] = useState('');
+            const [isSyncing, setIsSyncing] = useState(false);
+
+            useEffect(() => setUsers(DB.get(STORAGE.USERS, DEFAULT_USERS)), []);
+            
+            const handleManualSync = async () => {
+                setIsSyncing(true);
+                try {
+                    const count = await syncFromFirestore();
+                    if (count >= 0) {
+                        const updatedUsers = DB.get(STORAGE.USERS, DEFAULT_USERS);
+                        setUsers(updatedUsers);
+                        alert(`Berhasil Sinkronisasi! Data dimuat: ${count} items.\nSilakan pilih nama Anda sekarang.`);
+                    } else {
+                        alert("Gagal koneksi ke server. Pastikan internet lancar.");
+                    }
+                } catch(e) {
+                    alert("Error sync.");
+                } finally {
+                    setIsSyncing(false);
+                }
+            };
+
+            const handleSecretTrigger = () => {
+                if (showAdmin) return;
+                const newCount = secretCount + 1;
+                setSecretCount(newCount);
+                if (newCount >= 5) {
+                    setShowAdmin(true);
+                    setMode('ADMIN');
+                    alert("🔓 Admin Mode Terbuka!");
+                }
+            };
+            const handleLogin = (e) => {
+                e.preventDefault();
+                const recordLogin = (loggedInUser) => {
+                     const updated = { ...loggedInUser, lastLogin: new Date().toISOString() };
+                     DB.users.update(updated);
+                     DB.activities.add(loggedInUser.name, 'Login ke sistem');
+                     onLogin(updated);
+                };
+
+                if (mode === 'ADMIN') {
+                    if (pw === 'admin123') {
+                        const adminUser = { id: 'admin', name: 'Administrator', role: 'ADMIN', lastLogin: new Date().toISOString() };
+                        recordLogin(adminUser);
+                    }
+                    else alert('Password salah!');
+                } else {
+                    const u = users.find(x => x.id === selected);
+                    if (u) {
+                        if (u.isActive === false) return alert("Akun ini telah dinonaktifkan oleh Admin.");
+                        if (u.pin && u.pin === pw) {
+                            recordLogin(u);
+                        } else {
+                            alert('PIN Salah! Silakan coba lagi. (Default: 123456)');
+                        }
+                    } else {
+                        alert('Silakan pilih nama pengguna terlebih dahulu.');
+                    }
+                }
+            };
+
+            const handleForgot = () => {
+                if (recoveryKey === 'GKPS2025') { 
+                    const admin = users.find(u => u.role === 'ADMIN');
+                    if(admin) {
+                        alert("Reset Berhasil! Password Admin kembali ke: admin123");
+                        const updatedAdmin = { ...admin, pin: 'admin123' };
+                        DB.users.update(updatedAdmin);
+                    } else {
+                        alert("Reset ke Default: Gunakan 'admin123'");
+                    }
+                    setShowForgot(false);
+                } else {
+                    alert("Recovery Key Salah!");
+                }
+            };
+
+            const modes = showAdmin ? ['TEACHER', 'STUDENT', 'ADMIN'] : ['TEACHER', 'STUDENT'];
+            return (
+                <div className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden">
+                    <Background />
+                    <div className="glass-panel p-8 rounded-[2.5rem] w-full max-w-sm animate-slide-up relative z-10">
+                        <div className="flex justify-center mb-6">
+                            <button onClick={handleSecretTrigger} className="w-20 h-20 bg-gradient-to-tr from-indigo-500 to-pink-500 rounded-3xl flex items-center justify-center shadow-xl shadow-indigo-500/20 animate-float active:scale-90 transition-transform cursor-pointer">
+                                <Church className="text-white w-10 h-10" />
+                            </button>
+                        </div>
+                        <div className="text-center mb-8">
+                            <h1 className="text-2xl font-extrabold text-slate-800 tracking-tight mb-2 leading-tight">Presensi ASM-GSM<br/>GKPS Tangerang</h1>
+                            <p className="text-slate-500 font-medium flex items-center justify-center gap-1"><Cloud size={14}/> Online Database System</p>
+                        </div>
+                        <div className="bg-white/50 p-1.5 rounded-2xl flex mb-6 backdrop-blur-sm">
+                            {modes.map(m => (
+                                <button key={m} onClick={() => { setMode(m); setSelected(''); setPw(''); }}
+                                    className={`flex-1 py-3 text-[10px] font-bold rounded-xl transition-all ${mode === m ? 'bg-white text-indigo-600 shadow-md scale-100' : 'text-slate-400 hover:text-slate-600'}`}>
+                                    {m === 'TEACHER' ? 'GURU' : m === 'STUDENT' ? 'SISWA' : 'ADMIN'}
+                                </button>
+                            ))}
+                        </div>
+                        <form onSubmit={handleLogin} className="space-y-4">
+                            {mode !== 'ADMIN' ? (
+                                <div className="space-y-3">
+                                    <div className="relative group">
+                                        <select value={selected} onChange={e => setSelected(e.target.value)}
+                                            className="w-full p-4 pl-5 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-700 appearance-none shadow-sm transition-all hover:border-indigo-300">
+                                            <option value="">Pilih Nama Anda...</option>
+                                            {users.filter(u => u.role === mode && u.isActive !== false).map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+                                        </select>
+                                        <div className="absolute right-5 top-4 pointer-events-none text-slate-400"><ChevronRight className="rotate-90"/></div>
+                                    </div>
+                                    <input 
+                                        type="password" 
+                                        placeholder="Masukkan PIN (Default: 123456)" 
+                                        value={pw} 
+                                        onChange={e => setPw(e.target.value)}
+                                        className="w-full p-4 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-700 shadow-sm" 
+                                    />
+                                </div>
+                            ) : (
+                                <div>
+                                    <input type="password" placeholder="Password Admin" value={pw} onChange={e => setPw(e.target.value)}
+                                        className="w-full p-4 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-700 shadow-sm" />
+                                    <div className="text-right mt-2">
+                                        <button type="button" onClick={() => setShowForgot(true)} className="text-xs text-indigo-500 font-bold hover:underline">Lupa Password?</button>
+                                    </div>
+                                </div>
+                            )}
+                            <Button variant="primary">Masuk Aplikasi <Sparkles size={18} /></Button>
+                        </form>
+                        
+                        <div className="mt-6 text-center">
+                            <button onClick={handleManualSync} disabled={isSyncing} className="text-xs font-bold text-indigo-500 bg-indigo-50 px-4 py-2 rounded-xl flex items-center gap-2 mx-auto active:scale-95 transition-transform">
+                                {isSyncing ? <RefreshCw size={14} className="animate-spin"/> : <Cloud size={14}/>}
+                                {isSyncing ? 'Sedang Mengupdate...' : 'Paksa Update Data'}
+                            </button>
+                            <p className="text-[10px] text-slate-400 mt-2">Tekan tombol di atas jika nama user terbaru belum muncul.</p>
+                        </div>
+                    </div>
+                    <p className="absolute bottom-6 text-xs text-slate-400 font-medium opacity-60">GKPS Digital System v3.2 (Online)</p>
+
+                    {showForgot && (
+                        <div className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+                            <div className="bg-white p-6 rounded-3xl w-full max-w-xs animate-pop shadow-2xl">
+                                <h3 className="text-lg font-bold text-slate-800 mb-2">Reset Password Admin</h3>
+                                <p className="text-xs text-slate-500 mb-4">Masukkan Recovery Key dari Developer untuk mereset password ke default.</p>
+                                <input value={recoveryKey} onChange={e=>setRecoveryKey(e.target.value)} placeholder="Recovery Key" className="w-full p-3 border rounded-xl text-sm font-bold mb-4 outline-none focus:border-indigo-500"/>
+                                <div className="flex gap-2">
+                                    <Button onClick={handleForgot}>Reset</Button>
+                                    <Button variant="secondary" onClick={() => setShowForgot(false)}>Batal</Button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        // --- USER MANAGEMENT ---
+        const UserManagement = () => {
+            const [users, setUsers] = useState([]);
+            const [search, setSearch] = useState('');
+            const [form, setForm] = useState({ name: '', role: 'STUDENT', className: 'Kelas Daud', gender: 'Laki-Laki', pin: '123456' });
+            const [isFormOpen, setIsFormOpen] = useState(false);
+            const [isUploading, setIsUploading] = useState(false);
+            const [editingId, setEditingId] = useState(null); 
+            const fileInputRef = useRef(null);
+            
+            useEffect(() => { setUsers(DB.get(STORAGE.USERS, DEFAULT_USERS)); }, []);
+            
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if(!form.name) return;
+                
+                if (editingId) {
+                    const updatedUser = { 
+                        ...form, 
+                        id: editingId,
+                        ...users.find(u => u.id === editingId) 
+                    };
+                    updatedUser.name = form.name;
+                    updatedUser.role = form.role;
+                    updatedUser.className = (form.role === 'STUDENT' || form.role === 'TEACHER') ? form.className : '-';
+                    updatedUser.gender = form.gender;
+                    updatedUser.pin = form.pin;
+
+                    DB.users.update(updatedUser);
+                    alert("Data user berhasil diperbarui!");
+                    setEditingId(null);
+                } else {
+                    const hasClass = form.role === 'STUDENT' || form.role === 'TEACHER';
+                    const newUser = {
+                        id: Date.now().toString(), 
+                        name: form.name, 
+                        role: form.role,
+                        className: hasClass ? form.className : '-',
+                        gender: form.gender,
+                        pin: form.pin || '123456', 
+                        qrCode: `${form.role.substring(0,1)}-${Date.now().toString().slice(-4)}`,
+                        avatarStyle: 'avataaars',
+                        isActive: true,
+                        lastLogin: null
+                    };
+                    DB.users.add(newUser); 
+                    alert(`User ${newUser.name} berhasil ditambahkan dengan PIN: ${newUser.pin}`);
+                }
+                
+                const updated = DB.get(STORAGE.USERS);
+                setUsers(updated);
+                
+                setForm({ name: '', role: 'STUDENT', className: 'Kelas Daud', gender: 'Laki-Laki', pin: '123456' });
+                setIsFormOpen(false);
+            };
+            
+            const handleEdit = (user) => {
+                setForm({
+                    name: user.name,
+                    role: user.role,
+                    className: user.className !== '-' ? user.className : 'Kelas Daud',
+                    gender: user.gender,
+                    pin: user.pin
+                });
+                setEditingId(user.id);
+                setIsFormOpen(true);
+            };
+
+            const handleResetPin = (user) => {
+                if(confirm(`Reset PIN untuk ${user.name} menjadi 123456?`)) {
+                    const updatedUser = { ...user, pin: '123456' };
+                    DB.users.update(updatedUser);
+                    setUsers(DB.get(STORAGE.USERS));
+                    alert("PIN berhasil direset!");
+                }
+            };
+
+            const handleToggleStatus = (user) => {
+                const newStatus = !user.isActive; 
+                const action = newStatus ? "Mengaktifkan" : "Menonaktifkan";
+                if(confirm(`${action} akun ${user.name}?`)) {
+                    const updatedUser = { ...user, isActive: newStatus };
+                    DB.users.update(updatedUser);
+                    setUsers(DB.get(STORAGE.USERS));
+                }
+            };
+
+            const handleImportClick = () => {
+                fileInputRef.current.click();
+            };
+
+            const handleFileChange = (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const text = e.target.result;
+                    processCSV(text);
+                };
+                reader.readAsText(file);
+                event.target.value = ''; 
+            };
+
+            const processCSV = async (csvText) => {
+                setIsUploading(true);
+                const lines = csvText.split('\n');
+                let successCount = 0;
+                
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i];
+                    const [name, role, className, genderRaw] = line.split(',').map(item => item?.trim());
+                    
+                    if (name && role) {
+                        const normalizedRole = role.toUpperCase();
+                        if (['STUDENT', 'TEACHER', 'ADMIN'].includes(normalizedRole)) {
+                             const hasClass = normalizedRole === 'STUDENT' || normalizedRole === 'TEACHER';
+                             const finalClass = hasClass && className ? className : '-';
+                             let finalGender = 'Laki-Laki';
+                             if (genderRaw && (genderRaw.toLowerCase() === 'perempuan' || genderRaw.toLowerCase() === 'p' || genderRaw.toLowerCase() === 'pr')) {
+                                 finalGender = 'Perempuan';
+                             }
+                             const newUser = {
+                                id: Date.now().toString() + i, 
+                                name: name, role: normalizedRole, className: finalClass, gender: finalGender,
+                                pin: '123456', 
+                                qrCode: `${normalizedRole.substring(0,1)}-${Date.now().toString().slice(-4)}-${i}`,
+                                avatarStyle: 'avataaars',
+                                isActive: true
+                            };
+                            try {
+                                await pushToFirestore('users', newUser, newUser.id);
+                                const currentUsers = JSON.parse(localStorage.getItem(STORAGE.USERS)) || [];
+                                currentUsers.push(newUser);
+                                localStorage.setItem(STORAGE.USERS, JSON.stringify(currentUsers));
+                                successCount++;
+                            } catch (err) {
+                                console.error("Gagal upload user:", name, err);
+                            }
+                        }
+                    }
+                }
+
+                if (successCount > 0) {
+                    setUsers(DB.get(STORAGE.USERS));
+                    DB.activities.add('Admin', `Import ${successCount} user baru via CSV`);
+                    alert(`SUKSES! ${successCount} data berhasil diupload ke Cloud. Silakan buka HP Anda.`);
+                } else {
+                    alert("Gagal membaca data. Gunakan format: Nama,Role,Kelas,Gender");
+                }
+                setIsUploading(false);
+            };
+            const handleDelete = (id) => {
+                if(window.confirm('Hapus user ini?')) {
+                    DB.users.delete(id);
+                    const updated = DB.get(STORAGE.USERS);
+                    setUsers(updated);
+                    DB.activities.add('Admin', `Menghapus user ID: ${id}`);
+                }
+            };
+
+            const filtered = users.filter(u => u.name.toLowerCase().includes(search.toLowerCase()));
+            return (
+                <div className="p-6 pb-32 animate-slide-up">
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-2xl font-extrabold text-slate-800">Manajemen User</h2>
+                        <div className="flex gap-2">
+                            <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".csv" />
+                            <button onClick={handleImportClick} disabled={isUploading} className="bg-emerald-50 backdrop-blur border border-emerald-100 p-2 px-3 rounded-xl text-xs font-bold text-emerald-600 shadow-sm flex items-center gap-1 hover:bg-emerald-100 transition-colors">
+                                {isUploading ? <RefreshCw size={14} className="animate-spin"/> : <Upload size={14}/>} 
+                                <span className="hidden md:inline">{isUploading ? 'Mengupload...' : 'Import'}</span>
+                            </button>
+                            <button onClick={() => { setIsFormOpen(!isFormOpen); setEditingId(null); setForm({name: '', role: 'STUDENT', className: 'Kelas Daud', gender: 'Laki-Laki', pin: '123456'}); }} className="bg-white/80 backdrop-blur border border-white p-2 px-3 rounded-xl text-xs font-bold text-indigo-600 shadow-sm flex items-center gap-1 hover:bg-indigo-50 transition-colors">
+                                {isFormOpen ? <><X size={14}/> <span className="hidden md:inline">Tutup</span></> : <><Plus size={14}/> <span className="hidden md:inline">Tambah</span></>}
+                            </button>
+                        </div>
+                    </div>
+
+                    {isFormOpen && (
+                        <div className="glass-card p-5 rounded-[2rem] mb-6 animate-pop">
+                            <h3 className="font-bold text-slate-700 mb-4">{editingId ? 'Edit Data User' : 'Data User Baru'}</h3>
+                            <div className="space-y-3">
+                                <input value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="Nama Lengkap" className="w-full p-3 rounded-xl bg-white/50 border border-white focus:ring-2 focus:ring-indigo-500 outline-none font-semibold text-slate-700 placeholder-slate-400" />
+                                <input value={form.pin} onChange={e => setForm({...form, pin: e.target.value})} placeholder="Set PIN (Default: 123456)" className="w-full p-3 rounded-xl bg-white/50 border border-white focus:ring-2 focus:ring-indigo-500 outline-none font-semibold text-slate-700 placeholder-slate-400" />
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                    <div className="relative">
+                                        <select value={form.gender} onChange={e => setForm({...form, gender: e.target.value})} className="w-full p-3 rounded-xl bg-white/50 border border-white outline-none font-semibold text-slate-600 text-sm appearance-none">
+                                            <option value="Laki-Laki">Laki-Laki</option>
+                                            <option value="Perempuan">Perempuan</option>
+                                        </select>
+                                        <ChevronRight className="absolute right-3 top-3.5 rotate-90 text-slate-400 w-4 h-4 pointer-events-none"/>
+                                    </div>
+                                    <div className="relative">
+                                        <select value={form.role} onChange={e => setForm({...form, role: e.target.value})} className="w-full p-3 rounded-xl bg-white/50 border border-white outline-none font-semibold text-slate-600 text-sm appearance-none">
+                                            <option value="STUDENT">Siswa</option><option value="TEACHER">Guru</option><option value="ADMIN">Admin</option>
+                                        </select>
+                                        <ChevronRight className="absolute right-3 top-3.5 rotate-90 text-slate-400 w-4 h-4 pointer-events-none"/>
+                                    </div>
+                                </div>
+                                {(form.role === 'STUDENT' || form.role === 'TEACHER') && (
+                                    <div className="relative">
+                                        <select value={form.className} onChange={e => setForm({...form, className: e.target.value})} className="w-full p-3 rounded-xl bg-white/50 border border-white outline-none font-semibold text-slate-600 text-sm appearance-none">
+                                            {DEFAULT_CLASSES.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                                        </select>
+                                        <ChevronRight className="absolute right-3 top-3.5 rotate-90 text-slate-400 w-4 h-4 pointer-events-none"/>
+                                    </div>
+                                )}
+                                <Button onClick={handleSubmit}>{editingId ? 'Update Data' : 'Simpan Data'}</Button>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="relative mb-6">
+                        <Search className="absolute left-4 top-3.5 text-slate-400" size={20}/>
+                        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari nama user..." className="w-full p-3 pl-12 rounded-2xl bg-white/60 border border-white/40 focus:bg-white transition-all outline-none font-medium text-slate-700 placeholder-slate-400" />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {filtered.length === 0 ? <div className="col-span-full text-center py-10 text-slate-400 font-medium">Tidak ada user ditemukan</div> : filtered.map(u => (
+                            <div key={u.id} className={`glass-card p-4 rounded-2xl flex flex-col gap-3 group animate-pop hover:shadow-lg transition-all ${u.isActive === false ? 'opacity-60 grayscale' : ''}`}>
+                                <div className="flex items-center justify-between w-full">
+                                    <div className="flex items-center gap-3">
+                                        <Avatar name={u.name} seed={u.avatarSeed} style={u.avatarStyle} size="sm" />
+                                        <div>
+                                            <p className="font-bold text-slate-800 text-sm">{u.name}</p>
+                                            <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${u.role === 'ADMIN' ? 'bg-rose-100 text-rose-600' : u.role === 'TEACHER' ? 'bg-amber-100 text-amber-600' : 'bg-indigo-100 text-indigo-600'}`}>{u.role}</span>
+                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${u.gender === 'Perempuan' ? 'bg-pink-100 text-pink-600' : 'bg-blue-100 text-blue-600'}`}>{u.gender === 'Perempuan' ? 'P' : 'L'}</span>
+                                                {(u.role === 'STUDENT' || u.role === 'TEACHER') && <span className="text-[10px] text-slate-400 font-medium">• {u.className}</span>}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="flex gap-1">
+                                        <button onClick={() => handleEdit(u)} className="w-8 h-8 flex items-center justify-center rounded-full bg-blue-50 text-blue-500 hover:bg-blue-100 transition-colors" title="Edit User"><Edit size={14}/></button>
+                                        <button onClick={() => handleDelete(u.id)} className="w-8 h-8 flex items-center justify-center rounded-full bg-red-50 text-red-500 hover:bg-red-100 transition-colors" title="Hapus User"><Trash2 size={14}/></button>
+                                    </div>
+                                </div>
+                                
+                                <div className="grid grid-cols-2 gap-2 border-t border-slate-100 pt-3">
+                                    <button onClick={() => handleResetPin(u)} className="flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-slate-50 text-[10px] font-bold text-slate-600 hover:bg-slate-100">
+                                        <Key size={12}/> Reset PIN
+                                    </button>
+                                    <button onClick={() => handleToggleStatus(u)} className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[10px] font-bold ${u.isActive !== false ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' : 'bg-slate-200 text-slate-500 hover:bg-slate-300'}`}>
+                                        {u.isActive !== false ? <><Power size={12}/> Aktif</> : <><Power size={12}/> Nonaktif</>}
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
         const ScheduleManagerModal = ({ user, onClose }) => {
             const [schedules, setSchedules] = useState([]);
             const [form, setForm] = useState({
                 className: user.role === 'TEACHER' ? user.className : DEFAULT_CLASSES[0].name,
-                date: new Date().toISOString().split('T')[0], 
+                date: getLocalDate(), 
                 time: '', activity: '', theme: '', speaker: '', location: ''
             });
             const [filterClass, setFilterClass] = useState(user.role === 'TEACHER' ? user.className : 'ALL');
@@ -498,7 +966,7 @@
                 
                 setForm({
                     className: user.role === 'TEACHER' ? user.className : DEFAULT_CLASSES[0].name,
-                    date: new Date().toISOString().split('T')[0], 
+                    date: getLocalDate(), 
                     time: '', activity: '', theme: '', speaker: '', location: ''
                 }); 
             };
@@ -512,7 +980,7 @@
                 setEditingId(null);
                 setForm({
                     className: user.role === 'TEACHER' ? user.className : DEFAULT_CLASSES[0].name,
-                    date: new Date().toISOString().split('T')[0], 
+                    date: getLocalDate(), 
                     time: '', activity: '', theme: '', speaker: '', location: ''
                 });
             };
@@ -602,7 +1070,11 @@
 
         const NotificationModal = ({ onClose }) => {
             const [notifs, setNotifs] = useState([]);
-            useEffect(() => setNotifs(DB.notifications.get()), []);
+            useEffect(() => {
+                const all = DB.notifications.get();
+                const visible = all.filter(n => isNotifVisible(n));
+                setNotifs(visible);
+            }, []);
 
             return (
                 <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
@@ -633,7 +1105,6 @@
             );
         };
 
-        // --- MODIFIED PROFILE MODAL ---
         const ProfileModal = ({ user, onClose, onUpdate }) => {
             const [seed, setSeed] = useState(user.avatarSeed || user.name);
             const [style, setStyle] = useState(user.avatarStyle || 'avataaars'); 
@@ -664,11 +1135,9 @@
                             <p className="text-slate-500 text-sm">Pilih avatar favoritmu</p>
                         </div>
 
-                        {/* Preview Avatar Besar */}
                         <div className="flex justify-center mb-6">
                             <div className="flex flex-col items-center">
                                 <Avatar name={user.name} seed={seed} style={style} size="xl" className="border-4 border-white shadow-xl mb-2" />
-                                {/* Tampilkan QR Code untuk semua user agar Guru juga bisa absen mandiri atau discan Admin */}
                                 <div className="bg-white p-2 rounded-xl shadow-inner border border-slate-100">
                                     <QRCode value={user.qrCode || user.id} size={80} />
                                 </div>
@@ -677,14 +1146,12 @@
                         </div>
 
                         <div className="flex-1 overflow-y-auto pr-1">
-                            {/* Pilihan Koleksi */}
                             <div className="flex gap-2 mb-4 overflow-x-auto pb-2 no-scrollbar">
                                 <button onClick={() => setCollection('random')} className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-colors ${collection === 'random' ? 'bg-indigo-500 text-white' : 'bg-slate-100 text-slate-500'}`}>Acak</button>
                                 <button onClick={() => setCollection('ml')} className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-colors ${collection === 'ml' ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-500'}`}>Mobile Legends</button>
                                 <button onClick={() => setCollection('jacob')} className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-colors ${collection === 'jacob' ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-500'}`}>Anak Yakub</button>
                             </div>
 
-                            {/* Area Grid Avatar */}
                             <div className="bg-slate-50 rounded-2xl p-3 border border-slate-100 mb-6 min-h-[150px]">
                                 {collection === 'random' && (
                                     <div className="text-center py-4">
@@ -718,9 +1185,10 @@
                                 )}
                             </div>
 
-                            {/* Ganti PIN */}
                             <div className="mb-4">
-                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">PIN Keamanan (6 Digit)</label>
+                                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">
+                                    {user.role === 'ADMIN' ? 'Ganti Password/PIN Admin' : 'PIN Keamanan (6 Digit)'}
+                                </label>
                                 <input type="text" maxLength="6" value={newPin} onChange={e => setNewPin(e.target.value.replace(/\D/g, ''))} className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-center font-bold text-slate-700 tracking-[0.5em] focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="000000" />
                             </div>
                         </div>
@@ -807,306 +1275,96 @@
             );
         };
 
-        const LoginScreen = ({ onLogin }) => {
-            const [mode, setMode] = useState('TEACHER');
-            const [users, setUsers] = useState([]);
-            const [selected, setSelected] = useState('');
-            const [pw, setPw] = useState('');
-            const [secretCount, setSecretCount] = useState(0);
-            const [showAdmin, setShowAdmin] = useState(false); 
-
-            useEffect(() => setUsers(DB.get(STORAGE.USERS, DEFAULT_USERS)), []);
-            const handleSecretTrigger = () => {
-                if (showAdmin) return;
-                const newCount = secretCount + 1;
-                setSecretCount(newCount);
-                if (newCount >= 5) {
-                    setShowAdmin(true);
-                    setMode('ADMIN');
-                    alert("🔓 Admin Mode Terbuka!");
-                }
-            };
-            const handleLogin = (e) => {
-                e.preventDefault();
-                if (mode === 'ADMIN') {
-                    if (pw === 'admin123') {
-                        const adminUser = { id: 'admin', name: 'Administrator', role: 'ADMIN' };
-                        DB.activities.add('Administrator', 'Login ke sistem');
-                        onLogin(adminUser);
-                    }
-                    else alert('Password salah!');
-                } else {
-                    const u = users.find(x => x.id === selected);
-                    if (u) {
-                        if (u.pin && u.pin === pw) {
-                            DB.activities.add(u.name, 'Login ke sistem');
-                            onLogin(u);
-                        } else {
-                            alert('PIN Salah! Silakan coba lagi. (Default: 123456)');
-                        }
-                    } else {
-                        alert('Silakan pilih nama pengguna terlebih dahulu.');
-                    }
-                }
-            };
-            const modes = showAdmin ? ['TEACHER', 'STUDENT', 'ADMIN'] : ['TEACHER', 'STUDENT'];
-            return (
-                <div className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden">
-                    <Background />
-                    <div className="glass-panel p-8 rounded-[2.5rem] w-full max-w-sm animate-slide-up relative z-10">
-                        <div className="flex justify-center mb-6">
-                            <button onClick={handleSecretTrigger} className="w-20 h-20 bg-gradient-to-tr from-indigo-500 to-pink-500 rounded-3xl flex items-center justify-center shadow-xl shadow-indigo-500/20 animate-float active:scale-90 transition-transform cursor-pointer">
-                                <Church className="text-white w-10 h-10" />
-                            </button>
-                        </div>
-                        <div className="text-center mb-8">
-                            <h1 className="text-2xl font-extrabold text-slate-800 tracking-tight mb-2 leading-tight">Presensi ASM-GSM<br/>GKPS Tangerang</h1>
-                            <p className="text-slate-500 font-medium flex items-center justify-center gap-1"><Cloud size={14}/> Online Database System</p>
-                        </div>
-                        <div className="bg-white/50 p-1.5 rounded-2xl flex mb-6 backdrop-blur-sm">
-                            {modes.map(m => (
-                                <button key={m} onClick={() => { setMode(m); setSelected(''); setPw(''); }}
-                                    className={`flex-1 py-3 text-[10px] font-bold rounded-xl transition-all ${mode === m ? 'bg-white text-indigo-600 shadow-md scale-100' : 'text-slate-400 hover:text-slate-600'}`}>
-                                    {m === 'TEACHER' ? 'GURU' : m === 'STUDENT' ? 'SISWA' : 'ADMIN'}
-                                </button>
-                            ))}
-                        </div>
-                        <form onSubmit={handleLogin} className="space-y-4">
-                            {mode !== 'ADMIN' ? (
-                                <div className="space-y-3">
-                                    <div className="relative group">
-                                        <select value={selected} onChange={e => setSelected(e.target.value)}
-                                            className="w-full p-4 pl-5 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-700 appearance-none shadow-sm transition-all hover:border-indigo-300">
-                                            <option value="">Pilih Nama Anda...</option>
-                                            {users.filter(u => u.role === mode).map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
-                                        </select>
-                                        <div className="absolute right-5 top-4 pointer-events-none text-slate-400"><ChevronRight className="rotate-90"/></div>
-                                    </div>
-                                    <input 
-                                        type="password" 
-                                        placeholder="Masukkan PIN (Default: 123456)" 
-                                        value={pw} 
-                                        onChange={e => setPw(e.target.value)}
-                                        className="w-full p-4 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-700 shadow-sm" 
-                                    />
-                                </div>
-                            ) : (
-                                <input type="password" placeholder="Password Admin" value={pw} onChange={e => setPw(e.target.value)}
-                                    className="w-full p-4 bg-white border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-indigo-500 font-bold text-slate-700 shadow-sm" />
-                            )}
-                            <Button variant="primary">Masuk Aplikasi <Sparkles size={18} /></Button>
-                        </form>
-                    </div>
-                    <p className="absolute bottom-6 text-xs text-slate-400 font-medium opacity-60">GKPS Digital System v3.0 (Firebase)</p>
-                </div>
-            );
-        };
-
-        const UserManagement = () => {
-            const [users, setUsers] = useState([]);
-            const [search, setSearch] = useState('');
-            const [form, setForm] = useState({ name: '', role: 'STUDENT', className: 'Kelas Daud', gender: 'Laki-Laki', pin: '123456' });
-            const [isFormOpen, setIsFormOpen] = useState(false);
-            const [isUploading, setIsUploading] = useState(false);
-            const fileInputRef = useRef(null);
-            useEffect(() => { setUsers(DB.get(STORAGE.USERS, DEFAULT_USERS)); }, []);
-            
-            const handleSubmit = (e) => {
-                e.preventDefault();
-                if(!form.name) return;
-                const hasClass = form.role === 'STUDENT' || form.role === 'TEACHER';
-                const newUser = {
-                    id: Date.now().toString(), 
-                    name: form.name, 
-                    role: form.role,
-                    className: hasClass ? form.className : '-',
-                    gender: form.gender,
-                    pin: form.pin || '123456', 
-                    qrCode: `${form.role.substring(0,1)}-${Date.now().toString().slice(-4)}`,
-                    avatarStyle: 'avataaars'
-                };
-                DB.users.add(newUser); 
-                
-                const updated = DB.get(STORAGE.USERS);
-                setUsers(updated);
-                
-                DB.activities.add('Admin', `Menambah user baru: ${newUser.name} (${newUser.role})`);
-                setForm({ ...form, name: '', pin: '123456' });
-                setIsFormOpen(false);
-                alert(`User ${newUser.name} berhasil ditambahkan dengan PIN: ${newUser.pin}`);
-            };
-            
-            const handleImportClick = () => {
-                fileInputRef.current.click();
-            };
-
-            const handleFileChange = (event) => {
-                const file = event.target.files[0];
-                if (!file) return;
-
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const text = e.target.result;
-                    processCSV(text);
-                };
-                reader.readAsText(file);
-                event.target.value = ''; 
-            };
-
-            const processCSV = async (csvText) => {
-                setIsUploading(true);
-                const lines = csvText.split('\n');
-                let successCount = 0;
-                
-                for (let i = 0; i < lines.length; i++) {
-                    const line = lines[i];
-                    const [name, role, className, genderRaw] = line.split(',').map(item => item?.trim());
-                    
-                    if (name && role) {
-                        const normalizedRole = role.toUpperCase();
-                        if (['STUDENT', 'TEACHER', 'ADMIN'].includes(normalizedRole)) {
-                             const hasClass = normalizedRole === 'STUDENT' || normalizedRole === 'TEACHER';
-                             const finalClass = hasClass && className ? className : '-';
-                             let finalGender = 'Laki-Laki';
-                             if (genderRaw && (genderRaw.toLowerCase() === 'perempuan' || genderRaw.toLowerCase() === 'p' || genderRaw.toLowerCase() === 'pr')) {
-                                 finalGender = 'Perempuan';
-                             }
-                             const newUser = {
-                                id: Date.now().toString() + i, 
-                                name: name, role: normalizedRole, className: finalClass, gender: finalGender,
-                                pin: '123456', 
-                                qrCode: `${normalizedRole.substring(0,1)}-${Date.now().toString().slice(-4)}-${i}`,
-                                avatarStyle: 'avataaars'
-                            };
-                            try {
-                                await pushToFirestore('users', newUser, newUser.id);
-                                const currentUsers = JSON.parse(localStorage.getItem(STORAGE.USERS)) || [];
-                                currentUsers.push(newUser);
-                                localStorage.setItem(STORAGE.USERS, JSON.stringify(currentUsers));
-                                successCount++;
-                            } catch (err) {
-                                console.error("Gagal upload user:", name, err);
-                            }
-                        }
-                    }
-                }
-
-                if (successCount > 0) {
-                    setUsers(DB.get(STORAGE.USERS));
-                    DB.activities.add('Admin', `Import ${successCount} user baru via CSV`);
-                    alert(`SUKSES! ${successCount} data berhasil diupload ke Cloud. Silakan buka HP Anda.`);
-                } else {
-                    alert("Gagal membaca data. Gunakan format: Nama,Role,Kelas,Gender");
-                }
-                setIsUploading(false);
-            };
-            const handleDelete = (id) => {
-                if(window.confirm('Hapus user ini?')) {
-                    DB.users.delete(id);
-                    const updated = DB.get(STORAGE.USERS);
-                    setUsers(updated);
-                    DB.activities.add('Admin', `Menghapus user ID: ${id}`);
-                }
-            };
-
-            const filtered = users.filter(u => u.name.toLowerCase().includes(search.toLowerCase()));
-            return (
-                <div className="p-6 pb-32 animate-slide-up">
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-2xl font-extrabold text-slate-800">Manajemen User</h2>
-                        <div className="flex gap-2">
-                            <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept=".csv" />
-                            <button onClick={handleImportClick} disabled={isUploading} className="bg-emerald-50 backdrop-blur border border-emerald-100 p-2 px-3 rounded-xl text-xs font-bold text-emerald-600 shadow-sm flex items-center gap-1 hover:bg-emerald-100 transition-colors">
-                                {isUploading ? <RefreshCw size={14} className="animate-spin"/> : <Upload size={14}/>} 
-                                <span className="hidden md:inline">{isUploading ? 'Mengupload...' : 'Import'}</span>
-                            </button>
-                            <button onClick={() => setIsFormOpen(!isFormOpen)} className="bg-white/80 backdrop-blur border border-white p-2 px-3 rounded-xl text-xs font-bold text-indigo-600 shadow-sm flex items-center gap-1 hover:bg-indigo-50 transition-colors">
-                                {isFormOpen ? <><X size={14}/> <span className="hidden md:inline">Tutup</span></> : <><Plus size={14}/> <span className="hidden md:inline">Tambah</span></>}
-                            </button>
-                        </div>
-                    </div>
-
-                    {isFormOpen && (
-                        <div className="glass-card p-5 rounded-[2rem] mb-6 animate-pop">
-                            <h3 className="font-bold text-slate-700 mb-4">Data User Baru</h3>
-                            <div className="space-y-3">
-                                <input value={form.name} onChange={e => setForm({...form, name: e.target.value})} placeholder="Nama Lengkap" className="w-full p-3 rounded-xl bg-white/50 border border-white focus:ring-2 focus:ring-indigo-500 outline-none font-semibold text-slate-700 placeholder-slate-400" />
-                                <input value={form.pin} onChange={e => setForm({...form, pin: e.target.value})} placeholder="Set PIN (Default: 123456)" className="w-full p-3 rounded-xl bg-white/50 border border-white focus:ring-2 focus:ring-indigo-500 outline-none font-semibold text-slate-700 placeholder-slate-400" />
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                    <div className="relative">
-                                        <select value={form.gender} onChange={e => setForm({...form, gender: e.target.value})} className="w-full p-3 rounded-xl bg-white/50 border border-white outline-none font-semibold text-slate-600 text-sm appearance-none">
-                                            <option value="Laki-Laki">Laki-Laki</option>
-                                            <option value="Perempuan">Perempuan</option>
-                                        </select>
-                                        <ChevronRight className="absolute right-3 top-3.5 rotate-90 text-slate-400 w-4 h-4 pointer-events-none"/>
-                                    </div>
-                                    <div className="relative">
-                                        <select value={form.role} onChange={e => setForm({...form, role: e.target.value})} className="w-full p-3 rounded-xl bg-white/50 border border-white outline-none font-semibold text-slate-600 text-sm appearance-none">
-                                            <option value="STUDENT">Siswa</option><option value="TEACHER">Guru</option><option value="ADMIN">Admin</option>
-                                        </select>
-                                        <ChevronRight className="absolute right-3 top-3.5 rotate-90 text-slate-400 w-4 h-4 pointer-events-none"/>
-                                    </div>
-                                </div>
-                                {(form.role === 'STUDENT' || form.role === 'TEACHER') && (
-                                    <div className="relative">
-                                        <select value={form.className} onChange={e => setForm({...form, className: e.target.value})} className="w-full p-3 rounded-xl bg-white/50 border border-white outline-none font-semibold text-slate-600 text-sm appearance-none">
-                                            {DEFAULT_CLASSES.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-                                        </select>
-                                        <ChevronRight className="absolute right-3 top-3.5 rotate-90 text-slate-400 w-4 h-4 pointer-events-none"/>
-                                    </div>
-                                )}
-                                <Button onClick={handleSubmit}>Simpan Data</Button>
-                            </div>
-                        </div>
-                    )}
-
-                    <div className="relative mb-6">
-                        <Search className="absolute left-4 top-3.5 text-slate-400" size={20}/>
-                        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Cari nama user..." className="w-full p-3 pl-12 rounded-2xl bg-white/60 border border-white/40 focus:bg-white transition-all outline-none font-medium text-slate-700 placeholder-slate-400" />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {filtered.length === 0 ? <div className="col-span-full text-center py-10 text-slate-400 font-medium">Tidak ada user ditemukan</div> : filtered.map(u => (
-                            <div key={u.id} className="glass-card p-4 rounded-2xl flex items-center justify-between group animate-pop hover:shadow-lg transition-all">
-                                <div className="flex items-center gap-3">
-                                    <Avatar name={u.name} seed={u.avatarSeed} style={u.avatarStyle} size="sm" />
-                                    <div>
-                                        <p className="font-bold text-slate-800 text-sm">{u.name}</p>
-                                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${u.role === 'ADMIN' ? 'bg-rose-100 text-rose-600' : u.role === 'TEACHER' ? 'bg-amber-100 text-amber-600' : 'bg-indigo-100 text-indigo-600'}`}>{u.role}</span>
-                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${u.gender === 'Perempuan' ? 'bg-pink-100 text-pink-600' : 'bg-blue-100 text-blue-600'}`}>{u.gender === 'Perempuan' ? 'P' : 'L'}</span>
-                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 border border-slate-200">PIN: {u.pin}</span>
-                                            {(u.role === 'STUDENT' || u.role === 'TEACHER') && <span className="text-[10px] text-slate-400 font-medium">• {u.className}</span>}
-                                        </div>
-                                    </div>
-                                </div>
-                                <button onClick={() => handleDelete(u.id)} className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 text-slate-400 hover:bg-rose-100 hover:text-rose-500 transition-colors"><Trash2 size={16}/></button>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            );
-        };
-
         const Dashboard = ({ user }) => {
-            const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+            const [date, setDate] = useState(getLocalDate());
             const [att, setAtt] = useState([]);
             const [activities, setActivities] = useState([]);
             const [users, setUsers] = useState([]);
             const [isMatModalOpen, setIsMatModalOpen] = useState(false);
             const [isSchedModalOpen, setIsSchedModalOpen] = useState(false);
+            const [isSyncing, setIsSyncing] = useState(false);
+            
             const [bcTitle, setBcTitle] = useState('');
             const [bcMsg, setBcMsg] = useState('');
+            const [bcDate, setBcDate] = useState(getLocalDate()); 
+            const [bcTime, setBcTime] = useState(new Date().toTimeString().slice(0,5)); 
+            const [pendingBroadcasts, setPendingBroadcasts] = useState([]); 
+
             const [aiAnalysis, setAiAnalysis] = useState(null);
             const [isAnalyzing, setIsAnalyzing] = useState(false);
             const [aiDevotional, setAiDevotional] = useState(null);
             const [loadingDevo, setLoadingDevo] = useState(false);
+            
             useEffect(() => {
-                const all = DB.get(STORAGE.ATTENDANCE, []);
-                setAtt(all.filter(r => r.date === date));
+                if (!auth.currentUser) return; 
+
+                const unsubscribeAtt = onSnapshot(getCollectionRef('attendance'), (snapshot) => {
+                    // 1. Ambil data terbaru dari Server
+                    const serverData = snapshot.docs.map(doc => doc.data());
+                    
+                    // --- SMART MERGE LOGIC (PERBAIKAN) ---
+                    // Tujuannya: Mencegah data hilang (reset ke 0) saat koneksi lambat
+                    
+                    // 2. Ambil data lokal saat ini
+                    const localData = DB.get(STORAGE.ATTENDANCE, []);
+                    
+                    // 3. Buat daftar ID dari server untuk pengecekan cepat
+                    const serverIds = new Set(serverData.map(d => String(d.id)));
+                    
+                    // 4. Gunakan data server sebagai basis utama (Source of Truth)
+                    const mergedData = [...serverData];
+                    
+                    // 5. Cek data lokal: Jika ada data HARI INI yang belum masuk server (Pending), pertahankan!
+                    const todayStr = getLocalDate();
+                    
+                    localData.forEach(localItem => {
+                        // Syarat mempertahankan data lokal:
+                        // a. Tanggalnya hari ini (agar tidak memunculkan data lama yang sudah dihapus)
+                        // b. ID-nya belum ada di list server
+                        if (localItem.date === todayStr && !serverIds.has(String(localItem.id))) {
+                            mergedData.push(localItem);
+                        }
+                    });
+
+                    // 6. Simpan hasil gabungan (Server + Pending Local) ke localStorage
+                    localStorage.setItem(STORAGE.ATTENDANCE, JSON.stringify(mergedData));
+                    
+                    // 7. Update tampilan UI dengan data gabungan
+                    setAtt(mergedData.filter(r => r.date === date));
+                }, (error) => { console.error("Error fetching attendance:", error); });
+
+                const unsubscribeAct = onSnapshot(getCollectionRef('activities'), (snapshot) => {
+                    const data = snapshot.docs.map(doc => doc.data());
+                    data.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+                    localStorage.setItem(STORAGE.ACTIVITIES, JSON.stringify(data));
+                    setActivities(data);
+                }, (error) => { console.error("Error fetching activities:", error); });
+
+                let unsubscribeUsers = () => {};
+                if (user.role === 'ADMIN') {
+                     unsubscribeUsers = onSnapshot(getCollectionRef('users'), (snapshot) => {
+                        const data = snapshot.docs.map(doc => doc.data());
+                        localStorage.setItem(STORAGE.USERS, JSON.stringify(data));
+                        setUsers(data);
+                    }, (error) => { console.error("Error fetching users:", error); });
+                } else {
+                    setUsers(DB.get(STORAGE.USERS, DEFAULT_USERS));
+                }
+
+                const allAtt = DB.get(STORAGE.ATTENDANCE, []);
+                setAtt(allAtt.filter(r => r.date === date));
                 setActivities(DB.activities.get());
-                setUsers(DB.get(STORAGE.USERS, DEFAULT_USERS)); 
-            }, [date]);
+                
+                const allNotifs = DB.notifications.get();
+                setPendingBroadcasts(allNotifs.filter(n => n.status === 'scheduled' && new Date(n.scheduledTime) > new Date()));
+
+                return () => {
+                    if(unsubscribeAtt) unsubscribeAtt();
+                    if(unsubscribeAct) unsubscribeAct();
+                    if(unsubscribeUsers) unsubscribeUsers();
+                };
+            }, [date, user.role]); 
+
             const stats = useMemo(() => {
                 const grouped = {};
                 att.filter(x => x.role === 'STUDENT').forEach(x => grouped[x.className] = (grouped[x.className] || 0) + 1);
@@ -1116,13 +1374,26 @@
                 { name: 'Sen', hadir: 12 }, { name: 'Sel', hadir: 15 }, { name: 'Rab', hadir: 8 },
                 { name: 'Kam', hadir: 20 }, { name: 'Jum', hadir: 18 }, { name: 'Sab', hadir: 25 }, { name: 'Min', hadir: 40 }
             ];
+
             const handleBroadcast = () => {
                 if(!bcTitle || !bcMsg) return alert("Mohon isi judul dan pesan");
-                DB.notifications.broadcast(bcTitle, bcMsg, user.name);
-                DB.activities.add(user.name, `Mengirim broadcast: ${bcTitle}`);
+                
+                const scheduleDateTime = new Date(`${bcDate}T${bcTime}`);
+                const isScheduled = scheduleDateTime > new Date();
+                
+                DB.notifications.broadcast(bcTitle, bcMsg, user.name, scheduleDateTime.toISOString());
+                
+                const actionText = isScheduled ? `Menjadwalkan broadcast: ${bcTitle} pada ${scheduleDateTime.toLocaleString()}` : `Mengirim broadcast: ${bcTitle}`;
+                DB.activities.add(user.name, actionText);
+                
                 setBcTitle(''); setBcMsg('');
-                alert("Broadcast berhasil dikirim!");
+                
+                const allNotifs = DB.notifications.get();
+                setPendingBroadcasts(allNotifs.filter(n => n.status === 'scheduled' && new Date(n.scheduledTime) > new Date()));
+
+                alert(isScheduled ? "Broadcast berhasil dijadwalkan!" : "Broadcast berhasil dikirim!");
             };
+
             const handleAnalyze = async () => {
                 setIsAnalyzing(true);
                 try {
@@ -1138,6 +1409,21 @@
                     setIsAnalyzing(false);
                 }
             };
+            
+            const handleManualSync = async () => {
+                if(!confirm("Update data terbaru dari server?")) return;
+                setIsSyncing(true);
+                await syncFromFirestore();
+                
+                // Force reload state locally
+                const allAtt = DB.get(STORAGE.ATTENDANCE, []);
+                setAtt(allAtt.filter(r => r.date === date));
+                setUsers(DB.get(STORAGE.USERS, DEFAULT_USERS));
+                
+                setIsSyncing(false);
+                alert("Data berhasil diperbarui!");
+            };
+
             const generateDevotional = async () => {
                 setLoadingDevo(true);
                 try {
@@ -1148,58 +1434,42 @@
                 }
             };
             
-            // --- EXPORT FUNCTIONS ---
             const handleExportExcel = () => {
                 const allAtt = DB.get(STORAGE.ATTENDANCE, []);
-                // Filter data berdasarkan tanggal (opsional) atau semua
-                // Disini kita export semua data kehadiran atau filter by bulan bisa ditambahkan
                 if(allAtt.length === 0) return alert("Belum ada data absensi untuk diexport.");
-
                 const ws = XLSX.utils.json_to_sheet(allAtt.map(a => ({
-                    Tanggal: a.date,
-                    Waktu: new Date(a.timestamp).toLocaleTimeString(),
-                    Nama: a.userName,
-                    Role: a.role,
-                    Kelas: a.className
+                    Tanggal: a.date, Waktu: new Date(a.timestamp).toLocaleTimeString(), Nama: a.userName, Role: a.role, Kelas: a.className
                 })));
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "Kehadiran");
                 XLSX.writeFile(wb, "Laporan_Kehadiran_GKPS.xlsx");
             };
-
             const handleExportPDF = () => {
                  const allAtt = DB.get(STORAGE.ATTENDANCE, []);
                  if(allAtt.length === 0) return alert("Belum ada data absensi untuk diexport.");
-
                  const doc = new jspdf.jsPDF();
                  doc.text("Laporan Kehadiran Sekolah Minggu GKPS", 14, 20);
                  doc.setFontSize(10);
                  doc.text(`Dicetak pada: ${new Date().toLocaleString()}`, 14, 28);
-
                  const tableColumn = ["Tanggal", "Waktu", "Nama", "Role", "Kelas"];
                  const tableRows = [];
-
                  allAtt.forEach(a => {
-                     const row = [
-                         a.date,
-                         new Date(a.timestamp).toLocaleTimeString(),
-                         a.userName,
-                         a.role,
-                         a.className
-                     ];
+                     const row = [a.date, new Date(a.timestamp).toLocaleTimeString(), a.userName, a.role, a.className];
                      tableRows.push(row);
                  });
-
-                 doc.autoTable({
-                     head: [tableColumn],
-                     body: tableRows,
-                     startY: 35,
-                 });
+                 doc.autoTable({ head: [tableColumn], body: tableRows, startY: 35 });
                  doc.save("Laporan_Kehadiran_GKPS.pdf");
             };
 
             const COLORS = ['#6366f1', '#ec4899', '#a855f7', '#f43f5e'];
-            // --- ADMIN DASHBOARD ---
+            
+            const recentLogins = useMemo(() => {
+                return users
+                    .filter(u => u.lastLogin)
+                    .sort((a,b) => new Date(b.lastLogin) - new Date(a.lastLogin))
+                    .slice(0, 5); 
+            }, [users]); 
+
             if (user.role === 'ADMIN') {
                 const studentCount = users.filter(u => u.role === 'STUDENT').length;
                 const teacherCount = users.filter(u => u.role === 'TEACHER').length;
@@ -1211,10 +1481,15 @@
                                 <p className="text-slate-500 font-medium text-sm mb-1 uppercase tracking-wider">Dashboard</p>
                                 <h2 className="text-3xl font-extrabold text-slate-800">Admin Control</h2>
                             </div>
-                            <div className="hidden md:flex items-center gap-2 bg-white px-4 py-2 rounded-2xl shadow-sm">
-                                <Calendar size={18} className="text-indigo-500" />
-                                <span className="text-sm font-bold text-slate-600">{new Date().toLocaleDateString('id-ID', { 
-                                    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                            <div className="flex items-center gap-2">
+                                <button onClick={handleManualSync} disabled={isSyncing} className="bg-white p-2 rounded-2xl shadow-sm border border-slate-100 text-indigo-500 hover:bg-indigo-50 active:scale-95 transition-all">
+                                    {isSyncing ? <RefreshCw size={18} className="animate-spin"/> : <RefreshCw size={18}/>}
+                                </button>
+                                <div className="hidden md:flex items-center gap-2 bg-white px-4 py-2 rounded-2xl shadow-sm">
+                                    <Calendar size={18} className="text-indigo-500" />
+                                    <span className="text-sm font-bold text-slate-600">{new Date().toLocaleDateString('id-ID', { 
+                                        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                                </div>
                             </div>
                         </header>
 
@@ -1228,7 +1503,6 @@
                                 <h3 className="text-3xl font-black text-slate-800">{studentCount}</h3>
                                 <p className="text-xs text-blue-500 font-medium mt-1">Terdaftar Aktif</p>
                             </div>
-
                             <div className="glass-card p-5 rounded-3xl relative overflow-hidden group hover:shadow-lg transition-shadow">
                                 <div className="absolute right-[-10px] top-[-10px] w-20 h-20 bg-amber-100 rounded-full opacity-50 group-hover:scale-110 transition-transform"></div>
                                 <div className="flex items-center gap-3 mb-2">
@@ -1238,7 +1512,6 @@
                                 <h3 className="text-3xl font-black text-slate-800">{teacherCount}</h3>
                                 <p className="text-xs text-amber-500 font-medium mt-1">Pengajar Aktif</p>
                             </div>
-
                             <div className="glass-card p-5 rounded-3xl relative overflow-hidden group hover:shadow-lg transition-shadow">
                                 <div className="absolute right-[-10px] top-[-10px] w-20 h-20 bg-emerald-100 rounded-full opacity-50 group-hover:scale-110 transition-transform"></div>
                                 <div className="flex items-center gap-3 mb-2">
@@ -1248,7 +1521,6 @@
                                 <h3 className="text-3xl font-black text-slate-800">{att.length}</h3>
                                 <p className="text-xs text-emerald-500 font-medium mt-1">Siswa & Guru</p>
                             </div>
-
                             <div className="glass-card p-5 rounded-3xl relative overflow-hidden group hover:shadow-lg transition-shadow">
                                 <div className="absolute right-[-10px] top-[-10px] w-20 h-20 bg-indigo-100 rounded-full opacity-50 group-hover:scale-110 transition-transform"></div>
                                 <div className="flex items-center gap-3 mb-2">
@@ -1260,7 +1532,6 @@
                             </div>
                         </div>
 
-                         {/* NEW: EXPORT SECTION */}
                         <div className="mb-8 flex gap-4">
                             <button onClick={handleExportExcel} className="flex-1 bg-green-600 text-white p-4 rounded-2xl shadow-lg hover:bg-green-700 transition-all flex items-center justify-center gap-2 font-bold">
                                 <FileSpreadsheet size={24}/> Export Excel
@@ -1268,6 +1539,41 @@
                             <button onClick={handleExportPDF} className="flex-1 bg-red-600 text-white p-4 rounded-2xl shadow-lg hover:bg-red-700 transition-all flex items-center justify-center gap-2 font-bold">
                                 <File size={24}/> Export PDF
                             </button>
+                        </div>
+                        
+                        <div className="mb-8">
+                             <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2">
+                                <Eye size={20} className="text-indigo-500"/> Pantauan Login User (5 Terakhir)
+                            </h3>
+                            <div className="glass-card p-0 rounded-[1.5rem] overflow-hidden">
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left text-sm text-slate-600">
+                                        <thead className="bg-slate-50 border-b border-slate-100">
+                                            <tr>
+                                                <th className="p-4 font-bold text-xs uppercase tracking-wider">User</th>
+                                                <th className="p-4 font-bold text-xs uppercase tracking-wider">Role</th>
+                                                <th className="p-4 font-bold text-xs uppercase tracking-wider">Waktu Login</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100">
+                                            {recentLogins.length > 0 ? recentLogins.map(u => (
+                                                <tr key={u.id} className="hover:bg-slate-50/50">
+                                                    <td className="p-4 font-bold text-slate-800">{u.name}</td>
+                                                    <td className="p-4">
+                                                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                                            u.role === 'ADMIN' ? 'bg-rose-100 text-rose-600' : 
+                                                            u.role === 'TEACHER' ? 'bg-amber-100 text-amber-600' : 'bg-indigo-100 text-indigo-600'
+                                                        }`}>{u.role}</span>
+                                                    </td>
+                                                    <td className="p-4 text-xs font-mono">{new Date(u.lastLogin).toLocaleString()}</td>
+                                                </tr>
+                                            )) : (
+                                                <tr><td colSpan="3" className="p-4 text-center text-slate-400">Belum ada data login baru.</td></tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
 
                         <div className="mb-8">
@@ -1277,7 +1583,7 @@
                                     <div className="flex justify-between items-start mb-4">
                                         <div>
                                             <h3 className="text-2xl font-bold flex items-center gap-2"><BrainCircuit size={24}/> Analisa Cerdas AI</h3>
-                                            <p className="text-indigo-100 text-sm mt-1">Dapatkan wawasan mendalam tentang data kehadiran sekolah minggu.</p>
+                                            <p className="text-indigo-100 text-sm mt-1">Dapatkan wawasan mendalam tentang data kehadiran.</p>
                                         </div>
                                         <button onClick={handleAnalyze} disabled={isAnalyzing} className="bg-white text-indigo-600 px-4 py-2 rounded-xl font-bold text-sm shadow-lg hover:bg-indigo-50 transition-colors disabled:opacity-70 flex items-center gap-2">
                                             {isAnalyzing ? <RefreshCw size={16} className="animate-spin"/> : <Sparkles size={16}/>}
@@ -1325,14 +1631,40 @@
                                     <div className="space-y-4">
                                         <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
                                             <input value={bcTitle} onChange={e=>setBcTitle(e.target.value)} placeholder="Judul Pengumuman" className="w-full bg-transparent outline-none font-bold text-slate-700 mb-2 border-b border-slate-200 pb-2 focus:border-pink-500 transition-colors"/>
-                                            <textarea value={bcMsg} onChange={e=>setBcMsg(e.target.value)} rows="2" placeholder="Tulis pesan untuk semua guru dan murid..." className="w-full bg-transparent outline-none text-slate-600 text-sm resize-none"></textarea>
+                                            <textarea value={bcMsg} onChange={e=>setBcMsg(e.target.value)} rows="2" placeholder="Tulis pesan untuk semua guru dan murid..." className="w-full bg-transparent outline-none text-slate-600 text-sm resize-none mb-3"></textarea>
+                                            
+                                            <div className="flex items-center gap-2 pt-2 border-t border-slate-200">
+                                                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Jadwalkan:</span>
+                                                <input type="date" value={bcDate} onChange={e=>setBcDate(e.target.value)} className="bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold text-slate-600"/>
+                                                <input type="time" value={bcTime} onChange={e=>setBcTime(e.target.value)} className="bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold text-slate-600"/>
+                                            </div>
                                         </div>
-                                        <div className="flex justify-end">
+                                        <div className="flex justify-between items-center">
+                                            <p className="text-xs text-slate-400 italic">
+                                                *Set waktu ke masa depan untuk menjadwalkan.
+                                            </p>
                                             <button onClick={handleBroadcast} className="bg-pink-500 text-white px-6 py-2 rounded-xl font-bold shadow-lg shadow-pink-500/30 active:scale-95 transition-all flex items-center gap-2">
-                                                Kirim Sekarang <Send size={16}/>
+                                                Kirim / Jadwalkan <Send size={16}/>
                                             </button>
                                         </div>
                                     </div>
+
+                                    {pendingBroadcasts.length > 0 && (
+                                        <div className="mt-4 pt-4 border-t border-slate-100">
+                                            <h4 className="text-xs font-bold text-slate-500 uppercase mb-2 flex items-center gap-1"><Timer size={12}/> Antrean Broadcast Terjadwal</h4>
+                                            <div className="space-y-2">
+                                                {pendingBroadcasts.map(pb => (
+                                                    <div key={pb.id} className="bg-yellow-50 border border-yellow-100 p-2 rounded-xl flex justify-between items-center">
+                                                        <div>
+                                                            <p className="text-xs font-bold text-slate-700">{pb.title}</p>
+                                                            <p className="text-[10px] text-slate-500">Tayang: {new Date(pb.scheduledTime).toLocaleString()}</p>
+                                                        </div>
+                                                        <span className="text-[10px] font-bold bg-yellow-100 text-yellow-700 px-2 py-1 rounded">Waiting</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -1381,7 +1713,6 @@
                 );
             }
 
-            // --- TEACHER & STUDENT DASHBOARD ---
             return (
                 <div className="p-6 pb-32 animate-slide-up">
                     <header className="flex justify-between items-center mb-8">
@@ -1390,6 +1721,9 @@
                             <h2 className="text-3xl font-extrabold text-slate-800">Statistik</h2>
                         </div>
                         <div className="flex items-center gap-2">
+                             <button onClick={handleManualSync} disabled={isSyncing} className="bg-white p-2 rounded-2xl shadow-sm border border-slate-100 text-indigo-500 hover:bg-indigo-50 active:scale-95 transition-all">
+                                {isSyncing ? <RefreshCw size={18} className="animate-spin"/> : <RefreshCw size={18}/>}
+                             </button>
                              {user.role === 'TEACHER' && (
                                 <button onClick={generateDevotional} className="bg-gradient-to-tr from-yellow-400 to-orange-500 text-white p-2 rounded-xl shadow-lg hover:scale-105 transition-transform" title="Renungan Harian Guru AI">
                                     {loadingDevo ? <RefreshCw size={20} className="animate-spin"/> : <Sparkles size={20}/>}
@@ -1478,7 +1812,7 @@
                     <div className="space-y-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         <h3 className="font-bold text-slate-700 px-2 col-span-full">Baru Hadir</h3>
                         {att.map((r, i) => (
-                            <div key={i} className="glass-card p-4 rounded-2xl flex items-center justify-between animate-pop" style={{animationDelay: `${i*100}ms`}}>
+                            <div key={i} className="glass-card p-4 rounded-2xl flex items-center justify-between animate-pop">
                                 <div className="flex items-center gap-4">
                                     <Avatar name={r.userName} seed={r.avatarSeed} style={r.avatarStyle} size="sm" />
                                     <div>
@@ -1486,7 +1820,7 @@
                                         <p className="text-xs text-slate-500 font-semibold">{r.className}</p>
                                     </div>
                                 </div>
-                                <span className="bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full text-[10px] font-bold">{new Date(r.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
+                                <span className="bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full text-xs font-bold">{new Date(r.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
                             </div>
                         ))}
                         {att.length === 0 && <p className="text-center text-slate-400 py-8 text-sm col-span-full">Menunggu scan pertama...</p>}
@@ -1497,65 +1831,71 @@
                 </div>
             );
         };
-
         const Scanner = ({ user }) => {
             const [status, setStatus] = useState({ type: 'idle', msg: '' });
             const [manual, setManual] = useState(false);
             const [txt, setTxt] = useState('');
             const ref = useRef(null);
             
-            // --- MODIFIKASI LOGIKA SCANNER ---
-            // 1. Admin bisa scan Siapa Saja (GURU atau SISWA)
-            // 2. Guru hanya bisa scan Siswa di Kelasnya
             const onScan = (code) => {
-                if (status.type !== 'idle') return;
+                if (status.type !== 'idle' || !code) return;
+                
                 try {
                     if(ref.current && ref.current.getState() === 2) {
                         ref.current.pause();
                     }
                 } catch(e) { console.log("Pause error:", e); }
 
+                const cleanCode = typeof code === 'string' ? code.trim() : code;
                 const users = DB.get(STORAGE.USERS, DEFAULT_USERS);
-                const u = users.find(x => x.qrCode === code || x.id === code || x.name.toLowerCase() === code.toLowerCase());
+                
+                const u = users.find(x => 
+                    x.qrCode === cleanCode || 
+                    x.id === cleanCode || 
+                    x.name.toLowerCase() === cleanCode.toLowerCase()
+                );
                 
                 if (!u) {
                     setStatus({ type: 'err', msg: 'Data Tidak Ditemukan' });
                 } else {
                     let isAllowed = false;
-
                     if (user.role === 'ADMIN') {
-                        // Admin bebas scan siapapun (Student / Teacher / Admin)
                         isAllowed = true;
                     } else if (user.role === 'TEACHER') {
-                        // Guru hanya bisa scan STUDENT dan harus KELAS yang sama
                         if (u.role === 'STUDENT' && u.className === user.className) {
                             isAllowed = true;
                         } else if (u.role === 'TEACHER') {
-                             // Guru scan Guru lain? Biasanya tidak, tapi kita blokir saja agar sesuai 'Absensi Guru' biasanya oleh Admin/Self
                              setStatus({ type: 'err', msg: 'Hanya Admin yang bisa scan Guru.' });
-                             // return agar tidak lanjut
                              setTimeout(() => { setStatus({ type: 'idle', msg: '' }); try { if(ref.current && ref.current.getState() === 3) ref.current.resume(); } catch(e){} }, 2000);
                              return;
                         } else {
                             setStatus({ type: 'err', msg: 'Siswa beda kelas / Akses ditolak' });
-                             // return
                              setTimeout(() => { setStatus({ type: 'idle', msg: '' }); try { if(ref.current && ref.current.getState() === 3) ref.current.resume(); } catch(e){} }, 2000);
                              return;
                         }
                     } else {
-                         // Student tidak bisa scan
                          isAllowed = false;
                     }
 
                     if (isAllowed) {
-                        const ok = DB.att.add({
-                            id: Date.now(), userId: u.id, userName: u.name, className: u.className || '-', role: u.role,
-                            date: new Date().toISOString().split('T')[0], timestamp: new Date().toISOString(),
+                        const result = DB.att.add({
+                            id: Date.now(), 
+                            userId: u.id, 
+                            userName: u.name, 
+                            className: u.className || '-', 
+                            role: u.role,
+                            date: getLocalDate(), 
+                            timestamp: new Date().toISOString(),
                             avatarSeed: u.avatarSeed,
                             avatarStyle: u.avatarStyle || 'avataaars'
                         });
-                        if (ok) DB.activities.add(user.name, `Memindai kehadiran ${u.name} (${u.role})`);
-                        setStatus(ok ? { type: 'ok', msg: `Berhasil: ${u.name}` } : { type: 'err', msg: 'Sudah Absen Hari Ini' });
+
+                        if (result.success) {
+                             DB.activities.add(user.name, `Memindai kehadiran ${u.name} (${u.role})`);
+                             setStatus({ type: 'ok', msg: `Berhasil: ${u.name}` });
+                        } else {
+                             setStatus({ type: 'err', msg: result.reason === 'duplicate' ? 'Sudah Absen Hari Ini' : 'Gagal Menyimpan' });
+                        }
                     }
                 }
                 
@@ -1691,16 +2031,33 @@
             const [schedules, setSchedules] = useState([]);
             const [aiDevotional, setAiDevotional] = useState(null);
             const [loadingDevo, setLoadingDevo] = useState(false);
+            
+            // Menggunakan onSnapshot juga untuk Siswa agar melihat update realtime (Jadwal/Materi/History)
             useEffect(() => {
-                const allAtt = DB.get(STORAGE.ATTENDANCE, []);
-                const myAtt = allAtt.filter(a => a.userId === user.id).sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
-                setHistory(myAtt);
-                const allMat = DB.get(STORAGE.MATERIALS, []);
-                const myMat = allMat.filter(m => m.className === user.className).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
-                setMaterials(myMat);
-                const mySched = DB.schedules.get(user.className);
-                setSchedules(mySched);
+                // Listener Attendance
+                const unsubAtt = onSnapshot(getCollectionRef('attendance'), (snap) => {
+                    const data = snap.docs.map(d => d.data());
+                    const myAtt = data.filter(a => a.userId === user.id).sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+                    setHistory(myAtt);
+                });
+                
+                // Listener Materials
+                const unsubMat = onSnapshot(getCollectionRef('materials'), (snap) => {
+                    const data = snap.docs.map(d => d.data());
+                    const myMat = data.filter(m => m.className === user.className).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+                    setMaterials(myMat);
+                });
+
+                // Listener Schedules
+                const unsubSched = onSnapshot(getCollectionRef('schedules'), (snap) => {
+                    const data = snap.docs.map(d => d.data());
+                    const mySched = data.filter(s => s.className === user.className || s.className === 'ALL');
+                    setSchedules(mySched);
+                });
+
+                return () => { unsubAtt(); unsubMat(); unsubSched(); };
             }, [user]);
+
             const generateDevotional = async () => {
                 setLoadingDevo(true);
                 try {
@@ -1911,14 +2268,25 @@
                     nav('/', { replace: true });
                 }
             }, [user, loc.pathname, nav]);
+            
+            // Listen notif realtime
             useEffect(() => {
-                const notifs = DB.notifications.get();
-                if (notifs.length > 0) {
-                    const lastNotif = new Date(notifs[0].timestamp);
-                    const today = new Date();
-                    if(lastNotif.toDateString() === today.toDateString()) setHasNewNotif(true);
-                }
+                if (!auth.currentUser) return; // Guard
+                const unsubNotif = onSnapshot(getCollectionRef('notifications'), (snap) => {
+                    const data = snap.docs.map(d => d.data());
+                    localStorage.setItem(STORAGE.NOTIFICATIONS, JSON.stringify(data));
+                    
+                    if (data.length > 0) {
+                        const lastNotif = data.sort((a,b)=> new Date(b.timestamp) - new Date(a.timestamp))[0];
+                        const today = new Date();
+                        if(new Date(lastNotif.timestamp).toDateString() === today.toDateString() && isNotifVisible(lastNotif)) {
+                             setHasNewNotif(true);
+                        }
+                    }
+                }, (e) => console.error(e));
+                return () => { if(unsubNotif) unsubNotif(); };
             }, []);
+            
             return (
                 <div className="h-screen flex flex-col relative w-full md:max-w-7xl mx-auto bg-white/30 shadow-2xl overflow-hidden border-x border-white/40">
                     <Background />
@@ -1974,17 +2342,33 @@
             
             useEffect(() => {
                 const initApp = async () => {
-                    await syncFromFirestore(); 
-                    setIsReady(true); 
+                    try {
+                        // START ONLINE
+                        await signInAnonymously(auth);
+                        await syncFromFirestore(); 
+                    } catch (e) {
+                        console.error("Initialization Error:", e);
+                        if (e.code === 'auth/configuration-not-found' || e.code === 'auth/admin-restricted-operation') {
+                            alert("PERINGATAN: Mode Offline (Cek Config Firebase).");
+                        }
+                    } finally {
+                        setIsReady(true);
+                    }
+                    
                     const s = DB.get(STORAGE.SESSION); 
                     if(s) {
                         const users = DB.get(STORAGE.USERS, DEFAULT_USERS);
                         const freshUser = users.find(u => u.id === s.id);
-                        setUser(freshUser || s);
+                        if(freshUser && freshUser.isActive !== false) {
+                            setUser(freshUser || s);
+                        } else {
+                            localStorage.removeItem(STORAGE.SESSION);
+                        }
                     } 
                 };
                 initApp();
             }, []);
+
             const login = (u) => { setUser(u); DB.set(STORAGE.SESSION, u); };
             const logout = () => { 
                 setUser(null);
@@ -1995,6 +2379,7 @@
                 const success = DB.users.update(updatedUser);
                 if (success) { setUser(updatedUser); DB.set(STORAGE.SESSION, updatedUser); }
             };
+            
             if (!isReady) return <LoadingScreen />;
             if (!user) return <LoginScreen onLogin={login} />;
             return <HashRouter><MainApp user={user} onLogout={logout} onUpdateUser={handleUpdateUser} /></HashRouter>;
