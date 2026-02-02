@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Absensi GKPS - PRO FINAL (Secure Reset)</title>
+    <title>Sistem Absensi GKPS - PRO FINAL (Broadcast & Search)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -55,9 +55,23 @@
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 50; display: none; justify-content: center; align-items: center; padding: 1rem; backdrop-filter: blur(2px); }
         .modal-content { background: white; padding: 2rem; border-radius: 1.5rem; width: 100%; max-w-sm; animation: slideUp 0.3s ease; max-height: 90vh; overflow-y: auto; }
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
+        /* Broadcast Box */
+        .broadcast-box { background: linear-gradient(to right, #fffbeb, #fef3c7); border-left: 4px solid #f59e0b; padding: 1rem; margin-bottom: 1.5rem; border-radius: 0.5rem; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); } 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); } }
     </style>
 </head>
 <body class="p-4">
+
+    <section id="screen-setup" class="hidden max-w-md mx-auto min-h-screen flex flex-col justify-center">
+        <div class="pro-card text-center">
+            <h1 class="text-2xl font-bold text-blue-900 mb-2">Setup Sistem</h1>
+            <p class="text-gray-500 text-sm mb-6">Belum ada akun Admin. Silakan buat akun Super Admin pertama.</p>
+            <input type="text" id="setup-username" class="pro-input" placeholder="Username Admin Baru">
+            <input type="password" id="setup-password" class="pro-input" placeholder="Password">
+            <button onclick="setupAdmin()" class="pro-btn btn-blue">Buat Akun Admin</button>
+        </div>
+    </section>
 
     <section id="screen-login" class="hidden max-w-md mx-auto min-h-screen flex flex-col justify-center">
         <div class="text-center mb-8">
@@ -87,6 +101,9 @@
                 <button onclick="logout()" class="text-red-500 text-xs font-bold border border-red-200 px-3 py-1 rounded-full">Keluar</button>
             </div>
         </header>
+        
+        <div id="siswa-broadcast-area"></div>
+
         <div class="id-card-wrap animate-fade-in">
             <div class="text-xs font-bold tracking-[0.3em] opacity-80 mb-6">GKPS TANGERANG</div>
             <div class="w-24 h-24 mx-auto bg-white rounded-full p-1 mb-4 shadow-lg">
@@ -114,10 +131,13 @@
             </div>
         </header>
 
+        <div id="dashboard-broadcast-area"></div>
+
         <div class="flex gap-2 mb-6 overflow-x-auto pb-2">
             <button onclick="switchTab('home')" id="tab-home" class="nav-pill active">📊 Home</button>
             <button onclick="switchTab('scan')" id="tab-scan" class="nav-pill">📷 Scan</button>
             <button onclick="switchTab('users')" id="tab-users" class="nav-pill hidden">👥 Users</button> 
+            <button onclick="switchTab('messages')" id="tab-messages" class="nav-pill hidden">📢 Pesan</button>
             <button onclick="switchTab('settings')" id="tab-settings" class="nav-pill hidden">⚙️ Pengaturan</button>
         </div>
 
@@ -169,8 +189,9 @@
                     </div>
                 </div>
                 
-                <div class="mb-2">
-                    <p class="text-[10px] text-gray-500 italic">*Format CSV: Nama,Username,Password,Role(siswa/guru/admin),Kelas</p>
+                <div class="mb-4 relative">
+                    <input type="text" id="search-user" onkeyup="renderUserTable(this.value)" placeholder="Cari Nama atau Username..." class="pro-input pl-10" style="margin-bottom: 0;">
+                    <span class="absolute left-3 top-3 text-gray-400">🔍</span>
                 </div>
 
                 <div class="overflow-x-auto bg-white rounded-xl border border-gray-100">
@@ -191,40 +212,61 @@
                 </div>
             </div>
         </div>
+
+        <div id="view-messages" class="tab-view hidden">
+            <div class="pro-card mb-6">
+                <h3 class="font-bold text-lg mb-4">Buat Pengumuman Baru</h3>
+                <label class="text-xs font-bold text-gray-500 uppercase">Isi Pesan</label>
+                <textarea id="msg-content" class="pro-input h-24" placeholder="Tulis pengumuman di sini..."></textarea>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 uppercase">Target Penerima</label>
+                        <select id="msg-target" class="pro-input bg-white">
+                            <option value="all">Semua Pengguna</option>
+                            <option value="siswa">Hanya Siswa</option>
+                            <option value="guru">Hanya Guru</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 uppercase">Jadwal Kirim</label>
+                        <input type="datetime-local" id="msg-time" class="pro-input bg-white">
+                        <p class="text-[10px] text-gray-400 -mt-2">Biarkan kosong untuk kirim sekarang.</p>
+                    </div>
+                </div>
+                <button onclick="sendBroadcast()" class="pro-btn btn-blue mt-2">Kirim Pengumuman</button>
+            </div>
+
+            <div class="pro-card">
+                <h3 class="font-bold text-gray-700 mb-2">Riwayat Pengumuman</h3>
+                <div id="broadcast-history" class="space-y-3"></div>
+            </div>
+        </div>
         
          <div id="view-settings" class="tab-view hidden">
-            
             <div class="pro-card bg-blue-50 border-blue-200 mb-6">
                 <div class="flex items-center mb-4">
                     <div class="bg-blue-200 p-2 rounded-full mr-3 text-xl">🔄</div>
                     <div>
                         <h3 class="font-bold text-blue-900">Sinkronisasi Data (Sync)</h3>
-                        <p class="text-xs text-blue-700">Pindahkan data antar HP/Laptop tanpa internet.</p>
+                        <p class="text-xs text-blue-700">Pindahkan data antar HP/Laptop.</p>
                     </div>
                 </div>
-                
                 <div class="grid grid-cols-2 gap-4">
                     <div class="text-center">
-                        <p class="text-[10px] text-gray-500 mb-1">1. Dari HP (Sumber)</p>
-                        <button onclick="backupData()" class="bg-white border-2 border-blue-500 text-blue-600 w-full py-2 rounded-xl text-xs font-bold shadow-sm hover:bg-blue-50">
-                            📥 Download Data
-                        </button>
+                        <button onclick="backupData()" class="bg-white border-2 border-blue-500 text-blue-600 w-full py-2 rounded-xl text-xs font-bold shadow-sm hover:bg-blue-50">📥 Download Data</button>
                     </div>
-                    
                     <div class="text-center">
-                        <p class="text-[10px] text-gray-500 mb-1">2. Ke PC (Tujuan)</p>
                         <label class="bg-blue-600 text-white w-full py-2.5 rounded-xl text-xs font-bold shadow-md cursor-pointer hover:bg-blue-700 block text-center">
                             📤 Upload & Gabung
                             <input type="file" class="hidden" onchange="syncData(this)">
                         </label>
                     </div>
                 </div>
-                <p class="text-[10px] text-center mt-3 text-blue-400 italic">File yang diupload akan digabungkan dengan data di perangkat ini.</p>
             </div>
 
              <div class="pro-card bg-red-50 border-red-100">
                 <h3 class="font-bold text-red-700 mb-2">Reset Sistem</h3>
-                <p class="text-xs text-red-600 mb-4">Hati-hati! Ini menghapus semua data.</p>
                 <button onclick="emergencyReset()" class="bg-red-600 text-white px-4 py-2 rounded-lg text-xs font-bold w-full">Reset Factory</button>
             </div>
         </div>
@@ -306,16 +348,12 @@
         <div class="modal-content bg-yellow-50">
             <h3 class="text-lg font-bold mb-4 text-yellow-800">Reset Password Admin</h3>
             <p class="text-xs text-gray-600 mb-4">Masukkan Kode Pemulihan untuk mereset password Admin.</p>
-            
             <label class="text-xs font-bold text-gray-500 uppercase">Username Admin</label>
             <input type="text" id="forgot-username" class="pro-input" placeholder="Contoh: admin">
-            
             <label class="text-xs font-bold text-gray-500 uppercase">Kode Pemulihan</label>
             <input type="password" id="forgot-code" class="pro-input" placeholder="Masukkan Kode Rahasia">
-            
             <label class="text-xs font-bold text-gray-500 uppercase">Password Baru</label>
             <input type="text" id="forgot-newpass" class="pro-input" placeholder="Password Baru">
-
             <div class="flex gap-2">
                 <button onclick="resetAdminPassword()" class="pro-btn btn-yellow text-yellow-900">Reset Password</button>
                 <button onclick="document.getElementById('forgot-modal').style.display='none'" class="pro-btn bg-gray-200 text-gray-600">Batal</button>
@@ -324,23 +362,23 @@
     </div>
 
     <script>
-        // DB INIT
+        // DB INIT WITH MESSAGES
         const DB_KEY = 'gkps_system_db';
-        let db = JSON.parse(localStorage.getItem(DB_KEY)) || { users: [], attendance: [], isSetup: false };
+        let db = JSON.parse(localStorage.getItem(DB_KEY)) || { users: [], attendance: [], messages: [], isSetup: false };
         let currentUser = null;
 
         function initApp() {
-            // AUTO CREATE ADMIN IF EMPTY
+            // INIT DB.MESSAGES IF NOT EXISTS (Backward Compatibility)
+            if(!db.messages) db.messages = [];
+
             if (db.users.length === 0 || !db.users.some(u => u.role === 'admin')) {
                 db.users.push({
                     id: 'USR_ADMIN_DEF', name: 'Super Admin', username: 'admin', password: '123',
                     role: 'admin', kelas: '-', gender: 'L', disabled: false, 
-                    recoveryCode: 'root', // KODE PEMULIHAN DEFAULT
-                    avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Admin'
+                    recoveryCode: 'root', avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Admin'
                 });
-                db.isSetup = true;
-                saveDb();
-                console.log("Admin Default Dibuat: admin/123");
+                db.isSetup = true; saveDb();
+                console.log("Admin Default Dibuat.");
             }
             showScreen('login');
         }
@@ -350,44 +388,39 @@
             document.getElementById('screen-' + screenId).classList.remove('hidden');
         }
 
-        // --- SECRET TRIGGER FOR EMERGENCY RESET ---
+        // --- SECRET TRIGGER ---
         let tapCount = 0;
         function triggerSecretReset() {
             tapCount++;
             if(tapCount >= 5) {
                 document.getElementById('btn-emergency-reset').classList.remove('hidden');
                 alert("Mode Darurat Diaktifkan: Tombol Reset Muncul");
-                tapCount = 0; // Reset counter
+                tapCount = 0;
             }
         }
 
-        // --- EMERGENCY RESET (PASSWORD PROTECTED) ---
         function emergencyReset() {
-            // Minta PIN/Password Reset
-            const pin = prompt("PERINGATAN: SEMUA DATA AKAN DIHAPUS!\n\nMasukkan PIN Keamanan untuk melanjutkan:");
-            
-            if (pin === "9999") { // DEFAULT RESET PIN
-                if(confirm("YAKIN MENGHAPUS SELURUH DATABASE APLIKASI?")) {
-                    localStorage.removeItem(DB_KEY);
-                    alert("Aplikasi telah direset. Halaman akan dimuat ulang.");
-                    location.reload();
-                }
-            } else if (pin !== null) {
-                alert("PIN SALAH! Akses ditolak.");
-            }
+            const pin = prompt("PERINGATAN: DATA AKAN HILANG!\nMasukkan PIN Keamanan:");
+            if (pin === "9999") {
+                if(confirm("YAKIN RESET TOTAL?")) { localStorage.removeItem(DB_KEY); location.reload(); }
+            } else if (pin !== null) alert("PIN SALAH!");
         }
 
-        // AUTH LOGIC
+        // AUTH & LOGOUT
         function handleLogin() {
             const user = document.getElementById('login-username').value;
             const pass = document.getElementById('login-password').value;
             const foundUser = db.users.find(u => u.username === user && u.password === pass);
             
             if (foundUser) {
-                if (foundUser.disabled) return alert("AKUN DIBLOKIR/NON-AKTIF!");
+                if (foundUser.disabled) return alert("AKUN DIBLOKIR!");
                 currentUser = foundUser;
                 document.getElementById('login-username').value = '';
                 document.getElementById('login-password').value = '';
+                
+                // Show Broadcasts on Login
+                checkBroadcasts(foundUser.role);
+
                 if (foundUser.role === 'siswa') { renderSiswaScreen(); showScreen('siswa'); }
                 else { renderDashboardScreen(); showScreen('dashboard'); }
             } else alert('Username/Password Salah!');
@@ -395,56 +428,100 @@
 
         function logout() { currentUser = null; showScreen('login'); stopScanner(); }
 
-        // FORGOT PASSWORD LOGIC
-        function openForgotModal() {
-            document.getElementById('forgot-modal').style.display = 'flex';
-            document.getElementById('forgot-username').value = '';
-            document.getElementById('forgot-code').value = '';
-            document.getElementById('forgot-newpass').value = '';
+        // --- BROADCAST FEATURE LOGIC ---
+        function sendBroadcast() {
+            const content = document.getElementById('msg-content').value;
+            const target = document.getElementById('msg-target').value;
+            const timeInput = document.getElementById('msg-time').value;
+            const schedule = timeInput ? new Date(timeInput).getTime() : Date.now();
+
+            if(!content) return alert("Isi pesan tidak boleh kosong!");
+
+            db.messages.push({
+                id: 'MSG_' + Date.now(),
+                content: content,
+                target: target, // 'all', 'siswa', 'guru'
+                schedule: schedule,
+                sender: currentUser.name,
+                created: new Date().toLocaleString()
+            });
+            saveDb();
+            alert("Pengumuman berhasil dibuat!");
+            document.getElementById('msg-content').value = '';
+            document.getElementById('msg-time').value = '';
+            renderBroadcastHistory();
         }
 
-        function resetAdminPassword() {
-            const user = document.getElementById('forgot-username').value;
-            const code = document.getElementById('forgot-code').value;
-            const newPass = document.getElementById('forgot-newpass').value;
-
-            const targetUser = db.users.find(u => u.username === user && u.role === 'admin');
-
-            if (!targetUser) return alert("Username Admin tidak ditemukan!");
+        function renderBroadcastHistory() {
+            const container = document.getElementById('broadcast-history');
+            const now = Date.now();
             
-            if (targetUser.recoveryCode && targetUser.recoveryCode === code) {
-                targetUser.password = newPass;
-                saveDb();
-                alert("Password Berhasil Direset! Silakan Login.");
-                document.getElementById('forgot-modal').style.display = 'none';
-            } else {
-                alert("Kode Pemulihan Salah!");
+            if(db.messages.length === 0) {
+                container.innerHTML = '<p class="text-center text-gray-400 text-sm">Belum ada pengumuman.</p>';
+                return;
+            }
+
+            container.innerHTML = db.messages.slice().reverse().map(msg => {
+                const isFuture = msg.schedule > now;
+                const statusBadge = isFuture 
+                    ? '<span class="bg-yellow-100 text-yellow-800 text-[10px] px-2 py-1 rounded">⏳ Terjadwal</span>' 
+                    : '<span class="bg-green-100 text-green-800 text-[10px] px-2 py-1 rounded">✅ Terkirim</span>';
+                
+                return `
+                <div class="border p-3 rounded-lg bg-gray-50 relative group">
+                    <div class="flex justify-between items-start mb-1">
+                        <span class="font-bold text-xs text-blue-900">Ke: ${msg.target.toUpperCase()}</span>
+                        ${statusBadge}
+                    </div>
+                    <p class="text-sm text-gray-700 mb-2">${msg.content}</p>
+                    <div class="text-[10px] text-gray-400 flex justify-between">
+                        <span>Jadwal: ${new Date(msg.schedule).toLocaleString()}</span>
+                        <button onclick="deleteMessage('${msg.id}')" class="text-red-500 hover:underline">Hapus</button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function deleteMessage(id) {
+            if(confirm("Hapus pesan ini?")) {
+                db.messages = db.messages.filter(m => m.id !== id);
+                saveDb(); renderBroadcastHistory();
             }
         }
 
-        // SISWA LOGIC
-        function renderSiswaScreen() {
-            document.getElementById('siswa-greet-name').innerText = currentUser.name;
-            document.getElementById('card-name-display').innerText = currentUser.name;
-            document.getElementById('card-img').src = currentUser.avatar;
-            document.getElementById('card-class-display').innerText = "KELAS " + (currentUser.kelas || "-");
-            
-            // FIX CRITICAL: QR MEMBAWA DATA LENGKAP UTK AUTO-ADD DI DEVICE GURU
-            const qrData = `GKPS|${currentUser.username}|${currentUser.name}|${currentUser.role}|${currentUser.kelas||'-'}`;
-            
-            document.getElementById('qrcode').innerHTML = "";
-            new QRCode(document.getElementById("qrcode"), { text: qrData, width: 120, height: 120 });
+        function checkBroadcasts(role) {
+            const now = Date.now();
+            // Filter messages for current user role and valid time
+            const validMsgs = db.messages.filter(m => 
+                (m.target === 'all' || m.target === role) && 
+                m.schedule <= now
+            );
+
+            // Render to containers
+            const html = validMsgs.map(m => `
+                <div class="broadcast-box">
+                    <div class="font-bold text-yellow-900 text-sm mb-1">📢 Pengumuman</div>
+                    <p class="text-sm text-yellow-800">${m.content}</p>
+                    <div class="text-[10px] text-yellow-600 mt-2 text-right">${new Date(m.schedule).toLocaleDateString()}</div>
+                </div>
+            `).join('');
+
+            document.getElementById('siswa-broadcast-area').innerHTML = html;
+            document.getElementById('dashboard-broadcast-area').innerHTML = html;
         }
 
-        // DASHBOARD LOGIC
+        // --- DASHBOARD & NAVIGATION ---
         function renderDashboardScreen() {
             document.getElementById('guru-greet-name').innerText = currentUser.name;
             document.getElementById('role-badge').innerText = currentUser.role.toUpperCase();
+            
             if (currentUser.role === 'admin') {
                 document.getElementById('tab-users').classList.remove('hidden');
+                document.getElementById('tab-messages').classList.remove('hidden');
                 document.getElementById('tab-settings').classList.remove('hidden');
             } else {
                 document.getElementById('tab-users').classList.add('hidden');
+                document.getElementById('tab-messages').classList.add('hidden');
                 document.getElementById('tab-settings').classList.add('hidden');
             }
             switchTab('home');
@@ -457,39 +534,26 @@
             document.getElementById('tab-'+tab).classList.add('active');
             if(tab === 'home') renderHomeStats();
             if(tab === 'scan') startScanner(); else stopScanner();
-            if(tab === 'users') renderUserTable();
+            if(tab === 'users') { renderUserTable(); document.getElementById('search-user').value = ''; }
+            if(tab === 'messages') renderBroadcastHistory();
         }
 
-        function renderHomeStats() {
-            const today = new Date().toLocaleDateString();
-            const logs = db.attendance.filter(a => a.date === today);
-            document.getElementById('count-present').innerText = logs.length;
-            const tbody = document.getElementById('table-attendance');
-            if(logs.length === 0) tbody.innerHTML = '<tr><td colspan="4" class="text-center p-8 text-gray-400 italic">Tidak ada data.</td></tr>';
-            else {
-                tbody.innerHTML = logs.slice().reverse().map(l => {
-                    const u = db.users.find(user => user.username === l.username);
-                    const k = u ? u.kelas : '-';
-                    return `
-                    <tr>
-                        <td class="text-gray-500 font-mono text-xs">${l.time}</td>
-                        <td class="font-bold text-sm">${l.name}</td>
-                        <td><span class="badge badge-class">${k}</span></td>
-                        <td><span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Hadir</span></td>
-                    </tr>
-                `}).join('');
-            }
-        }
-
-        // USER MANAGEMENT (GOD MODE)
-        function renderUserTable() {
+        // --- USER SEARCH & MANAGEMENT ---
+        function renderUserTable(filter = '') {
             const tbody = document.getElementById('table-users');
-            if(db.users.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center p-8 text-gray-400 italic">Tidak ada data.</td></tr>';
+            
+            // FILTER LOGIC
+            const filteredUsers = db.users.filter(u => 
+                u.name.toLowerCase().includes(filter.toLowerCase()) || 
+                u.username.toLowerCase().includes(filter.toLowerCase())
+            );
+
+            if(filteredUsers.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center p-8 text-gray-400 italic">Tidak ada data pengguna.</td></tr>';
                 return;
             }
             
-            tbody.innerHTML = db.users.map(u => `
+            tbody.innerHTML = filteredUsers.map(u => `
                 <tr class="border-b hover:bg-gray-50">
                     <td class="text-center"><input type="checkbox" class="user-checkbox" value="${u.id}" onchange="updateDeleteBtn()"></td>
                     <td class="flex items-center">
@@ -510,47 +574,79 @@
             updateDeleteBtn();
         }
 
-        // --- BULK DELETE LOGIC ---
+        // SISWA RENDER
+        function renderSiswaScreen() {
+            document.getElementById('siswa-greet-name').innerText = currentUser.name;
+            document.getElementById('card-name-display').innerText = currentUser.name;
+            document.getElementById('card-img').src = currentUser.avatar;
+            document.getElementById('card-class-display').innerText = "KELAS " + (currentUser.kelas || "-");
+            const qrData = `GKPS|${currentUser.username}|${currentUser.name}|${currentUser.role}|${currentUser.kelas||'-'}`;
+            document.getElementById('qrcode').innerHTML = "";
+            new QRCode(document.getElementById("qrcode"), { text: qrData, width: 120, height: 120 });
+        }
+
+        // HOME STATS
+        function renderHomeStats() {
+            const today = new Date().toLocaleDateString();
+            const logs = db.attendance.filter(a => a.date === today);
+            document.getElementById('count-present').innerText = logs.length;
+            const tbody = document.getElementById('table-attendance');
+            if(logs.length === 0) tbody.innerHTML = '<tr><td colspan="4" class="text-center p-8 text-gray-400 italic">Tidak ada data.</td></tr>';
+            else {
+                tbody.innerHTML = logs.slice().reverse().map(l => {
+                    const u = db.users.find(user => user.username === l.username);
+                    const k = u ? u.kelas : '-';
+                    return `<tr><td class="text-gray-500 font-mono text-xs">${l.time}</td><td class="font-bold text-sm">${l.name}</td><td><span class="badge badge-class">${k}</span></td><td><span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Hadir</span></td></tr>`;
+                }).join('');
+            }
+        }
+
+        // FORGOT & RESET LOGIC
+        function openForgotModal() {
+            document.getElementById('forgot-modal').style.display = 'flex';
+            document.getElementById('forgot-username').value = '';
+            document.getElementById('forgot-code').value = '';
+            document.getElementById('forgot-newpass').value = '';
+        }
+        function resetAdminPassword() {
+            const user = document.getElementById('forgot-username').value;
+            const code = document.getElementById('forgot-code').value;
+            const newPass = document.getElementById('forgot-newpass').value;
+            const targetUser = db.users.find(u => u.username === user && u.role === 'admin');
+            if (!targetUser) return alert("Username Admin tidak ditemukan!");
+            if (targetUser.recoveryCode && targetUser.recoveryCode === code) {
+                targetUser.password = newPass; saveDb();
+                alert("Password Berhasil Direset! Silakan Login.");
+                document.getElementById('forgot-modal').style.display = 'none';
+            } else alert("Kode Pemulihan Salah!");
+        }
+
+        // BULK DELETE
         function toggleSelectAll(source) {
             const checkboxes = document.querySelectorAll('.user-checkbox');
             checkboxes.forEach(cb => cb.checked = source.checked);
             updateDeleteBtn();
         }
-
         function updateDeleteBtn() {
             const checkedCount = document.querySelectorAll('.user-checkbox:checked').length;
             const btn = document.getElementById('btn-delete-multi');
-            if(checkedCount > 0) {
-                btn.classList.remove('hidden');
-                btn.innerText = `Hapus (${checkedCount})`;
-            } else {
-                btn.classList.add('hidden');
-            }
+            if(checkedCount > 0) { btn.classList.remove('hidden'); btn.innerText = `Hapus (${checkedCount})`; }
+            else { btn.classList.add('hidden'); }
         }
-
         function deleteSelectedUsers() {
             const checkedBoxes = document.querySelectorAll('.user-checkbox:checked');
             if(checkedBoxes.length === 0) return;
-
             if(confirm(`Yakin ingin menghapus ${checkedBoxes.length} user yang dipilih?`)) {
                 const idsToDelete = Array.from(checkedBoxes).map(cb => cb.value);
-                
-                // Prevent deleting self (admin)
-                if(idsToDelete.includes(currentUser.id)) {
-                    alert("Tidak bisa menghapus akun sendiri!");
-                    return;
-                }
-
+                if(idsToDelete.includes(currentUser.id)) return alert("Tidak bisa menghapus akun sendiri!");
                 db.users = db.users.filter(u => !idsToDelete.includes(u.id));
-                saveDb();
-                renderUserTable();
-                
-                // Reset select all checkbox
+                saveDb(); renderUserTable();
                 const selectAll = document.querySelector('input[onchange="toggleSelectAll(this)"]');
                 if(selectAll) selectAll.checked = false;
             }
         }
 
+        // USER MODAL LOGIC (SHORTENED FOR BREVITY, LOGIC SAME AS BEFORE)
         function openUserModal(id=null) {
             document.getElementById('user-modal').style.display = 'flex';
             if(id) {
@@ -560,7 +656,6 @@
                 document.getElementById('modal-name').value = u.name;
                 document.getElementById('modal-username').value = u.username;
                 document.getElementById('modal-password').value = '';
-                document.getElementById('modal-password').placeholder = 'Isi untuk Reset Password';
                 document.getElementById('modal-role').value = u.role;
                 document.getElementById('modal-gender').value = u.gender || 'L';
                 document.getElementById('modal-kelas').value = u.kelas || '-';
@@ -571,7 +666,6 @@
                 document.getElementById('modal-name').value = '';
                 document.getElementById('modal-username').value = '';
                 document.getElementById('modal-password').value = '';
-                document.getElementById('modal-password').placeholder = 'Password Baru';
                 document.getElementById('modal-role').value = 'siswa';
                 document.getElementById('modal-gender').value = 'L';
                 document.getElementById('modal-kelas').value = '-';
@@ -579,7 +673,6 @@
             }
         }
         function closeModal() { document.getElementById('user-modal').style.display = 'none'; }
-
         function saveUser() {
             const id = document.getElementById('modal-id').value;
             const name = document.getElementById('modal-name').value;
@@ -590,188 +683,96 @@
             const kelas = document.getElementById('modal-kelas').value;
             const status = document.getElementById('modal-status').value;
             const isDisabled = status === 'disabled';
-
             if(!name || !user) return alert('Nama dan Username wajib!');
-
             if(id) {
                 const idx = db.users.findIndex(x => x.id === id);
                 if(idx !== -1) {
-                    db.users[idx].name = name;
-                    db.users[idx].username = user;
-                    db.users[idx].role = role;
-                    db.users[idx].gender = gender;
-                    db.users[idx].kelas = kelas;
-                    db.users[idx].disabled = isDisabled;
-                    if(pass && pass.trim() !== "") db.users[idx].password = pass; // God Mode Reset
+                    db.users[idx].name = name; db.users[idx].username = user; db.users[idx].role = role;
+                    db.users[idx].gender = gender; db.users[idx].kelas = kelas; db.users[idx].disabled = isDisabled;
+                    if(pass && pass.trim() !== "") db.users[idx].password = pass;
                 }
             } else {
-                if(!pass) return alert('Password wajib untuk user baru!');
+                if(!pass) return alert('Password wajib!');
                 if(db.users.find(u => u.username === user)) return alert('Username sudah ada!');
                 db.users.push({ id: 'USR_'+Date.now(), name, username: user, password: pass, role, gender, kelas, disabled: isDisabled, avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed='+name });
             }
             saveDb(); closeModal(); renderUserTable();
         }
 
-        // Quick Actions
-        function toggleStatus(id) {
-            const idx = db.users.findIndex(x => x.id === id);
-            if(idx !== -1) { db.users[idx].disabled = !db.users[idx].disabled; saveDb(); renderUserTable(); }
-        }
-        function deleteUser(id) {
-            if(confirm('Hapus Permanen?')) { db.users = db.users.filter(u => u.id !== id); saveDb(); renderUserTable(); }
-        }
+        // QUICK ACTIONS
+        function toggleStatus(id) { const idx = db.users.findIndex(x => x.id === id); if(idx !== -1) { db.users[idx].disabled = !db.users[idx].disabled; saveDb(); renderUserTable(); } }
+        function deleteUser(id) { if(confirm('Hapus Permanen?')) { db.users = db.users.filter(u => u.id !== id); saveDb(); renderUserTable(); } }
 
-        // Self Edit
-        function openProfileModal() {
-            if (!currentUser) return;
-            document.getElementById('profile-modal').style.display = 'flex';
-            document.getElementById('prof-name').value = currentUser.name;
-            document.getElementById('prof-username').value = currentUser.username;
-            document.getElementById('prof-password').value = '';
-        }
+        // SELF EDIT
+        function openProfileModal() { if (!currentUser) return; document.getElementById('profile-modal').style.display = 'flex'; document.getElementById('prof-name').value = currentUser.name; document.getElementById('prof-username').value = currentUser.username; document.getElementById('prof-password').value = ''; }
         function saveProfile() {
-            const name = document.getElementById('prof-name').value;
-            const user = document.getElementById('prof-username').value;
-            const pass = document.getElementById('prof-password').value;
-            if(!name || !user) return alert("Nama/Username kosong!");
+            const name = document.getElementById('prof-name').value; const user = document.getElementById('prof-username').value; const pass = document.getElementById('prof-password').value;
+            if(!name || !user) return alert("Kosong!");
             const idx = db.users.findIndex(u => u.id === currentUser.id);
-            if (idx !== -1) {
-                db.users[idx].name = name;
-                db.users[idx].username = user;
-                if(pass) db.users[idx].password = pass;
-                currentUser = db.users[idx]; saveDb();
-                alert("Profil Update!"); document.getElementById('profile-modal').style.display='none';
-                if(currentUser.role==='siswa') renderSiswaScreen(); else renderDashboardScreen();
-            }
+            if (idx !== -1) { db.users[idx].name = name; db.users[idx].username = user; if(pass) db.users[idx].password = pass; currentUser = db.users[idx]; saveDb(); alert("Profil Update!"); document.getElementById('profile-modal').style.display='none'; if(currentUser.role==='siswa') renderSiswaScreen(); else renderDashboardScreen(); }
         }
 
-        // Utils & Scanner
+        // UTILS
         function saveDb() { localStorage.setItem(DB_KEY, JSON.stringify(db)); }
-        function resetAllData() { if(confirm('RESET FACTORY?')) { localStorage.clear(); location.reload(); } }
-        
-        function backupData() {
-            const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(db)], {type:'application/json'}));
-            a.download = 'BACKUP_GKPS.json'; a.click();
-        }
-        
-        // --- SMART SYNC LOGIC (MERGE DATA) ---
+        function backupData() { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(db)], {type:'application/json'})); a.download = 'BACKUP_GKPS.json'; a.click(); }
         function syncData(input) {
-            const file = input.files[0];
-            if(!file) return;
+            const file = input.files[0]; if(!file) return;
             const reader = new FileReader();
             reader.onload = e => {
                 try {
                     const imported = JSON.parse(e.target.result);
-                    let userAdded = 0;
-                    let attendAdded = 0;
-
-                    // 1. Sync Users (Merge)
-                    if(imported.users) {
-                        imported.users.forEach(impU => {
-                            if(!db.users.find(u => u.username === impU.username)) {
-                                db.users.push(impU);
-                                userAdded++;
-                            }
-                        });
-                    }
-
-                    // 2. Sync Attendance (Merge)
-                    if(imported.attendance) {
-                        imported.attendance.forEach(impA => {
-                            const exists = db.attendance.find(a => 
-                                a.username === impA.username && 
-                                a.date === impA.date && 
-                                a.time === impA.time // Exact match check
-                            );
-                            if(!exists) {
-                                db.attendance.push(impA);
-                                attendAdded++;
-                            }
-                        });
-                    }
-
-                    saveDb();
-                    alert(`Sinkronisasi Sukses!\n\n+ ${userAdded} User Baru\n+ ${attendAdded} Absen Baru`);
-                    location.reload();
-                } catch(err) {
-                    alert("File Backup Rusak/Salah!");
-                }
+                    let userAdded = 0, attendAdded = 0;
+                    if(imported.users) imported.users.forEach(impU => { if(!db.users.find(u => u.username === impU.username)) { db.users.push(impU); userAdded++; } });
+                    if(imported.attendance) imported.attendance.forEach(impA => { if(!db.attendance.find(a => a.username === impA.username && a.date === impA.date && a.time === impA.time)) { db.attendance.push(impA); attendAdded++; } });
+                    saveDb(); alert(`Sinkronisasi Sukses!\n+ ${userAdded} User\n+ ${attendAdded} Absen`); location.reload();
+                } catch(err) { alert("File Rusak!"); }
             };
             reader.readAsText(file);
         }
-
         function exportExcel() {
              let csv = "Nama,Username,Kelas,Waktu,Tanggal\n";
              db.attendance.forEach(r => { const u = db.users.find(usr => usr.username === r.username); csv += `${r.name},${r.username},${u?u.kelas:'-'},${r.time},${r.date}\n` });
-             const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
-             a.download = `Absensi_${new Date().toLocaleDateString()}.csv`; a.click();
+             const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'})); a.download = `Absensi_${new Date().toLocaleDateString()}.csv`; a.click();
         }
         function importCSV(input) {
             const file = input.files[0]; if(!file) return;
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = e => {
                 const rows = e.target.result.split('\n'); let c=0;
                 rows.forEach(r => {
                     const cols = r.split(',');
                     if(cols.length>=3) {
                         const name=cols[0].trim(), username=cols[1].trim(), password=cols[2].trim(), role=cols[3]?cols[3].trim().toLowerCase():'siswa', kelas=cols[4]?cols[4].trim():'-';
                         if(name.toLowerCase()!=='nama' && !db.users.find(u=>u.username===username)) {
-                            db.users.push({ id:'IMP_'+Date.now()+c, name, username, password, role, kelas, gender:'L', disabled:false, avatar:'https://api.dicebear.com/7.x/adventurer/svg?seed='+name });
-                            c++;
+                            db.users.push({ id:'IMP_'+Date.now()+c, name, username, password, role, kelas, gender:'L', disabled:false, avatar:'https://api.dicebear.com/7.x/adventurer/svg?seed='+name }); c++;
                         }
                     }
                 });
-                saveDb(); alert(`Import ${c} User Sukses!`); renderUserTable();
+                saveDb(); alert(`Import ${c} Sukses!`); renderUserTable();
             };
             reader.readAsText(file);
         }
 
-        // Scanner
+        // SCANNER
         let scanner;
         function startScanner() { if(scanner) return; scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }); scanner.render(onScanSuccess); }
         function stopScanner() { if(scanner) { scanner.clear().then(_=>scanner=null); } }
-        
         function onScanSuccess(decodedText) {
             if(!decodedText.startsWith('GKPS')) return showStatus('QR Tidak Valid', 'red');
-            
-            const parts = decodedText.split('|');
-            const username = parts[1];
-            // AUTO REGISTER LOGIC (AMBIL DATA DARI QR JIKA TIDAK ADA DI DB LOKAL)
-            const qrName = parts[2];
-            const qrRole = parts[3];
-            const qrClass = parts[4];
-
+            const parts = decodedText.split('|'); const username = parts[1];
             let u = db.users.find(x => x.username === username);
-            
             if(!u) {
-                if(qrName) { // Jika QR versi baru (mengandung data lengkap)
-                    u = {
-                        id: 'AUTO_' + Date.now(),
-                        username: username,
-                        name: qrName,
-                        role: qrRole || 'siswa',
-                        kelas: qrClass || '-',
-                        gender: 'L',
-                        password: '123', // Dummy pass
-                        disabled: false,
-                        avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=' + qrName
-                    };
-                    db.users.push(u);
-                    saveDb();
-                } else {
-                    return showStatus('User Tidak Ada di Database', 'red');
-                }
+                if(parts[2]) {
+                    u = { id: 'AUTO_'+Date.now(), username, name: parts[2], role: parts[3]||'siswa', kelas: parts[4]||'-', gender:'L', password:'123', disabled:false, avatar:'https://api.dicebear.com/7.x/adventurer/svg?seed='+parts[2] };
+                    db.users.push(u); saveDb();
+                } else return showStatus('User Tidak Ada', 'red');
             }
-
             if(u.disabled) return showStatus('AKSES DITOLAK', 'red');
-            
             const today = new Date().toLocaleDateString();
             if(db.attendance.find(a => a.username === u.username && a.date === today)) return showStatus('Sudah Masuk', 'yellow');
-            
             db.attendance.push({ username: u.username, name: u.name, date: today, time: new Date().toLocaleTimeString() });
             saveDb(); showStatus('HADIR: '+u.name, 'green');
         }
-
         function showStatus(msg, color) {
             const el = document.getElementById('scan-status'); el.innerText=msg; el.className=`mt-4 text-center font-bold p-3 rounded-xl shadow-lg text-sm bg-${color}-100 text-${color}-800`;
             el.classList.remove('hidden'); setTimeout(()=>el.classList.add('hidden'), 2000);
