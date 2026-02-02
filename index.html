@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Absensi GKPS - PRO FINAL (Notification Bell)</title>
+    <title>Sistem Absensi GKPS - PRO FINAL (Verified)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -40,7 +40,9 @@
         }
         
         /* Table Styling */
-        .admin-table th { background: #f1f5f9; color: #64748b; font-size: 0.75rem; text-transform: uppercase; padding: 0.8rem; text-align: left; }
+        .admin-table th { background: #f1f5f9; color: #64748b; font-size: 0.75rem; text-transform: uppercase; padding: 0.8rem; text-align: left; user-select: none; }
+        .admin-table th.sortable { cursor: pointer; transition: background 0.2s; }
+        .admin-table th.sortable:hover { background: #e2e8f0; color: var(--primary); }
         .admin-table td { padding: 0.8rem; border-bottom: 1px solid #f1f5f9; font-size: 0.85rem; vertical-align: middle; }
         
         /* Status Badges */
@@ -62,16 +64,6 @@
     </style>
 </head>
 <body class="p-4" onclick="closeAllDropdowns(event)">
-
-    <section id="screen-setup" class="hidden max-w-md mx-auto min-h-screen flex flex-col justify-center">
-        <div class="pro-card text-center">
-            <h1 class="text-2xl font-bold text-blue-900 mb-2">Setup Sistem</h1>
-            <p class="text-gray-500 text-sm mb-6">Belum ada akun Admin. Silakan buat akun Super Admin pertama.</p>
-            <input type="text" id="setup-username" class="pro-input" placeholder="Username Admin Baru">
-            <input type="password" id="setup-password" class="pro-input" placeholder="Password">
-            <button onclick="setupAdmin()" class="pro-btn btn-blue">Buat Akun Admin</button>
-        </div>
-    </section>
 
     <section id="screen-login" class="hidden max-w-md mx-auto min-h-screen flex flex-col justify-center">
         <div class="text-center mb-8">
@@ -95,13 +87,18 @@
 
     <section id="screen-siswa" class="hidden max-w-md mx-auto pt-8">
         <header class="flex justify-between items-center mb-6 relative">
-            <h2 class="text-xl font-bold text-blue-900">Halo, <span id="siswa-greet-name">Siswa</span>! 👋</h2>
+            <div class="flex items-center gap-3">
+                <img id="stu-avatar" src="" class="w-12 h-12 rounded-full border-2 border-blue-500 shadow-sm bg-white object-cover">
+                <div>
+                    <h2 class="text-xl font-bold text-blue-900 leading-tight">Halo, <span id="siswa-greet-name">Siswa</span>!</h2>
+                    <p class="text-xs text-gray-500">Selamat Datang</p>
+                </div>
+            </div>
             
             <div class="flex gap-3 items-center">
                  <div class="relative notif-container">
                     <button onclick="toggleDropdown('siswa-notif-dropdown', event)" class="text-2xl text-gray-600 relative focus:outline-none mt-1">
-                        🔔
-                        <span id="siswa-notif-badge" class="hidden absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white">0</span>
+                        🔔 <span id="siswa-notif-badge" class="hidden absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white">0</span>
                     </button>
                     <div id="siswa-notif-dropdown" class="notif-dropdown">
                         <div class="p-3 border-b font-bold text-gray-700 text-sm bg-gray-50 rounded-t-xl">📢 Pengumuman</div>
@@ -133,16 +130,18 @@
 
     <section id="screen-dashboard" class="hidden max-w-5xl mx-auto pt-4">
         <header class="flex justify-between items-center mb-6 relative">
-            <div>
-                <h1 class="text-xl font-bold text-blue-900">Dashboard <span id="role-badge" class="bg-yellow-200 text-yellow-800 text-xs px-2 py-0.5 rounded ml-1">ROLE</span></h1>
-                <p class="text-sm text-gray-500">Halo, <span id="guru-greet-name">User</span></p>
+            <div class="flex items-center gap-3">
+                <img id="dash-avatar" src="" class="w-12 h-12 rounded-full border-2 border-blue-500 shadow-sm bg-white object-cover">
+                <div>
+                    <h1 class="text-xl font-bold text-blue-900 leading-tight">Dashboard <span id="role-badge" class="bg-yellow-200 text-yellow-800 text-xs px-2 py-0.5 rounded ml-1">ROLE</span></h1>
+                    <p class="text-xs text-gray-500">Halo, <span id="guru-greet-name">User</span></p>
+                </div>
             </div>
 
             <div class="flex gap-3 items-center">
                  <div class="relative notif-container">
                     <button onclick="toggleDropdown('dash-notif-dropdown', event)" class="text-2xl text-gray-600 relative focus:outline-none mt-1">
-                        🔔
-                        <span id="dash-notif-badge" class="hidden absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white">0</span>
+                        🔔 <span id="dash-notif-badge" class="hidden absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white">0</span>
                     </button>
                     <div id="dash-notif-dropdown" class="notif-dropdown">
                         <div class="p-3 border-b font-bold text-gray-700 text-sm bg-gray-50 rounded-t-xl">📢 Pengumuman</div>
@@ -223,11 +222,11 @@
                         <thead class="bg-gray-50">
                             <tr>
                                 <th class="w-8 text-center"><input type="checkbox" onchange="toggleSelectAll(this)"></th>
-                                <th>User Info</th>
-                                <th>Kelas</th>
-                                <th>Role</th>
-                                <th>JK</th>
-                                <th>Status</th>
+                                <th class="sortable" onclick="handleSort('name')">User Info <span id="sort-name">↕</span></th>
+                                <th class="sortable" onclick="handleSort('kelas')">Kelas <span id="sort-kelas">↕</span></th>
+                                <th class="sortable" onclick="handleSort('role')">Role <span id="sort-role">↕</span></th>
+                                <th class="sortable" onclick="handleSort('gender')">JK <span id="sort-gender">↕</span></th>
+                                <th class="sortable" onclick="handleSort('disabled')">Status <span id="sort-disabled">↕</span></th>
                                 <th class="text-right">Aksi</th>
                             </tr>
                         </thead>
@@ -386,15 +385,19 @@
     </div>
 
     <script>
-        // DB INIT WITH MESSAGES
+        // DB INIT
         const DB_KEY = 'gkps_system_db';
         let db = JSON.parse(localStorage.getItem(DB_KEY)) || { users: [], attendance: [], messages: [], isSetup: false };
         let currentUser = null;
+        
+        // SORTING STATE
+        let sortConfig = { key: null, asc: true };
 
         function initApp() {
-            // INIT DB.MESSAGES IF NOT EXISTS (Backward Compatibility)
+            // BACKWARD COMPATIBILITY: Ensure users have avatar & messages exist
             if(!db.messages) db.messages = [];
-
+            
+            // AUTO CREATE ADMIN IF EMPTY
             if (db.users.length === 0 || !db.users.some(u => u.role === 'admin')) {
                 db.users.push({
                     id: 'USR_ADMIN_DEF', name: 'Super Admin', username: 'admin', password: '123',
@@ -402,7 +405,6 @@
                     recoveryCode: 'root', avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Admin'
                 });
                 db.isSetup = true; saveDb();
-                console.log("Admin Default Dibuat.");
             }
             showScreen('login');
         }
@@ -439,12 +441,15 @@
             if (foundUser) {
                 if (foundUser.disabled) return alert("AKUN DIBLOKIR!");
                 currentUser = foundUser;
+                // AVATAR FALLBACK FIX: Ensure current user has avatar
+                if(!currentUser.avatar) {
+                    currentUser.avatar = 'https://api.dicebear.com/7.x/adventurer/svg?seed=' + currentUser.name;
+                    saveDb();
+                }
+
                 document.getElementById('login-username').value = '';
                 document.getElementById('login-password').value = '';
-                
-                // Show Broadcasts on Login (Update Bell)
                 checkBroadcasts(foundUser.role);
-
                 if (foundUser.role === 'siswa') { renderSiswaScreen(); showScreen('siswa'); }
                 else { renderDashboardScreen(); showScreen('dashboard'); }
             } else alert('Username/Password Salah!');
@@ -452,125 +457,53 @@
 
         function logout() { currentUser = null; showScreen('login'); stopScanner(); closeAllDropdowns(); }
 
-        // --- BROADCAST FEATURE LOGIC (UPDATED FOR BELL) ---
+        // --- BROADCAST ---
         function sendBroadcast() {
             const content = document.getElementById('msg-content').value;
             const target = document.getElementById('msg-target').value;
             const timeInput = document.getElementById('msg-time').value;
             const schedule = timeInput ? new Date(timeInput).getTime() : Date.now();
-
-            if(!content) return alert("Isi pesan tidak boleh kosong!");
-
-            db.messages.push({
-                id: 'MSG_' + Date.now(),
-                content: content,
-                target: target, // 'all', 'siswa', 'guru'
-                schedule: schedule,
-                sender: currentUser.name,
-                created: new Date().toLocaleString()
-            });
-            saveDb();
-            alert("Pengumuman berhasil dibuat!");
-            document.getElementById('msg-content').value = '';
-            document.getElementById('msg-time').value = '';
-            renderBroadcastHistory();
+            if(!content) return alert("Isi pesan kosong!");
+            db.messages.push({ id: 'MSG_' + Date.now(), content, target, schedule, sender: currentUser.name, created: new Date().toLocaleString() });
+            saveDb(); alert("Pengumuman berhasil dibuat!");
+            document.getElementById('msg-content').value = ''; document.getElementById('msg-time').value = ''; renderBroadcastHistory();
         }
 
         function renderBroadcastHistory() {
             const container = document.getElementById('broadcast-history');
             const now = Date.now();
-            
-            if(db.messages.length === 0) {
-                container.innerHTML = '<p class="text-center text-gray-400 text-sm">Belum ada pengumuman.</p>';
-                return;
-            }
-
+            if(db.messages.length === 0) { container.innerHTML = '<p class="text-center text-gray-400 text-sm">Belum ada pengumuman.</p>'; return; }
             container.innerHTML = db.messages.slice().reverse().map(msg => {
                 const isFuture = msg.schedule > now;
-                const statusBadge = isFuture 
-                    ? '<span class="bg-yellow-100 text-yellow-800 text-[10px] px-2 py-1 rounded">⏳ Terjadwal</span>' 
-                    : '<span class="bg-green-100 text-green-800 text-[10px] px-2 py-1 rounded">✅ Terkirim</span>';
-                
-                return `
-                <div class="border p-3 rounded-lg bg-gray-50 relative group">
-                    <div class="flex justify-between items-start mb-1">
-                        <span class="font-bold text-xs text-blue-900">Ke: ${msg.target.toUpperCase()}</span>
-                        ${statusBadge}
-                    </div>
-                    <p class="text-sm text-gray-700 mb-2">${msg.content}</p>
-                    <div class="text-[10px] text-gray-400 flex justify-between">
-                        <span>Jadwal: ${new Date(msg.schedule).toLocaleString()}</span>
-                        <button onclick="deleteMessage('${msg.id}')" class="text-red-500 hover:underline">Hapus</button>
-                    </div>
-                </div>`;
+                const statusBadge = isFuture ? '<span class="bg-yellow-100 text-yellow-800 text-[10px] px-2 py-1 rounded">⏳ Terjadwal</span>' : '<span class="bg-green-100 text-green-800 text-[10px] px-2 py-1 rounded">✅ Terkirim</span>';
+                return `<div class="border p-3 rounded-lg bg-gray-50 relative group"><div class="flex justify-between items-start mb-1"><span class="font-bold text-xs text-blue-900">Ke: ${msg.target.toUpperCase()}</span>${statusBadge}</div><p class="text-sm text-gray-700 mb-2">${msg.content}</p><div class="text-[10px] text-gray-400 flex justify-between"><span>Jadwal: ${new Date(msg.schedule).toLocaleString()}</span><button onclick="deleteMessage('${msg.id}')" class="text-red-500 hover:underline">Hapus</button></div></div>`;
             }).join('');
         }
 
-        function deleteMessage(id) {
-            if(confirm("Hapus pesan ini?")) {
-                db.messages = db.messages.filter(m => m.id !== id);
-                saveDb(); renderBroadcastHistory();
-            }
-        }
+        function deleteMessage(id) { if(confirm("Hapus pesan?")) { db.messages = db.messages.filter(m => m.id !== id); saveDb(); renderBroadcastHistory(); } }
 
-        // NEW: Logic untuk mengisi dropdown dan update badge lonceng
         function checkBroadcasts(role) {
             const now = Date.now();
-            // Filter messages for current user role and valid time
-            const validMsgs = db.messages.filter(m => 
-                (m.target === 'all' || m.target === role) && 
-                m.schedule <= now
-            );
-
+            const validMsgs = db.messages.filter(m => (m.target === 'all' || m.target === role) && m.schedule <= now);
             const count = validMsgs.length;
             const badgeId = role === 'siswa' ? 'siswa-notif-badge' : 'dash-notif-badge';
             const listId = role === 'siswa' ? 'siswa-notif-list' : 'dash-notif-list';
             const badgeEl = document.getElementById(badgeId);
             const listEl = document.getElementById(listId);
-
-            // Update Red Dot Badge
-            if(count > 0) {
-                badgeEl.innerText = count;
-                badgeEl.classList.remove('hidden');
-            } else {
-                badgeEl.classList.add('hidden');
-            }
-
-            // Populate Dropdown List
-            if(count === 0) {
-                listEl.innerHTML = '<p class="text-center text-gray-400 text-xs p-4">Tidak ada pengumuman baru.</p>';
-            } else {
-                listEl.innerHTML = validMsgs.slice().reverse().map(m => `
-                    <div class="bg-yellow-50 p-3 rounded-lg border-l-4 border-yellow-400 relative relative shadow-sm">
-                        <p class="text-sm text-gray-800">${m.content}</p>
-                        <div class="text-[10px] text-gray-500 mt-2 text-right">${new Date(m.schedule).toLocaleDateString()}</div>
-                    </div>
-                `).join('');
-            }
+            if(count > 0) { badgeEl.innerText = count; badgeEl.classList.remove('hidden'); } else { badgeEl.classList.add('hidden'); }
+            if(count === 0) { listEl.innerHTML = '<p class="text-center text-gray-400 text-xs p-4">Tidak ada pengumuman baru.</p>'; }
+            else { listEl.innerHTML = validMsgs.slice().reverse().map(m => `<div class="bg-yellow-50 p-3 rounded-lg border-l-4 border-yellow-400 relative relative shadow-sm"><p class="text-sm text-gray-800">${m.content}</p><div class="text-[10px] text-gray-500 mt-2 text-right">${new Date(m.schedule).toLocaleDateString()}</div></div>`).join(''); }
         }
 
-        // NEW: Dropdown Toggle Logic
-        function toggleDropdown(dropdownId, event) {
-            event.stopPropagation(); // Prevent closing immediately due to body click
-            const dropdown = document.getElementById(dropdownId);
-            const isCurrentlyShown = dropdown.classList.contains('show');
-            closeAllDropdowns(); // Close others first
-            if(!isCurrentlyShown) {
-                dropdown.classList.add('show');
-            }
-        }
-
-        function closeAllDropdowns(event) {
-            // Only close if click is NOT inside a notification container
-            if(event && event.target.closest('.notif-container')) return;
-            
-            document.querySelectorAll('.notif-dropdown').forEach(d => d.classList.remove('show'));
-        }
+        function toggleDropdown(id, e) { e.stopPropagation(); closeAllDropdowns(); document.getElementById(id).classList.toggle('show'); }
+        function closeAllDropdowns(e) { if(e && e.target.closest('.notif-container')) return; document.querySelectorAll('.notif-dropdown').forEach(d => d.classList.remove('show')); }
 
         // --- DASHBOARD & NAVIGATION ---
         function renderDashboardScreen() {
             document.getElementById('guru-greet-name').innerText = currentUser.name;
             document.getElementById('role-badge').innerText = currentUser.role.toUpperCase();
+            // FITUR BARU: UPDATE AVATAR HEADER
+            document.getElementById('dash-avatar').src = currentUser.avatar || 'https://api.dicebear.com/7.x/adventurer/svg?seed=' + currentUser.name;
             
             if (currentUser.role === 'admin') {
                 document.getElementById('tab-users').classList.remove('hidden');
@@ -595,26 +528,53 @@
             if(tab === 'messages') renderBroadcastHistory();
         }
 
-        // --- USER SEARCH & MANAGEMENT ---
+        // --- USER SEARCH & SORTING ---
+        function handleSort(key) {
+            if (sortConfig.key === key) sortConfig.asc = !sortConfig.asc;
+            else { sortConfig.key = key; sortConfig.asc = true; }
+            
+            // Reset indicators
+            ['name','kelas','role','gender','disabled'].forEach(k => document.getElementById(`sort-${k}`).innerText = '↕');
+            
+            // Set active indicator
+            document.getElementById(`sort-${key}`).innerText = sortConfig.asc ? '↑' : '↓';
+            renderUserTable(document.getElementById('search-user').value);
+        }
+
         function renderUserTable(filter = '') {
             const tbody = document.getElementById('table-users');
-            
-            // FILTER LOGIC
-            const filteredUsers = db.users.filter(u => 
+            let filteredUsers = db.users.filter(u => 
                 u.name.toLowerCase().includes(filter.toLowerCase()) || 
                 u.username.toLowerCase().includes(filter.toLowerCase())
             );
 
-            if(filteredUsers.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center p-8 text-gray-400 italic">Tidak ada data pengguna.</td></tr>';
-                return;
+            // Sorting Logic
+            if(sortConfig.key) {
+                filteredUsers.sort((a, b) => {
+                    let valA = a[sortConfig.key];
+                    let valB = b[sortConfig.key];
+                    
+                    // Handle boolean for status
+                    if(sortConfig.key === 'disabled') { valA = valA ? 1 : 0; valB = valB ? 1 : 0; }
+                    else { valA = (valA || '').toString().toLowerCase(); valB = (valB || '').toString().toLowerCase(); }
+
+                    if(valA < valB) return sortConfig.asc ? -1 : 1;
+                    if(valA > valB) return sortConfig.asc ? 1 : -1;
+                    return 0;
+                });
             }
+
+            if(filteredUsers.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="text-center p-8 text-gray-400 italic">Tidak ada data pengguna.</td></tr>'; return; }
             
-            tbody.innerHTML = filteredUsers.map(u => `
+            tbody.innerHTML = filteredUsers.map(u => {
+                // Ensure avatar exists for old data
+                const userAvatar = u.avatar || 'https://api.dicebear.com/7.x/adventurer/svg?seed=' + u.name;
+                
+                return `
                 <tr class="border-b hover:bg-gray-50">
                     <td class="text-center"><input type="checkbox" class="user-checkbox" value="${u.id}" onchange="updateDeleteBtn()"></td>
                     <td class="flex items-center">
-                        <img src="${u.avatar}" class="w-8 h-8 rounded-full mr-2 border">
+                        <img src="${userAvatar}" class="w-8 h-8 rounded-full mr-2 border">
                         <div><div class="font-bold text-xs">${u.name}</div><div class="text-[10px] text-gray-400">@${u.username}</div></div>
                     </td>
                     <td><span class="text-[10px] bg-gray-100 px-2 py-1 rounded">${u.kelas||'-'}</span></td>
@@ -627,7 +587,7 @@
                         ${u.role !== 'admin' ? `<button onclick="deleteUser('${u.id}')" class="bg-red-100 text-red-600 text-xs px-2 py-1 rounded hover:bg-red-200">Del</button>` : ''}
                     </td>
                 </tr>
-            `).join('');
+            `}).join('');
             updateDeleteBtn();
         }
 
@@ -635,7 +595,11 @@
         function renderSiswaScreen() {
             document.getElementById('siswa-greet-name').innerText = currentUser.name;
             document.getElementById('card-name-display').innerText = currentUser.name;
-            document.getElementById('card-img').src = currentUser.avatar;
+            // FITUR BARU: UPDATE AVATAR HEADER SISWA & CARD
+            const avatarUrl = currentUser.avatar || 'https://api.dicebear.com/7.x/adventurer/svg?seed=' + currentUser.name;
+            document.getElementById('card-img').src = avatarUrl;
+            document.getElementById('stu-avatar').src = avatarUrl;
+            
             document.getElementById('card-class-display').innerText = "KELAS " + (currentUser.kelas || "-");
             const qrData = `GKPS|${currentUser.username}|${currentUser.name}|${currentUser.role}|${currentUser.kelas||'-'}`;
             document.getElementById('qrcode').innerHTML = "";
@@ -659,101 +623,60 @@
         }
 
         // FORGOT & RESET LOGIC
-        function openForgotModal() {
-            document.getElementById('forgot-modal').style.display = 'flex';
-            document.getElementById('forgot-username').value = '';
-            document.getElementById('forgot-code').value = '';
-            document.getElementById('forgot-newpass').value = '';
-        }
+        function openForgotModal() { document.getElementById('forgot-modal').style.display = 'flex'; }
         function resetAdminPassword() {
             const user = document.getElementById('forgot-username').value;
             const code = document.getElementById('forgot-code').value;
             const newPass = document.getElementById('forgot-newpass').value;
             const targetUser = db.users.find(u => u.username === user && u.role === 'admin');
             if (!targetUser) return alert("Username Admin tidak ditemukan!");
-            if (targetUser.recoveryCode && targetUser.recoveryCode === code) {
-                targetUser.password = newPass; saveDb();
-                alert("Password Berhasil Direset! Silakan Login.");
-                document.getElementById('forgot-modal').style.display = 'none';
-            } else alert("Kode Pemulihan Salah!");
+            if (targetUser.recoveryCode && targetUser.recoveryCode === code) { targetUser.password = newPass; saveDb(); alert("Password Berhasil Direset!"); document.getElementById('forgot-modal').style.display = 'none'; } 
+            else alert("Kode Pemulihan Salah!");
         }
 
         // BULK DELETE
-        function toggleSelectAll(source) {
-            const checkboxes = document.querySelectorAll('.user-checkbox');
-            checkboxes.forEach(cb => cb.checked = source.checked);
-            updateDeleteBtn();
-        }
-        function updateDeleteBtn() {
-            const checkedCount = document.querySelectorAll('.user-checkbox:checked').length;
-            const btn = document.getElementById('btn-delete-multi');
-            if(checkedCount > 0) { btn.classList.remove('hidden'); btn.innerText = `Hapus (${checkedCount})`; }
-            else { btn.classList.add('hidden'); }
-        }
+        function toggleSelectAll(source) { document.querySelectorAll('.user-checkbox').forEach(cb => cb.checked = source.checked); updateDeleteBtn(); }
+        function updateDeleteBtn() { const count = document.querySelectorAll('.user-checkbox:checked').length; const btn = document.getElementById('btn-delete-multi'); if(count>0){btn.classList.remove('hidden');btn.innerText=`Hapus (${count})`;}else{btn.classList.add('hidden');} }
         function deleteSelectedUsers() {
-            const checkedBoxes = document.querySelectorAll('.user-checkbox:checked');
-            if(checkedBoxes.length === 0) return;
-            if(confirm(`Yakin ingin menghapus ${checkedBoxes.length} user yang dipilih?`)) {
-                const idsToDelete = Array.from(checkedBoxes).map(cb => cb.value);
-                if(idsToDelete.includes(currentUser.id)) return alert("Tidak bisa menghapus akun sendiri!");
-                db.users = db.users.filter(u => !idsToDelete.includes(u.id));
-                saveDb(); renderUserTable();
-                const selectAll = document.querySelector('input[onchange="toggleSelectAll(this)"]');
-                if(selectAll) selectAll.checked = false;
+            if(confirm(`Hapus user terpilih?`)) {
+                const ids = Array.from(document.querySelectorAll('.user-checkbox:checked')).map(cb => cb.value);
+                if(ids.includes(currentUser.id)) return alert("Tidak bisa hapus diri sendiri!");
+                db.users = db.users.filter(u => !ids.includes(u.id)); saveDb(); renderUserTable();
+                document.querySelector('input[onchange="toggleSelectAll(this)"]').checked = false;
             }
         }
 
-        // USER MODAL LOGIC (SHORTENED FOR BREVITY, LOGIC SAME AS BEFORE)
+        // USER MODAL
         function openUserModal(id=null) {
             document.getElementById('user-modal').style.display = 'flex';
             if(id) {
                 const u = db.users.find(x => x.id === id);
                 document.getElementById('modal-title').innerText = 'Edit User (Admin)';
-                document.getElementById('modal-id').value = u.id;
-                document.getElementById('modal-name').value = u.name;
-                document.getElementById('modal-username').value = u.username;
-                document.getElementById('modal-password').value = '';
-                document.getElementById('modal-role').value = u.role;
-                document.getElementById('modal-gender').value = u.gender || 'L';
-                document.getElementById('modal-kelas').value = u.kelas || '-';
-                document.getElementById('modal-status').value = u.disabled ? 'disabled' : 'active';
+                document.getElementById('modal-id').value = u.id; document.getElementById('modal-name').value = u.name; document.getElementById('modal-username').value = u.username; document.getElementById('modal-password').value = '';
+                document.getElementById('modal-role').value = u.role; document.getElementById('modal-gender').value = u.gender||'L'; document.getElementById('modal-kelas').value = u.kelas||'-'; document.getElementById('modal-status').value = u.disabled?'disabled':'active';
             } else {
                 document.getElementById('modal-title').innerText = 'Tambah User';
-                document.getElementById('modal-id').value = '';
-                document.getElementById('modal-name').value = '';
-                document.getElementById('modal-username').value = '';
-                document.getElementById('modal-password').value = '';
-                document.getElementById('modal-password').placeholder = 'Password Baru';
-                document.getElementById('modal-role').value = 'siswa';
-                document.getElementById('modal-gender').value = 'L';
-                document.getElementById('modal-kelas').value = '-';
-                document.getElementById('modal-status').value = 'active';
+                document.getElementById('modal-id').value = ''; document.getElementById('modal-name').value = ''; document.getElementById('modal-username').value = ''; document.getElementById('modal-password').value = '';
+                document.getElementById('modal-role').value = 'siswa'; document.getElementById('modal-gender').value = 'L'; document.getElementById('modal-kelas').value = '-'; document.getElementById('modal-status').value = 'active';
             }
         }
         function closeModal() { document.getElementById('user-modal').style.display = 'none'; }
         function saveUser() {
-            const id = document.getElementById('modal-id').value;
-            const name = document.getElementById('modal-name').value;
-            const user = document.getElementById('modal-username').value;
-            const pass = document.getElementById('modal-password').value;
-            const role = document.getElementById('modal-role').value;
-            const gender = document.getElementById('modal-gender').value;
-            const kelas = document.getElementById('modal-kelas').value;
-            const status = document.getElementById('modal-status').value;
-            const isDisabled = status === 'disabled';
-            if(!name || !user) return alert('Nama dan Username wajib!');
-            if(id) {
-                const idx = db.users.findIndex(x => x.id === id);
-                if(idx !== -1) {
-                    db.users[idx].name = name; db.users[idx].username = user; db.users[idx].role = role;
-                    db.users[idx].gender = gender; db.users[idx].kelas = kelas; db.users[idx].disabled = isDisabled;
-                    if(pass && pass.trim() !== "") db.users[idx].password = pass;
-                }
-            } else {
-                if(!pass) return alert('Password wajib!');
-                if(db.users.find(u => u.username === user)) return alert('Username sudah ada!');
-                db.users.push({ id: 'USR_'+Date.now(), name, username: user, password: pass, role, gender, kelas, disabled: isDisabled, avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed='+name });
+            const id=document.getElementById('modal-id').value, name=document.getElementById('modal-name').value, user=document.getElementById('modal-username').value, pass=document.getElementById('modal-password').value, role=document.getElementById('modal-role').value, gender=document.getElementById('modal-gender').value, kelas=document.getElementById('modal-kelas').value, status=document.getElementById('modal-status').value;
+            if(!name || !user) return alert('Wajib isi!');
+            
+            // GENERATE AVATAR URL
+            const avatarUrl = 'https://api.dicebear.com/7.x/adventurer/svg?seed=' + name;
+
+            if(id) { 
+                const idx = db.users.findIndex(x => x.id === id); 
+                // Preserve existing avatar if not overwritten, else fallback to new name
+                const currentAvatar = db.users[idx].avatar || avatarUrl;
+                
+                db.users[idx]={...db.users[idx], name, username:user, role, gender, kelas, disabled:status==='disabled', avatar: currentAvatar}; 
+                if(pass) db.users[idx].password=pass; 
             }
+            else { db.users.push({ id:'USR_'+Date.now(), name, username:user, password:pass||'123', role, gender, kelas, disabled:status==='disabled', avatar:avatarUrl }); }
             saveDb(); closeModal(); renderUserTable();
         }
 
@@ -782,7 +705,7 @@
                     let userAdded = 0, attendAdded = 0;
                     if(imported.users) imported.users.forEach(impU => { if(!db.users.find(u => u.username === impU.username)) { db.users.push(impU); userAdded++; } });
                     if(imported.attendance) imported.attendance.forEach(impA => { if(!db.attendance.find(a => a.username === impA.username && a.date === impA.date && a.time === impA.time)) { db.attendance.push(impA); attendAdded++; } });
-                    saveDb(); alert(`Sinkronisasi Sukses!\n+ ${userAdded} User\n+ ${attendAdded} Absen`); location.reload();
+                    saveDb(); alert(`Sync Sukses!\n+ ${userAdded} User\n+ ${attendAdded} Absen`); location.reload();
                 } catch(err) { alert("File Rusak!"); }
             };
             reader.readAsText(file);
