@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Absensi GKPS - Secure Login</title>
+    <title>Sistem Absensi GKPS - Secure Login v2</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -41,7 +41,12 @@
         
         /* Table Styling */
         .admin-table th { background: #f1f5f9; color: #64748b; font-size: 0.75rem; text-transform: uppercase; padding: 0.8rem; text-align: left; }
-        .admin-table td { padding: 0.8rem; border-bottom: 1px solid #f1f5f9; font-size: 0.85rem; }
+        .admin-table td { padding: 0.8rem; border-bottom: 1px solid #f1f5f9; font-size: 0.85rem; vertical-align: middle; }
+        
+        /* Status Badges */
+        .badge { font-size: 0.7rem; padding: 2px 8px; border-radius: 99px; font-weight: 700; display: inline-block; }
+        .badge-active { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        .badge-disabled { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
 
         /* Modal */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 50; display: none; justify-content: center; align-items: center; padding: 1rem; backdrop-filter: blur(2px); }
@@ -161,14 +166,14 @@
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="font-bold text-lg">Kelola Pengguna</h3>
                     <div class="flex gap-2">
-                        <button onclick="openUserModal()" class="bg-blue-600 text-white text-xs px-3 py-2 rounded-full font-bold">+ User</button>
-                        <button onclick="backupData()" class="bg-gray-600 text-white text-xs px-3 py-2 rounded-full font-bold">Backup</button>
+                        <button onclick="openUserModal()" class="bg-blue-600 text-white text-xs px-3 py-2 rounded-full font-bold shadow hover:bg-blue-700">+ User</button>
+                        <button onclick="backupData()" class="bg-gray-600 text-white text-xs px-3 py-2 rounded-full font-bold shadow hover:bg-gray-700">Backup</button>
                     </div>
                 </div>
                 <div class="overflow-x-auto bg-white rounded-xl border border-gray-100">
                     <table class="w-full admin-table">
                         <thead class="bg-gray-50">
-                            <tr><th>User</th><th>Role</th><th>Aksi</th></tr>
+                            <tr><th>User</th><th>Role</th><th>Status</th><th>Aksi</th></tr>
                         </thead>
                         <tbody id="table-users"></tbody>
                     </table>
@@ -195,20 +200,26 @@
             <h3 id="modal-title" class="text-lg font-bold mb-4">Tambah User</h3>
             <input type="hidden" id="modal-id">
             
-            <label class="text-xs font-bold text-gray-500">Nama Lengkap</label>
+            <label class="text-xs font-bold text-gray-500 uppercase">Nama Lengkap</label>
             <input type="text" id="modal-name" class="pro-input">
             
-            <label class="text-xs font-bold text-gray-500">Username</label>
+            <label class="text-xs font-bold text-gray-500 uppercase">Username</label>
             <input type="text" id="modal-username" class="pro-input">
             
-            <label class="text-xs font-bold text-gray-500">Password</label>
+            <label class="text-xs font-bold text-gray-500 uppercase">Password</label>
             <input type="text" id="modal-password" class="pro-input" placeholder="Isi untuk ubah password">
             
-            <label class="text-xs font-bold text-gray-500">Role</label>
+            <label class="text-xs font-bold text-gray-500 uppercase">Role</label>
             <select id="modal-role" class="pro-input bg-white">
                 <option value="siswa">Siswa</option>
                 <option value="guru">Guru</option>
                 <option value="admin">Admin</option>
+            </select>
+
+            <label class="text-xs font-bold text-gray-500 uppercase">Status Akun</label>
+            <select id="modal-status" class="pro-input bg-white">
+                <option value="active">Aktif (Bisa Login/Scan)</option>
+                <option value="disabled">Non-Aktif (Diblokir)</option>
             </select>
 
             <div class="flex gap-2">
@@ -257,6 +268,7 @@
                 username: user,
                 password: pass,
                 role: 'admin',
+                disabled: false,
                 avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Admin'
             };
             
@@ -275,6 +287,8 @@
             const foundUser = db.users.find(u => u.username === user && u.password === pass);
             
             if (foundUser) {
+                if (foundUser.disabled) return alert("AKUN DINONAKTIFKAN! Hubungi Admin.");
+
                 currentUser = foundUser;
                 document.getElementById('login-username').value = '';
                 document.getElementById('login-password').value = '';
@@ -377,6 +391,7 @@
             const user = db.users.find(u => u.username === username);
             
             if(!user) return showStatus('User Tidak Dikenal', 'red');
+            if(user.disabled) return showStatus('AKSES DITOLAK: Akun Non-Aktif', 'red');
             
             const today = new Date().toLocaleDateString();
             if(db.attendance.find(a => a.username === username && a.date === today)) {
@@ -414,9 +429,11 @@
                         </div>
                     </td>
                     <td><span class="text-[10px] border px-2 py-0.5 rounded uppercase">${u.role}</span></td>
+                    <td><span class="badge ${u.disabled ? 'badge-disabled' : 'badge-active'}">${u.disabled ? 'Non-Aktif' : 'Aktif'}</span></td>
                     <td class="flex gap-2 justify-end">
-                        <button onclick="editUser('${u.id}')" class="text-blue-500 text-xs">Edit</button>
-                        ${u.role !== 'admin' ? `<button onclick="deleteUser('${u.id}')" class="text-red-500 text-xs">Hapus</button>` : ''}
+                        <button onclick="editUser('${u.id}')" class="text-blue-500 text-xs font-bold hover:underline">Edit</button>
+                        ${u.role !== 'admin' ? `<button onclick="toggleStatus('${u.id}')" class="text-orange-500 text-xs hover:underline">${u.disabled ? 'Enable' : 'Disable'}</button>` : ''}
+                        ${u.role !== 'admin' ? `<button onclick="deleteUser('${u.id}')" class="text-red-500 text-xs hover:underline">Del</button>` : ''}
                     </td>
                 </tr>
             `).join('');
@@ -430,15 +447,19 @@
                 document.getElementById('modal-id').value = u.id;
                 document.getElementById('modal-name').value = u.name;
                 document.getElementById('modal-username').value = u.username;
-                document.getElementById('modal-password').value = u.password;
+                document.getElementById('modal-password').value = ''; // Reset password field for security
+                document.getElementById('modal-password').placeholder = 'Kosongkan jika tidak ubah password';
                 document.getElementById('modal-role').value = u.role;
+                document.getElementById('modal-status').value = u.disabled ? 'disabled' : 'active';
             } else {
                 document.getElementById('modal-title').innerText = 'Tambah User';
                 document.getElementById('modal-id').value = '';
                 document.getElementById('modal-name').value = '';
                 document.getElementById('modal-username').value = '';
                 document.getElementById('modal-password').value = '';
+                document.getElementById('modal-password').placeholder = 'Password Baru';
                 document.getElementById('modal-role').value = 'siswa';
+                document.getElementById('modal-status').value = 'active';
             }
         }
         function closeModal() { document.getElementById('user-modal').style.display = 'none'; }
@@ -449,23 +470,48 @@
             const user = document.getElementById('modal-username').value;
             const pass = document.getElementById('modal-password').value;
             const role = document.getElementById('modal-role').value;
+            const status = document.getElementById('modal-status').value;
+            const isDisabled = status === 'disabled';
 
-            if(!name || !user || !pass) return alert('Semua data wajib diisi!');
+            if(!name || !user) return alert('Nama dan Username wajib diisi!');
 
             if(id) {
+                // Edit existing
                 const idx = db.users.findIndex(x => x.id === id);
-                db.users[idx] = { ...db.users[idx], name, username: user, password: pass, role };
+                if(idx !== -1) {
+                    db.users[idx].name = name;
+                    db.users[idx].username = user;
+                    db.users[idx].role = role;
+                    db.users[idx].disabled = isDisabled;
+                    // Hanya update password jika diisi
+                    if(pass && pass.trim() !== "") {
+                        db.users[idx].password = pass;
+                    }
+                }
             } else {
+                // Create new
+                if(!pass) return alert('Password wajib diisi untuk user baru!');
                 if(db.users.find(u => u.username === user)) return alert('Username sudah dipakai!');
+                
                 db.users.push({
                     id: 'USR_' + Date.now(),
                     name, username: user, password: pass, role,
+                    disabled: isDisabled,
                     avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=' + name
                 });
             }
             saveDb();
             closeModal();
             renderUserTable();
+        }
+
+        function toggleStatus(id) {
+            const idx = db.users.findIndex(x => x.id === id);
+            if(idx !== -1) {
+                db.users[idx].disabled = !db.users[idx].disabled;
+                saveDb();
+                renderUserTable();
+            }
         }
 
         function deleteUser(id) {
@@ -475,6 +521,8 @@
                 renderUserTable();
             }
         }
+
+        function editUser(id) { openModal(id); }
 
         // --- UTILS ---
         function saveDb() { localStorage.setItem(DB_KEY, JSON.stringify(db)); }
