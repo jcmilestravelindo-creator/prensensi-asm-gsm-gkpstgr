@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Absensi GKPS - PRO FINAL (Broadcast & Search)</title>
+    <title>Sistem Absensi GKPS - PRO FINAL (Notification Bell)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -56,12 +56,12 @@
         .modal-content { background: white; padding: 2rem; border-radius: 1.5rem; width: 100%; max-w-sm; animation: slideUp 0.3s ease; max-height: 90vh; overflow-y: auto; }
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         
-        /* Broadcast Box */
-        .broadcast-box { background: linear-gradient(to right, #fffbeb, #fef3c7); border-left: 4px solid #f59e0b; padding: 1rem; margin-bottom: 1.5rem; border-radius: 0.5rem; animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); } 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); } }
+        /* Notification Dropdown styles */
+        .notif-dropdown { display: none; position: absolute; right: 0; top: 100%; margin-top: 0.5rem; width: 20rem; background: white; border-radius: 1rem; box-shadow: 0 10px 30px -5px rgba(0,0,0,0.2); border: 1px solid #e2e8f0; z-index: 60; max-height: 24rem; overflow-y: auto; }
+        .notif-dropdown.show { display: block; animation: slideUp 0.2s ease; }
     </style>
 </head>
-<body class="p-4">
+<body class="p-4" onclick="closeAllDropdowns(event)">
 
     <section id="screen-setup" class="hidden max-w-md mx-auto min-h-screen flex flex-col justify-center">
         <div class="pro-card text-center">
@@ -94,16 +94,28 @@
     </section>
 
     <section id="screen-siswa" class="hidden max-w-md mx-auto pt-8">
-        <header class="flex justify-between items-center mb-6">
+        <header class="flex justify-between items-center mb-6 relative">
             <h2 class="text-xl font-bold text-blue-900">Halo, <span id="siswa-greet-name">Siswa</span>! 👋</h2>
-            <div class="flex gap-2">
-                <button onclick="openProfileModal()" class="text-blue-500 text-xs font-bold border border-blue-200 px-3 py-1 rounded-full">Profil</button>
-                <button onclick="logout()" class="text-red-500 text-xs font-bold border border-red-200 px-3 py-1 rounded-full">Keluar</button>
+            
+            <div class="flex gap-3 items-center">
+                 <div class="relative notif-container">
+                    <button onclick="toggleDropdown('siswa-notif-dropdown', event)" class="text-2xl text-gray-600 relative focus:outline-none mt-1">
+                        🔔
+                        <span id="siswa-notif-badge" class="hidden absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white">0</span>
+                    </button>
+                    <div id="siswa-notif-dropdown" class="notif-dropdown">
+                        <div class="p-3 border-b font-bold text-gray-700 text-sm bg-gray-50 rounded-t-xl">📢 Pengumuman</div>
+                        <div id="siswa-notif-list" class="p-2 space-y-2"></div>
+                    </div>
+                </div>
+
+                <div class="flex gap-2">
+                    <button onclick="openProfileModal()" class="text-blue-500 text-xs font-bold border border-blue-200 px-3 py-1 rounded-full">Profil</button>
+                    <button onclick="logout()" class="text-red-500 text-xs font-bold border border-red-200 px-3 py-1 rounded-full">Keluar</button>
+                </div>
             </div>
         </header>
         
-        <div id="siswa-broadcast-area"></div>
-
         <div class="id-card-wrap animate-fade-in">
             <div class="text-xs font-bold tracking-[0.3em] opacity-80 mb-6">GKPS TANGERANG</div>
             <div class="w-24 h-24 mx-auto bg-white rounded-full p-1 mb-4 shadow-lg">
@@ -120,18 +132,30 @@
     </section>
 
     <section id="screen-dashboard" class="hidden max-w-5xl mx-auto pt-4">
-        <header class="flex justify-between items-center mb-6">
+        <header class="flex justify-between items-center mb-6 relative">
             <div>
                 <h1 class="text-xl font-bold text-blue-900">Dashboard <span id="role-badge" class="bg-yellow-200 text-yellow-800 text-xs px-2 py-0.5 rounded ml-1">ROLE</span></h1>
                 <p class="text-sm text-gray-500">Halo, <span id="guru-greet-name">User</span></p>
             </div>
-            <div class="flex gap-2">
-                <button onclick="openProfileModal()" class="text-blue-500 text-xs font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-50">Profil Saya</button>
-                <button onclick="logout()" class="text-red-500 text-xs font-bold border border-red-200 px-3 py-1 rounded-full hover:bg-red-50">Keluar</button>
+
+            <div class="flex gap-3 items-center">
+                 <div class="relative notif-container">
+                    <button onclick="toggleDropdown('dash-notif-dropdown', event)" class="text-2xl text-gray-600 relative focus:outline-none mt-1">
+                        🔔
+                        <span id="dash-notif-badge" class="hidden absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white">0</span>
+                    </button>
+                    <div id="dash-notif-dropdown" class="notif-dropdown">
+                        <div class="p-3 border-b font-bold text-gray-700 text-sm bg-gray-50 rounded-t-xl">📢 Pengumuman</div>
+                        <div id="dash-notif-list" class="p-2 space-y-2"></div>
+                    </div>
+                </div>
+
+                <div class="flex gap-2">
+                    <button onclick="openProfileModal()" class="text-blue-500 text-xs font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-50">Profil Saya</button>
+                    <button onclick="logout()" class="text-red-500 text-xs font-bold border border-red-200 px-3 py-1 rounded-full hover:bg-red-50">Keluar</button>
+                </div>
             </div>
         </header>
-
-        <div id="dashboard-broadcast-area"></div>
 
         <div class="flex gap-2 mb-6 overflow-x-auto pb-2">
             <button onclick="switchTab('home')" id="tab-home" class="nav-pill active">📊 Home</button>
@@ -418,7 +442,7 @@
                 document.getElementById('login-username').value = '';
                 document.getElementById('login-password').value = '';
                 
-                // Show Broadcasts on Login
+                // Show Broadcasts on Login (Update Bell)
                 checkBroadcasts(foundUser.role);
 
                 if (foundUser.role === 'siswa') { renderSiswaScreen(); showScreen('siswa'); }
@@ -426,9 +450,9 @@
             } else alert('Username/Password Salah!');
         }
 
-        function logout() { currentUser = null; showScreen('login'); stopScanner(); }
+        function logout() { currentUser = null; showScreen('login'); stopScanner(); closeAllDropdowns(); }
 
-        // --- BROADCAST FEATURE LOGIC ---
+        // --- BROADCAST FEATURE LOGIC (UPDATED FOR BELL) ---
         function sendBroadcast() {
             const content = document.getElementById('msg-content').value;
             const target = document.getElementById('msg-target').value;
@@ -489,6 +513,7 @@
             }
         }
 
+        // NEW: Logic untuk mengisi dropdown dan update badge lonceng
         function checkBroadcasts(role) {
             const now = Date.now();
             // Filter messages for current user role and valid time
@@ -497,17 +522,49 @@
                 m.schedule <= now
             );
 
-            // Render to containers
-            const html = validMsgs.map(m => `
-                <div class="broadcast-box">
-                    <div class="font-bold text-yellow-900 text-sm mb-1">📢 Pengumuman</div>
-                    <p class="text-sm text-yellow-800">${m.content}</p>
-                    <div class="text-[10px] text-yellow-600 mt-2 text-right">${new Date(m.schedule).toLocaleDateString()}</div>
-                </div>
-            `).join('');
+            const count = validMsgs.length;
+            const badgeId = role === 'siswa' ? 'siswa-notif-badge' : 'dash-notif-badge';
+            const listId = role === 'siswa' ? 'siswa-notif-list' : 'dash-notif-list';
+            const badgeEl = document.getElementById(badgeId);
+            const listEl = document.getElementById(listId);
 
-            document.getElementById('siswa-broadcast-area').innerHTML = html;
-            document.getElementById('dashboard-broadcast-area').innerHTML = html;
+            // Update Red Dot Badge
+            if(count > 0) {
+                badgeEl.innerText = count;
+                badgeEl.classList.remove('hidden');
+            } else {
+                badgeEl.classList.add('hidden');
+            }
+
+            // Populate Dropdown List
+            if(count === 0) {
+                listEl.innerHTML = '<p class="text-center text-gray-400 text-xs p-4">Tidak ada pengumuman baru.</p>';
+            } else {
+                listEl.innerHTML = validMsgs.slice().reverse().map(m => `
+                    <div class="bg-yellow-50 p-3 rounded-lg border-l-4 border-yellow-400 relative relative shadow-sm">
+                        <p class="text-sm text-gray-800">${m.content}</p>
+                        <div class="text-[10px] text-gray-500 mt-2 text-right">${new Date(m.schedule).toLocaleDateString()}</div>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // NEW: Dropdown Toggle Logic
+        function toggleDropdown(dropdownId, event) {
+            event.stopPropagation(); // Prevent closing immediately due to body click
+            const dropdown = document.getElementById(dropdownId);
+            const isCurrentlyShown = dropdown.classList.contains('show');
+            closeAllDropdowns(); // Close others first
+            if(!isCurrentlyShown) {
+                dropdown.classList.add('show');
+            }
+        }
+
+        function closeAllDropdowns(event) {
+            // Only close if click is NOT inside a notification container
+            if(event && event.target.closest('.notif-container')) return;
+            
+            document.querySelectorAll('.notif-dropdown').forEach(d => d.classList.remove('show'));
         }
 
         // --- DASHBOARD & NAVIGATION ---
