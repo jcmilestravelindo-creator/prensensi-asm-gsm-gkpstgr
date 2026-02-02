@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Absensi GKPS - ONLINE REALTIME</title>
+    <title>Sistem Absensi GKPS - PRO ULTIMATE (Fixed)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -77,10 +77,20 @@
 
     <div id="conn-indicator" class="conn-status offline">🔴 Offline - Menghubungkan...</div>
 
+    <section id="screen-setup" class="hidden max-w-md mx-auto min-h-screen flex flex-col justify-center">
+        <div class="pro-card text-center">
+            <h1 class="text-2xl font-bold text-blue-900 mb-2">Setup Sistem</h1>
+            <p class="text-gray-500 text-sm mb-6">Belum ada akun Admin. Silakan buat akun Super Admin pertama.</p>
+            <input type="text" id="setup-username" class="pro-input" placeholder="Username Admin Baru">
+            <input type="password" id="setup-password" class="pro-input" placeholder="Password">
+            <button onclick="setupAdmin()" class="pro-btn btn-blue">Buat Akun Admin</button>
+        </div>
+    </section>
+
     <section id="screen-login" class="hidden max-w-md mx-auto min-h-screen flex flex-col justify-center">
         <div class="text-center mb-8">
             <h1 onclick="triggerSecretReset()" class="text-3xl font-extrabold text-blue-900 tracking-tight cursor-pointer select-none">GKPS TANGERANG</h1>
-            <p class="text-gray-500 font-medium">Sistem Absensi Online</p>
+            <p class="text-gray-500 font-medium">Sistem Absensi Terpadu</p>
         </div>
         <div class="pro-card">
             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Username</label>
@@ -279,8 +289,29 @@
         </div>
         
          <div id="view-settings" class="tab-view hidden">
+            <div class="pro-card bg-blue-50 border-blue-200 mb-6">
+                <div class="flex items-center mb-4">
+                    <div class="bg-blue-200 p-2 rounded-full mr-3 text-xl">🔄</div>
+                    <div>
+                        <h3 class="font-bold text-blue-900">Sinkronisasi Data (Sync)</h3>
+                        <p class="text-xs text-blue-700">Pindahkan data antar HP/Laptop.</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="text-center">
+                        <button onclick="backupData()" class="bg-white border-2 border-blue-500 text-blue-600 w-full py-2 rounded-xl text-xs font-bold shadow-sm hover:bg-blue-50">📥 Download Data</button>
+                    </div>
+                    <div class="text-center">
+                        <label class="bg-blue-600 text-white w-full py-2.5 rounded-xl text-xs font-bold shadow-md cursor-pointer hover:bg-blue-700 block text-center">
+                            📤 Upload & Gabung
+                            <input type="file" class="hidden" onchange="syncData(this)">
+                        </label>
+                    </div>
+                </div>
+            </div>
+
              <div class="pro-card bg-red-50 border-red-100">
-                <h3 class="font-bold text-red-700 mb-2">Reset Sistem (Bahaya)</h3>
+                <h3 class="font-bold text-red-700 mb-2">Reset Sistem</h3>
                 <button onclick="emergencyReset()" class="bg-red-600 text-white px-4 py-2 rounded-lg text-xs font-bold w-full">Hapus Semua Data Online</button>
             </div>
         </div>
@@ -376,13 +407,10 @@
     </div>
 
     <script>
-        // --- KONFIGURASI FIREBASE (WAJIB DIISI) ---
-        // 1. Buka console.firebase.google.com
-        // 2. Buat Project -> Realtime Database -> Start in Test Mode
-        // 3. Project Settings -> General -> Your Apps (Web) -> Copy Config
+        // --- KONFIGURASI FIREBASE ---
         const firebaseConfig = {
             apiKey: "AIzaSyCH-_9wgq0Mw8JSqw2PtUUJy7KEPaHHZxM",
-  	    authDomain: "absensigkps.firebaseapp.com",
+            authDomain: "absensigkps.firebaseapp.com",
             databaseURL: "https://absensigkps-default-rtdb.asia-southeast1.firebasedatabase.app",
             projectId: "absensigkps",
             storageBucket: "absensigkps.firebasestorage.app",
@@ -427,6 +455,7 @@
                     db = val; // Update local state dari cloud
                     if(!db.messages) db.messages = [];
                     if(!db.users) db.users = [];
+                    if(!db.attendance) db.attendance = []; // FIX: Handle empty attendance
                     console.log("Data Sync: Updated from Cloud");
                     
                     // Refresh UI jika sedang di dashboard
