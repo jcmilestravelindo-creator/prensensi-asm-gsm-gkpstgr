@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Absensi GKPS - PRO ULTIMATE (Scanner Fix)</title>
+    <title>Sistem Absensi GKPS - PRO ULTIMATE (Barcode ID Card)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -35,13 +36,37 @@
         .nav-pill { padding: 0.5rem 1rem; border-radius: 99px; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: 0.2s; color: #64748b; background: white; border: 1px solid transparent; white-space: nowrap; }
         .nav-pill.active { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(14, 165, 233, 0.4); }
 
-        /* ID Card Styling */
-        .id-card-wrap {
-            width: 300px; height: 480px; margin: 0 auto;
-            background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%);
-            border-radius: 24px; padding: 2rem; color: white; text-align: center;
-            position: relative; overflow: hidden; box-shadow: 0 20px 40px -10px rgba(0,0,0,0.3);
+        /* NEW: STUDENT ID CARD STYLING */
+        .student-card {
+            width: 100%; max-width: 350px; aspect-ratio: 1.586/1; /* Credit Card Ratio */
+            margin: 0 auto;
+            background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
+            border-radius: 16px;
+            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.2);
+            position: relative; overflow: hidden;
+            border: 1px solid #cbd5e1;
+            display: flex; flex-direction: column;
         }
+        .card-header-strip {
+            background: #0284c7; height: 12px; width: 100%;
+        }
+        .card-body {
+            padding: 1.2rem; flex: 1; display: flex; gap: 1rem; align-items: center;
+        }
+        .card-photo-frame {
+            width: 80px; height: 100px; background: #e2e8f0; border-radius: 8px; overflow: hidden; border: 2px solid white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); flex-shrink: 0;
+        }
+        .card-photo-frame img { width: 100%; height: 100%; object-fit: cover; }
+        .card-info h3 { font-size: 1.1rem; font-weight: 800; color: #1e293b; line-height: 1.2; margin-bottom: 4px; text-transform: uppercase; }
+        .card-info p { font-size: 0.75rem; color: #64748b; margin-bottom: 2px; }
+        .card-info .role-tag {
+            display: inline-block; background: #0ea5e9; color: white; font-size: 0.6rem; font-weight: 700; padding: 2px 8px; border-radius: 99px; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .card-footer {
+            background: white; padding: 0.8rem; text-align: center; border-top: 1px dashed #e2e8f0;
+        }
+        /* Barcode SVG styling */
+        #barcode { width: 100%; height: 40px; }
         
         /* Table Styling */
         .admin-table th { background: #f1f5f9; color: #64748b; font-size: 0.75rem; text-transform: uppercase; padding: 0.8rem; text-align: left; user-select: none; }
@@ -140,18 +165,24 @@
             </div>
         </header>
         
-        <div class="id-card-wrap animate-fade-in">
-            <div class="text-xs font-bold tracking-[0.3em] opacity-80 mb-6">GKPS TANGERANG</div>
-            <div class="w-24 h-24 mx-auto bg-white rounded-full p-1 mb-4 shadow-lg">
-                <img id="card-img" src="" class="w-full h-full rounded-full object-cover">
+        <div class="student-card animate-fade-in">
+            <div class="card-header-strip"></div>
+            <div class="card-body">
+                <div class="card-photo-frame">
+                    <img id="card-img" src="" alt="Foto Siswa">
+                </div>
+                <div class="card-info">
+                    <div class="text-[10px] font-bold text-blue-500 tracking-widest uppercase mb-1">GKPS TANGERANG</div>
+                    <h3 id="card-name-display">NAMA SISWA</h3>
+                    <p id="card-id-display">ID: 12345678</p>
+                    <p id="card-class-display">KELAS DAUD</p>
+                    <span class="role-tag" id="card-role-display">SISWA</span>
+                </div>
             </div>
-            <h2 id="card-name-display" class="text-2xl font-extrabold uppercase mb-1 leading-none">Nama</h2>
-            <span class="inline-block bg-white/20 px-3 py-1 rounded-full text-xs font-bold mb-2">SISWA</span>
-            <div id="card-class-display" class="text-sm font-bold text-yellow-300 mb-4 uppercase">KELAS -</div>
-            <div class="bg-white p-3 rounded-xl inline-block shadow-inner">
-                <div id="qrcode"></div>
+            <div class="card-footer">
+                <svg id="barcode" class="mx-auto"></svg>
+                <p class="text-[9px] text-gray-400 mt-1">Scan barcode ini untuk absensi</p>
             </div>
-            <p class="text-[10px] mt-4 opacity-80">Tunjukkan QR ini kepada Guru untuk absen.</p>
         </div>
     </section>
 
@@ -220,7 +251,7 @@
             <div class="max-w-md mx-auto">
                 <div class="bg-black rounded-3xl overflow-hidden shadow-2xl relative w-full">
                     <div id="reader"></div>
-                    <div class="absolute bottom-0 w-full text-center text-white font-bold text-xs bg-black/50 py-2 z-10">Scan QR Siswa</div>
+                    <div class="absolute bottom-0 w-full text-center text-white font-bold text-xs bg-black/50 py-2 z-10">Scan Barcode / QR</div>
                 </div>
                 <div id="scan-status" class="mt-4 text-center font-bold p-3 rounded-xl hidden shadow-lg text-sm"></div>
             </div>
@@ -672,12 +703,25 @@
         // SISWA SCREEN
         function renderSiswaScreen() {
             document.getElementById('siswa-greet-name').innerText = currentUser.name;
-            document.getElementById('card-name-display').innerText = currentUser.name;
+            
+            // UPDATE CARD DATA
             document.getElementById('card-img').src = currentUser.avatar;
             document.getElementById('stu-avatar').src = currentUser.avatar;
+            document.getElementById('card-name-display').innerText = currentUser.name;
+            document.getElementById('card-id-display').innerText = "ID: " + currentUser.username;
             document.getElementById('card-class-display').innerText = "KELAS " + (currentUser.kelas || "-");
-            const qr = `GKPS|${currentUser.username}|${currentUser.name}|${currentUser.role}|${currentUser.kelas||'-'}`;
-            document.getElementById('qrcode').innerHTML = ""; new QRCode(document.getElementById("qrcode"), { text: qr, width: 120, height: 120 });
+            document.getElementById('card-role-display').innerText = currentUser.role;
+
+            // GENERATE BARCODE
+            const codeData = `GKPS|${currentUser.username}|${currentUser.name}|${currentUser.role}|${currentUser.kelas||'-'}`;
+            JsBarcode("#barcode", codeData, {
+                format: "CODE128",
+                displayValue: false, // Sembunyikan teks di bawah barcode (kita buat custom)
+                height: 40,
+                width: 1.5,
+                margin: 0,
+                background: "#ffffff"
+            });
         }
 
         // HOME STATS
@@ -779,17 +823,20 @@
             reader.readAsText(file);
         }
 
-        // SCANNER LOGIC (IMPROVED)
+        // SCANNER LOGIC (IMPROVED FOR BARCODE)
         let scanner;
         function startScanner() {
             if(scanner) return;
-            // Delay to allow UI render
             setTimeout(() => {
                 scanner = new Html5QrcodeScanner("reader", { 
                     fps: 10, 
-                    qrbox: 250,
-                    // removed aspectRatio for better compatibility
-                    rememberLastUsedCamera: true
+                    qrbox: { width: 250, height: 150 }, // Rectangular box for barcodes
+                    rememberLastUsedCamera: true,
+                    // IMPORTANT: Support both QR and Code 128
+                    formatsToSupport: [ 
+                        Html5QrcodeSupportedFormats.QR_CODE, 
+                        Html5QrcodeSupportedFormats.CODE_128 
+                    ]
                 });
                 scanner.render(onScanSuccess, onScanFailure);
             }, 300);
@@ -798,23 +845,18 @@
         function stopScanner() { if(scanner) { scanner.clear().then(_=>scanner=null); } }
         
         function onScanSuccess(decodedText) {
-            // DEBOUNCE: Mencegah scan beruntun cepat
             if(document.getElementById('scan-status').innerText.includes('HADIR') && !document.getElementById('scan-status').classList.contains('hidden')) return;
 
-            if(!decodedText.startsWith('GKPS')) return showStatus('QR Tidak Valid', 'red');
+            if(!decodedText.startsWith('GKPS')) return showStatus('QR/Barcode Tidak Valid', 'red');
             const parts = decodedText.split('|'); const username = parts[1];
             
-            // Safe Check for users array
             if(!db.users || !Array.isArray(db.users)) db.users = [];
-            
             let u = db.users.find(x => x.username === username);
             
-            // Auto Register if not found
             if(!u) {
                 if(parts[2]) {
                     u = { id: 'AUTO_'+Date.now(), username, name: parts[2], role: parts[3]||'siswa', kelas: parts[4]||'-', gender:'L', password:'123', disabled:false, avatar:'https://api.dicebear.com/7.x/adventurer/svg?seed='+parts[2] };
                     db.users.push(u);
-                    // SaveDB will happen at end
                 } else return showStatus('User Tidak Ada', 'red');
             }
             
@@ -825,19 +867,12 @@
             
             if(db.attendance.find(a => a.username === u.username && a.date === today)) return showStatus('Sudah Masuk', 'yellow');
             
-            // Catat Kehadiran
             db.attendance.push({ username: u.username, name: u.name, date: today, time: new Date().toLocaleTimeString() });
-            
-            // Update UI dulu biar responsif
             showStatus('HADIR: '+u.name, 'green');
-            
-            // Kirim ke Cloud
             saveDb(); 
         }
         
-        function onScanFailure(err) {
-            // Ignore frame errors
-        }
+        function onScanFailure(err) { }
 
         function showStatus(msg, color) {
             const el = document.getElementById('scan-status'); el.innerText=msg; el.className=`mt-4 text-center font-bold p-3 rounded-xl shadow-lg text-sm bg-${color}-100 text-${color}-800`;
