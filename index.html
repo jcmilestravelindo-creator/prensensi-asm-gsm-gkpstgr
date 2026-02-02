@@ -48,6 +48,8 @@
         .badge-active { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
         .badge-disabled { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
         .badge-class { background: #e0f2fe; color: #075985; border: 1px solid #bae6fd; font-size: 0.65rem; margin-top: 2px; }
+        .badge-gender-l { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
+        .badge-gender-p { background: #fce7f3; color: #9d174d; border: 1px solid #f9a8d4; }
 
         /* Modal */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 50; display: none; justify-content: center; align-items: center; padding: 1rem; backdrop-filter: blur(2px); }
@@ -166,6 +168,7 @@
                 <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
                     <h3 class="font-bold text-lg">Kelola Pengguna</h3>
                     <div class="flex gap-2">
+                        <button onclick="deleteSelectedUsers()" id="btn-delete-multi" class="hidden bg-red-600 text-white text-xs px-3 py-2 rounded-full font-bold shadow hover:bg-red-700">Hapus (0)</button>
                         <button onclick="openUserModal()" class="bg-blue-600 text-white text-xs px-3 py-2 rounded-full font-bold shadow hover:bg-blue-700">+ User</button>
                         <label class="bg-green-600 text-white text-xs px-3 py-2 rounded-full font-bold shadow hover:bg-green-700 cursor-pointer">
                             Import CSV <input type="file" class="hidden" onchange="importCSV(this)" accept=".csv">
@@ -180,7 +183,15 @@
                 <div class="overflow-x-auto bg-white rounded-xl border border-gray-100">
                     <table class="w-full admin-table">
                         <thead class="bg-gray-50">
-                            <tr><th>User Info</th><th>Kelas</th><th>Role</th><th>Status</th><th class="text-right">Aksi</th></tr>
+                            <tr>
+                                <th class="w-8 text-center"><input type="checkbox" onchange="toggleSelectAll(this)"></th>
+                                <th>User Info</th>
+                                <th>Kelas</th>
+                                <th>Role</th>
+                                <th>JK</th>
+                                <th>Status</th>
+                                <th class="text-right">Aksi</th>
+                            </tr>
                         </thead>
                         <tbody id="table-users"></tbody>
                     </table>
@@ -240,12 +251,23 @@
             <label class="text-xs font-bold text-gray-500 uppercase">Password (Reset)</label>
             <input type="text" id="modal-password" class="pro-input" placeholder="Isi untuk ubah password">
             
-            <label class="text-xs font-bold text-gray-500 uppercase">Role</label>
-            <select id="modal-role" class="pro-input bg-white">
-                <option value="siswa">Siswa</option>
-                <option value="guru">Guru</option>
-                <option value="admin">Admin</option>
-            </select>
+            <div class="grid grid-cols-2 gap-2">
+                <div>
+                    <label class="text-xs font-bold text-gray-500 uppercase">Role</label>
+                    <select id="modal-role" class="pro-input bg-white">
+                        <option value="siswa">Siswa</option>
+                        <option value="guru">Guru</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-500 uppercase">Jenis Kelamin</label>
+                    <select id="modal-gender" class="pro-input bg-white">
+                        <option value="L">Laki-Laki</option>
+                        <option value="P">Perempuan</option>
+                    </select>
+                </div>
+            </div>
 
             <label class="text-xs font-bold text-gray-500 uppercase">Kelas</label>
             <select id="modal-kelas" class="pro-input bg-white">
@@ -310,7 +332,7 @@
             if(!user || !pass) return alert('Isi semua field!');
             
             db.users.push({
-                id: 'USR_' + Date.now(), name: 'Super Admin', username: user, password: pass, role: 'admin', kelas: '-', disabled: false,
+                id: 'USR_' + Date.now(), name: 'Super Admin', username: user, password: pass, role: 'admin', kelas: '-', disabled: false, gender: 'L',
                 avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Admin'
             });
             db.isSetup = true; saveDb();
@@ -377,7 +399,7 @@
             const logs = db.attendance.filter(a => a.date === today);
             document.getElementById('count-present').innerText = logs.length;
             const tbody = document.getElementById('table-attendance');
-            // MODIFIED: Unified Empty State Message
+            
             if(logs.length === 0) tbody.innerHTML = '<tr><td colspan="4" class="text-center p-8 text-gray-400 italic">Tidak ada data kehadiran saat ini.</td></tr>';
             else {
                 tbody.innerHTML = logs.slice().reverse().map(l => {
@@ -397,20 +419,22 @@
         // USER MANAGEMENT (GOD MODE)
         function renderUserTable() {
             const tbody = document.getElementById('table-users');
-            // MODIFIED: Unified Empty State Message
+            
             if(db.users.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center p-8 text-gray-400 italic">Tidak ada data pengguna.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center p-8 text-gray-400 italic">Tidak ada data pengguna.</td></tr>';
                 return;
             }
             
             tbody.innerHTML = db.users.map(u => `
                 <tr class="border-b hover:bg-gray-50">
+                    <td class="text-center"><input type="checkbox" class="user-checkbox" value="${u.id}" onchange="updateDeleteBtn()"></td>
                     <td class="flex items-center">
                         <img src="${u.avatar}" class="w-8 h-8 rounded-full mr-2 border">
                         <div><div class="font-bold text-xs">${u.name}</div><div class="text-[10px] text-gray-400">@${u.username}</div></div>
                     </td>
                     <td><span class="text-[10px] bg-gray-100 px-2 py-1 rounded">${u.kelas||'-'}</span></td>
                     <td><span class="text-[10px] border px-2 py-0.5 rounded uppercase">${u.role}</span></td>
+                    <td><span class="badge ${u.gender === 'P' ? 'badge-gender-p' : 'badge-gender-l'}">${u.gender || 'L'}</span></td>
                     <td><span class="badge ${u.disabled ? 'badge-disabled' : 'badge-active'}">${u.disabled ? 'Blocked' : 'Active'}</span></td>
                     <td class="text-right flex gap-1 justify-end items-center h-full pt-3">
                         <button onclick="openUserModal('${u.id}')" class="bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded font-bold hover:bg-blue-200">Edit</button>
@@ -419,6 +443,48 @@
                     </td>
                 </tr>
             `).join('');
+            updateDeleteBtn();
+        }
+
+        // --- BULK DELETE LOGIC ---
+        function toggleSelectAll(source) {
+            const checkboxes = document.querySelectorAll('.user-checkbox');
+            checkboxes.forEach(cb => cb.checked = source.checked);
+            updateDeleteBtn();
+        }
+
+        function updateDeleteBtn() {
+            const checkedCount = document.querySelectorAll('.user-checkbox:checked').length;
+            const btn = document.getElementById('btn-delete-multi');
+            if(checkedCount > 0) {
+                btn.classList.remove('hidden');
+                btn.innerText = `Hapus (${checkedCount})`;
+            } else {
+                btn.classList.add('hidden');
+            }
+        }
+
+        function deleteSelectedUsers() {
+            const checkedBoxes = document.querySelectorAll('.user-checkbox:checked');
+            if(checkedBoxes.length === 0) return;
+
+            if(confirm(`Yakin ingin menghapus ${checkedBoxes.length} user yang dipilih?`)) {
+                const idsToDelete = Array.from(checkedBoxes).map(cb => cb.value);
+                
+                // Prevent deleting self (admin)
+                if(idsToDelete.includes(currentUser.id)) {
+                    alert("Tidak bisa menghapus akun sendiri!");
+                    return;
+                }
+
+                db.users = db.users.filter(u => !idsToDelete.includes(u.id));
+                saveDb();
+                renderUserTable();
+                
+                // Reset select all checkbox
+                const selectAll = document.querySelector('input[onchange="toggleSelectAll(this)"]');
+                if(selectAll) selectAll.checked = false;
+            }
         }
 
         function openUserModal(id=null) {
@@ -432,6 +498,7 @@
                 document.getElementById('modal-password').value = '';
                 document.getElementById('modal-password').placeholder = 'Isi untuk Reset Password';
                 document.getElementById('modal-role').value = u.role;
+                document.getElementById('modal-gender').value = u.gender || 'L';
                 document.getElementById('modal-kelas').value = u.kelas || '-';
                 document.getElementById('modal-status').value = u.disabled ? 'disabled' : 'active';
             } else {
@@ -442,6 +509,7 @@
                 document.getElementById('modal-password').value = '';
                 document.getElementById('modal-password').placeholder = 'Password Baru';
                 document.getElementById('modal-role').value = 'siswa';
+                document.getElementById('modal-gender').value = 'L';
                 document.getElementById('modal-kelas').value = '-';
                 document.getElementById('modal-status').value = 'active';
             }
@@ -454,6 +522,7 @@
             const user = document.getElementById('modal-username').value;
             const pass = document.getElementById('modal-password').value;
             const role = document.getElementById('modal-role').value;
+            const gender = document.getElementById('modal-gender').value;
             const kelas = document.getElementById('modal-kelas').value;
             const status = document.getElementById('modal-status').value;
             const isDisabled = status === 'disabled';
@@ -466,6 +535,7 @@
                     db.users[idx].name = name;
                     db.users[idx].username = user;
                     db.users[idx].role = role;
+                    db.users[idx].gender = gender;
                     db.users[idx].kelas = kelas;
                     db.users[idx].disabled = isDisabled;
                     if(pass && pass.trim() !== "") db.users[idx].password = pass; // God Mode Reset
@@ -473,7 +543,7 @@
             } else {
                 if(!pass) return alert('Password wajib untuk user baru!');
                 if(db.users.find(u => u.username === user)) return alert('Username sudah ada!');
-                db.users.push({ id: 'USR_'+Date.now(), name, username: user, password: pass, role, kelas, disabled: isDisabled, avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed='+name });
+                db.users.push({ id: 'USR_'+Date.now(), name, username: user, password: pass, role, gender, kelas, disabled: isDisabled, avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed='+name });
             }
             saveDb(); closeModal(); renderUserTable();
         }
@@ -582,7 +652,7 @@
                     if(cols.length>=3) {
                         const name=cols[0].trim(), username=cols[1].trim(), password=cols[2].trim(), role=cols[3]?cols[3].trim().toLowerCase():'siswa', kelas=cols[4]?cols[4].trim():'-';
                         if(name.toLowerCase()!=='nama' && !db.users.find(u=>u.username===username)) {
-                            db.users.push({ id:'IMP_'+Date.now()+c, name, username, password, role, kelas, disabled:false, avatar:'https://api.dicebear.com/7.x/adventurer/svg?seed='+name });
+                            db.users.push({ id:'IMP_'+Date.now()+c, name, username, password, role, kelas, gender:'L', disabled:false, avatar:'https://api.dicebear.com/7.x/adventurer/svg?seed='+name });
                             c++;
                         }
                     }
@@ -617,6 +687,7 @@
                         name: qrName,
                         role: qrRole || 'siswa',
                         kelas: qrClass || '-',
+                        gender: 'L',
                         password: '123', // Dummy pass
                         disabled: false,
                         avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=' + qrName
@@ -646,4 +717,3 @@
     </script>
 </body>
 </html>
-
