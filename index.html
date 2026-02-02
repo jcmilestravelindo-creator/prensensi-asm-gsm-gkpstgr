@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Absensi GKPS - PRO SYNC (Multi-Device)</title>
+    <title>Sistem Absensi GKPS - PRO v5 (Auto Admin & Recovery)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -59,20 +59,10 @@
 </head>
 <body class="p-4">
 
-    <section id="screen-setup" class="hidden max-w-md mx-auto min-h-screen flex flex-col justify-center">
-        <div class="pro-card text-center">
-            <h1 class="text-2xl font-bold text-blue-900 mb-2">Setup Sistem</h1>
-            <p class="text-gray-500 text-sm mb-6">Belum ada akun Admin. Silakan buat akun Super Admin pertama.</p>
-            <input type="text" id="setup-username" class="pro-input" placeholder="Username Admin Baru">
-            <input type="password" id="setup-password" class="pro-input" placeholder="Password">
-            <button onclick="setupAdmin()" class="pro-btn btn-blue">Buat Akun Admin</button>
-        </div>
-    </section>
-
     <section id="screen-login" class="hidden max-w-md mx-auto min-h-screen flex flex-col justify-center">
         <div class="text-center mb-8">
             <h1 class="text-3xl font-extrabold text-blue-900 tracking-tight">GKPS TANGERANG</h1>
-            <p class="text-gray-500 font-medium">Silakan Login</p>
+            <p class="text-gray-500 font-medium">Sistem Absensi Terpadu</p>
         </div>
         <div class="pro-card">
             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Username</label>
@@ -80,9 +70,13 @@
             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Password</label>
             <input type="password" id="login-password" class="pro-input" placeholder="Masukkan Password">
             <button onclick="handleLogin()" class="pro-btn btn-blue shadow-lg shadow-blue-200">MASUK</button>
+            
+            <div class="mt-4 text-center">
+                <button onclick="openForgotModal()" class="text-xs text-blue-500 font-bold hover:underline">Lupa Password Admin?</button>
+            </div>
         </div>
         <div class="text-center mt-4">
-            <p class="text-xs text-gray-400">Lupa password? Hubungi Admin Sekolah Minggu.</p>
+            <p class="text-xs text-gray-400">Default Admin: <b>admin</b> / <b>123</b></p>
         </div>
     </section>
 
@@ -309,6 +303,27 @@
         </div>
     </div>
 
+    <div id="forgot-modal" class="modal-overlay">
+        <div class="modal-content bg-yellow-50">
+            <h3 class="text-lg font-bold mb-4 text-yellow-800">Reset Password Admin</h3>
+            <p class="text-xs text-gray-600 mb-4">Masukkan Kode Pemulihan untuk mereset password Admin.</p>
+            
+            <label class="text-xs font-bold text-gray-500 uppercase">Username Admin</label>
+            <input type="text" id="forgot-username" class="pro-input" placeholder="Contoh: admin">
+            
+            <label class="text-xs font-bold text-gray-500 uppercase">Kode Pemulihan</label>
+            <input type="password" id="forgot-code" class="pro-input" placeholder="Masukkan Kode Rahasia">
+            
+            <label class="text-xs font-bold text-gray-500 uppercase">Password Baru</label>
+            <input type="text" id="forgot-newpass" class="pro-input" placeholder="Password Baru">
+
+            <div class="flex gap-2">
+                <button onclick="resetAdminPassword()" class="pro-btn btn-yellow text-yellow-900">Reset Password</button>
+                <button onclick="document.getElementById('forgot-modal').style.display='none'" class="pro-btn bg-gray-200 text-gray-600">Batal</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // DB INIT
         const DB_KEY = 'gkps_system_db';
@@ -316,8 +331,19 @@
         let currentUser = null;
 
         function initApp() {
-            if (!db.isSetup) showScreen('setup');
-            else showScreen('login');
+            // AUTO CREATE ADMIN IF EMPTY
+            if (db.users.length === 0 || !db.users.some(u => u.role === 'admin')) {
+                db.users.push({
+                    id: 'USR_ADMIN_DEF', name: 'Super Admin', username: 'admin', password: '123',
+                    role: 'admin', kelas: '-', gender: 'L', disabled: false, 
+                    recoveryCode: 'root', // KODE PEMULIHAN DEFAULT
+                    avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Admin'
+                });
+                db.isSetup = true;
+                saveDb();
+                console.log("Admin Default Dibuat.");
+            }
+            showScreen('login');
         }
 
         function showScreen(screenId) {
@@ -325,20 +351,7 @@
             document.getElementById('screen-' + screenId).classList.remove('hidden');
         }
 
-        // AUTH & SETUP
-        function setupAdmin() {
-            const user = document.getElementById('setup-username').value;
-            const pass = document.getElementById('setup-password').value;
-            if(!user || !pass) return alert('Isi semua field!');
-            
-            db.users.push({
-                id: 'USR_' + Date.now(), name: 'Super Admin', username: user, password: pass, role: 'admin', kelas: '-', disabled: false, gender: 'L',
-                avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Admin'
-            });
-            db.isSetup = true; saveDb();
-            alert('Admin Dibuat! Silakan Login.'); initApp();
-        }
-
+        // AUTH LOGIC
         function handleLogin() {
             const user = document.getElementById('login-username').value;
             const pass = document.getElementById('login-password').value;
@@ -355,6 +368,35 @@
         }
 
         function logout() { currentUser = null; showScreen('login'); stopScanner(); }
+
+        // FORGOT PASSWORD LOGIC
+        function openForgotModal() {
+            document.getElementById('forgot-modal').style.display = 'flex';
+            document.getElementById('forgot-username').value = '';
+            document.getElementById('forgot-code').value = '';
+            document.getElementById('forgot-newpass').value = '';
+        }
+
+        function resetAdminPassword() {
+            const user = document.getElementById('forgot-username').value;
+            const code = document.getElementById('forgot-code').value;
+            const newPass = document.getElementById('forgot-newpass').value;
+
+            const targetUser = db.users.find(u => u.username === user && u.role === 'admin');
+
+            if (!targetUser) return alert("Username Admin tidak ditemukan!");
+            
+            // Cek Kode Pemulihan (Default: 'root')
+            // Di sistem nyata, ini harus lebih kompleks. Untuk lokal, kita pakai properti recoveryCode.
+            if (targetUser.recoveryCode && targetUser.recoveryCode === code) {
+                targetUser.password = newPass;
+                saveDb();
+                alert("Password Berhasil Direset! Silakan Login.");
+                document.getElementById('forgot-modal').style.display = 'none';
+            } else {
+                alert("Kode Pemulihan Salah!");
+            }
+        }
 
         // SISWA LOGIC
         function renderSiswaScreen() {
@@ -399,7 +441,6 @@
             const logs = db.attendance.filter(a => a.date === today);
             document.getElementById('count-present').innerText = logs.length;
             const tbody = document.getElementById('table-attendance');
-            
             if(logs.length === 0) tbody.innerHTML = '<tr><td colspan="4" class="text-center p-8 text-gray-400 italic">Tidak ada data kehadiran saat ini.</td></tr>';
             else {
                 tbody.innerHTML = logs.slice().reverse().map(l => {
@@ -419,7 +460,6 @@
         // USER MANAGEMENT (GOD MODE)
         function renderUserTable() {
             const tbody = document.getElementById('table-users');
-            
             if(db.users.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="7" class="text-center p-8 text-gray-400 italic">Tidak ada data pengguna.</td></tr>';
                 return;
