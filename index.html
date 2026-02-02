@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Absensi GKPS - PRO FINAL</title>
+    <title>Sistem Absensi GKPS - PRO FINAL (Emergency Fix)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -69,11 +69,16 @@
             <input type="text" id="login-username" class="pro-input" placeholder="Masukkan Username">
             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Password</label>
             <input type="password" id="login-password" class="pro-input" placeholder="Masukkan Password">
+            
             <button onclick="handleLogin()" class="pro-btn btn-blue shadow-lg shadow-blue-200">MASUK</button>
             
-            <div class="mt-4 text-center">
-                <button onclick="openForgotModal()" class="text-xs text-blue-500 font-bold hover:underline">Lupa Password Admin?</button>
+            <div class="mt-4 flex justify-between items-center text-xs">
+                <button onclick="openForgotModal()" class="text-blue-500 font-bold hover:underline">Lupa Password?</button>
+                <button onclick="emergencyReset()" class="text-red-500 font-bold hover:underline border border-red-200 px-2 py-1 rounded">⚠️ Reset Aplikasi</button>
             </div>
+        </div>
+        <div class="text-center mt-4">
+            <p class="text-xs text-gray-400">Gunakan tombol <b>Reset Aplikasi</b> jika gagal login di perangkat baru.</p>
         </div>
     </section>
 
@@ -338,7 +343,7 @@
                 });
                 db.isSetup = true;
                 saveDb();
-                console.log("Admin Default Dibuat.");
+                console.log("Admin Default Dibuat: admin/123");
             }
             showScreen('login');
         }
@@ -346,6 +351,15 @@
         function showScreen(screenId) {
             document.querySelectorAll('section').forEach(el => el.classList.add('hidden'));
             document.getElementById('screen-' + screenId).classList.remove('hidden');
+        }
+
+        // --- EMERGENCY RESET (FITUR BARU) ---
+        function emergencyReset() {
+            if(confirm("PERINGATAN KERAS:\n\nIni akan MENGHAPUS SEMUA DATA di perangkat ini dan mereset ke pengaturan awal (Admin: admin/123).\n\nGunakan fitur ini hanya jika Anda tidak bisa login sama sekali.")) {
+                localStorage.removeItem(DB_KEY);
+                alert("Aplikasi telah direset. Halaman akan dimuat ulang.");
+                location.reload();
+            }
         }
 
         // AUTH LOGIC
