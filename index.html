@@ -457,7 +457,7 @@
             dbRef.on('value', (snapshot) => {
                 const val = snapshot.val();
                 if (val) {
-                    // FIX DATA TYPE: FORCE USERS TO ARRAY
+                    // FIX DATA TYPE: FORCE USERS TO ARRAY (SOLUSI SCANNER MACET)
                     if (val.users && typeof val.users === 'object' && !Array.isArray(val.users)) {
                         val.users = Object.values(val.users);
                     }
