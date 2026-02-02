@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Absensi GKPS - Secure Login v2</title>
+    <title>Sistem Absensi GKPS - Pro v3 (Kelas & Import)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -47,10 +47,11 @@
         .badge { font-size: 0.7rem; padding: 2px 8px; border-radius: 99px; font-weight: 700; display: inline-block; }
         .badge-active { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
         .badge-disabled { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+        .badge-class { background: #e0f2fe; color: #075985; border: 1px solid #bae6fd; font-size: 0.65rem; margin-top: 2px; }
 
         /* Modal */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 50; display: none; justify-content: center; align-items: center; padding: 1rem; backdrop-filter: blur(2px); }
-        .modal-content { background: white; padding: 2rem; border-radius: 1.5rem; width: 100%; max-w-sm; animation: slideUp 0.3s ease; }
+        .modal-content { background: white; padding: 2rem; border-radius: 1.5rem; width: 100%; max-w-sm; animation: slideUp 0.3s ease; max-height: 90vh; overflow-y: auto; }
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     </style>
 </head>
@@ -60,7 +61,6 @@
         <div class="pro-card text-center">
             <h1 class="text-2xl font-bold text-blue-900 mb-2">Setup Sistem</h1>
             <p class="text-gray-500 text-sm mb-6">Belum ada akun Admin. Silakan buat akun Super Admin pertama.</p>
-            
             <input type="text" id="setup-username" class="pro-input" placeholder="Username Admin Baru">
             <input type="password" id="setup-password" class="pro-input" placeholder="Password">
             <button onclick="setupAdmin()" class="pro-btn btn-blue">Buat Akun Admin</button>
@@ -72,17 +72,13 @@
             <h1 class="text-3xl font-extrabold text-blue-900 tracking-tight">GKPS TANGERANG</h1>
             <p class="text-gray-500 font-medium">Silakan Login</p>
         </div>
-
         <div class="pro-card">
             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Username</label>
             <input type="text" id="login-username" class="pro-input" placeholder="Masukkan Username">
-            
             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Password</label>
             <input type="password" id="login-password" class="pro-input" placeholder="Masukkan Password">
-            
             <button onclick="handleLogin()" class="pro-btn btn-blue shadow-lg shadow-blue-200">MASUK</button>
         </div>
-        
         <div class="text-center mt-4">
             <p class="text-xs text-gray-400">Lupa password? Hubungi Admin Sekolah Minggu.</p>
         </div>
@@ -93,15 +89,14 @@
             <h2 class="text-xl font-bold text-blue-900">Halo, <span id="siswa-greet-name">Siswa</span>! 👋</h2>
             <button onclick="logout()" class="text-red-500 text-xs font-bold border border-red-200 px-3 py-1 rounded-full">Keluar</button>
         </header>
-
         <div class="id-card-wrap animate-fade-in">
             <div class="text-xs font-bold tracking-[0.3em] opacity-80 mb-6">GKPS TANGERANG</div>
             <div class="w-24 h-24 mx-auto bg-white rounded-full p-1 mb-4 shadow-lg">
                 <img id="card-img" src="" class="w-full h-full rounded-full object-cover">
             </div>
             <h2 id="card-name-display" class="text-2xl font-extrabold uppercase mb-1 leading-none">Nama</h2>
-            <span class="inline-block bg-white/20 px-3 py-1 rounded-full text-xs font-bold mb-6">SISWA</span>
-            
+            <span class="inline-block bg-white/20 px-3 py-1 rounded-full text-xs font-bold mb-2">SISWA</span>
+            <div id="card-class-display" class="text-sm font-bold text-yellow-300 mb-4 uppercase">KELAS DAUD</div>
             <div class="bg-white p-3 rounded-xl inline-block shadow-inner">
                 <div id="qrcode"></div>
             </div>
@@ -136,7 +131,6 @@
                     <div class="font-bold text-gray-700 text-xs">Mulai Scan</div>
                 </div>
             </div>
-
             <div class="pro-card">
                 <div class="flex justify-between items-center mb-4 border-b pb-2">
                     <h3 class="font-bold text-gray-800">Log Kehadiran</h3>
@@ -144,7 +138,7 @@
                 </div>
                 <div class="overflow-x-auto max-h-[300px]">
                     <table class="w-full admin-table">
-                        <thead><tr><th>Jam</th><th>Nama</th><th>Status</th></tr></thead>
+                        <thead><tr><th>Jam</th><th>Nama</th><th>Kelas</th><th>Status</th></tr></thead>
                         <tbody id="table-attendance"></tbody>
                     </table>
                 </div>
@@ -163,17 +157,25 @@
 
         <div id="view-users" class="tab-view hidden">
             <div class="pro-card">
-                <div class="flex justify-between items-center mb-4">
+                <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
                     <h3 class="font-bold text-lg">Kelola Pengguna</h3>
                     <div class="flex gap-2">
                         <button onclick="openUserModal()" class="bg-blue-600 text-white text-xs px-3 py-2 rounded-full font-bold shadow hover:bg-blue-700">+ User</button>
+                        <label class="bg-green-600 text-white text-xs px-3 py-2 rounded-full font-bold shadow hover:bg-green-700 cursor-pointer">
+                            Import CSV <input type="file" class="hidden" onchange="importCSV(this)" accept=".csv">
+                        </label>
                         <button onclick="backupData()" class="bg-gray-600 text-white text-xs px-3 py-2 rounded-full font-bold shadow hover:bg-gray-700">Backup</button>
                     </div>
                 </div>
+                
+                <div class="mb-2">
+                    <p class="text-[10px] text-gray-500 italic">*Format CSV: Nama,Username,Password,Role(siswa/guru/admin),Kelas</p>
+                </div>
+
                 <div class="overflow-x-auto bg-white rounded-xl border border-gray-100">
                     <table class="w-full admin-table">
                         <thead class="bg-gray-50">
-                            <tr><th>User</th><th>Role</th><th>Status</th><th>Aksi</th></tr>
+                            <tr><th>User Info</th><th>Kelas</th><th>Role</th><th>Status</th><th>Aksi</th></tr>
                         </thead>
                         <tbody id="table-users"></tbody>
                     </table>
@@ -188,11 +190,10 @@
                 <button onclick="resetAllData()" class="bg-red-600 text-white px-4 py-2 rounded-lg text-xs font-bold w-full">Reset Factory</button>
             </div>
              <div class="pro-card mt-4">
-                <h3 class="font-bold mb-2">Restore Database</h3>
+                <h3 class="font-bold mb-2">Restore Database (Backup File)</h3>
                  <input type="file" id="restore-file" class="text-xs" onchange="restoreData(this)">
             </div>
         </div>
-
     </section>
 
     <div id="user-modal" class="modal-overlay">
@@ -214,6 +215,17 @@
                 <option value="siswa">Siswa</option>
                 <option value="guru">Guru</option>
                 <option value="admin">Admin</option>
+            </select>
+
+            <label class="text-xs font-bold text-gray-500 uppercase">Kelas</label>
+            <select id="modal-kelas" class="pro-input bg-white">
+                <option value="-">- Pilih Kelas -</option>
+                <option value="Daud">Daud</option>
+                <option value="Daniel">Daniel</option>
+                <option value="Paulus">Paulus</option>
+                <option value="Ester">Ester</option>
+                <option value="Timotius">Timotius</option>
+                <option value="Abraham">Abraham</option>
             </select>
 
             <label class="text-xs font-bold text-gray-500 uppercase">Status Akun</label>
@@ -268,6 +280,7 @@
                 username: user,
                 password: pass,
                 role: 'admin',
+                kelas: '-',
                 disabled: false,
                 avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Admin'
             };
@@ -316,8 +329,8 @@
             document.getElementById('siswa-greet-name').innerText = currentUser.name;
             document.getElementById('card-name-display').innerText = currentUser.name;
             document.getElementById('card-img').src = currentUser.avatar;
+            document.getElementById('card-class-display').innerText = "KELAS " + (currentUser.kelas || "-");
             
-            // Generate QR: Format = "GKPS|Username" (Username unik sebagai ID)
             const qrData = `GKPS|${currentUser.username}`;
             document.getElementById('qrcode').innerHTML = "";
             new QRCode(document.getElementById("qrcode"), {
@@ -332,7 +345,6 @@
             document.getElementById('guru-greet-name').innerText = currentUser.name;
             document.getElementById('role-badge').innerText = currentUser.role.toUpperCase();
             
-            // Atur Tab Visibility berdasarkan Role
             if (currentUser.role === 'admin') {
                 document.getElementById('tab-users').classList.remove('hidden');
                 document.getElementById('tab-settings').classList.remove('hidden');
@@ -363,15 +375,19 @@
             document.getElementById('count-present').innerText = logs.length;
             
             const tbody = document.getElementById('table-attendance');
-            if(logs.length === 0) tbody.innerHTML = '<tr><td colspan="3" class="text-center p-4 text-gray-400">Belum ada data.</td></tr>';
+            if(logs.length === 0) tbody.innerHTML = '<tr><td colspan="4" class="text-center p-4 text-gray-400">Belum ada data.</td></tr>';
             else {
-                tbody.innerHTML = logs.slice().reverse().map(l => `
+                tbody.innerHTML = logs.slice().reverse().map(l => {
+                    const u = db.users.find(user => user.username === l.username);
+                    const k = u ? u.kelas : '-';
+                    return `
                     <tr>
                         <td class="text-gray-500 font-mono text-xs">${l.time}</td>
-                        <td class="font-bold text-gray-700">${l.name}</td>
+                        <td class="font-bold text-gray-700 text-sm">${l.name}</td>
+                        <td><span class="badge badge-class">${k}</span></td>
                         <td><span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Hadir</span></td>
                     </tr>
-                `).join('');
+                `}).join('');
             }
         }
 
@@ -428,6 +444,7 @@
                             <div class="text-[10px] text-gray-400">@${u.username}</div>
                         </div>
                     </td>
+                    <td><span class="badge badge-class">${u.kelas || '-'}</span></td>
                     <td><span class="text-[10px] border px-2 py-0.5 rounded uppercase">${u.role}</span></td>
                     <td><span class="badge ${u.disabled ? 'badge-disabled' : 'badge-active'}">${u.disabled ? 'Non-Aktif' : 'Aktif'}</span></td>
                     <td class="flex gap-2 justify-end">
@@ -447,9 +464,10 @@
                 document.getElementById('modal-id').value = u.id;
                 document.getElementById('modal-name').value = u.name;
                 document.getElementById('modal-username').value = u.username;
-                document.getElementById('modal-password').value = ''; // Reset password field for security
+                document.getElementById('modal-password').value = ''; 
                 document.getElementById('modal-password').placeholder = 'Kosongkan jika tidak ubah password';
                 document.getElementById('modal-role').value = u.role;
+                document.getElementById('modal-kelas').value = u.kelas || '-';
                 document.getElementById('modal-status').value = u.disabled ? 'disabled' : 'active';
             } else {
                 document.getElementById('modal-title').innerText = 'Tambah User';
@@ -459,6 +477,7 @@
                 document.getElementById('modal-password').value = '';
                 document.getElementById('modal-password').placeholder = 'Password Baru';
                 document.getElementById('modal-role').value = 'siswa';
+                document.getElementById('modal-kelas').value = '-';
                 document.getElementById('modal-status').value = 'active';
             }
         }
@@ -470,6 +489,7 @@
             const user = document.getElementById('modal-username').value;
             const pass = document.getElementById('modal-password').value;
             const role = document.getElementById('modal-role').value;
+            const kelas = document.getElementById('modal-kelas').value;
             const status = document.getElementById('modal-status').value;
             const isDisabled = status === 'disabled';
 
@@ -482,11 +502,9 @@
                     db.users[idx].name = name;
                     db.users[idx].username = user;
                     db.users[idx].role = role;
+                    db.users[idx].kelas = kelas;
                     db.users[idx].disabled = isDisabled;
-                    // Hanya update password jika diisi
-                    if(pass && pass.trim() !== "") {
-                        db.users[idx].password = pass;
-                    }
+                    if(pass && pass.trim() !== "") db.users[idx].password = pass;
                 }
             } else {
                 // Create new
@@ -495,7 +513,7 @@
                 
                 db.users.push({
                     id: 'USR_' + Date.now(),
-                    name, username: user, password: pass, role,
+                    name, username: user, password: pass, role, kelas,
                     disabled: isDisabled,
                     avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=' + name
                 });
@@ -503,6 +521,52 @@
             saveDb();
             closeModal();
             renderUserTable();
+        }
+
+        // --- IMPORT CSV FEATURE ---
+        function importCSV(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                const rows = text.split('\n');
+                let count = 0;
+
+                // Format: Nama,Username,Password,Role,Kelas
+                // Skip header row if exists (simple check)
+                rows.forEach((row, index) => {
+                    const cols = row.split(',');
+                    if (cols.length >= 3) {
+                        const name = cols[0].trim();
+                        const username = cols[1].trim();
+                        const password = cols[2].trim();
+                        const role = cols[3] ? cols[3].trim().toLowerCase() : 'siswa';
+                        const kelas = cols[4] ? cols[4].trim() : '-';
+
+                        // Skip header or empty
+                        if(name === '' || name.toLowerCase() === 'nama') return;
+
+                        // Check duplicate username
+                        if (!db.users.find(u => u.username === username)) {
+                            db.users.push({
+                                id: 'IMP_' + Date.now() + index,
+                                name, username, password, role, kelas,
+                                disabled: false,
+                                avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=' + name
+                            });
+                            count++;
+                        }
+                    }
+                });
+                
+                saveDb();
+                alert(`Berhasil mengimpor ${count} pengguna baru!`);
+                renderUserTable();
+                input.value = ''; // Reset input
+            };
+            reader.readAsText(file);
         }
 
         function toggleStatus(id) {
@@ -544,8 +608,12 @@
             reader.readAsText(input.files[0]);
         }
         function exportExcel() {
-             let csv = "Nama,Username,Waktu,Tanggal\n";
-             db.attendance.forEach(r => csv += `${r.name},${r.username},${r.time},${r.date}\n`);
+             let csv = "Nama,Username,Kelas,Waktu,Tanggal\n";
+             db.attendance.forEach(r => {
+                 const u = db.users.find(usr => usr.username === r.username);
+                 const k = u ? u.kelas : '-';
+                 csv += `${r.name},${r.username},${k},${r.time},${r.date}\n`
+             });
              const a = document.createElement('a'); 
              a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
              a.download = `Absensi_${new Date().toLocaleDateString()}.csv`; a.click();
@@ -553,7 +621,6 @@
 
         // --- START ---
         initApp();
-
     </script>
 </body>
 </html>
