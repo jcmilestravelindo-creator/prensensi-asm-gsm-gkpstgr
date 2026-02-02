@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Absensi GKPS - PRO v5 (Auto Admin & Recovery)</title>
+    <title>Sistem Absensi GKPS - PRO FINAL</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -74,9 +74,6 @@
             <div class="mt-4 text-center">
                 <button onclick="openForgotModal()" class="text-xs text-blue-500 font-bold hover:underline">Lupa Password Admin?</button>
             </div>
-        </div>
-        <div class="text-center mt-4">
-            <p class="text-xs text-gray-400">Default Admin: <b>admin</b> / <b>123</b></p>
         </div>
     </section>
 
@@ -386,8 +383,6 @@
 
             if (!targetUser) return alert("Username Admin tidak ditemukan!");
             
-            // Cek Kode Pemulihan (Default: 'root')
-            // Di sistem nyata, ini harus lebih kompleks. Untuk lokal, kita pakai properti recoveryCode.
             if (targetUser.recoveryCode && targetUser.recoveryCode === code) {
                 targetUser.password = newPass;
                 saveDb();
@@ -441,7 +436,7 @@
             const logs = db.attendance.filter(a => a.date === today);
             document.getElementById('count-present').innerText = logs.length;
             const tbody = document.getElementById('table-attendance');
-            if(logs.length === 0) tbody.innerHTML = '<tr><td colspan="4" class="text-center p-8 text-gray-400 italic">Tidak ada data kehadiran saat ini.</td></tr>';
+            if(logs.length === 0) tbody.innerHTML = '<tr><td colspan="4" class="text-center p-8 text-gray-400 italic">Tidak ada data.</td></tr>';
             else {
                 tbody.innerHTML = logs.slice().reverse().map(l => {
                     const u = db.users.find(user => user.username === l.username);
@@ -461,7 +456,7 @@
         function renderUserTable() {
             const tbody = document.getElementById('table-users');
             if(db.users.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center p-8 text-gray-400 italic">Tidak ada data pengguna.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center p-8 text-gray-400 italic">Tidak ada data.</td></tr>';
                 return;
             }
             
