@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Absensi GKPS - PRO ULTIMATE (Fixed)</title>
+    <title>Sistem Absensi GKPS - PRO ULTIMATE (CSV Fixed)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -428,7 +428,7 @@
             console.error("Firebase Error: Config belum diisi dengan benar.");
         }
 
-        // LOCAL STATE (Untuk tampilan instan)
+        // LOCAL STATE
         let db = { users: [], attendance: [], messages: [], isSetup: false };
         let currentUser = null;
         let sortConfig = { key: null, asc: true };
@@ -448,7 +448,7 @@
                 }
             });
 
-            // SINKRONISASI REALTIME (Magic Happens Here)
+            // SINKRONISASI REALTIME
             dbRef.on('value', (snapshot) => {
                 const val = snapshot.val();
                 if (val) {
@@ -470,7 +470,6 @@
                         checkBroadcasts(currentUser.role);
                     }
                 } else {
-                    // Jika database kosong (pertama kali), buat admin default
                     createDefaultAdmin();
                 }
             });
@@ -488,7 +487,6 @@
             saveDb(); // Push ke Cloud
         }
 
-        // FUNGSI SIMPAN (PUSH KE CLOUD)
         function saveDb() {
             if(dbRef) {
                 dbRef.set(db).catch(err => alert("Gagal Simpan ke Cloud: " + err.message));
@@ -720,7 +718,7 @@
             if(t && t.recoveryCode === c) { t.password = p; saveDb(); alert('Sukses!'); document.getElementById('forgot-modal').style.display='none'; } else alert('Gagal!');
         }
 
-        // CSV EXPORT IMPORT
+        // CSV EXPORT IMPORT - MODIFIED TO READ GENDER (INDEX 5)
         function exportExcel() {
              let csv = "Nama,Username,Kelas,Waktu,Tanggal\n";
              db.attendance.forEach(r => { const u = db.users.find(usr => usr.username === r.username); csv += `${r.name},${r.username},${u?u.kelas:'-'},${r.time},${r.date}\n` });
@@ -735,8 +733,13 @@
                     const cols = r.split(',');
                     if(cols.length>=3) {
                         const name=cols[0].trim(), username=cols[1].trim(), password=cols[2].trim(), role=cols[3]?cols[3].trim().toLowerCase():'siswa', kelas=cols[4]?cols[4].trim():'-';
+                        
+                        // NEW LOGIC: READ GENDER FROM COLUMN 5
+                        let genderRaw = cols[5] ? cols[5].trim().toUpperCase() : 'L';
+                        let gender = (genderRaw === 'P' || genderRaw === 'PEREMPUAN') ? 'P' : 'L';
+
                         if(name.toLowerCase()!=='nama' && !db.users.find(u=>u.username===username)) {
-                            db.users.push({ id:'IMP_'+Date.now()+c, name, username, password, role, kelas, gender:'L', disabled:false, avatar:'https://api.dicebear.com/7.x/adventurer/svg?seed='+name }); c++;
+                            db.users.push({ id:'IMP_'+Date.now()+c, name, username, password, role, kelas, gender: gender, disabled:false, avatar:'https://api.dicebear.com/7.x/adventurer/svg?seed='+name }); c++;
                         }
                     }
                 });
