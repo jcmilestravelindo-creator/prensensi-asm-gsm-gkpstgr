@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Absensi GKPS - Pro v4 (Self Edit)</title>
+    <title>Sistem Absensi GKPS - Final Admin Control</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -204,7 +204,7 @@
 
     <div id="user-modal" class="modal-overlay">
         <div class="modal-content">
-            <h3 id="modal-title" class="text-lg font-bold mb-4">Tambah User</h3>
+            <h3 id="modal-title" class="text-lg font-bold mb-4">Edit User (Admin)</h3>
             <input type="hidden" id="modal-id">
             
             <label class="text-xs font-bold text-gray-500 uppercase">Nama Lengkap</label>
@@ -213,8 +213,8 @@
             <label class="text-xs font-bold text-gray-500 uppercase">Username</label>
             <input type="text" id="modal-username" class="pro-input">
             
-            <label class="text-xs font-bold text-gray-500 uppercase">Password</label>
-            <input type="text" id="modal-password" class="pro-input" placeholder="Isi untuk ubah password">
+            <label class="text-xs font-bold text-gray-500 uppercase">Password (Reset)</label>
+            <input type="text" id="modal-password" class="pro-input" placeholder="Kosongkan jika tidak ingin merubah">
             
             <label class="text-xs font-bold text-gray-500 uppercase">Role</label>
             <select id="modal-role" class="pro-input bg-white">
@@ -236,12 +236,12 @@
 
             <label class="text-xs font-bold text-gray-500 uppercase">Status Akun</label>
             <select id="modal-status" class="pro-input bg-white">
-                <option value="active">Aktif (Bisa Login/Scan)</option>
-                <option value="disabled">Non-Aktif (Diblokir)</option>
+                <option value="active">Aktif (Bisa Login)</option>
+                <option value="disabled">Disable (Blokir)</option>
             </select>
 
             <div class="flex gap-2">
-                <button onclick="saveUser()" class="pro-btn btn-blue">Simpan</button>
+                <button onclick="saveUser()" class="pro-btn btn-blue">Simpan Perubahan</button>
                 <button onclick="closeModal()" class="pro-btn bg-gray-200 text-gray-600">Batal</button>
             </div>
         </div>
@@ -354,7 +354,7 @@
             stopScanner();
         }
 
-        // --- PROFILE EDIT LOGIC (SELF SERVICE) ---
+        // --- SELF PROFILE EDIT LOGIC ---
         function openProfileModal() {
             if (!currentUser) return;
             document.getElementById('profile-modal').style.display = 'flex';
@@ -370,23 +370,19 @@
 
             if (!newName || !newUser) return alert("Nama dan Username tidak boleh kosong");
 
-            // Cek duplikat username (jika ganti username)
             if (newUser !== currentUser.username && db.users.find(u => u.username === newUser)) {
                 return alert("Username sudah dipakai orang lain!");
             }
 
-            // Update DB
             const userIdx = db.users.findIndex(u => u.id === currentUser.id);
             if (userIdx !== -1) {
                 db.users[userIdx].name = newName;
                 db.users[userIdx].username = newUser;
-                if (newPass) db.users[userIdx].password = newPass; // Hanya update password jika diisi
+                if (newPass) db.users[userIdx].password = newPass; 
                 
-                // Update Session
                 currentUser = db.users[userIdx];
                 saveDb();
                 
-                // Update UI Realtime
                 alert("Profil berhasil diperbarui!");
                 document.getElementById('profile-modal').style.display = 'none';
                 
@@ -469,7 +465,7 @@
             scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
             scanner.render(onScanSuccess);
         }
-        function stopScanner() { if(scanner) { scanner.clear(); scanner = null; } }
+        function stopScanner() { if(scanner) { scanner.clear().then(_=>scanner=null); } }
 
         function onScanSuccess(decodedText) {
             if(!decodedText.startsWith('GKPS')) return showStatus('QR Tidak Valid', 'red');
@@ -520,7 +516,6 @@
                     <td><span class="badge ${u.disabled ? 'badge-disabled' : 'badge-active'}">${u.disabled ? 'Non-Aktif' : 'Aktif'}</span></td>
                     <td class="flex gap-2 justify-end">
                         <button onclick="editUser('${u.id}')" class="text-blue-500 text-xs font-bold hover:underline">Edit</button>
-                        ${u.role !== 'admin' ? `<button onclick="toggleStatus('${u.id}')" class="text-orange-500 text-xs hover:underline">${u.disabled ? 'Enable' : 'Disable'}</button>` : ''}
                         ${u.role !== 'admin' ? `<button onclick="deleteUser('${u.id}')" class="text-red-500 text-xs hover:underline">Del</button>` : ''}
                     </td>
                 </tr>
@@ -531,12 +526,11 @@
             document.getElementById('user-modal').style.display = 'flex';
             if(id) {
                 const u = db.users.find(x => x.id === id);
-                document.getElementById('modal-title').innerText = 'Edit User';
+                document.getElementById('modal-title').innerText = 'Edit User (Admin Mode)';
                 document.getElementById('modal-id').value = u.id;
                 document.getElementById('modal-name').value = u.name;
                 document.getElementById('modal-username').value = u.username;
                 document.getElementById('modal-password').value = ''; 
-                document.getElementById('modal-password').placeholder = 'Kosongkan jika tidak ubah password';
                 document.getElementById('modal-role').value = u.role;
                 document.getElementById('modal-kelas').value = u.kelas || '-';
                 document.getElementById('modal-status').value = u.disabled ? 'disabled' : 'active';
@@ -546,7 +540,6 @@
                 document.getElementById('modal-name').value = '';
                 document.getElementById('modal-username').value = '';
                 document.getElementById('modal-password').value = '';
-                document.getElementById('modal-password').placeholder = 'Password Baru';
                 document.getElementById('modal-role').value = 'siswa';
                 document.getElementById('modal-kelas').value = '-';
                 document.getElementById('modal-status').value = 'active';
@@ -566,6 +559,10 @@
 
             if(!name || !user) return alert('Nama dan Username wajib diisi!');
 
+            // Check Duplicate Username (Exclude current user id)
+            const duplicate = db.users.find(u => u.username === user && u.id !== id);
+            if (duplicate) return alert('Username sudah dipakai orang lain!');
+
             if(id) {
                 // Edit existing
                 const idx = db.users.findIndex(x => x.id === id);
@@ -575,12 +572,12 @@
                     db.users[idx].role = role;
                     db.users[idx].kelas = kelas;
                     db.users[idx].disabled = isDisabled;
+                    // Reset password functionality
                     if(pass && pass.trim() !== "") db.users[idx].password = pass;
                 }
             } else {
                 // Create new
                 if(!pass) return alert('Password wajib diisi untuk user baru!');
-                if(db.users.find(u => u.username === user)) return alert('Username sudah dipakai!');
                 
                 db.users.push({
                     id: 'USR_' + Date.now(),
@@ -606,7 +603,6 @@
                 let count = 0;
 
                 // Format: Nama,Username,Password,Role,Kelas
-                // Skip header row if exists (simple check)
                 rows.forEach((row, index) => {
                     const cols = row.split(',');
                     if (cols.length >= 3) {
@@ -616,10 +612,8 @@
                         const role = cols[3] ? cols[3].trim().toLowerCase() : 'siswa';
                         const kelas = cols[4] ? cols[4].trim() : '-';
 
-                        // Skip header or empty
                         if(name === '' || name.toLowerCase() === 'nama') return;
 
-                        // Check duplicate username
                         if (!db.users.find(u => u.username === username)) {
                             db.users.push({
                                 id: 'IMP_' + Date.now() + index,
@@ -635,18 +629,9 @@
                 saveDb();
                 alert(`Berhasil mengimpor ${count} pengguna baru!`);
                 renderUserTable();
-                input.value = ''; // Reset input
+                input.value = '';
             };
             reader.readAsText(file);
-        }
-
-        function toggleStatus(id) {
-            const idx = db.users.findIndex(x => x.id === id);
-            if(idx !== -1) {
-                db.users[idx].disabled = !db.users[idx].disabled;
-                saveDb();
-                renderUserTable();
-            }
         }
 
         function deleteUser(id) {
