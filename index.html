@@ -377,15 +377,32 @@
             const logs = db.attendance.filter(a => a.date === today);
             document.getElementById('count-present').innerText = logs.length;
             const tbody = document.getElementById('table-attendance');
-            tbody.innerHTML = logs.length === 0 ? '<tr><td colspan="4" class="text-center p-4">Kosong</td></tr>' : logs.slice().reverse().map(l => {
-                const u = db.users.find(user => user.username === l.username);
-                return `<tr><td class="text-gray-500 font-mono text-xs">${l.time}</td><td class="font-bold text-sm">${l.name}</td><td><span class="badge" style="background:#e0f2fe;color:#0369a1">${u ? u.kelas : '-'}</span></td><td><span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Hadir</span></td></tr>`
-            }).join('');
+            // MODIFIED: Unified Empty State Message
+            if(logs.length === 0) tbody.innerHTML = '<tr><td colspan="4" class="text-center p-8 text-gray-400 italic">Tidak ada data kehadiran saat ini.</td></tr>';
+            else {
+                tbody.innerHTML = logs.slice().reverse().map(l => {
+                    const u = db.users.find(user => user.username === l.username);
+                    const k = u ? u.kelas : '-';
+                    return `
+                    <tr>
+                        <td class="text-gray-500 font-mono text-xs">${l.time}</td>
+                        <td class="font-bold text-sm">${l.name}</td>
+                        <td><span class="badge badge-class">${k}</span></td>
+                        <td><span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Hadir</span></td>
+                    </tr>
+                `}).join('');
+            }
         }
 
         // USER MANAGEMENT (GOD MODE)
         function renderUserTable() {
             const tbody = document.getElementById('table-users');
+            // MODIFIED: Unified Empty State Message
+            if(db.users.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center p-8 text-gray-400 italic">Tidak ada data pengguna.</td></tr>';
+                return;
+            }
+            
             tbody.innerHTML = db.users.map(u => `
                 <tr class="border-b hover:bg-gray-50">
                     <td class="flex items-center">
