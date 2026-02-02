@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Absensi GKPS - Final Admin Control</title>
+    <title>Sistem Absensi GKPS - GOD MODE FIXED</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -181,7 +181,7 @@
                 <div class="overflow-x-auto bg-white rounded-xl border border-gray-100">
                     <table class="w-full admin-table">
                         <thead class="bg-gray-50">
-                            <tr><th>User Info</th><th>Kelas</th><th>Role</th><th>Status</th><th>Aksi</th></tr>
+                            <tr><th>User Info</th><th>Kelas</th><th>Role</th><th>Status</th><th class="text-right">Aksi</th></tr>
                         </thead>
                         <tbody id="table-users"></tbody>
                     </table>
@@ -204,7 +204,7 @@
 
     <div id="user-modal" class="modal-overlay">
         <div class="modal-content">
-            <h3 id="modal-title" class="text-lg font-bold mb-4">Edit User (Admin)</h3>
+            <h3 id="modal-title" class="text-lg font-bold mb-4">Edit User (God Mode)</h3>
             <input type="hidden" id="modal-id">
             
             <label class="text-xs font-bold text-gray-500 uppercase">Nama Lengkap</label>
@@ -214,7 +214,7 @@
             <input type="text" id="modal-username" class="pro-input">
             
             <label class="text-xs font-bold text-gray-500 uppercase">Password (Reset)</label>
-            <input type="text" id="modal-password" class="pro-input" placeholder="Kosongkan jika tidak ingin merubah">
+            <input type="text" id="modal-password" class="pro-input" placeholder="Isi untuk ubah password">
             
             <label class="text-xs font-bold text-gray-500 uppercase">Role</label>
             <select id="modal-role" class="pro-input bg-white">
@@ -237,7 +237,7 @@
             <label class="text-xs font-bold text-gray-500 uppercase">Status Akun</label>
             <select id="modal-status" class="pro-input bg-white">
                 <option value="active">Aktif (Bisa Login)</option>
-                <option value="disabled">Disable (Blokir)</option>
+                <option value="disabled">Blokir / Non-Aktif</option>
             </select>
 
             <div class="flex gap-2">
@@ -249,47 +249,29 @@
 
     <div id="profile-modal" class="modal-overlay">
         <div class="modal-content">
-            <h3 class="text-lg font-bold mb-4 flex items-center">
-                <span class="bg-blue-100 text-blue-600 p-2 rounded-full mr-2">✏️</span>
-                Edit Profil Saya
-            </h3>
-            
+            <h3 class="text-lg font-bold mb-4">Edit Profil Saya</h3>
             <label class="text-xs font-bold text-gray-500 uppercase">Nama Lengkap</label>
             <input type="text" id="prof-name" class="pro-input">
-            
-            <label class="text-xs font-bold text-gray-500 uppercase">Username (Login)</label>
+            <label class="text-xs font-bold text-gray-500 uppercase">Username</label>
             <input type="text" id="prof-username" class="pro-input">
-            
             <label class="text-xs font-bold text-gray-500 uppercase">Password Baru</label>
             <input type="text" id="prof-password" class="pro-input" placeholder="Kosongkan jika tidak ubah">
-            <p class="text-[10px] text-gray-400 mb-4">*Role dan Kelas hanya bisa diubah oleh Admin.</p>
-
             <div class="flex gap-2">
-                <button onclick="saveProfile()" class="pro-btn btn-blue">Update Profil</button>
+                <button onclick="saveProfile()" class="pro-btn btn-blue">Update</button>
                 <button onclick="document.getElementById('profile-modal').style.display='none'" class="pro-btn bg-gray-200 text-gray-600">Tutup</button>
             </div>
         </div>
     </div>
 
     <script>
-        // --- DATABASE INIT ---
+        // DB INIT
         const DB_KEY = 'gkps_system_db';
-        let db = JSON.parse(localStorage.getItem(DB_KEY)) || {
-            users: [],
-            attendance: [],
-            isSetup: false
-        };
-
-        // --- SESSION STATE ---
+        let db = JSON.parse(localStorage.getItem(DB_KEY)) || { users: [], attendance: [], isSetup: false };
         let currentUser = null;
 
-        // --- APP INITIALIZATION ---
         function initApp() {
-            if (!db.isSetup) {
-                showScreen('setup');
-            } else {
-                showScreen('login');
-            }
+            if (!db.isSetup) showScreen('setup');
+            else showScreen('login');
         }
 
         function showScreen(screenId) {
@@ -297,121 +279,51 @@
             document.getElementById('screen-' + screenId).classList.remove('hidden');
         }
 
-        // --- SETUP LOGIC (First Run) ---
+        // AUTH & SETUP
         function setupAdmin() {
             const user = document.getElementById('setup-username').value;
             const pass = document.getElementById('setup-password').value;
+            if(!user || !pass) return alert('Isi semua field!');
             
-            if(!user || !pass) return alert('Mohon isi semua field');
-            
-            const adminUser = {
-                id: 'USR_' + Date.now(),
-                name: 'Super Admin',
-                username: user,
-                password: pass,
-                role: 'admin',
-                kelas: '-',
-                disabled: false,
+            db.users.push({
+                id: 'USR_' + Date.now(), name: 'Super Admin', username: user, password: pass, role: 'admin', kelas: '-', disabled: false,
                 avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Admin'
-            };
-            
-            db.users.push(adminUser);
-            db.isSetup = true;
-            saveDb();
-            alert('Admin Berhasil Dibuat! Silakan Login.');
-            initApp();
+            });
+            db.isSetup = true; saveDb();
+            alert('Admin Dibuat! Silakan Login.'); initApp();
         }
 
-        // --- AUTH LOGIC ---
         function handleLogin() {
             const user = document.getElementById('login-username').value;
             const pass = document.getElementById('login-password').value;
-            
             const foundUser = db.users.find(u => u.username === user && u.password === pass);
             
             if (foundUser) {
-                if (foundUser.disabled) return alert("AKUN DINONAKTIFKAN! Hubungi Admin.");
-
+                if (foundUser.disabled) return alert("AKUN DIBLOKIR/NON-AKTIF!");
                 currentUser = foundUser;
                 document.getElementById('login-username').value = '';
                 document.getElementById('login-password').value = '';
-                
-                if (foundUser.role === 'siswa') {
-                    renderSiswaScreen();
-                    showScreen('siswa');
-                } else {
-                    renderDashboardScreen();
-                    showScreen('dashboard');
-                }
-            } else {
-                alert('Username atau Password Salah!');
-            }
+                if (foundUser.role === 'siswa') { renderSiswaScreen(); showScreen('siswa'); }
+                else { renderDashboardScreen(); showScreen('dashboard'); }
+            } else alert('Username/Password Salah!');
         }
 
-        function logout() {
-            currentUser = null;
-            showScreen('login');
-            stopScanner();
-        }
+        function logout() { currentUser = null; showScreen('login'); stopScanner(); }
 
-        // --- SELF PROFILE EDIT LOGIC ---
-        function openProfileModal() {
-            if (!currentUser) return;
-            document.getElementById('profile-modal').style.display = 'flex';
-            document.getElementById('prof-name').value = currentUser.name;
-            document.getElementById('prof-username').value = currentUser.username;
-            document.getElementById('prof-password').value = '';
-        }
-
-        function saveProfile() {
-            const newName = document.getElementById('prof-name').value;
-            const newUser = document.getElementById('prof-username').value;
-            const newPass = document.getElementById('prof-password').value;
-
-            if (!newName || !newUser) return alert("Nama dan Username tidak boleh kosong");
-
-            if (newUser !== currentUser.username && db.users.find(u => u.username === newUser)) {
-                return alert("Username sudah dipakai orang lain!");
-            }
-
-            const userIdx = db.users.findIndex(u => u.id === currentUser.id);
-            if (userIdx !== -1) {
-                db.users[userIdx].name = newName;
-                db.users[userIdx].username = newUser;
-                if (newPass) db.users[userIdx].password = newPass; 
-                
-                currentUser = db.users[userIdx];
-                saveDb();
-                
-                alert("Profil berhasil diperbarui!");
-                document.getElementById('profile-modal').style.display = 'none';
-                
-                if (currentUser.role === 'siswa') renderSiswaScreen();
-                else renderDashboardScreen();
-            }
-        }
-
-        // --- SISWA SCREEN LOGIC ---
+        // SISWA LOGIC
         function renderSiswaScreen() {
             document.getElementById('siswa-greet-name').innerText = currentUser.name;
             document.getElementById('card-name-display').innerText = currentUser.name;
             document.getElementById('card-img').src = currentUser.avatar;
             document.getElementById('card-class-display').innerText = "KELAS " + (currentUser.kelas || "-");
-            
-            const qrData = `GKPS|${currentUser.username}`;
             document.getElementById('qrcode').innerHTML = "";
-            new QRCode(document.getElementById("qrcode"), {
-                text: qrData, width: 120, height: 120,
-                colorDark : "#000000", colorLight : "#ffffff",
-                correctLevel : QRCode.CorrectLevel.M
-            });
+            new QRCode(document.getElementById("qrcode"), { text: `GKPS|${currentUser.username}`, width: 120, height: 120 });
         }
 
-        // --- DASHBOARD LOGIC (Guru & Admin) ---
+        // DASHBOARD LOGIC
         function renderDashboardScreen() {
             document.getElementById('guru-greet-name').innerText = currentUser.name;
             document.getElementById('role-badge').innerText = currentUser.role.toUpperCase();
-            
             if (currentUser.role === 'admin') {
                 document.getElementById('tab-users').classList.remove('hidden');
                 document.getElementById('tab-settings').classList.remove('hidden');
@@ -419,17 +331,14 @@
                 document.getElementById('tab-users').classList.add('hidden');
                 document.getElementById('tab-settings').classList.add('hidden');
             }
-            
             switchTab('home');
         }
 
         function switchTab(tab) {
             document.querySelectorAll('.tab-view').forEach(el => el.classList.add('hidden'));
             document.getElementById('view-'+tab).classList.remove('hidden');
-            
             document.querySelectorAll('.nav-pill').forEach(el => el.classList.remove('active'));
             document.getElementById('tab-'+tab).classList.add('active');
-            
             if(tab === 'home') renderHomeStats();
             if(tab === 'scan') startScanner(); else stopScanner();
             if(tab === 'users') renderUserTable();
@@ -438,85 +347,30 @@
         function renderHomeStats() {
             const today = new Date().toLocaleDateString();
             const logs = db.attendance.filter(a => a.date === today);
-            
             document.getElementById('count-present').innerText = logs.length;
-            
             const tbody = document.getElementById('table-attendance');
-            if(logs.length === 0) tbody.innerHTML = '<tr><td colspan="4" class="text-center p-4 text-gray-400">Belum ada data.</td></tr>';
-            else {
-                tbody.innerHTML = logs.slice().reverse().map(l => {
-                    const u = db.users.find(user => user.username === l.username);
-                    const k = u ? u.kelas : '-';
-                    return `
-                    <tr>
-                        <td class="text-gray-500 font-mono text-xs">${l.time}</td>
-                        <td class="font-bold text-gray-700 text-sm">${l.name}</td>
-                        <td><span class="badge badge-class">${k}</span></td>
-                        <td><span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Hadir</span></td>
-                    </tr>
-                `}).join('');
-            }
+            tbody.innerHTML = logs.length === 0 ? '<tr><td colspan="4" class="text-center p-4">Kosong</td></tr>' : logs.slice().reverse().map(l => {
+                const u = db.users.find(user => user.username === l.username);
+                return `<tr><td class="text-gray-500 font-mono text-xs">${l.time}</td><td class="font-bold text-sm">${l.name}</td><td><span class="badge" style="background:#e0f2fe;color:#0369a1">${u ? u.kelas : '-'}</span></td><td><span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Hadir</span></td></tr>`
+            }).join('');
         }
 
-        // --- SCANNER LOGIC ---
-        let scanner;
-        function startScanner() {
-            if(scanner) return;
-            scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
-            scanner.render(onScanSuccess);
-        }
-        function stopScanner() { if(scanner) { scanner.clear().then(_=>scanner=null); } }
-
-        function onScanSuccess(decodedText) {
-            if(!decodedText.startsWith('GKPS')) return showStatus('QR Tidak Valid', 'red');
-            
-            const username = decodedText.split('|')[1];
-            const user = db.users.find(u => u.username === username);
-            
-            if(!user) return showStatus('User Tidak Dikenal', 'red');
-            if(user.disabled) return showStatus('AKSES DITOLAK: Akun Non-Aktif', 'red');
-            
-            const today = new Date().toLocaleDateString();
-            if(db.attendance.find(a => a.username === username && a.date === today)) {
-                return showStatus(`${user.name} Sudah Absen`, 'yellow');
-            }
-            
-            db.attendance.push({
-                username: user.username,
-                name: user.name,
-                date: today,
-                time: new Date().toLocaleTimeString()
-            });
-            saveDb();
-            showStatus(`Berhasil: ${user.name}`, 'green');
-        }
-
-        function showStatus(msg, color) {
-            const el = document.getElementById('scan-status');
-            el.innerText = msg;
-            el.className = `mt-4 text-center font-bold p-3 rounded-xl shadow-lg text-sm bg-${color}-100 text-${color}-800`;
-            el.classList.remove('hidden');
-            setTimeout(() => el.classList.add('hidden'), 2000);
-        }
-
-        // --- USER MANAGEMENT (Admin Only) ---
+        // USER MANAGEMENT (GOD MODE)
         function renderUserTable() {
             const tbody = document.getElementById('table-users');
             tbody.innerHTML = db.users.map(u => `
-                <tr class="border-b">
+                <tr class="border-b hover:bg-gray-50">
                     <td class="flex items-center">
                         <img src="${u.avatar}" class="w-8 h-8 rounded-full mr-2 border">
-                        <div>
-                            <div class="font-bold text-gray-800 text-xs">${u.name}</div>
-                            <div class="text-[10px] text-gray-400">@${u.username}</div>
-                        </div>
+                        <div><div class="font-bold text-xs">${u.name}</div><div class="text-[10px] text-gray-400">@${u.username}</div></div>
                     </td>
-                    <td><span class="badge badge-class">${u.kelas || '-'}</span></td>
+                    <td><span class="text-[10px] bg-gray-100 px-2 py-1 rounded">${u.kelas||'-'}</span></td>
                     <td><span class="text-[10px] border px-2 py-0.5 rounded uppercase">${u.role}</span></td>
-                    <td><span class="badge ${u.disabled ? 'badge-disabled' : 'badge-active'}">${u.disabled ? 'Non-Aktif' : 'Aktif'}</span></td>
-                    <td class="flex gap-2 justify-end">
-                        <button onclick="editUser('${u.id}')" class="text-blue-500 text-xs font-bold hover:underline">Edit</button>
-                        ${u.role !== 'admin' ? `<button onclick="deleteUser('${u.id}')" class="text-red-500 text-xs hover:underline">Del</button>` : ''}
+                    <td><span class="badge ${u.disabled ? 'badge-disabled' : 'badge-active'}">${u.disabled ? 'Blocked' : 'Active'}</span></td>
+                    <td class="text-right flex gap-1 justify-end items-center h-full pt-3">
+                        <button onclick="openUserModal('${u.id}')" class="bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded font-bold hover:bg-blue-200">Edit</button>
+                        ${u.role !== 'admin' ? `<button onclick="toggleStatus('${u.id}')" class="bg-orange-100 text-orange-600 text-xs px-2 py-1 rounded hover:bg-orange-200">${u.disabled ? 'Aktifkan' : 'Blokir'}</button>` : ''}
+                        ${u.role !== 'admin' ? `<button onclick="deleteUser('${u.id}')" class="bg-red-100 text-red-600 text-xs px-2 py-1 rounded hover:bg-red-200">Del</button>` : ''}
                     </td>
                 </tr>
             `).join('');
@@ -526,11 +380,12 @@
             document.getElementById('user-modal').style.display = 'flex';
             if(id) {
                 const u = db.users.find(x => x.id === id);
-                document.getElementById('modal-title').innerText = 'Edit User (Admin Mode)';
+                document.getElementById('modal-title').innerText = 'Edit User (Admin)';
                 document.getElementById('modal-id').value = u.id;
                 document.getElementById('modal-name').value = u.name;
                 document.getElementById('modal-username').value = u.username;
-                document.getElementById('modal-password').value = ''; 
+                document.getElementById('modal-password').value = '';
+                document.getElementById('modal-password').placeholder = 'Isi untuk Reset Password';
                 document.getElementById('modal-role').value = u.role;
                 document.getElementById('modal-kelas').value = u.kelas || '-';
                 document.getElementById('modal-status').value = u.disabled ? 'disabled' : 'active';
@@ -540,6 +395,7 @@
                 document.getElementById('modal-name').value = '';
                 document.getElementById('modal-username').value = '';
                 document.getElementById('modal-password').value = '';
+                document.getElementById('modal-password').placeholder = 'Password Baru';
                 document.getElementById('modal-role').value = 'siswa';
                 document.getElementById('modal-kelas').value = '-';
                 document.getElementById('modal-status').value = 'active';
@@ -557,14 +413,9 @@
             const status = document.getElementById('modal-status').value;
             const isDisabled = status === 'disabled';
 
-            if(!name || !user) return alert('Nama dan Username wajib diisi!');
-
-            // Check Duplicate Username (Exclude current user id)
-            const duplicate = db.users.find(u => u.username === user && u.id !== id);
-            if (duplicate) return alert('Username sudah dipakai orang lain!');
+            if(!name || !user) return alert('Nama dan Username wajib!');
 
             if(id) {
-                // Edit existing
                 const idx = db.users.findIndex(x => x.id === id);
                 if(idx !== -1) {
                     db.users[idx].name = name;
@@ -572,110 +423,106 @@
                     db.users[idx].role = role;
                     db.users[idx].kelas = kelas;
                     db.users[idx].disabled = isDisabled;
-                    // Reset password functionality
-                    if(pass && pass.trim() !== "") db.users[idx].password = pass;
+                    if(pass && pass.trim() !== "") db.users[idx].password = pass; // God Mode Reset
                 }
             } else {
-                // Create new
-                if(!pass) return alert('Password wajib diisi untuk user baru!');
-                
-                db.users.push({
-                    id: 'USR_' + Date.now(),
-                    name, username: user, password: pass, role, kelas,
-                    disabled: isDisabled,
-                    avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=' + name
-                });
+                if(!pass) return alert('Password wajib untuk user baru!');
+                if(db.users.find(u => u.username === user)) return alert('Username sudah ada!');
+                db.users.push({ id: 'USR_'+Date.now(), name, username: user, password: pass, role, kelas, disabled: isDisabled, avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed='+name });
             }
-            saveDb();
-            closeModal();
-            renderUserTable();
+            saveDb(); closeModal(); renderUserTable();
         }
 
-        // --- IMPORT CSV FEATURE ---
-        function importCSV(input) {
-            const file = input.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const text = e.target.result;
-                const rows = text.split('\n');
-                let count = 0;
-
-                // Format: Nama,Username,Password,Role,Kelas
-                rows.forEach((row, index) => {
-                    const cols = row.split(',');
-                    if (cols.length >= 3) {
-                        const name = cols[0].trim();
-                        const username = cols[1].trim();
-                        const password = cols[2].trim();
-                        const role = cols[3] ? cols[3].trim().toLowerCase() : 'siswa';
-                        const kelas = cols[4] ? cols[4].trim() : '-';
-
-                        if(name === '' || name.toLowerCase() === 'nama') return;
-
-                        if (!db.users.find(u => u.username === username)) {
-                            db.users.push({
-                                id: 'IMP_' + Date.now() + index,
-                                name, username, password, role, kelas,
-                                disabled: false,
-                                avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=' + name
-                            });
-                            count++;
-                        }
-                    }
-                });
-                
-                saveDb();
-                alert(`Berhasil mengimpor ${count} pengguna baru!`);
-                renderUserTable();
-                input.value = '';
-            };
-            reader.readAsText(file);
+        // Quick Actions
+        function toggleStatus(id) {
+            const idx = db.users.findIndex(x => x.id === id);
+            if(idx !== -1) { db.users[idx].disabled = !db.users[idx].disabled; saveDb(); renderUserTable(); }
         }
-
         function deleteUser(id) {
-            if(confirm('Hapus user ini?')) {
-                db.users = db.users.filter(u => u.id !== id);
-                saveDb();
-                renderUserTable();
+            if(confirm('Hapus Permanen?')) { db.users = db.users.filter(u => u.id !== id); saveDb(); renderUserTable(); }
+        }
+
+        // Self Edit
+        function openProfileModal() {
+            if (!currentUser) return;
+            document.getElementById('profile-modal').style.display = 'flex';
+            document.getElementById('prof-name').value = currentUser.name;
+            document.getElementById('prof-username').value = currentUser.username;
+            document.getElementById('prof-password').value = '';
+        }
+        function saveProfile() {
+            const name = document.getElementById('prof-name').value;
+            const user = document.getElementById('prof-username').value;
+            const pass = document.getElementById('prof-password').value;
+            if(!name || !user) return alert("Nama/Username kosong!");
+            const idx = db.users.findIndex(u => u.id === currentUser.id);
+            if (idx !== -1) {
+                db.users[idx].name = name;
+                db.users[idx].username = user;
+                if(pass) db.users[idx].password = pass;
+                currentUser = db.users[idx]; saveDb();
+                alert("Profil Update!"); document.getElementById('profile-modal').style.display='none';
+                if(currentUser.role==='siswa') renderSiswaScreen(); else renderDashboardScreen();
             }
         }
 
-        function editUser(id) { openModal(id); }
-
-        // --- UTILS ---
+        // Utils & Scanner
         function saveDb() { localStorage.setItem(DB_KEY, JSON.stringify(db)); }
-        function resetAllData() { if(confirm('RESET TOTAL?')) { localStorage.clear(); location.reload(); } }
-        
+        function resetAllData() { if(confirm('RESET FACTORY?')) { localStorage.clear(); location.reload(); } }
         function backupData() {
-            const blob = new Blob([JSON.stringify(db)], {type: 'application/json'});
-            const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(db)], {type:'application/json'}));
             a.download = 'BACKUP_GKPS.json'; a.click();
         }
         function restoreData(input) {
             const reader = new FileReader();
-            reader.onload = e => {
-                db = JSON.parse(e.target.result);
-                saveDb();
-                alert('Database Restore Berhasil. Silakan Login Ulang.');
-                location.reload();
-            };
+            reader.onload = e => { db = JSON.parse(e.target.result); saveDb(); alert('Restore Sukses!'); location.reload(); };
             reader.readAsText(input.files[0]);
         }
         function exportExcel() {
              let csv = "Nama,Username,Kelas,Waktu,Tanggal\n";
-             db.attendance.forEach(r => {
-                 const u = db.users.find(usr => usr.username === r.username);
-                 const k = u ? u.kelas : '-';
-                 csv += `${r.name},${r.username},${k},${r.time},${r.date}\n`
-             });
-             const a = document.createElement('a'); 
-             a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+             db.attendance.forEach(r => { const u = db.users.find(usr => usr.username === r.username); csv += `${r.name},${r.username},${u?u.kelas:'-'},${r.time},${r.date}\n` });
+             const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
              a.download = `Absensi_${new Date().toLocaleDateString()}.csv`; a.click();
         }
+        function importCSV(input) {
+            const file = input.files[0]; if(!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const rows = e.target.result.split('\n'); let c=0;
+                rows.forEach(r => {
+                    const cols = r.split(',');
+                    if(cols.length>=3) {
+                        const name=cols[0].trim(), username=cols[1].trim(), password=cols[2].trim(), role=cols[3]?cols[3].trim().toLowerCase():'siswa', kelas=cols[4]?cols[4].trim():'-';
+                        if(name.toLowerCase()!=='nama' && !db.users.find(u=>u.username===username)) {
+                            db.users.push({ id:'IMP_'+Date.now()+c, name, username, password, role, kelas, disabled:false, avatar:'https://api.dicebear.com/7.x/adventurer/svg?seed='+name });
+                            c++;
+                        }
+                    }
+                });
+                saveDb(); alert(`Import ${c} User Sukses!`); renderUserTable();
+            };
+            reader.readAsText(file);
+        }
 
-        // --- START ---
+        // Scanner
+        let scanner;
+        function startScanner() { if(scanner) return; scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }); scanner.render(onScan); }
+        function stopScanner() { if(scanner) { scanner.clear().then(_=>scanner=null); } }
+        function onScan(txt) {
+            if(!txt.startsWith('GKPS')) return status('QR Salah!', 'red');
+            const u = db.users.find(x => x.username === txt.split('|')[1]);
+            if(!u) return status('User Tidak Ada', 'red');
+            if(u.disabled) return status('AKSES DITOLAK', 'red');
+            const today = new Date().toLocaleDateString();
+            if(db.attendance.find(a => a.username === u.username && a.date === today)) return status('Sudah Masuk', 'yellow');
+            db.attendance.push({ username: u.username, name: u.name, date: today, time: new Date().toLocaleTimeString() });
+            saveDb(); status('HADIR: '+u.name, 'green');
+        }
+        function status(msg, color) {
+            const el = document.getElementById('scan-status'); el.innerText=msg; el.className=`mt-4 text-center font-bold p-3 rounded-xl shadow-lg text-sm bg-${color}-100 text-${color}-800`;
+            el.classList.remove('hidden'); setTimeout(()=>el.classList.add('hidden'), 2000);
+        }
+
         initApp();
     </script>
 </body>
