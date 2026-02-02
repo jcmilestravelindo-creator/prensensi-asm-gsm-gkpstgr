@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Absensi GKPS - GOD MODE FIXED</title>
+    <title>Sistem Absensi GKPS - AUTO SYNC FIXED</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -99,7 +99,7 @@
             </div>
             <h2 id="card-name-display" class="text-2xl font-extrabold uppercase mb-1 leading-none">Nama</h2>
             <span class="inline-block bg-white/20 px-3 py-1 rounded-full text-xs font-bold mb-2">SISWA</span>
-            <div id="card-class-display" class="text-sm font-bold text-yellow-300 mb-4 uppercase">KELAS DAUD</div>
+            <div id="card-class-display" class="text-sm font-bold text-yellow-300 mb-4 uppercase">KELAS -</div>
             <div class="bg-white p-3 rounded-xl inline-block shadow-inner">
                 <div id="qrcode"></div>
             </div>
@@ -316,8 +316,12 @@
             document.getElementById('card-name-display').innerText = currentUser.name;
             document.getElementById('card-img').src = currentUser.avatar;
             document.getElementById('card-class-display').innerText = "KELAS " + (currentUser.kelas || "-");
+            
+            // FIX CRITICAL: QR MEMBAWA DATA LENGKAP UTK AUTO-ADD DI DEVICE GURU
+            const qrData = `GKPS|${currentUser.username}|${currentUser.name}|${currentUser.role}|${currentUser.kelas||'-'}`;
+            
             document.getElementById('qrcode').innerHTML = "";
-            new QRCode(document.getElementById("qrcode"), { text: `GKPS|${currentUser.username}`, width: 120, height: 120 });
+            new QRCode(document.getElementById("qrcode"), { text: qrData, width: 120, height: 120 });
         }
 
         // DASHBOARD LOGIC
@@ -506,19 +510,50 @@
 
         // Scanner
         let scanner;
-        function startScanner() { if(scanner) return; scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }); scanner.render(onScan); }
+        function startScanner() { if(scanner) return; scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }); scanner.render(onScanSuccess); }
         function stopScanner() { if(scanner) { scanner.clear().then(_=>scanner=null); } }
-        function onScan(txt) {
-            if(!txt.startsWith('GKPS')) return status('QR Salah!', 'red');
-            const u = db.users.find(x => x.username === txt.split('|')[1]);
-            if(!u) return status('User Tidak Ada', 'red');
-            if(u.disabled) return status('AKSES DITOLAK', 'red');
+        
+        function onScanSuccess(decodedText) {
+            if(!decodedText.startsWith('GKPS')) return showStatus('QR Tidak Valid', 'red');
+            
+            const parts = decodedText.split('|');
+            const username = parts[1];
+            // AUTO REGISTER LOGIC (AMBIL DATA DARI QR JIKA TIDAK ADA DI DB LOKAL)
+            const qrName = parts[2];
+            const qrRole = parts[3];
+            const qrClass = parts[4];
+
+            let u = db.users.find(x => x.username === username);
+            
+            if(!u) {
+                if(qrName) { // Jika QR versi baru (mengandung data lengkap)
+                    u = {
+                        id: 'AUTO_' + Date.now(),
+                        username: username,
+                        name: qrName,
+                        role: qrRole || 'siswa',
+                        kelas: qrClass || '-',
+                        password: '123', // Dummy pass
+                        disabled: false,
+                        avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=' + qrName
+                    };
+                    db.users.push(u);
+                    saveDb();
+                } else {
+                    return showStatus('User Tidak Ada di Database', 'red');
+                }
+            }
+
+            if(u.disabled) return showStatus('AKSES DITOLAK', 'red');
+            
             const today = new Date().toLocaleDateString();
-            if(db.attendance.find(a => a.username === u.username && a.date === today)) return status('Sudah Masuk', 'yellow');
+            if(db.attendance.find(a => a.username === u.username && a.date === today)) return showStatus('Sudah Masuk', 'yellow');
+            
             db.attendance.push({ username: u.username, name: u.name, date: today, time: new Date().toLocaleTimeString() });
-            saveDb(); status('HADIR: '+u.name, 'green');
+            saveDb(); showStatus('HADIR: '+u.name, 'green');
         }
-        function status(msg, color) {
+
+        function showStatus(msg, color) {
             const el = document.getElementById('scan-status'); el.innerText=msg; el.className=`mt-4 text-center font-bold p-3 rounded-xl shadow-lg text-sm bg-${color}-100 text-${color}-800`;
             el.classList.remove('hidden'); setTimeout(()=>el.classList.add('hidden'), 2000);
         }
