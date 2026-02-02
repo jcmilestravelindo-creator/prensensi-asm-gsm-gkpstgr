@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Absensi GKPS - PRO ULTIMATE (Scanner Fixed)</title>
+    <title>Sistem Absensi GKPS - PRO ULTIMATE (Fixed)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -71,13 +71,6 @@
         .conn-status.offline { background: #ef4444; }
         .blink { animation: blinker 1.5s linear infinite; }
         @keyframes blinker { 50% { opacity: 0; } }
-
-        /* --- SCANNER FIXES --- */
-        /* Menyembunyikan elemen bawaan library scanner yang membuat tampilan turun/jelek */
-        #reader { border: none !important; }
-        #reader__dashboard_section_csr span { display: none !important; }
-        #reader__dashboard_section_swaplink { display: none !important; } 
-        #reader__status_span { font-size: 10px; opacity: 0.6; }
     </style>
 </head>
 <body class="p-4" onclick="closeAllDropdowns(event)">
@@ -220,8 +213,8 @@
 
         <div id="view-scan" class="tab-view hidden">
             <div class="max-w-md mx-auto">
-                <div class="bg-black rounded-3xl overflow-hidden shadow-2xl relative w-full aspect-square">
-                    <div id="reader" class="w-full h-full"></div>
+                <div class="bg-black rounded-3xl overflow-hidden shadow-2xl relative">
+                    <div id="reader" class="w-full h-72"></div>
                     <div class="absolute bottom-0 w-full text-center text-white font-bold text-xs bg-black/50 py-2">Scan QR Siswa</div>
                 </div>
                 <div id="scan-status" class="mt-4 text-center font-bold p-3 rounded-xl hidden shadow-lg text-sm"></div>
@@ -727,7 +720,7 @@
             if(t && t.recoveryCode === c) { t.password = p; saveDb(); alert('Sukses!'); document.getElementById('forgot-modal').style.display='none'; } else alert('Gagal!');
         }
 
-        // CSV EXPORT IMPORT - MODIFIED TO READ GENDER (INDEX 5)
+        // CSV EXPORT IMPORT
         function exportExcel() {
              let csv = "Nama,Username,Kelas,Waktu,Tanggal\n";
              db.attendance.forEach(r => { const u = db.users.find(usr => usr.username === r.username); csv += `${r.name},${r.username},${u?u.kelas:'-'},${r.time},${r.date}\n` });
@@ -742,13 +735,8 @@
                     const cols = r.split(',');
                     if(cols.length>=3) {
                         const name=cols[0].trim(), username=cols[1].trim(), password=cols[2].trim(), role=cols[3]?cols[3].trim().toLowerCase():'siswa', kelas=cols[4]?cols[4].trim():'-';
-                        
-                        // NEW LOGIC: READ GENDER FROM COLUMN 5
-                        let genderRaw = cols[5] ? cols[5].trim().toUpperCase() : 'L';
-                        let gender = (genderRaw === 'P' || genderRaw === 'PEREMPUAN') ? 'P' : 'L';
-
                         if(name.toLowerCase()!=='nama' && !db.users.find(u=>u.username===username)) {
-                            db.users.push({ id:'IMP_'+Date.now()+c, name, username, password, role, kelas, gender: gender, disabled:false, avatar:'https://api.dicebear.com/7.x/adventurer/svg?seed='+name }); c++;
+                            db.users.push({ id:'IMP_'+Date.now()+c, name, username, password, role, kelas, gender:'L', disabled:false, avatar:'https://api.dicebear.com/7.x/adventurer/svg?seed='+name }); c++;
                         }
                     }
                 });
@@ -759,17 +747,7 @@
 
         // SCANNER
         let scanner;
-        function startScanner() {
-            if(scanner) return;
-            setTimeout(() => {
-                scanner = new Html5QrcodeScanner("reader", {
-                    fps: 10,
-                    qrbox: 250,
-                    aspectRatio: 1.0 // PENTING: Agar kotak persegi
-                });
-                scanner.render(onScanSuccess, onScanFailure); 
-            }, 300);
-        }
+        function startScanner() { if(scanner) return; scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }); scanner.render(onScanSuccess); }
         function stopScanner() { if(scanner) { scanner.clear().then(_=>scanner=null); } }
         function onScanSuccess(decodedText) {
             if(!decodedText.startsWith('GKPS')) return showStatus('QR Tidak Valid', 'red');
@@ -787,11 +765,6 @@
             db.attendance.push({ username: u.username, name: u.name, date: today, time: new Date().toLocaleTimeString() });
             saveDb(); showStatus('HADIR: '+u.name, 'green');
         }
-        // Handler untuk failure (agar console bersih)
-        function onScanFailure(error) {
-            // console.warn(`Code scan error = ${error}`);
-        }
-
         function showStatus(msg, color) {
             const el = document.getElementById('scan-status'); el.innerText=msg; el.className=`mt-4 text-center font-bold p-3 rounded-xl shadow-lg text-sm bg-${color}-100 text-${color}-800`;
             el.classList.remove('hidden'); setTimeout(()=>el.classList.add('hidden'), 2000);
