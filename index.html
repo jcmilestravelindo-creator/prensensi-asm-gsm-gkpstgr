@@ -190,6 +190,9 @@
 
     <section id="screen-login" class="hidden max-w-md mx-auto min-h-screen flex flex-col justify-center">
         <div class="text-center mb-8">
+            <div class="flex justify-center mb-4">
+                <img src="Logo GKPS.png" alt="Logo GKPS" class="h-24 w-auto object-contain">
+            </div>
             <h1 onclick="triggerSecretReset()" class="text-3xl font-extrabold text-blue-900 tracking-tight cursor-pointer select-none">GKPS TANGERANG</h1>
             <p class="text-gray-500 font-medium">Sistem Absensi Terpadu</p>
         </div>
@@ -273,6 +276,8 @@
             </div>
 
             <div class="flex gap-3 items-center">
+                 <img src="Logo Tema.png" alt="Logo Tema" class="h-10 w-auto object-contain hidden md:block">
+
                  <div class="relative notif-container">
                     <button onclick="toggleDropdown('dash-notif-dropdown', event)" class="text-2xl text-gray-600 relative focus:outline-none mt-1">
                         🔔 <span id="dash-notif-badge" class="hidden absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white">0</span>
@@ -721,6 +726,12 @@
                 soundFail.play().then(() => { soundFail.pause(); soundFail.currentTime = 0; }).catch(()=>{});
             }, { once: true });
 
+            // 1. Restore Session & Last Screen
+            const savedSession = localStorage.getItem('gkps_session');
+            if (savedSession) {
+                currentUser = JSON.parse(savedSession);
+            }
+
             const connStat = document.getElementById('conn-indicator');
             const connectedRef = firebase.database().ref(".info/connected");
             connectedRef.on("value", (snap) => {
@@ -753,23 +764,43 @@
                     if(!db.settings) db.settings = { manual: false, start: "07:00", end: "12:00" }; // Default settings
                     
                     if(currentUser) {
+                        // Refresh user data from DB to stay in sync
+                        const freshUser = db.users.find(u => u.username === currentUser.username);
+                        if(freshUser) {
+                            currentUser = freshUser;
+                            localStorage.setItem('gkps_session', JSON.stringify(currentUser));
+                        }
+
                         if(currentUser.role === 'admin') {
                             renderUserTable(document.getElementById('search-user').value);
                             renderHomeStats();
                             renderBroadcastHistory();
-                            loadSettingsToUI(); // Load settings to admin UI
+                            loadSettingsToUI(); 
                         } else {
                             renderSiswaScreen();
                         }
                         checkBroadcasts(currentUser.role);
-                        checkManualAttendanceVisibility(); // Check user button
+                        checkManualAttendanceVisibility(); 
+                        
+                        // Restore last screen
+                        const lastScreen = localStorage.getItem('gkps_last_screen');
+                        if(lastScreen === 'siswa') showScreen('siswa');
+                        else showScreen('dashboard');
+                        
+                        // Restore last tab if on dashboard
+                        const lastTab = localStorage.getItem('gkps_tab');
+                        if(currentUser.role !== 'siswa' && lastTab) switchTab(lastTab);
+
+                    } else {
+                        showScreen('login');
                     }
                 } else {
                     createDefaultAdmin();
                 }
             });
-
-            showScreen('login');
+            
+            // If no session found initially, show login
+            if(!currentUser) showScreen('login');
         }
 
         function createDefaultAdmin() {
@@ -795,6 +826,9 @@
         function showScreen(screenId) {
             document.querySelectorAll('section').forEach(el => el.classList.add('hidden'));
             document.getElementById('screen-' + screenId).classList.remove('hidden');
+            // Save last screen state
+            if(screenId === 'login') return;
+            localStorage.setItem('gkps_last_screen', screenId === 'siswa' ? 'siswa' : 'dashboard');
         }
 
         let tapCount = 0;
@@ -809,6 +843,7 @@
             const pin = prompt("PERINGATAN: INI MENGHAPUS DATABASE CLOUD!\nPIN:");
             if (pin === "9999") {
                 if(confirm("YAKIN?")) { dbRef.set(null);
+                localStorage.clear();
                 location.reload(); }
             } else if (pin !== null) alert("PIN SALAH!");
         }
@@ -821,6 +856,9 @@
             if (foundUser) {
                 if (foundUser.disabled) return alert("AKUN DIBLOKIR!");
                 currentUser = foundUser;
+                // Save Session
+                localStorage.setItem('gkps_session', JSON.stringify(currentUser));
+
                 if(!currentUser.avatar) {
                     currentUser.avatar = 'https://api.dicebear.com/7.x/notionists/svg?seed=' + currentUser.name;
                     saveDb();
@@ -836,7 +874,12 @@
                 }
             } else alert('Login Gagal!');
         }
-        function logout() { currentUser = null; showScreen('login'); stopScanner(); closeAllDropdowns();
+        function logout() { 
+            currentUser = null; 
+            localStorage.removeItem('gkps_session');
+            localStorage.removeItem('gkps_tab');
+            localStorage.removeItem('gkps_last_screen');
+            showScreen('login'); stopScanner(); closeAllDropdowns();
         }
 
         // --- SETTINGS & MANUAL ATTENDANCE LOGIC ---
@@ -858,31 +901,26 @@
         }
 
         function checkManualAttendanceVisibility() {
-            // Check global switch, time range, and if already present
             if(!currentUser) return;
             
             const btnSiswa = document.getElementById('manual-absen-container-siswa');
             const btnGuru = document.getElementById('manual-absen-container-guru');
             const btnDash = document.getElementById('manual-absen-container-dash');
             
-            // Default hide all
             if(btnSiswa) btnSiswa.classList.add('hidden');
             if(btnGuru) btnGuru.classList.add('hidden');
             if(btnDash) btnDash.classList.add('hidden');
 
-            if(!db.settings || !db.settings.manual) return; // Feature disabled by admin
+            if(!db.settings || !db.settings.manual) return; 
 
-            // Check Time
             const now = new Date();
             const currentTime = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
-            if(currentTime < db.settings.start || currentTime > db.settings.end) return; // Out of time
+            if(currentTime < db.settings.start || currentTime > db.settings.end) return; 
 
-            // Check if already present
             const today = new Date().toLocaleDateString();
             const already = db.attendance.find(a => a.username === currentUser.username && a.date === today);
-            if(already) return; // Already present
+            if(already) return; 
 
-            // Show Buttons
             if(currentUser.role === 'siswa' && btnSiswa) btnSiswa.classList.remove('hidden');
             if(currentUser.role !== 'siswa') {
                 if(btnDash) btnDash.classList.remove('hidden');
@@ -893,7 +931,6 @@
         function handleManualAttendance() {
             if(confirm("Anda yakin ingin melakukan Absen Manual?")) {
                 const today = new Date().toLocaleDateString();
-                // Double check
                 if(db.attendance.find(a => a.username === currentUser.username && a.date === today)) {
                     alert("Anda sudah absen hari ini!");
                     checkManualAttendanceVisibility();
@@ -904,7 +941,7 @@
                 db.attendance.push({ username: currentUser.username, name: currentUser.name, date: today, time: new Date().toLocaleTimeString(), type: 'MANUAL' });
                 saveDb();
                 alert("Absen Manual Berhasil!");
-                checkManualAttendanceVisibility(); // Hide button
+                checkManualAttendanceVisibility(); 
                 if(currentUser.role !== 'siswa') renderHomeStats();
             }
         }
@@ -966,13 +1003,19 @@
             document.getElementById('tab-users').className = isAdmin ? 'nav-pill' : 'nav-pill hidden';
             document.getElementById('tab-messages').className = isAdmin ? 'nav-pill' : 'nav-pill hidden';
             document.getElementById('tab-settings').className = isAdmin ? 'nav-pill' : 'nav-pill hidden';
-            switchTab('home');
+            
+            // Do NOT switchTab here to avoid resetting to 'home' on every render.
+            // Let initApp or manual click handle switching.
         }
         function switchTab(tab) {
             document.querySelectorAll('.tab-view').forEach(el => el.classList.add('hidden'));
             document.getElementById('view-'+tab).classList.remove('hidden');
             document.querySelectorAll('.nav-pill').forEach(el => el.classList.remove('active'));
             document.getElementById('tab-'+tab).classList.add('active');
+            
+            // Save Tab State
+            localStorage.setItem('gkps_tab', tab);
+
             if(tab === 'home') renderHomeStats();
             if(tab === 'scan') startScanner(); else stopScanner();
             if(tab === 'users') renderUserTable();
@@ -1251,6 +1294,9 @@
                 if(pass) db.users[idx].password=pass; 
                 currentUser=db.users[idx]; 
                 saveDb(); 
+                // Update Local Storage immediately to keep session in sync
+                localStorage.setItem('gkps_session', JSON.stringify(currentUser));
+                
                 alert('Profil Berhasil Diupdate!'); 
                 document.getElementById('profile-modal').style.display='none'; 
                 if(currentUser.role==='siswa') renderSiswaScreen(); 
