@@ -13,31 +13,47 @@
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
-        
         :root {
             --primary: #0ea5e9; --primary-dark: #0284c7;
-            --accent: #facc15; --bg-soft: #f0f9ff;
+            --accent: #facc15;
+            --bg-soft: #f0f9ff;
             --text-main: #1e293b;
         }
-        body { font-family: 'Poppins', sans-serif; color: var(--text-main); background: linear-gradient(180deg, #e0f2fe 0%, #f0f9ff 100%); min-height: 100vh; padding-bottom: 2rem; }
+        body { font-family: 'Poppins', sans-serif; color: var(--text-main);
+            background: linear-gradient(180deg, #e0f2fe 0%, #f0f9ff 100%); min-height: 100vh; padding-bottom: 2rem;
+        }
         
         /* UI Components */
-        .pro-card { background: white; border-radius: 1.5rem; padding: 1.5rem; box-shadow: 0 10px 30px -5px rgba(14, 165, 233, 0.15); border: 1px solid #e2e8f0; margin-bottom: 1.5rem; }
-        .pro-input { width: 100%; padding: 0.8rem 1rem; border: 2px solid #e2e8f0; border-radius: 0.8rem; background: #f8fafc; outline: none; transition: 0.2s; font-size: 0.95rem; margin-bottom: 1rem; }
-        .pro-input:focus { border-color: var(--primary); background: white; }
-        .pro-btn { width: 100%; padding: 0.8rem; border-radius: 0.8rem; font-weight: 700; transition: 0.2s; text-align: center; cursor: pointer; border: none; margin-top: 0.5rem; }
-        .btn-blue { background: var(--primary); color: white; } .btn-blue:hover { background: var(--primary-dark); }
-        .btn-green { background: #22c55e; color: white; } .btn-green:hover { background: #16a34a; }
-        .btn-red { background: #ef4444; color: white; } .btn-red:hover { background: #dc2626; }
-        .btn-yellow { background: var(--accent); color: #713f12; } .btn-yellow:hover { background: #eab308; }
+        .pro-card { background: white;
+            border-radius: 1.5rem; padding: 1.5rem; box-shadow: 0 10px 30px -5px rgba(14, 165, 233, 0.15); border: 1px solid #e2e8f0; margin-bottom: 1.5rem;
+        }
+        .pro-input { width: 100%; padding: 0.8rem 1rem; border: 2px solid #e2e8f0;
+            border-radius: 0.8rem; background: #f8fafc; outline: none; transition: 0.2s; font-size: 0.95rem; margin-bottom: 1rem;
+        }
+        .pro-input:focus { border-color: var(--primary); background: white;
+        }
+        .pro-btn { width: 100%; padding: 0.8rem; border-radius: 0.8rem; font-weight: 700; transition: 0.2s;
+            text-align: center; cursor: pointer; border: none; margin-top: 0.5rem; }
+        .btn-blue { background: var(--primary);
+            color: white; } .btn-blue:hover { background: var(--primary-dark); }
+        .btn-green { background: #22c55e;
+            color: white; } .btn-green:hover { background: #16a34a; }
+        .btn-red { background: #ef4444;
+            color: white; } .btn-red:hover { background: #dc2626; }
+        .btn-yellow { background: var(--accent);
+            color: #713f12; } .btn-yellow:hover { background: #eab308; }
 
         /* Navigation Pills */
-        .nav-pill { padding: 0.5rem 1rem; border-radius: 99px; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: 0.2s; color: #64748b; background: white; border: 1px solid transparent; white-space: nowrap; }
-        .nav-pill.active { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(14, 165, 233, 0.4); }
+        .nav-pill { padding: 0.5rem 1rem;
+            border-radius: 99px; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: 0.2s; color: #64748b; background: white; border: 1px solid transparent; white-space: nowrap;
+        }
+        .nav-pill.active { background: var(--primary); color: white;
+            box-shadow: 0 4px 10px rgba(14, 165, 233, 0.4); }
 
         /* STUDENT ID CARD STYLING (UPDATED FOR QR) */
         .student-card {
-            width: 100%; max-width: 350px; 
+            width: 100%;
+            max-width: 350px; 
             margin: 0 auto;
             background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
             border-radius: 16px;
@@ -47,62 +63,100 @@
             display: flex; flex-direction: column;
         }
         .card-header-strip {
-            background: #0284c7; height: 12px; width: 100%;
+            background: #0284c7;
+            height: 12px; width: 100%;
         }
         .card-body {
-            padding: 1.2rem; flex: 1; display: flex; gap: 1rem; align-items: center;
+            padding: 1.2rem;
+            flex: 1; display: flex; gap: 1rem; align-items: center;
         }
         .card-photo-frame {
-            width: 80px; height: 100px; background: #e2e8f0; border-radius: 8px; overflow: hidden; border: 2px solid white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); flex-shrink: 0;
+            width: 80px;
+            height: 100px; background: #e2e8f0; border-radius: 8px; overflow: hidden; border: 2px solid white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); flex-shrink: 0;
         }
-        .card-photo-frame img { width: 100%; height: 100%; object-fit: cover; }
-        .card-info h3 { font-size: 1.1rem; font-weight: 800; color: #1e293b; line-height: 1.2; margin-bottom: 4px; text-transform: uppercase; }
-        .card-info p { font-size: 0.75rem; color: #64748b; margin-bottom: 2px; }
+        .card-photo-frame img { width: 100%; height: 100%; object-fit: cover;
+        }
+        .card-info h3 { font-size: 1.1rem; font-weight: 800; color: #1e293b; line-height: 1.2;
+            margin-bottom: 4px; text-transform: uppercase; }
+        .card-info p { font-size: 0.75rem; color: #64748b;
+            margin-bottom: 2px; }
         .card-info .role-tag {
-            display: inline-block; background: #0ea5e9; color: white; font-size: 0.6rem; font-weight: 700; padding: 2px 8px; border-radius: 99px; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px;
+            display: inline-block;
+            background: #0ea5e9; color: white; font-size: 0.6rem; font-weight: 700; padding: 2px 8px; border-radius: 99px; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px;
         }
         .card-footer {
-            background: white; padding: 1rem; text-align: center; border-top: 1px dashed #e2e8f0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: white;
+            padding: 1rem; text-align: center; border-top: 1px dashed #e2e8f0; display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
         /* QR Code Container Styling */
         #qrcode { 
-            padding: 5px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; 
+            padding: 5px;
+            background: white; border: 1px solid #e2e8f0; border-radius: 8px; 
         }
-        #qrcode img { display: block; }
+        #qrcode img { display: block;
+        }
         
         /* Table Styling */
-        .admin-table th { background: #f1f5f9; color: #64748b; font-size: 0.75rem; text-transform: uppercase; padding: 0.8rem; text-align: left; user-select: none; }
-        .admin-table th.sortable { cursor: pointer; transition: background 0.2s; }
-        .admin-table th.sortable:hover { background: #e2e8f0; color: var(--primary); }
-        .admin-table td { padding: 0.8rem; border-bottom: 1px solid #f1f5f9; font-size: 0.85rem; vertical-align: middle; }
+        .admin-table th { background: #f1f5f9;
+            color: #64748b; font-size: 0.75rem; text-transform: uppercase; padding: 0.8rem; text-align: left; user-select: none;
+        }
+        .admin-table th.sortable { cursor: pointer; transition: background 0.2s;
+        }
+        .admin-table th.sortable:hover { background: #e2e8f0; color: var(--primary);
+        }
+        .admin-table td { padding: 0.8rem; border-bottom: 1px solid #f1f5f9; font-size: 0.85rem;
+            vertical-align: middle; }
         
         /* Status Badges */
-        .badge { font-size: 0.7rem; padding: 2px 8px; border-radius: 99px; font-weight: 700; display: inline-block; }
-        .badge-active { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
-        .badge-disabled { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
-        .badge-class { background: #e0f2fe; color: #075985; border: 1px solid #bae6fd; font-size: 0.65rem; margin-top: 2px; }
-        .badge-gender-l { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
-        .badge-gender-p { background: #fce7f3; color: #9d174d; border: 1px solid #f9a8d4; }
+        .badge { font-size: 0.7rem;
+            padding: 2px 8px; border-radius: 99px; font-weight: 700; display: inline-block; }
+        .badge-active { background: #dcfce7;
+            color: #166534; border: 1px solid #bbf7d0; }
+        .badge-disabled { background: #fee2e2; color: #991b1b;
+            border: 1px solid #fecaca; }
+        .badge-class { background: #e0f2fe; color: #075985;
+            border: 1px solid #bae6fd; font-size: 0.65rem; margin-top: 2px; }
+        .badge-gender-l { background: #dbeafe;
+            color: #1e40af; border: 1px solid #93c5fd; }
+        .badge-gender-p { background: #fce7f3; color: #9d174d;
+            border: 1px solid #f9a8d4; }
 
         /* Modal */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 50; display: none; justify-content: center; align-items: center; padding: 1rem; backdrop-filter: blur(2px); }
-        .modal-content { background: white; padding: 2rem; border-radius: 1.5rem; width: 100%; max-w-sm; animation: slideUp 0.3s ease; max-height: 90vh; overflow-y: auto; }
-        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .modal-overlay { position: fixed;
+            inset: 0; background: rgba(0,0,0,0.5); z-index: 50; display: none; justify-content: center; align-items: center; padding: 1rem; backdrop-filter: blur(2px);
+        }
+        .modal-content { background: white; padding: 2rem; border-radius: 1.5rem; width: 100%; max-w-sm;
+            animation: slideUp 0.3s ease; max-height: 90vh; overflow-y: auto; }
+        @keyframes slideUp { from { transform: translateY(20px);
+            opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         
         /* Notification Dropdown styles */
-        .notif-dropdown { display: none; position: absolute; right: 0; top: 100%; margin-top: 0.5rem; width: 20rem; background: white; border-radius: 1rem; box-shadow: 0 10px 30px -5px rgba(0,0,0,0.2); border: 1px solid #e2e8f0; z-index: 60; max-height: 24rem; overflow-y: auto; }
-        .notif-dropdown.show { display: block; animation: slideUp 0.2s ease; }
+        .notif-dropdown { display: none;
+            position: absolute; right: 0; top: 100%; margin-top: 0.5rem; width: 20rem; background: white; border-radius: 1rem; box-shadow: 0 10px 30px -5px rgba(0,0,0,0.2);
+            border: 1px solid #e2e8f0; z-index: 60; max-height: 24rem; overflow-y: auto;
+        }
+        .notif-dropdown.show { display: block; animation: slideUp 0.2s ease;
+        }
 
         /* Connection Status */
-        .conn-status { position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); background: #22c55e; color: white; padding: 5px 15px; border-radius: 20px; font-size: 10px; font-weight: bold; z-index: 100; box-shadow: 0 5px 15px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 5px;}
-        .conn-status.offline { background: #ef4444; }
-        .blink { animation: blinker 1.5s linear infinite; }
-        @keyframes blinker { 50% { opacity: 0; } }
+        .conn-status { position: fixed;
+            bottom: 10px; left: 50%; transform: translateX(-50%); background: #22c55e; color: white; padding: 5px 15px; border-radius: 20px; font-size: 10px; font-weight: bold;
+            z-index: 100; box-shadow: 0 5px 15px rgba(0,0,0,0.2); display: flex; align-items: center;
+            gap: 5px;}
+        .conn-status.offline { background: #ef4444;
+        }
+        .blink { animation: blinker 1.5s linear infinite;
+        }
+        @keyframes blinker { 50% { opacity: 0;
+        } }
 
         /* --- SCANNER FIXES --- */
-        #reader { border: none !important; width: 100% !important; }
-        #reader video { object-fit: cover; border-radius: 1.5rem; }
-        #reader__dashboard_section_csr span, #reader__dashboard_section_swaplink { display: none !important; }
+        #reader { border: none !important;
+            width: 100% !important; }
+        #reader video { object-fit: cover; border-radius: 1.5rem;
+        }
+        #reader__dashboard_section_csr span, #reader__dashboard_section_swaplink { display: none !important;
+        }
     </style>
 </head>
 <body class="p-4" onclick="closeAllDropdowns(event)">
@@ -112,7 +166,8 @@
     <section id="screen-setup" class="hidden max-w-md mx-auto min-h-screen flex flex-col justify-center">
         <div class="pro-card text-center">
             <h1 class="text-2xl font-bold text-blue-900 mb-2">Setup Sistem</h1>
-            <p class="text-gray-500 text-sm mb-6">Belum ada akun Admin. Silakan buat akun Super Admin pertama.</p>
+            <p class="text-gray-500 text-sm mb-6">Belum ada akun Admin.
+                Silakan buat akun Super Admin pertama.</p>
             <input type="text" id="setup-username" class="pro-input" placeholder="Username Admin Baru">
             <input type="password" id="setup-password" class="pro-input" placeholder="Password">
             <button onclick="setupAdmin()" class="pro-btn btn-blue">Buat Akun Admin</button>
@@ -142,7 +197,8 @@
     <section id="screen-siswa" class="hidden max-w-md mx-auto pt-8">
         <header class="flex justify-between items-center mb-6 relative">
             <div class="flex items-center gap-3">
-                <img id="stu-avatar" src="" class="w-12 h-12 rounded-full border-2 border-blue-500 shadow-sm bg-white object-cover">
+                <img id="stu-avatar" 
+                    src="" class="w-12 h-12 rounded-full border-2 border-blue-500 shadow-sm bg-white object-cover">
                 <div>
                     <h2 class="text-xl font-bold text-blue-900 leading-tight">Halo, <span id="siswa-greet-name">Siswa</span>!</h2>
                     <p class="text-xs text-gray-500">Selamat Datang</p>
@@ -152,7 +208,8 @@
             <div class="flex gap-3 items-center">
                  <div class="relative notif-container">
                     <button onclick="toggleDropdown('siswa-notif-dropdown', event)" class="text-2xl text-gray-600 relative focus:outline-none mt-1">
-                        🔔 <span id="siswa-notif-badge" class="hidden absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white">0</span>
+                        🔔 <span 
+                        id="siswa-notif-badge" class="hidden absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white">0</span>
                     </button>
                     <div id="siswa-notif-dropdown" class="notif-dropdown">
                         <div class="p-3 border-b font-bold text-gray-700 text-sm bg-gray-50 rounded-t-xl">📢 Pengumuman</div>
@@ -265,7 +322,8 @@
                     <h3 class="font-bold text-lg">Kelola Pengguna (LIVE)</h3>
                     <div class="flex gap-2">
                         <button onclick="deleteSelectedUsers()" id="btn-delete-multi" class="hidden bg-red-600 text-white text-xs px-3 py-2 rounded-full font-bold shadow hover:bg-red-700">Hapus (0)</button>
-                        <button onclick="openUserModal()" class="bg-blue-600 text-white text-xs px-3 py-2 rounded-full font-bold shadow hover:bg-blue-700">+ User</button>
+                        <button onclick="openUserModal()" class="bg-blue-600 
+                            text-white text-xs px-3 py-2 rounded-full font-bold shadow hover:bg-blue-700">+ User</button>
                         <label class="bg-green-600 text-white text-xs px-3 py-2 rounded-full font-bold shadow hover:bg-green-700 cursor-pointer">
                             Import CSV <input type="file" class="hidden" onchange="importCSV(this)" accept=".csv">
                         </label>
@@ -273,7 +331,8 @@
                 </div>
                 
                 <div class="mb-4 relative">
-                    <input type="text" id="search-user" onkeyup="renderUserTable(this.value)" placeholder="Cari Nama atau Username..." class="pro-input pl-10" style="margin-bottom: 0;">
+                    <input type="text" id="search-user" onkeyup="renderUserTable(this.value)" placeholder="Cari Nama atau Username..." class="pro-input pl-10" 
+                        style="margin-bottom: 0;">
                     <span class="absolute left-3 top-3 text-gray-400">🔍</span>
                 </div>
 
@@ -312,7 +371,8 @@
                         </select>
                     </div>
                     <div>
-                        <label class="text-xs font-bold text-gray-500 uppercase">Jadwal Kirim</label>
+                        <label 
+                        class="text-xs font-bold text-gray-500 uppercase">Jadwal Kirim</label>
                         <input type="datetime-local" id="msg-time" class="pro-input bg-white">
                         <p class="text-[10px] text-gray-400 -mt-2">Biarkan kosong untuk kirim sekarang.</p>
                     </div>
@@ -348,7 +408,8 @@
                 </div>
             </div>
 
-             <div class="pro-card bg-red-50 border-red-100">
+             <div class="pro-card 
+                bg-red-50 border-red-100">
                 <h3 class="font-bold text-red-700 mb-2">Reset Sistem</h3>
                 <button onclick="emergencyReset()" class="bg-red-600 text-white px-4 py-2 rounded-lg text-xs font-bold w-full">Hapus Semua Data Online</button>
             </div>
@@ -412,17 +473,50 @@
     </div>
 
     <div id="profile-modal" class="modal-overlay">
-        <div class="modal-content">
-            <h3 class="text-lg font-bold mb-4">Edit Profil</h3>
-            <label class="text-xs font-bold text-gray-500 uppercase">Nama</label>
-            <input type="text" id="prof-name" class="pro-input">
-            <label class="text-xs font-bold text-gray-500 uppercase">Username</label>
-            <input type="text" id="prof-username" class="pro-input">
-            <label class="text-xs font-bold text-gray-500 uppercase">Password Baru</label>
-            <input type="text" id="prof-password" class="pro-input">
-            <div class="flex gap-2">
-                <button onclick="saveProfile()" class="pro-btn btn-blue">Update</button>
-                <button onclick="document.getElementById('profile-modal').style.display='none'" class="pro-btn bg-gray-200 text-gray-600">Tutup</button>
+        <div class="modal-content overflow-hidden p-0" style="max-width: 400px;">
+            <div class="bg-blue-600 p-6 text-center relative">
+                <button onclick="document.getElementById('profile-modal').style.display='none'" class="absolute top-4 right-4 text-white hover:text-gray-200 font-bold">✕</button>
+                <div class="w-24 h-24 mx-auto bg-white rounded-full p-1 shadow-lg mb-3">
+                    <img id="prof-img-display" src="" class="w-full h-full rounded-full object-cover">
+                </div>
+                <h3 id="prof-name-display" class="text-white font-bold text-xl tracking-wide">User</h3>
+                <span id="prof-role-display" class="bg-blue-800 text-blue-100 text-xs px-3 py-1 rounded-full uppercase font-bold tracking-wider mt-2 inline-block">ROLE</span>
+            </div>
+
+            <div class="p-6">
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 text-center">
+                        <span class="block text-xs font-bold text-gray-400 uppercase">Jenis Kelamin</span>
+                        <span id="prof-gender-display" class="font-bold text-gray-700 text-lg">-</span>
+                    </div>
+                    <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 text-center">
+                        <span class="block text-xs font-bold text-gray-400 uppercase">Kelas</span>
+                        <span id="prof-class-display" class="font-bold text-gray-700 text-lg">-</span>
+                    </div>
+                </div>
+
+                <div class="border-t pt-4">
+                    <h4 class="text-sm font-bold text-gray-800 mb-3">✏️ Edit Akun</h4>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-[10px] font-bold text-gray-500 uppercase">Nama Lengkap</label>
+                            <input type="text" id="prof-name" class="pro-input py-1.5 text-sm mb-0">
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="text-[10px] font-bold text-gray-500 uppercase">Username</label>
+                                <input type="text" id="prof-username" class="pro-input py-1.5 text-sm mb-0 bg-gray-100" readonly>
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-bold text-gray-500 uppercase">Password Baru</label>
+                                <input type="text" id="prof-password" class="pro-input py-1.5 text-sm mb-0" placeholder="Biarkan kosong">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex gap-2 mt-6">
+                        <button onclick="saveProfile()" class="pro-btn btn-blue shadow-lg shadow-blue-200">Simpan Perubahan</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -471,6 +565,18 @@
         let currentUser = null;
         let sortConfig = { key: null, asc: true };
 
+        // --- SOUND EFFECTS (UPDATE BARU) ---
+        // Menggunakan link audio CDN yang stabil untuk efek suara
+        const audioSuccess = new Audio('https://actions.google.com/sounds/v1/science_fiction/scifi_input_accept.ogg');
+        const audioFail = new Audio('https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg');
+        
+        function playSound(type) {
+            const aud = type === 'success' ? audioSuccess : audioFail;
+            aud.volume = 0.5; // Set volume 50%
+            aud.currentTime = 0; 
+            aud.play().catch(e => console.log("Audio Error (Perlu interaksi user):", e));
+        }
+
         // APP INIT
         function initApp() {
             // Cek status koneksi
@@ -485,7 +591,6 @@
                     connStat.className = "conn-status offline blink";
                 }
             });
-
             // SINKRONISASI REALTIME
             dbRef.on('value', (snapshot) => {
                 const val = snapshot.val();
@@ -559,7 +664,8 @@
         function emergencyReset() {
             const pin = prompt("PERINGATAN: INI MENGHAPUS DATABASE CLOUD!\nPIN:");
             if (pin === "9999") {
-                if(confirm("YAKIN?")) { dbRef.set(null); location.reload(); }
+                if(confirm("YAKIN?")) { dbRef.set(null);
+                location.reload(); }
             } else if (pin !== null) alert("PIN SALAH!");
         }
 
@@ -569,7 +675,6 @@
             const pass = document.getElementById('login-password').value;
             const usersList = Array.isArray(db.users) ? db.users : [];
             const foundUser = usersList.find(u => u.username === user && u.password === pass);
-            
             if (foundUser) {
                 if (foundUser.disabled) return alert("AKUN DIBLOKIR!");
                 currentUser = foundUser;
@@ -582,11 +687,14 @@
                 document.getElementById('login-password').value = '';
                 checkBroadcasts(foundUser.role);
                 
-                if (foundUser.role === 'siswa') { renderSiswaScreen(); showScreen('siswa'); }
-                else { renderDashboardScreen(); showScreen('dashboard'); }
+                if (foundUser.role === 'siswa') { renderSiswaScreen(); showScreen('siswa');
+                }
+                else { renderDashboardScreen(); showScreen('dashboard');
+                }
             } else alert('Login Gagal!');
         }
-        function logout() { currentUser = null; showScreen('login'); stopScanner(); closeAllDropdowns(); }
+        function logout() { currentUser = null; showScreen('login'); stopScanner(); closeAllDropdowns();
+        }
 
         // BROADCAST
         function sendBroadcast() {
@@ -598,13 +706,15 @@
             
             if(!Array.isArray(db.messages)) db.messages = [];
             db.messages.push({ id: 'MSG_' + Date.now(), content, target, schedule, sender: currentUser.name });
-            saveDb(); alert("Terkirim!");
+            saveDb();
+            alert("Terkirim!");
             document.getElementById('msg-content').value = '';
         }
         function renderBroadcastHistory() {
             const container = document.getElementById('broadcast-history');
             const messages = Array.isArray(db.messages) ? db.messages : [];
-            if(messages.length === 0) { container.innerHTML = '<p class="text-center text-gray-400 text-xs">Kosong</p>'; return; }
+            if(messages.length === 0) { container.innerHTML = '<p class="text-center text-gray-400 text-xs">Kosong</p>'; return;
+            }
             container.innerHTML = messages.slice().reverse().map(m => `
                 <div class="border p-2 rounded bg-gray-50 mb-2">
                     <div class="flex justify-between text-xs font-bold text-blue-800">
@@ -614,7 +724,8 @@
                     <p class="text-sm mt-1">${m.content}</p>
                 </div>`).join('');
         }
-        function deleteMsg(id) { if(confirm("Hapus?")) { db.messages = db.messages.filter(m => m.id !== id); saveDb(); } }
+        function deleteMsg(id) { if(confirm("Hapus?")) { db.messages = db.messages.filter(m => m.id !== id);
+            saveDb(); } }
         
         function checkBroadcasts(role) {
             const now = Date.now();
@@ -625,12 +736,13 @@
             
             document.getElementById(badge).innerText = valid.length;
             document.getElementById(badge).className = valid.length > 0 ? "absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white" : "hidden";
-            
             document.getElementById(list).innerHTML = valid.length === 0 ? '<p class="text-xs text-center text-gray-400 p-2">Kosong</p>' : 
                 valid.slice().reverse().map(m => `<div class="bg-yellow-50 p-2 rounded border-l-4 border-yellow-400 mb-2 shadow-sm text-sm">${m.content}</div>`).join('');
         }
-        function toggleDropdown(id, e) { e.stopPropagation(); closeAllDropdowns(); document.getElementById(id).classList.toggle('show'); }
-        function closeAllDropdowns(e) { if(e && e.target.closest('.notif-container')) return; document.querySelectorAll('.notif-dropdown').forEach(d => d.classList.remove('show')); }
+        function toggleDropdown(id, e) { e.stopPropagation(); closeAllDropdowns(); document.getElementById(id).classList.toggle('show');
+        }
+        function closeAllDropdowns(e) { if(e && e.target.closest('.notif-container')) return; document.querySelectorAll('.notif-dropdown').forEach(d => d.classList.remove('show'));
+        }
 
         // DASHBOARD
         function renderDashboardScreen() {
@@ -667,7 +779,6 @@
             const tbody = document.getElementById('table-users');
             const users = Array.isArray(db.users) ? db.users : [];
             let data = users.filter(u => u.name.toLowerCase().includes(filter.toLowerCase()) || u.username.toLowerCase().includes(filter.toLowerCase()));
-            
             if(sortConfig.key) {
                 data.sort((a,b) => {
                     let valA = (a[sortConfig.key]||'').toString().toLowerCase();
@@ -678,7 +789,8 @@
                 });
             }
             
-            if(data.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="text-center p-4 text-gray-400">Kosong</td></tr>'; return; }
+            if(data.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="text-center p-4 text-gray-400">Kosong</td></tr>';
+            return; }
             tbody.innerHTML = data.map(u => `
                 <tr class="border-b hover:bg-gray-50">
                     <td class="text-center"><input type="checkbox" class="user-checkbox" value="${u.id}" onchange="updateDeleteBtn()"></td>
@@ -689,7 +801,8 @@
                     <td><span class="badge ${u.disabled?'badge-disabled':'badge-active'}">${u.disabled?'Blocked':'Active'}</span></td>
                     <td class="text-right flex gap-1 justify-end items-center h-full pt-3">
                         <button onclick="openUserModal('${u.id}')" class="bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded font-bold">Edit</button>
-                        ${u.role!=='admin' ? `<button onclick="toggleStatus('${u.id}')" class="bg-orange-100 text-orange-600 text-xs px-2 py-1 rounded">Sts</button><button onclick="deleteUser('${u.id}')" class="bg-red-100 text-red-600 text-xs px-2 py-1 rounded">Del</button>` : ''}
+                        ${u.role!=='admin' ?
+                        `<button onclick="toggleStatus('${u.id}')" class="bg-orange-100 text-orange-600 text-xs px-2 py-1 rounded">Sts</button><button onclick="deleteUser('${u.id}')" class="bg-red-100 text-red-600 text-xs px-2 py-1 rounded">Del</button>` : ''}
                     </td>
                 </tr>`).join('');
             updateDeleteBtn();
@@ -698,7 +811,6 @@
         // SISWA SCREEN (GENERATE QR CODE)
         function renderSiswaScreen() {
             document.getElementById('siswa-greet-name').innerText = currentUser.name;
-            
             // UPDATE CARD DATA
             document.getElementById('card-img').src = currentUser.avatar;
             document.getElementById('stu-avatar').src = currentUser.avatar;
@@ -741,20 +853,23 @@
             if(id) {
                 const u = db.users.find(x => x.id === id);
                 document.getElementById('modal-id').value = u.id; document.getElementById('modal-name').value = u.name; document.getElementById('modal-username').value = u.username; document.getElementById('modal-password').value = '';
-                document.getElementById('modal-role').value = u.role; document.getElementById('modal-gender').value = u.gender||'L'; document.getElementById('modal-kelas').value = u.kelas||'-'; document.getElementById('modal-status').value = u.disabled?'disabled':'active';
+                document.getElementById('modal-role').value = u.role; document.getElementById('modal-gender').value = u.gender||'L';
+                document.getElementById('modal-kelas').value = u.kelas||'-'; document.getElementById('modal-status').value = u.disabled?'disabled':'active';
             } else {
-                document.getElementById('modal-id').value = ''; document.getElementById('modal-name').value = ''; document.getElementById('modal-username').value = ''; document.getElementById('modal-password').value = '';
-                document.getElementById('modal-role').value = 'siswa'; document.getElementById('modal-gender').value = 'L'; document.getElementById('modal-kelas').value = '-'; document.getElementById('modal-status').value = 'active';
+                document.getElementById('modal-id').value = '';
+                document.getElementById('modal-name').value = ''; document.getElementById('modal-username').value = ''; document.getElementById('modal-password').value = '';
+                document.getElementById('modal-role').value = 'siswa'; document.getElementById('modal-gender').value = 'L'; document.getElementById('modal-kelas').value = '-';
+                document.getElementById('modal-status').value = 'active';
             }
         }
-        function closeModal() { document.getElementById('user-modal').style.display = 'none'; }
+        function closeModal() { document.getElementById('user-modal').style.display = 'none';
+        }
         function saveUser() {
             const id=document.getElementById('modal-id').value, name=document.getElementById('modal-name').value, user=document.getElementById('modal-username').value, pass=document.getElementById('modal-password').value;
             const role=document.getElementById('modal-role').value, gender=document.getElementById('modal-gender').value, kelas=document.getElementById('modal-kelas').value, status=document.getElementById('modal-status').value;
             if(!name || !user) return alert('Wajib isi!');
             
             const avatarUrl = 'https://api.dicebear.com/7.x/adventurer/svg?seed=' + name;
-            
             if(id) {
                 const idx = db.users.findIndex(x => x.id === id);
                 const currentAvatar = db.users[idx].avatar || avatarUrl;
@@ -767,27 +882,66 @@
             saveDb(); closeModal(); renderUserTable();
         }
         
-        function toggleStatus(id) { const idx = db.users.findIndex(x => x.id === id); if(idx!==-1) { db.users[idx].disabled = !db.users[idx].disabled; saveDb(); } }
-        function deleteUser(id) { if(confirm("Hapus?")) { db.users = db.users.filter(u => u.id !== id); saveDb(); } }
-        function toggleSelectAll(src) { document.querySelectorAll('.user-checkbox').forEach(cb => cb.checked = src.checked); updateDeleteBtn(); }
-        function updateDeleteBtn() { const c = document.querySelectorAll('.user-checkbox:checked').length; const b = document.getElementById('btn-delete-multi'); if(c>0){b.classList.remove('hidden');b.innerText=`Hapus (${c})`;}else{b.classList.add('hidden');} }
-        function deleteSelectedUsers() { if(confirm("Hapus terpilih?")) { const ids = Array.from(document.querySelectorAll('.user-checkbox:checked')).map(cb=>cb.value); db.users = db.users.filter(u => !ids.includes(u.id)); saveDb(); } }
+        function toggleStatus(id) { const idx = db.users.findIndex(x => x.id === id);
+            if(idx!==-1) { db.users[idx].disabled = !db.users[idx].disabled; saveDb(); } }
+        function deleteUser(id) { if(confirm("Hapus?")) { db.users = db.users.filter(u => u.id !== id);
+            saveDb(); } }
+        function toggleSelectAll(src) { document.querySelectorAll('.user-checkbox').forEach(cb => cb.checked = src.checked); updateDeleteBtn();
+        }
+        function updateDeleteBtn() { const c = document.querySelectorAll('.user-checkbox:checked').length; const b = document.getElementById('btn-delete-multi');
+            if(c>0){b.classList.remove('hidden');b.innerText=`Hapus (${c})`;}else{b.classList.add('hidden');} }
+        function deleteSelectedUsers() { if(confirm("Hapus terpilih?")) { const ids = Array.from(document.querySelectorAll('.user-checkbox:checked')).map(cb=>cb.value);
+            db.users = db.users.filter(u => !ids.includes(u.id)); saveDb(); } }
 
-        // SELF EDIT & FORGOT
-        function openProfileModal() { if(!currentUser) return; document.getElementById('profile-modal').style.display='flex'; document.getElementById('prof-name').value=currentUser.name; document.getElementById('prof-username').value=currentUser.username; document.getElementById('prof-password').value=''; }
+        // SELF EDIT & FORGOT (UPDATED PROFESSIONAL MODAL LOGIC)
+        function openProfileModal() { 
+            if(!currentUser) return;
+            document.getElementById('profile-modal').style.display='flex'; 
+            
+            // Set Form Values (Untuk Edit)
+            document.getElementById('prof-name').value = currentUser.name; 
+            document.getElementById('prof-username').value = currentUser.username; 
+            document.getElementById('prof-password').value = ''; 
+            
+            // Set Display Values (Untuk Tampilan Professional)
+            document.getElementById('prof-img-display').src = currentUser.avatar;
+            document.getElementById('prof-name-display').innerText = currentUser.name;
+            document.getElementById('prof-role-display').innerText = currentUser.role;
+            
+            // Format Gender agar lebih rapi
+            let jkFull = currentUser.gender === 'P' ? 'Perempuan' : 'Laki-Laki';
+            const genderEl = document.getElementById('prof-gender-display');
+            genderEl.innerText = jkFull;
+            // Ubah warna gender: Pink untuk Perempuan, Biru untuk Laki-laki
+            genderEl.className = currentUser.gender === 'P' ? 'font-bold text-pink-600 text-lg' : 'font-bold text-blue-600 text-lg';
+            
+            document.getElementById('prof-class-display').innerText = currentUser.kelas || '-';
+        }
+        
         function saveProfile() {
             const name=document.getElementById('prof-name').value, user=document.getElementById('prof-username').value, pass=document.getElementById('prof-password').value;
             const idx = db.users.findIndex(u=>u.id===currentUser.id);
-            if(idx!==-1) { db.users[idx].name=name; db.users[idx].username=user; if(pass) db.users[idx].password=pass; currentUser=db.users[idx]; saveDb(); alert('Updated!'); document.getElementById('profile-modal').style.display='none'; if(currentUser.role==='siswa') renderSiswaScreen(); else renderDashboardScreen(); }
+            if(idx!==-1) { 
+                db.users[idx].name=name; 
+                db.users[idx].username=user; 
+                if(pass) db.users[idx].password=pass; 
+                currentUser=db.users[idx]; 
+                saveDb(); 
+                alert('Profil Berhasil Diupdate!'); 
+                document.getElementById('profile-modal').style.display='none'; 
+                if(currentUser.role==='siswa') renderSiswaScreen(); 
+                else renderDashboardScreen();
+            }
         }
-        function openForgotModal() { document.getElementById('forgot-modal').style.display='flex'; }
+        function openForgotModal() { document.getElementById('forgot-modal').style.display='flex';
+        }
         function resetAdminPassword() {
             const u = document.getElementById('forgot-username').value, c = document.getElementById('forgot-code').value, p = document.getElementById('forgot-newpass').value;
             const t = db.users.find(x => x.username === u && x.role === 'admin');
             if(t && t.recoveryCode === c) { t.password = p; saveDb(); alert('Sukses!'); document.getElementById('forgot-modal').style.display='none'; } else alert('Gagal!');
         }
 
-        // CSV EXPORT IMPORT - MODIFIED TO READ GENDER (INDEX 5)
+        // CSV EXPORT IMPORT
         function exportExcel() {
              let csv = "Nama,Username,Kelas,Waktu,Tanggal\n";
              const att = Array.isArray(db.attendance) ? db.attendance : [];
@@ -795,16 +949,17 @@
              const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'})); a.download = `Absensi_${new Date().toLocaleDateString()}.csv`; a.click();
         }
         function importCSV(input) {
-            const file = input.files[0]; if(!file) return;
+            const file = input.files[0];
+            if(!file) return;
             const reader = new FileReader();
             reader.onload = e => {
-                const rows = e.target.result.split('\n'); let c=0;
+                const rows = e.target.result.split('\n');
+                let c=0;
                 rows.forEach(r => {
                     const cols = r.split(',');
                     if(cols.length>=3) {
                         const name=cols[0].trim(), username=cols[1].trim(), password=cols[2].trim(), role=cols[3]?cols[3].trim().toLowerCase():'siswa', kelas=cols[4]?cols[4].trim():'-';
-                        
-                        // NEW LOGIC: READ GENDER FROM COLUMN 5
+                        // READ GENDER FROM COLUMN 5
                         let genderRaw = cols[5] ? cols[5].trim().toUpperCase() : 'L';
                         let gender = (genderRaw === 'P' || genderRaw === 'PEREMPUAN') ? 'P' : 'L';
 
@@ -819,7 +974,7 @@
             reader.readAsText(file);
         }
 
-        // SCANNER LOGIC (SUPER FAST QR)
+        // SCANNER LOGIC (UPDATED WITH SOUND)
         let scanner;
         function startScanner() {
             if(scanner) return;
@@ -833,12 +988,18 @@
             }, 300);
         }
         
-        function stopScanner() { if(scanner) { scanner.clear().then(_=>scanner=null); } }
+        function stopScanner() { if(scanner) { scanner.clear().then(_=>scanner=null);
+        } }
         
         function onScanSuccess(decodedText) {
             if(document.getElementById('scan-status').innerText.includes('HADIR') && !document.getElementById('scan-status').classList.contains('hidden')) return;
 
-            if(!decodedText.startsWith('GKPS')) return showStatus('QR Tidak Valid', 'red');
+            // --- SOUND CHECK: INVALID QR ---
+            if(!decodedText.startsWith('GKPS')) {
+                playSound('error');
+                return showStatus('QR Tidak Valid', 'red');
+            }
+
             const parts = decodedText.split('|'); const username = parts[1];
             
             if(!db.users || !Array.isArray(db.users)) db.users = [];
@@ -848,25 +1009,37 @@
                 if(parts[2]) {
                     u = { id: 'AUTO_'+Date.now(), username, name: parts[2], role: parts[3]||'siswa', kelas: parts[4]||'-', gender:'L', password:'123', disabled:false, avatar:'https://api.dicebear.com/7.x/adventurer/svg?seed='+parts[2] };
                     db.users.push(u);
-                } else return showStatus('User Tidak Ada', 'red');
+                } else {
+                    playSound('error');
+                    return showStatus('User Tidak Ada', 'red');
+                }
             }
             
-            if(u.disabled) return showStatus('AKSES DITOLAK', 'red');
+            if(u.disabled) {
+                playSound('error');
+                return showStatus('AKSES DITOLAK', 'red');
+            }
             
             const today = new Date().toLocaleDateString();
             if(!db.attendance || !Array.isArray(db.attendance)) db.attendance = [];
             
-            if(db.attendance.find(a => a.username === u.username && a.date === today)) return showStatus('Sudah Masuk', 'yellow');
-            
+            if(db.attendance.find(a => a.username === u.username && a.date === today)) {
+                playSound('error');
+                return showStatus('Sudah Masuk', 'yellow');
+            }
+
+            // --- SOUND SUCCESS ---
+            playSound('success');
             db.attendance.push({ username: u.username, name: u.name, date: today, time: new Date().toLocaleTimeString() });
             showStatus('HADIR: '+u.name, 'green');
-            saveDb(); 
+            saveDb();
         }
         
         function onScanFailure(err) { }
 
         function showStatus(msg, color) {
-            const el = document.getElementById('scan-status'); el.innerText=msg; el.className=`mt-4 text-center font-bold p-3 rounded-xl shadow-lg text-sm bg-${color}-100 text-${color}-800`;
+            const el = document.getElementById('scan-status');
+            el.innerText=msg; el.className=`mt-4 text-center font-bold p-3 rounded-xl shadow-lg text-sm bg-${color}-100 text-${color}-800`;
             el.classList.remove('hidden'); setTimeout(()=>el.classList.add('hidden'), 2000);
         }
 
