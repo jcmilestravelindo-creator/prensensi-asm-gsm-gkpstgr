@@ -129,12 +129,26 @@
         .badge-gender-p { background: #fce7f3; color: #9d174d;
             border: 1px solid #f9a8d4; }
 
-        /* Modal */
+        /* Modal Improved for Laptop */
         .modal-overlay { position: fixed;
             inset: 0; background: rgba(0,0,0,0.5); z-index: 50; display: none; justify-content: center; align-items: center; padding: 1rem; backdrop-filter: blur(2px);
         }
-        .modal-content { background: white; padding: 2rem; border-radius: 1.5rem; width: 100%; max-w-sm;
-            animation: slideUp 0.3s ease; max-height: 90vh; overflow-y: auto; }
+        /* Fix Layout overflow */
+        .modal-content { 
+            background: white; 
+            border-radius: 1.5rem; 
+            width: 100%; max-w-sm;
+            max-height: 90vh; /* Limit height */
+            display: flex; 
+            flex-direction: column;
+            animation: slideUp 0.3s ease; 
+        }
+        .modal-body-scroll {
+            overflow-y: auto;
+            flex: 1; /* Take remaining space */
+            padding: 1.5rem;
+        }
+        
         @keyframes slideUp { from { transform: translateY(20px);
             opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         
@@ -190,7 +204,7 @@
     <section id="screen-login" class="hidden max-w-md mx-auto min-h-screen flex flex-col justify-center">
         <div class="text-center mb-8">
             <div class="flex justify-center mb-4">
-                <img src="Logo GKPS.png" alt="Logo GKPS" class="h-24 w-auto object-contain" onerror="this.style.display='none'">
+                <img src="Logo GKPS.png" alt="" class="h-24 w-auto object-contain" onerror="this.style.display='none'">
             </div>
             <h1 onclick="triggerSecretReset()" class="text-3xl font-extrabold text-blue-900 tracking-tight cursor-pointer select-none">GKPS TANGERANG</h1>
             <p class="text-gray-500 font-medium">Sistem Absensi Terpadu</p>
@@ -328,6 +342,7 @@
                 <div class="flex justify-between items-center mb-4 border-b pb-2">
                     <h3 class="font-bold text-gray-800">Log Kehadiran (Hari Ini)</h3>
                     <div class="flex gap-2">
+                        <button onclick="clearLogs()" class="text-red-600 text-xs font-bold bg-red-50 px-2 py-1 rounded border border-red-200">🗑️ Hapus</button>
                         <button onclick="openArchiveModal()" class="text-blue-600 text-xs font-bold bg-blue-50 px-2 py-1 rounded border border-blue-200">📂 Lihat Arsip</button>
                         <button onclick="exportExcel()" class="text-green-600 text-xs font-bold bg-green-50 px-2 py-1 rounded border border-green-200">Excel</button>
                     </div>
@@ -602,8 +617,8 @@
     </div>
 
     <div id="profile-modal" class="modal-overlay">
-        <div class="modal-content overflow-hidden p-0" style="max-width: 400px;">
-            <div class="bg-blue-600 p-6 text-center relative">
+        <div class="modal-content" style="max-width: 400px; padding: 0; max-height: 85vh;">
+            <div class="bg-blue-600 p-6 text-center relative flex-shrink-0">
                 <button onclick="document.getElementById('profile-modal').style.display='none'" class="absolute top-4 right-4 text-white hover:text-gray-200 font-bold">✕</button>
                 
                 <div class="w-24 h-24 mx-auto bg-white rounded-full p-1 shadow-lg mb-3 relative overflow-hidden group">
@@ -621,7 +636,7 @@
                 <span id="prof-role-display" class="bg-blue-800 text-blue-100 text-xs px-3 py-1 rounded-full uppercase font-bold tracking-wider mt-2 inline-block">ROLE</span>
             </div>
 
-            <div class="p-6">
+            <div class="p-6 modal-body-scroll">
                 <div class="grid grid-cols-2 gap-4 mb-4">
                     <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 text-center">
                         <span class="block text-xs font-bold text-gray-400 uppercase">Jenis Kelamin</span>
@@ -663,7 +678,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="flex gap-2 mt-6">
+                    <div class="flex gap-2 mt-6 pb-4">
                         <button onclick="saveProfile()" class="pro-btn btn-blue shadow-lg shadow-blue-200">Simpan Perubahan</button>
                     </div>
                 </div>
@@ -744,7 +759,6 @@
         let sortConfig = { key: null, asc: true };
 
         // --- SOUND EFFECTS (BASE64 VALID) ---
-        // Placeholder Safe Base64
         const sndBeep = "data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU";
         const audioSuccess = new Audio("data:audio/mp3;base64,//uQxAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//uQxAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq");
         
@@ -787,9 +801,8 @@
                     renderSiswaScreen();
                     showScreen('siswa');
                 } else {
-                    renderDashboardScreen(); // This reveals the admin tabs!
+                    renderDashboardScreen(); 
                     showScreen('dashboard');
-                    // Restore Tab
                     const lastTab = localStorage.getItem('gkps_tab');
                     if(lastTab) switchTab(lastTab);
                 }
@@ -826,8 +839,7 @@
                     if(!db.messages) db.messages = [];
                     if(!db.users) db.users = [];
                     if(!db.attendance) db.attendance = [];
-                    // FIX: DEFAULT MANUAL ATTENDANCE TO TRUE FOR TESTING IF NOT SET
-                    if(!db.settings) db.settings = { manual: true, start: "00:00", end: "23:59" }; 
+                    if(!db.settings) db.settings = { manualOpen: true }; // Default manualOpen = true
                     
                     if(currentUser) {
                         // Refresh user data from DB to stay in sync
@@ -853,7 +865,7 @@
                         // FIX: Ensure correct screen showing if session valid
                         const lastScreen = localStorage.getItem('gkps_last_screen');
                         if (lastScreen === 'dashboard' && currentUser.role === 'admin') {
-                             renderDashboardScreen(); // Force re-render admin tabs
+                             renderDashboardScreen(); 
                         }
 
                     } else {
@@ -876,8 +888,7 @@
                 posX: 50, posY: 50
             }];
             db.isSetup = true;
-            // ENABLE MANUAL ABSEN BY DEFAULT FOR NEW INSTALL
-            db.settings = { manual: true, start: "07:00", end: "23:00" };
+            db.settings = { manualOpen: true };
             saveDb();
         }
 
@@ -950,21 +961,29 @@
             localStorage.removeItem('gkps_last_screen');
             showScreen('login'); stopScanner(); closeAllDropdowns();
         }
+        
+        // --- NEW DELETE LOG FEATURE ---
+        function clearLogs() {
+            if(prompt("Ketik 'hapus' untuk menghapus semua log absensi:") === 'hapus') {
+                 db.attendance = [];
+                 saveDb();
+                 alert("Semua log absensi berhasil dihapus.");
+                 renderHomeStats();
+            } else {
+                alert("Penghapusan dibatalkan.");
+            }
+        }
 
         // --- SETTINGS & MANUAL ATTENDANCE LOGIC ---
         
         function loadSettingsToUI() {
             if(!db.settings) return;
-            document.getElementById('sett-manual-toggle').checked = db.settings.manual || false;
-            document.getElementById('sett-manual-start').value = db.settings.start || "07:00";
-            document.getElementById('sett-manual-end').value = db.settings.end || "12:00";
+            document.getElementById('sett-manual-toggle').checked = db.settings.manualOpen || false;
         }
 
         function saveSettings() {
             if(!db.settings) db.settings = {};
-            db.settings.manual = document.getElementById('sett-manual-toggle').checked;
-            db.settings.start = document.getElementById('sett-manual-start').value;
-            db.settings.end = document.getElementById('sett-manual-end').value;
+            db.settings.manualOpen = document.getElementById('sett-manual-toggle').checked;
             saveDb();
             alert("Pengaturan Disimpan!");
         }
@@ -981,11 +1000,9 @@
             if(btnGuru) btnGuru.classList.add('hidden');
             if(btnDash) btnDash.classList.add('hidden');
 
-            if(!db.settings || !db.settings.manual) return; 
-
-            const now = new Date();
-            const currentTime = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
-            if(currentTime < db.settings.start || currentTime > db.settings.end) return; 
+            // Default to TRUE if undefined to fix visibility issue
+            const manualEnabled = db.settings ? db.settings.manualOpen : true;
+            if(!manualEnabled) return; 
 
             const today = getTodayDate();
             const already = db.attendance.find(a => a.username === currentUser.username && a.date === today);
@@ -1037,7 +1054,6 @@
                 name: currentUser.name, 
                 date: today, 
                 time: new Date().toLocaleTimeString(), 
-                type: 'MANUAL',
                 status: status,
                 note: note
             });
@@ -1502,8 +1518,10 @@
             if(scanner) return;
             setTimeout(() => {
                 scanner = new Html5QrcodeScanner("reader", { 
-                    fps: 30, 
-                    qrbox: 250, 
+                    fps: 50, // Increased sensitivity
+                    qrbox: { width: 250, height: 250 },
+                    aspectRatio: 1.0,
+                    showTorchButtonIfSupported: true,
                     rememberLastUsedCamera: true
                 });
                 scanner.render(onScanSuccess, onScanFailure);
