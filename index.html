@@ -138,11 +138,9 @@
         @keyframes slideUp { from { transform: translateY(20px);
             opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         
-        /* Notification Dropdown styles - FIXED FOR MOBILE */
+        /* Notification Dropdown styles */
         .notif-dropdown { display: none;
-            position: absolute; right: 0; top: 100%; margin-top: 0.5rem; 
-            width: 85vw; max-width: 20rem; /* Responsive width */
-            background: white; border-radius: 1rem; box-shadow: 0 10px 30px -5px rgba(0,0,0,0.2);
+            position: absolute; right: 0; top: 100%; margin-top: 0.5rem; width: 85vw; max-width: 20rem; background: white; border-radius: 1rem; box-shadow: 0 10px 30px -5px rgba(0,0,0,0.2);
             border: 1px solid #e2e8f0; z-index: 60; max-height: 24rem; overflow-y: auto;
         }
         .notif-dropdown.show { display: block; animation: slideUp 0.2s ease;
@@ -192,7 +190,7 @@
     <section id="screen-login" class="hidden max-w-md mx-auto min-h-screen flex flex-col justify-center">
         <div class="text-center mb-8">
             <div class="flex justify-center mb-4">
-                <img src="Logo GKPS.png" alt="" class="h-24 w-auto object-contain" onerror="this.style.display='none'">
+                <img src="Logo GKPS.png" alt="Logo GKPS" class="h-24 w-auto object-contain" onerror="this.style.display='none'">
             </div>
             <h1 onclick="triggerSecretReset()" class="text-3xl font-extrabold text-blue-900 tracking-tight cursor-pointer select-none">GKPS TANGERANG</h1>
             <p class="text-gray-500 font-medium">Sistem Absensi Terpadu</p>
@@ -764,6 +762,12 @@
                 });
             }
         }
+        
+        // --- HELPER DATE ---
+        function getTodayDate() {
+            const d = new Date();
+            return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth()+1).toString().padStart(2, '0')}/${d.getFullYear()}`;
+        }
 
         // APP INIT
         function initApp() {
@@ -823,7 +827,7 @@
                     if(!db.users) db.users = [];
                     if(!db.attendance) db.attendance = [];
                     // FIX: DEFAULT MANUAL ATTENDANCE TO TRUE FOR TESTING IF NOT SET
-                    if(!db.settings) db.settings = { manualOpen: true }; 
+                    if(!db.settings) db.settings = { manual: true, start: "00:00", end: "23:59" }; 
                     
                     if(currentUser) {
                         // Refresh user data from DB to stay in sync
@@ -873,7 +877,7 @@
             }];
             db.isSetup = true;
             // ENABLE MANUAL ABSEN BY DEFAULT FOR NEW INSTALL
-            db.settings = { manualOpen: true };
+            db.settings = { manual: true, start: "07:00", end: "23:00" };
             saveDb();
         }
 
@@ -951,12 +955,16 @@
         
         function loadSettingsToUI() {
             if(!db.settings) return;
-            document.getElementById('sett-manual-toggle').checked = db.settings.manualOpen || false;
+            document.getElementById('sett-manual-toggle').checked = db.settings.manual || false;
+            document.getElementById('sett-manual-start').value = db.settings.start || "07:00";
+            document.getElementById('sett-manual-end').value = db.settings.end || "12:00";
         }
 
         function saveSettings() {
             if(!db.settings) db.settings = {};
-            db.settings.manualOpen = document.getElementById('sett-manual-toggle').checked;
+            db.settings.manual = document.getElementById('sett-manual-toggle').checked;
+            db.settings.start = document.getElementById('sett-manual-start').value;
+            db.settings.end = document.getElementById('sett-manual-end').value;
             saveDb();
             alert("Pengaturan Disimpan!");
         }
@@ -973,11 +981,13 @@
             if(btnGuru) btnGuru.classList.add('hidden');
             if(btnDash) btnDash.classList.add('hidden');
 
-            // Default to TRUE if undefined to fix visibility issue
-            const manualEnabled = db.settings ? db.settings.manualOpen : true;
-            if(!manualEnabled) return; 
+            if(!db.settings || !db.settings.manual) return; 
 
-            const today = new Date().toLocaleDateString();
+            const now = new Date();
+            const currentTime = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
+            if(currentTime < db.settings.start || currentTime > db.settings.end) return; 
+
+            const today = getTodayDate();
             const already = db.attendance.find(a => a.username === currentUser.username && a.date === today);
             if(already) return; 
 
@@ -991,7 +1001,7 @@
 
         // NEW: MANUAL ABSEN MODAL LOGIC
         function openManualModal() {
-            const today = new Date().toLocaleDateString();
+            const today = getTodayDate();
             if(db.attendance.find(a => a.username === currentUser.username && a.date === today)) {
                 alert("Anda sudah absen hari ini!");
                 return;
@@ -1020,7 +1030,7 @@
                 if(!note) return alert("Mohon isi keterangan!");
             }
 
-            const today = new Date().toLocaleDateString();
+            const today = getTodayDate();
             playSound('success');
             db.attendance.push({ 
                 username: currentUser.username, 
@@ -1220,7 +1230,7 @@
         }
 
         function renderHomeStats() {
-            const today = new Date().toLocaleDateString();
+            const today = getTodayDate();
             const att = Array.isArray(db.attendance) ? db.attendance : [];
             const logs = att.filter(a => a.date === today);
             
@@ -1531,7 +1541,7 @@
                 return showStatus('AKSES DITOLAK', 'red');
             }
             
-            const today = new Date().toLocaleDateString();
+            const today = getTodayDate();
             if(!db.attendance || !Array.isArray(db.attendance)) db.attendance = [];
             
             if(db.attendance.find(a => a.username === u.username && a.date === today)) {
