@@ -75,7 +75,7 @@
             height: 100px; background: #e2e8f0; border-radius: 8px; overflow: hidden; border: 2px solid white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); flex-shrink: 0;
             cursor: pointer; position: relative;
         }
-        .card-photo-frame img { width: 100%; height: 100%; object-fit: cover;
+        .card-photo-frame img { width: 100%; height: 100%; object-fit: cover; transition: object-position 0.2s;
         }
         
         /* Overlay for Image Upload (Hover Effect) */
@@ -166,6 +166,11 @@
         }
         #reader__dashboard_section_csr span, #reader__dashboard_section_swaplink { display: none !important;
         }
+
+        /* Custom Range Slider */
+        input[type=range] {
+            width: 100%; margin: 5px 0; accent-color: var(--primary);
+        }
     </style>
 </head>
 <body class="p-4" onclick="closeAllDropdowns(event)">
@@ -250,6 +255,9 @@
             <div class="card-footer">
                 <div id="qrcode"></div>
                 <p class="text-[9px] text-gray-400 mt-2">Scan QR ini untuk absensi</p>
+                <div id="manual-absen-container-siswa" class="w-full mt-2 hidden">
+                    <button onclick="handleManualAttendance()" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg text-xs shadow animate-pulse">📍 Absen Manual (Klik Disini)</button>
+                </div>
             </div>
         </div>
     </section>
@@ -302,6 +310,13 @@
                     <div class="font-bold text-gray-700 text-xs">Mulai Scan</div>
                 </div>
             </div>
+            
+            <div id="manual-absen-container-dash" class="w-full mb-4 hidden">
+                <button onclick="handleManualAttendance()" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-xl text-sm shadow-lg flex justify-center items-center gap-2">
+                    <span>📍</span> Klik Disini Untuk Absen Manual
+                </button>
+            </div>
+
             <div class="pro-card">
                 <div class="flex justify-between items-center mb-4 border-b pb-2">
                     <h3 class="font-bold text-gray-800">Log Kehadiran</h3>
@@ -397,6 +412,36 @@
         </div>
         
          <div id="view-settings" class="tab-view hidden">
+            <div class="pro-card bg-green-50 border-green-200 mb-6">
+                <div class="flex items-center mb-4">
+                    <div class="bg-green-200 p-2 rounded-full mr-3 text-xl">📍</div>
+                    <div>
+                        <h3 class="font-bold text-green-900">Kontrol Absen Manual</h3>
+                        <p class="text-xs text-green-700">Izinkan user absen tanpa scan QR.</p>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between bg-white p-3 rounded-xl border">
+                        <span class="text-xs font-bold uppercase text-gray-500">Status Fitur</span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="sett-manual-toggle" class="sr-only peer">
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                        </label>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-[10px] font-bold uppercase text-gray-500">Jam Buka</label>
+                            <input type="time" id="sett-manual-start" class="pro-input bg-white py-1 text-center">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold uppercase text-gray-500">Jam Tutup</label>
+                            <input type="time" id="sett-manual-end" class="pro-input bg-white py-1 text-center">
+                        </div>
+                    </div>
+                    <button onclick="saveSettings()" class="w-full bg-green-600 text-white font-bold py-2 rounded-lg text-xs hover:bg-green-700">Simpan Pengaturan</button>
+                </div>
+            </div>
+
             <div class="pro-card bg-blue-50 border-blue-200 mb-6">
                 <div class="flex items-center mb-4">
                     <div class="bg-blue-200 p-2 rounded-full mr-3 text-xl">🔄</div>
@@ -431,7 +476,7 @@
             <h3 id="modal-title" class="text-lg font-bold mb-4">Edit User</h3>
             <input type="hidden" id="modal-id">
             
-            <div class="text-center mb-4">
+            <div class="text-center mb-2">
                  <div class="w-20 h-20 mx-auto bg-gray-100 rounded-full border border-gray-300 relative overflow-hidden group">
                      <img id="modal-avatar-preview" src="" class="w-full h-full object-cover">
                      <label class="upload-overlay cursor-pointer">
@@ -439,24 +484,36 @@
                          <input type="file" id="modal-file-input" hidden accept="image/*" onchange="handleImageUpload(this, 'modal-avatar-preview')">
                      </label>
                  </div>
-                 <p class="text-[9px] text-gray-400 mt-1 flex justify-center gap-2">
+                 <p class="text-[9px] text-gray-400 mt-1 mb-2 flex justify-center gap-2">
                      <span class="text-blue-500 cursor-pointer hover:underline" onclick="generateRandomAvatar('modal-avatar-preview')">🎲 Acak Avatar</span>
                  </p>
+                 
+                 <div class="bg-gray-50 p-2 rounded border mb-2">
+                    <p class="text-[9px] font-bold text-gray-500 uppercase mb-1">Atur Posisi Foto</p>
+                    <div class="flex gap-2 items-center text-[10px]">
+                        <span>↔️ X:</span>
+                        <input type="range" id="modal-pos-x" min="0" max="100" value="50" oninput="previewPosition('modal-avatar-preview', this.value, document.getElementById('modal-pos-y').value)">
+                    </div>
+                    <div class="flex gap-2 items-center text-[10px]">
+                        <span>↕️ Y:</span>
+                        <input type="range" id="modal-pos-y" min="0" max="100" value="50" oninput="previewPosition('modal-avatar-preview', document.getElementById('modal-pos-x').value, this.value)">
+                    </div>
+                 </div>
             </div>
 
             <label class="text-xs font-bold text-gray-500 uppercase">Nama Lengkap</label>
-            <input type="text" id="modal-name" class="pro-input">
+            <input type="text" id="modal-name" class="pro-input py-1 mb-2">
             
             <label class="text-xs font-bold text-gray-500 uppercase">Username</label>
-            <input type="text" id="modal-username" class="pro-input">
+            <input type="text" id="modal-username" class="pro-input py-1 mb-2">
             
-            <label class="text-xs font-bold text-gray-500 uppercase">Password (Isi untuk Reset)</label>
-            <input type="text" id="modal-password" class="pro-input">
+            <label class="text-xs font-bold text-gray-500 uppercase">Password</label>
+            <input type="text" id="modal-password" class="pro-input py-1 mb-2">
             
             <div class="grid grid-cols-2 gap-2">
                 <div>
                     <label class="text-xs font-bold text-gray-500 uppercase">Role</label>
-                    <select id="modal-role" class="pro-input bg-white">
+                    <select id="modal-role" class="pro-input bg-white py-1 mb-2">
                         <option value="siswa">Siswa</option>
                         <option value="guru">Guru</option>
                         <option value="admin">Admin</option>
@@ -464,7 +521,7 @@
                 </div>
                 <div>
                     <label class="text-xs font-bold text-gray-500 uppercase">JK</label>
-                    <select id="modal-gender" class="pro-input bg-white">
+                    <select id="modal-gender" class="pro-input bg-white py-1 mb-2">
                         <option value="L">Laki-Laki</option>
                         <option value="P">Perempuan</option>
                     </select>
@@ -472,7 +529,7 @@
             </div>
 
             <label class="text-xs font-bold text-gray-500 uppercase">Kelas</label>
-            <select id="modal-kelas" class="pro-input bg-white">
+            <select id="modal-kelas" class="pro-input bg-white py-1 mb-2">
                 <option value="-">- Pilih Kelas -</option>
                 <option value="Daud">Daud</option>
                 <option value="Daniel">Daniel</option>
@@ -483,7 +540,7 @@
             </select>
 
             <label class="text-xs font-bold text-gray-500 uppercase">Status Akun</label>
-            <select id="modal-status" class="pro-input bg-white">
+            <select id="modal-status" class="pro-input bg-white py-1 mb-4">
                 <option value="active">Aktif</option>
                 <option value="disabled">Blokir</option>
             </select>
@@ -516,7 +573,7 @@
             </div>
 
             <div class="p-6">
-                <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="grid grid-cols-2 gap-4 mb-4">
                     <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 text-center">
                         <span class="block text-xs font-bold text-gray-400 uppercase">Jenis Kelamin</span>
                         <span id="prof-gender-display" class="font-bold text-gray-700 text-lg">-</span>
@@ -524,6 +581,18 @@
                     <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 text-center">
                         <span class="block text-xs font-bold text-gray-400 uppercase">Kelas</span>
                         <span id="prof-class-display" class="font-bold text-gray-700 text-lg">-</span>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 p-3 rounded-xl border mb-4">
+                    <p class="text-[10px] font-bold text-gray-500 uppercase mb-2">Atur Posisi Foto</p>
+                    <div class="flex gap-2 items-center text-xs mb-1">
+                        <span class="w-6">↔️ X</span>
+                        <input type="range" id="prof-pos-x" min="0" max="100" value="50" oninput="previewPosition('prof-img-display', this.value, document.getElementById('prof-pos-y').value)">
+                    </div>
+                    <div class="flex gap-2 items-center text-xs">
+                        <span class="w-6">↕️ Y</span>
+                        <input type="range" id="prof-pos-y" min="0" max="100" value="50" oninput="previewPosition('prof-img-display', document.getElementById('prof-pos-x').value, this.value)">
                     </div>
                 </div>
 
@@ -573,6 +642,9 @@
                 <div class="card-footer">
                     <div id="qrcode-guru"></div>
                     <p class="text-[9px] text-gray-400 mt-2">Scan QR ini untuk absensi</p>
+                    <div id="manual-absen-container-guru" class="w-full mt-2 hidden">
+                        <button onclick="handleManualAttendance()" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg text-xs shadow animate-pulse">📍 Absen Manual (Klik Disini)</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -618,19 +690,17 @@
         }
 
         // LOCAL STATE
-        let db = { users: [], attendance: [], messages: [], isSetup: false };
+        let db = { users: [], attendance: [], messages: [], settings: {}, isSetup: false };
         let currentUser = null;
         let sortConfig = { key: null, asc: true };
 
         // --- SOUND EFFECTS (BASE64 VALID) ---
-        // Bunyi 'Beep' (Sukses) - Pendek dan Tring
-        const sndBeep = "data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU"; // Placeholder safe
-        // Menggunakan Sound Objek dengan Base64 Asli (Short Beep)
+        // Placeholder Safe Base64
+        const sndBeep = "data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU";
         const audioSuccess = new Audio("data:audio/mp3;base64,//uQxAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//uQxAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq");
-        // Karena string base64 beep asli sangat panjang, kita pakai link CDN yang sangat stabil sebagai fallback utama
-        // dan logic pemaksaan play.
-        const soundOk = new Audio('https://cdn.freesound.org/previews/242/242501_4414128-lq.mp3'); // Simple Beep
-        const soundFail = new Audio('https://cdn.freesound.org/previews/142/142608_1840739-lq.mp3'); // Error buzz
+        
+        const soundOk = new Audio('https://cdn.freesound.org/previews/242/242501_4414128-lq.mp3'); 
+        const soundFail = new Audio('https://cdn.freesound.org/previews/142/142608_1840739-lq.mp3');
         
         function playSound(type) {
             const aud = type === 'success' ? soundOk : soundFail;
@@ -646,7 +716,6 @@
 
         // APP INIT
         function initApp() {
-            // Unlock Audio Context pada klik pertama di body (Solusi 'Tidak Ada Suara')
             document.body.addEventListener('click', function() {
                 soundOk.play().then(() => { soundOk.pause(); soundOk.currentTime = 0; }).catch(()=>{});
                 soundFail.play().then(() => { soundFail.pause(); soundFail.currentTime = 0; }).catch(()=>{});
@@ -681,16 +750,19 @@
                     if(!db.messages) db.messages = [];
                     if(!db.users) db.users = [];
                     if(!db.attendance) db.attendance = [];
+                    if(!db.settings) db.settings = { manual: false, start: "07:00", end: "12:00" }; // Default settings
                     
                     if(currentUser) {
                         if(currentUser.role === 'admin') {
                             renderUserTable(document.getElementById('search-user').value);
                             renderHomeStats();
                             renderBroadcastHistory();
+                            loadSettingsToUI(); // Load settings to admin UI
                         } else {
                             renderSiswaScreen();
                         }
                         checkBroadcasts(currentUser.role);
+                        checkManualAttendanceVisibility(); // Check user button
                     }
                 } else {
                     createDefaultAdmin();
@@ -704,9 +776,11 @@
             db.users = [{
                 id: 'USR_ADMIN_DEF', name: 'Super Admin', username: 'admin', password: '123',
                 role: 'admin', kelas: '-', gender: 'L', disabled: false, 
-                recoveryCode: 'root', avatar: 'https://api.dicebear.com/7.x/notionists/svg?seed=Admin'
+                recoveryCode: 'root', avatar: 'https://api.dicebear.com/7.x/notionists/svg?seed=Admin',
+                posX: 50, posY: 50
             }];
             db.isSetup = true;
+            db.settings = { manual: false, start: "07:00", end: "12:00" };
             saveDb();
         }
 
@@ -756,13 +830,83 @@
                 document.getElementById('login-password').value = '';
                 checkBroadcasts(foundUser.role);
                 
-                if (foundUser.role === 'siswa') { renderSiswaScreen(); showScreen('siswa');
+                if (foundUser.role === 'siswa') { renderSiswaScreen(); showScreen('siswa'); checkManualAttendanceVisibility();
                 }
-                else { renderDashboardScreen(); showScreen('dashboard');
+                else { renderDashboardScreen(); showScreen('dashboard'); checkManualAttendanceVisibility();
                 }
             } else alert('Login Gagal!');
         }
         function logout() { currentUser = null; showScreen('login'); stopScanner(); closeAllDropdowns();
+        }
+
+        // --- SETTINGS & MANUAL ATTENDANCE LOGIC ---
+        
+        function loadSettingsToUI() {
+            if(!db.settings) return;
+            document.getElementById('sett-manual-toggle').checked = db.settings.manual || false;
+            document.getElementById('sett-manual-start').value = db.settings.start || "07:00";
+            document.getElementById('sett-manual-end').value = db.settings.end || "12:00";
+        }
+
+        function saveSettings() {
+            if(!db.settings) db.settings = {};
+            db.settings.manual = document.getElementById('sett-manual-toggle').checked;
+            db.settings.start = document.getElementById('sett-manual-start').value;
+            db.settings.end = document.getElementById('sett-manual-end').value;
+            saveDb();
+            alert("Pengaturan Disimpan!");
+        }
+
+        function checkManualAttendanceVisibility() {
+            // Check global switch, time range, and if already present
+            if(!currentUser) return;
+            
+            const btnSiswa = document.getElementById('manual-absen-container-siswa');
+            const btnGuru = document.getElementById('manual-absen-container-guru');
+            const btnDash = document.getElementById('manual-absen-container-dash');
+            
+            // Default hide all
+            if(btnSiswa) btnSiswa.classList.add('hidden');
+            if(btnGuru) btnGuru.classList.add('hidden');
+            if(btnDash) btnDash.classList.add('hidden');
+
+            if(!db.settings || !db.settings.manual) return; // Feature disabled by admin
+
+            // Check Time
+            const now = new Date();
+            const currentTime = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
+            if(currentTime < db.settings.start || currentTime > db.settings.end) return; // Out of time
+
+            // Check if already present
+            const today = new Date().toLocaleDateString();
+            const already = db.attendance.find(a => a.username === currentUser.username && a.date === today);
+            if(already) return; // Already present
+
+            // Show Buttons
+            if(currentUser.role === 'siswa' && btnSiswa) btnSiswa.classList.remove('hidden');
+            if(currentUser.role !== 'siswa') {
+                if(btnDash) btnDash.classList.remove('hidden');
+                if(btnGuru) btnGuru.classList.remove('hidden');
+            }
+        }
+
+        function handleManualAttendance() {
+            if(confirm("Anda yakin ingin melakukan Absen Manual?")) {
+                const today = new Date().toLocaleDateString();
+                // Double check
+                if(db.attendance.find(a => a.username === currentUser.username && a.date === today)) {
+                    alert("Anda sudah absen hari ini!");
+                    checkManualAttendanceVisibility();
+                    return;
+                }
+                
+                playSound('success');
+                db.attendance.push({ username: currentUser.username, name: currentUser.name, date: today, time: new Date().toLocaleTimeString(), type: 'MANUAL' });
+                saveDb();
+                alert("Absen Manual Berhasil!");
+                checkManualAttendanceVisibility(); // Hide button
+                if(currentUser.role !== 'siswa') renderHomeStats();
+            }
         }
 
         function sendBroadcast() {
@@ -816,6 +960,7 @@
             document.getElementById('guru-greet-name').innerText = currentUser.name;
             document.getElementById('role-badge').innerText = currentUser.role.toUpperCase();
             document.getElementById('dash-avatar').src = currentUser.avatar;
+            document.getElementById('dash-avatar').style.objectPosition = `${currentUser.posX||50}% ${currentUser.posY||50}%`;
             
             const isAdmin = currentUser.role === 'admin';
             document.getElementById('tab-users').className = isAdmin ? 'nav-pill' : 'nav-pill hidden';
@@ -860,7 +1005,7 @@
             tbody.innerHTML = data.map(u => `
                 <tr class="border-b hover:bg-gray-50">
                     <td class="text-center"><input type="checkbox" class="user-checkbox" value="${u.id}" onchange="updateDeleteBtn()"></td>
-                    <td class="flex items-center"><img src="${u.avatar || 'https://api.dicebear.com/7.x/notionists/svg?seed='+u.name}" class="w-8 h-8 rounded-full mr-2 border"><div><div class="font-bold text-xs">${u.name}</div><div class="text-[10px] text-gray-400">@${u.username}</div></div></td>
+                    <td class="flex items-center"><img src="${u.avatar || 'https://api.dicebear.com/7.x/notionists/svg?seed='+u.name}" class="w-8 h-8 rounded-full mr-2 border" style="object-position: ${u.posX||50}% ${u.posY||50}%"><div><div class="font-bold text-xs">${u.name}</div><div class="text-[10px] text-gray-400">@${u.username}</div></div></td>
                     <td><span class="text-[10px] bg-gray-100 px-2 py-1 rounded">${u.kelas||'-'}</span></td>
                     <td><span class="text-[10px] border px-2 py-0.5 rounded uppercase">${u.role}</span></td>
                     <td><span class="badge ${u.gender==='P'?'badge-gender-p':'badge-gender-l'}">${u.gender||'L'}</span></td>
@@ -876,8 +1021,16 @@
 
         function renderSiswaScreen() {
             document.getElementById('siswa-greet-name').innerText = currentUser.name;
-            document.getElementById('card-img').src = currentUser.avatar;
-            document.getElementById('stu-avatar').src = currentUser.avatar;
+            // UPDATE CARD DATA WITH POSITION
+            const img = document.getElementById('card-img');
+            const avatar = document.getElementById('stu-avatar');
+            
+            img.src = currentUser.avatar;
+            img.style.objectPosition = `${currentUser.posX || 50}% ${currentUser.posY || 50}%`;
+            
+            avatar.src = currentUser.avatar;
+            avatar.style.objectPosition = `${currentUser.posX || 50}% ${currentUser.posY || 50}%`;
+
             document.getElementById('card-name-display').innerText = currentUser.name;
             document.getElementById('card-id-display').innerText = "ID: " + currentUser.username;
             document.getElementById('card-class-display').innerText = "KELAS " + (currentUser.kelas || "-");
@@ -898,7 +1051,11 @@
         function openIdCardModal() {
             if (!currentUser) return;
             document.getElementById('id-card-modal').style.display = 'flex';
-            document.getElementById('card-img-guru').src = currentUser.avatar;
+            
+            const img = document.getElementById('card-img-guru');
+            img.src = currentUser.avatar;
+            img.style.objectPosition = `${currentUser.posX || 50}% ${currentUser.posY || 50}%`;
+
             document.getElementById('card-name-guru').innerText = currentUser.name;
             document.getElementById('card-id-guru').innerText = "ID: " + currentUser.username;
             document.getElementById('card-class-guru').innerText = currentUser.kelas !== '-' ? "KELAS " + currentUser.kelas : "GURU / STAFF";
@@ -926,11 +1083,11 @@
             if(logs.length===0) tbody.innerHTML = '<tr><td colspan="4" class="text-center p-4 text-gray-400">Belum ada absen</td></tr>';
             else tbody.innerHTML = logs.slice().reverse().map(l => {
                 const u = db.users.find(x => x.username === l.username);
-                return `<tr><td class="text-gray-500 font-mono text-xs">${l.time}</td><td class="font-bold text-sm">${l.name}</td><td><span class="badge badge-class">${u?u.kelas:'-'}</span></td><td><span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Hadir</span></td></tr>`;
+                return `<tr><td class="text-gray-500 font-mono text-xs">${l.time}</td><td class="font-bold text-sm">${l.name} ${l.type === 'MANUAL' ? '📍' : ''}</td><td><span class="badge badge-class">${u?u.kelas:'-'}</span></td><td><span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Hadir</span></td></tr>`;
             }).join('');
         }
 
-        // --- FIXED: AUTO COMPRESS & RANDOM AVATAR ---
+        // --- FIXED: AUTO COMPRESS & RANDOM AVATAR & POSITION ---
         function handleImageUpload(input, previewId) {
             const file = input.files[0];
             if (!file) return;
@@ -978,6 +1135,12 @@
             const newAvatar = `https://api.dicebear.com/7.x/${randomStyle}/svg?seed=${randomSeed}`;
             document.getElementById(previewId).src = newAvatar;
         }
+        
+        // NEW: PREVIEW POSITION FUNCTION
+        function previewPosition(imgId, x, y) {
+            const img = document.getElementById(imgId);
+            if(img) img.style.objectPosition = `${x}% ${y}%`;
+        }
 
         function openUserModal(id=null) {
             document.getElementById('user-modal').style.display = 'flex';
@@ -988,13 +1151,25 @@
                 document.getElementById('modal-id').value = u.id; document.getElementById('modal-name').value = u.name; document.getElementById('modal-username').value = u.username; document.getElementById('modal-password').value = '';
                 document.getElementById('modal-role').value = u.role; document.getElementById('modal-gender').value = u.gender||'L';
                 document.getElementById('modal-kelas').value = u.kelas||'-'; document.getElementById('modal-status').value = u.disabled?'disabled':'active';
-                document.getElementById('modal-avatar-preview').src = u.avatar || 'https://api.dicebear.com/7.x/notionists/svg?seed='+u.name;
+                
+                const img = document.getElementById('modal-avatar-preview');
+                img.src = u.avatar || 'https://api.dicebear.com/7.x/notionists/svg?seed='+u.name;
+                img.style.objectPosition = `${u.posX||50}% ${u.posY||50}%`;
+                
+                // Set Sliders
+                document.getElementById('modal-pos-x').value = u.posX || 50;
+                document.getElementById('modal-pos-y').value = u.posY || 50;
+
             } else {
                 document.getElementById('modal-id').value = '';
                 document.getElementById('modal-name').value = ''; document.getElementById('modal-username').value = ''; document.getElementById('modal-password').value = '';
                 document.getElementById('modal-role').value = 'siswa'; document.getElementById('modal-gender').value = 'L'; document.getElementById('modal-kelas').value = '-';
                 document.getElementById('modal-status').value = 'active';
-                document.getElementById('modal-avatar-preview').src = 'https://api.dicebear.com/7.x/notionists/svg?seed=NewUser';
+                const img = document.getElementById('modal-avatar-preview');
+                img.src = 'https://api.dicebear.com/7.x/notionists/svg?seed=NewUser';
+                img.style.objectPosition = '50% 50%';
+                document.getElementById('modal-pos-x').value = 50;
+                document.getElementById('modal-pos-y').value = 50;
             }
         }
         function closeModal() { document.getElementById('user-modal').style.display = 'none';
@@ -1003,17 +1178,19 @@
             const id=document.getElementById('modal-id').value, name=document.getElementById('modal-name').value, user=document.getElementById('modal-username').value, pass=document.getElementById('modal-password').value;
             const role=document.getElementById('modal-role').value, gender=document.getElementById('modal-gender').value, kelas=document.getElementById('modal-kelas').value, status=document.getElementById('modal-status').value;
             const avatarPreview = document.getElementById('modal-avatar-preview').src;
+            const posX = document.getElementById('modal-pos-x').value;
+            const posY = document.getElementById('modal-pos-y').value;
             
             if(!name || !user) return alert('Wajib isi!');
             
             let avatarUrl = avatarPreview;
             if(id) {
                 const idx = db.users.findIndex(x => x.id === id);
-                db.users[idx] = {...db.users[idx], name, username:user, role, gender, kelas, disabled:status==='disabled', avatar: avatarUrl};
+                db.users[idx] = {...db.users[idx], name, username:user, role, gender, kelas, disabled:status==='disabled', avatar: avatarUrl, posX: posX, posY: posY};
                 if(pass) db.users[idx].password = pass;
             } else {
                 if(!Array.isArray(db.users)) db.users = [];
-                db.users.push({ id:'USR_'+Date.now(), name, username:user, password:pass||'123', role, gender, kelas, disabled:status==='disabled', avatar:avatarUrl });
+                db.users.push({ id:'USR_'+Date.now(), name, username:user, password:pass||'123', role, gender, kelas, disabled:status==='disabled', avatar:avatarUrl, posX: posX, posY: posY });
             }
             saveDb(); closeModal(); renderUserTable();
         }
@@ -1038,7 +1215,14 @@
             document.getElementById('prof-username').value = currentUser.username; 
             document.getElementById('prof-password').value = ''; 
             
-            document.getElementById('prof-img-display').src = currentUser.avatar;
+            const img = document.getElementById('prof-img-display');
+            img.src = currentUser.avatar;
+            img.style.objectPosition = `${currentUser.posX||50}% ${currentUser.posY||50}%`;
+            
+            // Set Sliders Profile
+            document.getElementById('prof-pos-x').value = currentUser.posX || 50;
+            document.getElementById('prof-pos-y').value = currentUser.posY || 50;
+
             document.getElementById('prof-name-display').innerText = currentUser.name;
             document.getElementById('prof-role-display').innerText = currentUser.role;
             
@@ -1053,12 +1237,16 @@
         function saveProfile() {
             const name=document.getElementById('prof-name').value, user=document.getElementById('prof-username').value, pass=document.getElementById('prof-password').value;
             const avatarSrc = document.getElementById('prof-img-display').src;
+            const posX = document.getElementById('prof-pos-x').value;
+            const posY = document.getElementById('prof-pos-y').value;
 
             const idx = db.users.findIndex(u=>u.id===currentUser.id);
             if(idx!==-1) { 
                 db.users[idx].name=name; 
                 db.users[idx].username=user; 
                 db.users[idx].avatar = avatarSrc;
+                db.users[idx].posX = posX;
+                db.users[idx].posY = posY;
 
                 if(pass) db.users[idx].password=pass; 
                 currentUser=db.users[idx]; 
@@ -1099,7 +1287,7 @@
 
                         if(!Array.isArray(db.users)) db.users = [];
                         if(name.toLowerCase()!=='nama' && !db.users.find(u=>u.username===username)) {
-                            db.users.push({ id:'IMP_'+Date.now()+c, name, username, password, role, kelas, gender: gender, disabled:false, avatar:'https://api.dicebear.com/7.x/notionists/svg?seed='+name }); c++;
+                            db.users.push({ id:'IMP_'+Date.now()+c, name, username, password, role, kelas, gender: gender, disabled:false, avatar:'https://api.dicebear.com/7.x/notionists/svg?seed='+name, posX: 50, posY: 50 }); c++;
                         }
                     }
                 });
@@ -1139,7 +1327,7 @@
             
             if(!u) {
                 if(parts[2]) {
-                    u = { id: 'AUTO_'+Date.now(), username, name: parts[2], role: parts[3]||'siswa', kelas: parts[4]||'-', gender:'L', password:'123', disabled:false, avatar:'https://api.dicebear.com/7.x/notionists/svg?seed='+parts[2] };
+                    u = { id: 'AUTO_'+Date.now(), username, name: parts[2], role: parts[3]||'siswa', kelas: parts[4]||'-', gender:'L', password:'123', disabled:false, avatar:'https://api.dicebear.com/7.x/notionists/svg?seed='+parts[2], posX: 50, posY: 50 };
                     db.users.push(u);
                 } else {
                     playSound('error');
