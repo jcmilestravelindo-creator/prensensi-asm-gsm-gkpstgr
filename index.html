@@ -190,7 +190,7 @@
     <section id="screen-login" class="hidden max-w-md mx-auto min-h-screen flex flex-col justify-center">
         <div class="text-center mb-8">
             <div class="flex justify-center mb-4">
-                <img src="Logo GKPS.png" alt="Logo GKPS" class="h-24 w-auto object-contain">
+                <img src="Logo GKPS.png" alt="" class="h-24 w-auto object-contain" onerror="this.style.display='none'">
             </div>
             <h1 onclick="triggerSecretReset()" class="text-3xl font-extrabold text-blue-900 tracking-tight cursor-pointer select-none">GKPS TANGERANG</h1>
             <p class="text-gray-500 font-medium">Sistem Absensi Terpadu</p>
@@ -827,11 +827,23 @@
                         }
                         checkBroadcasts(currentUser.role);
                         checkManualAttendanceVisibility(); 
-                    } 
+                        
+                        // FIX: Ensure correct screen showing if session valid
+                        const lastScreen = localStorage.getItem('gkps_last_screen');
+                        if (lastScreen === 'dashboard' && currentUser.role === 'admin') {
+                             renderDashboardScreen(); // Force re-render admin tabs
+                        }
+
+                    } else {
+                        showScreen('login');
+                    }
                 } else {
                     createDefaultAdmin();
                 }
             });
+            
+            // If no session found initially, show login
+            if(!currentUser) showScreen('login');
         }
 
         function createDefaultAdmin() {
@@ -938,6 +950,7 @@
             const btnGuru = document.getElementById('manual-absen-container-guru');
             const btnDash = document.getElementById('manual-absen-container-dash');
             
+            // RESET: Hide all first
             if(btnSiswa) btnSiswa.classList.add('hidden');
             if(btnGuru) btnGuru.classList.add('hidden');
             if(btnDash) btnDash.classList.add('hidden');
@@ -952,6 +965,7 @@
             const already = db.attendance.find(a => a.username === currentUser.username && a.date === today);
             if(already) return; 
 
+            // SHOW based on role
             if(currentUser.role === 'siswa' && btnSiswa) btnSiswa.classList.remove('hidden');
             if(currentUser.role !== 'siswa') {
                 if(btnDash) btnDash.classList.remove('hidden');
@@ -1072,9 +1086,13 @@
                 document.getElementById('tab-users').classList.add('hidden');
                 document.getElementById('tab-messages').classList.add('hidden');
                 document.getElementById('tab-settings').classList.add('hidden');
+                
+                // SECURITY: Kick non-admin from admin tabs
+                const activeTab = localStorage.getItem('gkps_tab');
+                if(['users', 'messages', 'settings'].includes(activeTab)) {
+                    switchTab('home');
+                }
             }
-            
-            // Note: We do NOT force switchTab here anymore to allow restoration of last tab
         }
         function switchTab(tab) {
             document.querySelectorAll('.tab-view').forEach(el => el.classList.add('hidden'));
@@ -1315,7 +1333,7 @@
                 if(pass) db.users[idx].password = pass;
             } else {
                 if(!Array.isArray(db.users)) db.users = [];
-                db.users.push({ id:'USR_'+Date.now(), name, username:user, password:pass||'123', role, gender, kelas, disabled:status==='disabled', avatar:avatarUrl, posX: posX, posY: posY });
+                db.users.push({ id:'USR_'+Date.now(), name, username:user, password:pass||'123', role, gender, kelas, disabled:status==='disabled', avatar: avatarUrl, posX: posX, posY: posY });
             }
             saveDb(); closeModal(); renderUserTable();
         }
