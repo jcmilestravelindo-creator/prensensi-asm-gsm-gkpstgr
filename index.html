@@ -278,7 +278,7 @@
             </div>
 
             <div class="flex gap-3 items-center">
-                 <img src="Logo Tema.png" alt="Logo Tema" class="h-10 w-auto object-contain hidden md:block" onerror="this.style.display='none'">
+                 <img src="Logo Tema.png" alt="" class="h-10 w-auto object-contain hidden md:block" onerror="this.style.display='none'">
 
                  <div class="relative notif-container">
                     <button onclick="toggleDropdown('dash-notif-dropdown', event)" class="text-2xl text-gray-600 relative focus:outline-none mt-1">
@@ -805,7 +805,7 @@
                     if(!db.messages) db.messages = [];
                     if(!db.users) db.users = [];
                     if(!db.attendance) db.attendance = [];
-                    // FIX: DEFAULT MANUAL ATTENDANCE TO TRUE FOR TESTING IF NOT SET
+                    // FIX: DEFAULT MANUAL ABSEN TO TRUE IF NOT SET
                     if(!db.settings) db.settings = { manual: true, start: "00:00", end: "23:59" }; 
                     
                     if(currentUser) {
@@ -829,10 +829,10 @@
                         checkBroadcasts(currentUser.role);
                         checkManualAttendanceVisibility(); 
                         
-                        // FIX: Ensure correct screen showing if session valid
+                        // FIX: Force re-render admin tabs if refresh on dashboard
                         const lastScreen = localStorage.getItem('gkps_last_screen');
                         if (lastScreen === 'dashboard' && currentUser.role === 'admin') {
-                             renderDashboardScreen(); // Force re-render admin tabs
+                             renderDashboardScreen(); 
                         }
 
                     } else {
@@ -856,7 +856,7 @@
             }];
             db.isSetup = true;
             // ENABLE MANUAL ABSEN BY DEFAULT FOR NEW INSTALL
-            db.settings = { manual: true, start: "07:00", end: "23:00" };
+            db.settings = { manual: true, start: "00:00", end: "23:59" };
             saveDb();
         }
 
@@ -960,11 +960,16 @@
             if(btnGuru) btnGuru.classList.add('hidden');
             if(btnDash) btnDash.classList.add('hidden');
 
-            if(!db.settings || !db.settings.manual) return; 
+            // Default to TRUE if undefined to fix visibility issue
+            const manualEnabled = db.settings ? db.settings.manual : true;
+            if(!manualEnabled) return; 
 
             const now = new Date();
             const currentTime = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
-            if(currentTime < db.settings.start || currentTime > db.settings.end) return; 
+            const startTime = (db.settings && db.settings.start) ? db.settings.start : "00:00";
+            const endTime = (db.settings && db.settings.end) ? db.settings.end : "23:59";
+            
+            if(currentTime < startTime || currentTime > endTime) return; 
 
             const today = new Date().toLocaleDateString();
             const already = db.attendance.find(a => a.username === currentUser.username && a.date === today);
@@ -1092,7 +1097,7 @@
                 document.getElementById('tab-messages').classList.add('hidden');
                 document.getElementById('tab-settings').classList.add('hidden');
                 
-                // SECURITY: Kick non-admin from admin tabs
+                // SECURITY FIX: KICK GURU/SISWA OUT OF SETTINGS TAB
                 const activeTab = localStorage.getItem('gkps_tab');
                 if(['users', 'messages', 'settings'].includes(activeTab)) {
                     switchTab('home');
