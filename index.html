@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Absensi GKPS - PRO ULTIMATE (QR High Speed)</title>
+    <title>Sistem Absensi GKPS - PRO ULTIMATE</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -78,7 +78,6 @@
         .card-photo-frame img { width: 100%; height: 100%; object-fit: cover; transition: object-position 0.2s;
         }
         
-        /* Overlay for Image Upload (Hover Effect) */
         .upload-overlay {
             position: absolute; inset: 0; background: rgba(0,0,0,0.4); display: flex; justify-content: center; align-items: center; 
             opacity: 0; transition: opacity 0.2s; color: white; font-weight: bold; font-size: 0.7rem; flex-direction: column;
@@ -191,7 +190,7 @@
     <section id="screen-login" class="hidden max-w-md mx-auto min-h-screen flex flex-col justify-center">
         <div class="text-center mb-8">
             <div class="flex justify-center mb-4">
-                <img src="Logo GKPS.png" alt="Logo GKPS" class="h-24 w-auto object-contain">
+                <img src="Logo GKPS.png" alt="" class="h-24 w-auto object-contain" onerror="this.style.display='none'">
             </div>
             <h1 onclick="triggerSecretReset()" class="text-3xl font-extrabold text-blue-900 tracking-tight cursor-pointer select-none">GKPS TANGERANG</h1>
             <p class="text-gray-500 font-medium">Sistem Absensi Terpadu</p>
@@ -259,7 +258,7 @@
                 <div id="qrcode"></div>
                 <p class="text-[9px] text-gray-400 mt-2">Scan QR ini untuk absensi</p>
                 <div id="manual-absen-container-siswa" class="w-full mt-2 hidden">
-                    <button onclick="handleManualAttendance()" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg text-xs shadow animate-pulse">📍 Absen Manual (Klik Disini)</button>
+                    <button onclick="openManualModal()" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg text-xs shadow animate-pulse">📍 Absen Manual (Klik Disini)</button>
                 </div>
             </div>
         </div>
@@ -270,13 +269,16 @@
             <div class="flex items-center gap-3">
                 <img id="dash-avatar" src="" class="w-12 h-12 rounded-full border-2 border-blue-500 shadow-sm bg-white object-cover">
                 <div>
-                    <h1 class="text-xl font-bold text-blue-900 leading-tight">Dashboard <span id="role-badge" class="bg-yellow-200 text-yellow-800 text-xs px-2 py-0.5 rounded ml-1">ROLE</span></h1>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-xl font-bold text-blue-900 leading-tight">Dashboard</h1>
+                        <span id="role-badge" class="bg-yellow-200 text-yellow-800 text-xs px-2 py-0.5 rounded">ROLE</span>
+                    </div>
                     <p class="text-xs text-gray-500">Halo, <span id="guru-greet-name">User</span></p>
                 </div>
             </div>
 
             <div class="flex gap-3 items-center">
-                 <img src="Logo Tema.png" alt="Logo Tema" class="h-10 w-auto object-contain hidden md:block">
+                 <img src="Logo Tema.png" alt="" class="h-10 w-auto object-contain hidden md:block" onerror="this.style.display='none'">
 
                  <div class="relative notif-container">
                     <button onclick="toggleDropdown('dash-notif-dropdown', event)" class="text-2xl text-gray-600 relative focus:outline-none mt-1">
@@ -317,7 +319,7 @@
             </div>
             
             <div id="manual-absen-container-dash" class="w-full mb-4 hidden">
-                <button onclick="handleManualAttendance()" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-xl text-sm shadow-lg flex justify-center items-center gap-2">
+                <button onclick="openManualModal()" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-xl text-sm shadow-lg flex justify-center items-center gap-2">
                     <span>📍</span> Klik Disini Untuk Absen Manual
                 </button>
             </div>
@@ -329,7 +331,7 @@
                 </div>
                 <div class="overflow-x-auto max-h-[300px]">
                     <table class="w-full admin-table">
-                        <thead><tr><th>Jam</th><th>Nama</th><th>Kelas</th><th>Status</th></tr></thead>
+                        <thead><tr><th>Jam</th><th>Nama</th><th>Kelas</th><th>Status</th><th>Ket</th></tr></thead>
                         <tbody id="table-attendance"></tbody>
                     </table>
                 </div>
@@ -475,6 +477,33 @@
             </div>
         </div>
     </section>
+
+    <div id="manual-modal" class="modal-overlay">
+        <div class="modal-content bg-white">
+            <div class="text-center mb-6">
+                <div class="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <span class="text-3xl">📍</span>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800">Absen Manual</h3>
+                <p class="text-xs text-gray-500">Silakan pilih status kehadiran Anda.</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <button onclick="submitManualAbsen('Hadir')" class="bg-green-100 text-green-700 border border-green-200 py-3 rounded-xl font-bold hover:bg-green-200 transition">✅ HADIR</button>
+                <button onclick="toggleNoteInput('Sakit')" class="bg-yellow-100 text-yellow-700 border border-yellow-200 py-3 rounded-xl font-bold hover:bg-yellow-200 transition">🤒 SAKIT</button>
+                <button onclick="toggleNoteInput('Izin')" class="bg-blue-100 text-blue-700 border border-blue-200 py-3 rounded-xl font-bold hover:bg-blue-200 transition">📝 IZIN</button>
+                <button onclick="submitManualAbsen('Alpha')" class="bg-red-100 text-red-700 border border-red-200 py-3 rounded-xl font-bold hover:bg-red-200 transition">❌ ALPHA</button>
+            </div>
+
+            <div id="manual-note-section" class="hidden">
+                <label class="text-[10px] font-bold text-gray-500 uppercase">Keterangan (Wajib)</label>
+                <textarea id="manual-note" class="pro-input h-20 mb-2" placeholder="Tulis alasan..."></textarea>
+                <button id="btn-submit-note" class="w-full bg-gray-800 text-white font-bold py-2 rounded-lg" onclick="">Kirim</button>
+            </div>
+
+            <button onclick="document.getElementById('manual-modal').style.display='none'" class="w-full mt-4 text-gray-400 text-xs hover:text-gray-600">Batal</button>
+        </div>
+    </div>
 
     <div id="user-modal" class="modal-overlay">
         <div class="modal-content">
@@ -648,7 +677,7 @@
                     <div id="qrcode-guru"></div>
                     <p class="text-[9px] text-gray-400 mt-2">Scan QR ini untuk absensi</p>
                     <div id="manual-absen-container-guru" class="w-full mt-2 hidden">
-                        <button onclick="handleManualAttendance()" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg text-xs shadow animate-pulse">📍 Absen Manual (Klik Disini)</button>
+                        <button onclick="openManualModal()" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg text-xs shadow animate-pulse">📍 Absen Manual (Klik Disini)</button>
                     </div>
                 </div>
             </div>
@@ -903,31 +932,26 @@
         }
 
         function checkManualAttendanceVisibility() {
-            // Check global switch, time range, and if already present
             if(!currentUser) return;
             
             const btnSiswa = document.getElementById('manual-absen-container-siswa');
             const btnGuru = document.getElementById('manual-absen-container-guru');
             const btnDash = document.getElementById('manual-absen-container-dash');
             
-            // Default hide all
             if(btnSiswa) btnSiswa.classList.add('hidden');
             if(btnGuru) btnGuru.classList.add('hidden');
             if(btnDash) btnDash.classList.add('hidden');
 
-            if(!db.settings || !db.settings.manual) return; // Feature disabled by admin
+            if(!db.settings || !db.settings.manual) return; 
 
-            // Check Time
             const now = new Date();
             const currentTime = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
-            if(currentTime < db.settings.start || currentTime > db.settings.end) return; // Out of time
+            if(currentTime < db.settings.start || currentTime > db.settings.end) return; 
 
-            // Check if already present
             const today = new Date().toLocaleDateString();
             const already = db.attendance.find(a => a.username === currentUser.username && a.date === today);
-            if(already) return; // Already present
+            if(already) return; 
 
-            // Show Buttons
             if(currentUser.role === 'siswa' && btnSiswa) btnSiswa.classList.remove('hidden');
             if(currentUser.role !== 'siswa') {
                 if(btnDash) btnDash.classList.remove('hidden');
@@ -935,23 +959,53 @@
             }
         }
 
-        function handleManualAttendance() {
-            if(confirm("Anda yakin ingin melakukan Absen Manual?")) {
-                const today = new Date().toLocaleDateString();
-                // Double check
-                if(db.attendance.find(a => a.username === currentUser.username && a.date === today)) {
-                    alert("Anda sudah absen hari ini!");
-                    checkManualAttendanceVisibility();
-                    return;
-                }
-                
-                playSound('success');
-                db.attendance.push({ username: currentUser.username, name: currentUser.name, date: today, time: new Date().toLocaleTimeString(), type: 'MANUAL' });
-                saveDb();
-                alert("Absen Manual Berhasil!");
-                checkManualAttendanceVisibility(); // Hide button
-                if(currentUser.role !== 'siswa') renderHomeStats();
+        // NEW: MANUAL ABSEN MODAL LOGIC
+        function openManualModal() {
+            const today = new Date().toLocaleDateString();
+            if(db.attendance.find(a => a.username === currentUser.username && a.date === today)) {
+                alert("Anda sudah absen hari ini!");
+                return;
             }
+            document.getElementById('manual-modal').style.display = 'flex';
+            document.getElementById('manual-note-section').classList.add('hidden');
+        }
+
+        function toggleNoteInput(status) {
+            const noteSection = document.getElementById('manual-note-section');
+            const btnSubmit = document.getElementById('btn-submit-note');
+            
+            if (status === 'Sakit' || status === 'Izin') {
+                noteSection.classList.remove('hidden');
+                document.getElementById('manual-note').focus();
+                btnSubmit.onclick = () => submitManualAbsen(status);
+            } else {
+                noteSection.classList.add('hidden');
+            }
+        }
+
+        function submitManualAbsen(status) {
+            let note = '-';
+            if (status === 'Sakit' || status === 'Izin') {
+                note = document.getElementById('manual-note').value;
+                if(!note) return alert("Mohon isi keterangan!");
+            }
+
+            const today = new Date().toLocaleDateString();
+            playSound('success');
+            db.attendance.push({ 
+                username: currentUser.username, 
+                name: currentUser.name, 
+                date: today, 
+                time: new Date().toLocaleTimeString(), 
+                type: 'MANUAL',
+                status: status,
+                note: note
+            });
+            saveDb();
+            document.getElementById('manual-modal').style.display = 'none';
+            alert("Absen Berhasil: " + status);
+            checkManualAttendanceVisibility(); 
+            if(currentUser.role !== 'siswa') renderHomeStats();
         }
 
         function sendBroadcast() {
@@ -1008,9 +1062,17 @@
             document.getElementById('dash-avatar').style.objectPosition = `${currentUser.posX||50}% ${currentUser.posY||50}%`;
             
             const isAdmin = currentUser.role === 'admin';
-            document.getElementById('tab-users').className = isAdmin ? 'nav-pill' : 'nav-pill hidden';
-            document.getElementById('tab-messages').className = isAdmin ? 'nav-pill' : 'nav-pill hidden';
-            document.getElementById('tab-settings').className = isAdmin ? 'nav-pill' : 'nav-pill hidden';
+            
+            // FIX REFRESH: Ensure elements are visible based on role
+            if (isAdmin) {
+                document.getElementById('tab-users').classList.remove('hidden');
+                document.getElementById('tab-messages').classList.remove('hidden');
+                document.getElementById('tab-settings').classList.remove('hidden');
+            } else {
+                document.getElementById('tab-users').classList.add('hidden');
+                document.getElementById('tab-messages').classList.add('hidden');
+                document.getElementById('tab-settings').classList.add('hidden');
+            }
             
             // Note: We do NOT force switchTab here anymore to allow restoration of last tab
         }
@@ -1130,10 +1192,23 @@
             
             document.getElementById('count-present').innerText = logs.length;
             const tbody = document.getElementById('table-attendance');
-            if(logs.length===0) tbody.innerHTML = '<tr><td colspan="4" class="text-center p-4 text-gray-400">Belum ada absen</td></tr>';
+            if(logs.length===0) tbody.innerHTML = '<tr><td colspan="5" class="text-center p-4 text-gray-400">Belum ada absen</td></tr>';
             else tbody.innerHTML = logs.slice().reverse().map(l => {
                 const u = db.users.find(x => x.username === l.username);
-                return `<tr><td class="text-gray-500 font-mono text-xs">${l.time}</td><td class="font-bold text-sm">${l.name} ${l.type === 'MANUAL' ? '📍' : ''}</td><td><span class="badge badge-class">${u?u.kelas:'-'}</span></td><td><span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Hadir</span></td></tr>`;
+                let statusLabel = 'Hadir';
+                let colorClass = 'bg-green-100 text-green-800';
+                
+                if (l.status === 'Sakit') { statusLabel = 'Sakit'; colorClass = 'bg-yellow-100 text-yellow-800'; }
+                else if (l.status === 'Izin') { statusLabel = 'Izin'; colorClass = 'bg-blue-100 text-blue-800'; }
+                else if (l.status === 'Alpha') { statusLabel = 'Alpha'; colorClass = 'bg-red-100 text-red-800'; }
+
+                return `<tr>
+                    <td class="text-gray-500 font-mono text-xs">${l.time}</td>
+                    <td class="font-bold text-sm">${l.name}</td>
+                    <td><span class="badge badge-class">${u?u.kelas:'-'}</span></td>
+                    <td><span class="text-xs ${colorClass} px-2 py-1 rounded">${statusLabel}</span></td>
+                    <td class="text-[10px] text-gray-500 italic">${l.note || '-'}</td>
+                </tr>`;
             }).join('');
         }
 
@@ -1402,7 +1477,7 @@
             }
 
             playSound('success');
-            db.attendance.push({ username: u.username, name: u.name, date: today, time: new Date().toLocaleTimeString() });
+            db.attendance.push({ username: u.username, name: u.name, date: today, time: new Date().toLocaleTimeString(), status: 'Hadir' });
             showStatus('HADIR: '+u.name, 'green');
             saveDb();
         }
