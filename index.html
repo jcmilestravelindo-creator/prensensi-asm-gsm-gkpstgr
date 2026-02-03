@@ -73,9 +73,18 @@
         .card-photo-frame {
             width: 80px;
             height: 100px; background: #e2e8f0; border-radius: 8px; overflow: hidden; border: 2px solid white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); flex-shrink: 0;
+            cursor: pointer; position: relative;
         }
         .card-photo-frame img { width: 100%; height: 100%; object-fit: cover;
         }
+        
+        /* Overlay for Image Upload (Hover Effect) */
+        .upload-overlay {
+            position: absolute; inset: 0; background: rgba(0,0,0,0.4); display: flex; justify-content: center; align-items: center; 
+            opacity: 0; transition: opacity 0.2s; color: white; font-weight: bold; font-size: 0.7rem; flex-direction: column;
+        }
+        .group:hover .upload-overlay { opacity: 1; }
+
         .card-info h3 { font-size: 1.1rem; font-weight: 800; color: #1e293b; line-height: 1.2;
             margin-bottom: 4px; text-transform: uppercase; }
         .card-info p { font-size: 0.75rem; color: #64748b;
@@ -89,11 +98,11 @@
             padding: 1rem; text-align: center; border-top: 1px dashed #e2e8f0; display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
         /* QR Code Container Styling */
-        #qrcode { 
+        #qrcode, #qrcode-guru { 
             padding: 5px;
             background: white; border: 1px solid #e2e8f0; border-radius: 8px; 
         }
-        #qrcode img { display: block;
+        #qrcode img, #qrcode-guru img { display: block;
         }
         
         /* Table Styling */
@@ -267,6 +276,7 @@
                 </div>
 
                 <div class="flex gap-2">
+                    <button onclick="openIdCardModal()" class="bg-blue-100 text-blue-600 text-xs font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex items-center gap-1">🆔 Kartu ID</button>
                     <button onclick="openProfileModal()" class="text-blue-500 text-xs font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-50">Profil Saya</button>
                     <button onclick="logout()" class="text-red-500 text-xs font-bold border border-red-200 px-3 py-1 rounded-full hover:bg-red-50">Keluar</button>
                 </div>
@@ -421,6 +431,17 @@
             <h3 id="modal-title" class="text-lg font-bold mb-4">Edit User</h3>
             <input type="hidden" id="modal-id">
             
+            <div class="text-center mb-4">
+                 <div class="w-20 h-20 mx-auto bg-gray-100 rounded-full border border-gray-300 relative overflow-hidden group">
+                     <img id="modal-avatar-preview" src="" class="w-full h-full object-cover">
+                     <label class="upload-overlay cursor-pointer">
+                         <span class="text-white text-xs font-bold">📷 Ubah</span>
+                         <input type="file" id="modal-file-input" hidden accept="image/*" onchange="handleImageUpload(this, 'modal-avatar-preview')">
+                     </label>
+                 </div>
+                 <p class="text-[9px] text-gray-400 mt-1">Klik foto untuk ganti</p>
+            </div>
+
             <label class="text-xs font-bold text-gray-500 uppercase">Nama Lengkap</label>
             <input type="text" id="modal-name" class="pro-input">
             
@@ -476,9 +497,15 @@
         <div class="modal-content overflow-hidden p-0" style="max-width: 400px;">
             <div class="bg-blue-600 p-6 text-center relative">
                 <button onclick="document.getElementById('profile-modal').style.display='none'" class="absolute top-4 right-4 text-white hover:text-gray-200 font-bold">✕</button>
-                <div class="w-24 h-24 mx-auto bg-white rounded-full p-1 shadow-lg mb-3">
+                
+                <div class="w-24 h-24 mx-auto bg-white rounded-full p-1 shadow-lg mb-3 relative overflow-hidden group">
                     <img id="prof-img-display" src="" class="w-full h-full rounded-full object-cover">
+                    <label class="upload-overlay cursor-pointer">
+                        <span class="text-white text-xs font-bold">📷 Ganti</span>
+                        <input type="file" id="prof-file-input" hidden accept="image/*" onchange="handleImageUpload(this, 'prof-img-display')">
+                    </label>
                 </div>
+                
                 <h3 id="prof-name-display" class="text-white font-bold text-xl tracking-wide">User</h3>
                 <span id="prof-role-display" class="bg-blue-800 text-blue-100 text-xs px-3 py-1 rounded-full uppercase font-bold tracking-wider mt-2 inline-block">ROLE</span>
             </div>
@@ -516,6 +543,31 @@
                     <div class="flex gap-2 mt-6">
                         <button onclick="saveProfile()" class="pro-btn btn-blue shadow-lg shadow-blue-200">Simpan Perubahan</button>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="id-card-modal" class="modal-overlay">
+        <div class="modal-content bg-transparent shadow-none p-0 flex justify-center items-center" style="box-shadow: none; border: none;">
+            <div class="student-card animate-fade-in relative">
+                <button onclick="document.getElementById('id-card-modal').style.display='none'" class="absolute top-2 right-2 text-gray-400 hover:text-gray-600 bg-white rounded-full p-1 z-10 font-bold">✕</button>
+                <div class="card-header-strip"></div>
+                <div class="card-body">
+                    <div class="card-photo-frame">
+                        <img id="card-img-guru" src="" alt="Foto">
+                    </div>
+                    <div class="card-info">
+                        <div class="text-[10px] font-bold text-blue-500 tracking-widest uppercase mb-1">GKPS TANGERANG</div>
+                        <h3 id="card-name-guru">NAMA GURU</h3>
+                        <p id="card-id-guru">ID: 12345678</p>
+                        <p id="card-class-guru">GURU SEKOLAH MINGGU</p>
+                        <span class="role-tag" id="card-role-guru">GURU</span>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div id="qrcode-guru"></div>
+                    <p class="text-[9px] text-gray-400 mt-2">Scan QR ini untuk absensi</p>
                 </div>
             </div>
         </div>
@@ -565,8 +617,7 @@
         let currentUser = null;
         let sortConfig = { key: null, asc: true };
 
-        // --- SOUND EFFECTS (UPDATE BARU) ---
-        // Menggunakan link audio CDN yang stabil untuk efek suara
+        // --- SOUND EFFECTS ---
         const audioSuccess = new Audio('https://actions.google.com/sounds/v1/science_fiction/scifi_input_accept.ogg');
         const audioFail = new Audio('https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg');
         
@@ -832,6 +883,31 @@
             });
         }
 
+        // NEW: TEACHER ID CARD LOGIC
+        function openIdCardModal() {
+            if (!currentUser) return;
+            document.getElementById('id-card-modal').style.display = 'flex';
+            
+            // Populate Data
+            document.getElementById('card-img-guru').src = currentUser.avatar;
+            document.getElementById('card-name-guru').innerText = currentUser.name;
+            document.getElementById('card-id-guru').innerText = "ID: " + currentUser.username;
+            document.getElementById('card-class-guru').innerText = currentUser.kelas !== '-' ? "KELAS " + currentUser.kelas : "GURU / STAFF";
+            document.getElementById('card-role-guru').innerText = currentUser.role.toUpperCase();
+
+            // Generate QR
+            const codeData = `GKPS|${currentUser.username}|${currentUser.name}|${currentUser.role}|${currentUser.kelas||'-'}`;
+            document.getElementById("qrcode-guru").innerHTML = "";
+            new QRCode(document.getElementById("qrcode-guru"), {
+                text: codeData,
+                width: 128,
+                height: 128,
+                colorDark : "#000000",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+        }
+
         // HOME STATS
         function renderHomeStats() {
             const today = new Date().toLocaleDateString();
@@ -847,19 +923,44 @@
             }).join('');
         }
 
+        // --- IMAGE UPLOAD LOGIC (NEW) ---
+        function handleImageUpload(input, previewId) {
+            const file = input.files[0];
+            if (!file) return;
+
+            // Check file size (Max 150KB to keep DB happy)
+            if (file.size > 150000) {
+                alert("Ukuran file terlalu besar! Maksimal 150KB.");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                // Set preview
+                document.getElementById(previewId).src = e.target.result;
+            }
+            reader.readAsDataURL(file);
+        }
+
         // CRUD USER
         function openUserModal(id=null) {
             document.getElementById('user-modal').style.display = 'flex';
+            document.getElementById('modal-file-input').value = ""; // Reset input file
+            
             if(id) {
                 const u = db.users.find(x => x.id === id);
                 document.getElementById('modal-id').value = u.id; document.getElementById('modal-name').value = u.name; document.getElementById('modal-username').value = u.username; document.getElementById('modal-password').value = '';
                 document.getElementById('modal-role').value = u.role; document.getElementById('modal-gender').value = u.gender||'L';
                 document.getElementById('modal-kelas').value = u.kelas||'-'; document.getElementById('modal-status').value = u.disabled?'disabled':'active';
+                // Set Preview to current avatar
+                document.getElementById('modal-avatar-preview').src = u.avatar || 'https://api.dicebear.com/7.x/adventurer/svg?seed='+u.name;
             } else {
                 document.getElementById('modal-id').value = '';
                 document.getElementById('modal-name').value = ''; document.getElementById('modal-username').value = ''; document.getElementById('modal-password').value = '';
                 document.getElementById('modal-role').value = 'siswa'; document.getElementById('modal-gender').value = 'L'; document.getElementById('modal-kelas').value = '-';
                 document.getElementById('modal-status').value = 'active';
+                // Set default preview
+                document.getElementById('modal-avatar-preview').src = 'https://via.placeholder.com/150?text=Upload';
             }
         }
         function closeModal() { document.getElementById('user-modal').style.display = 'none';
@@ -867,13 +968,19 @@
         function saveUser() {
             const id=document.getElementById('modal-id').value, name=document.getElementById('modal-name').value, user=document.getElementById('modal-username').value, pass=document.getElementById('modal-password').value;
             const role=document.getElementById('modal-role').value, gender=document.getElementById('modal-gender').value, kelas=document.getElementById('modal-kelas').value, status=document.getElementById('modal-status').value;
+            const avatarPreview = document.getElementById('modal-avatar-preview').src;
+            
             if(!name || !user) return alert('Wajib isi!');
             
-            const avatarUrl = 'https://api.dicebear.com/7.x/adventurer/svg?seed=' + name;
+            // Check if uploaded (Base64) or Default Dicebear
+            let avatarUrl = avatarPreview;
+            if(avatarUrl.includes('placeholder') || avatarUrl === '') {
+                 avatarUrl = 'https://api.dicebear.com/7.x/adventurer/svg?seed=' + name;
+            }
+
             if(id) {
                 const idx = db.users.findIndex(x => x.id === id);
-                const currentAvatar = db.users[idx].avatar || avatarUrl;
-                db.users[idx] = {...db.users[idx], name, username:user, role, gender, kelas, disabled:status==='disabled', avatar: currentAvatar};
+                db.users[idx] = {...db.users[idx], name, username:user, role, gender, kelas, disabled:status==='disabled', avatar: avatarUrl};
                 if(pass) db.users[idx].password = pass;
             } else {
                 if(!Array.isArray(db.users)) db.users = [];
@@ -893,10 +1000,11 @@
         function deleteSelectedUsers() { if(confirm("Hapus terpilih?")) { const ids = Array.from(document.querySelectorAll('.user-checkbox:checked')).map(cb=>cb.value);
             db.users = db.users.filter(u => !ids.includes(u.id)); saveDb(); } }
 
-        // SELF EDIT & FORGOT (UPDATED PROFESSIONAL MODAL LOGIC)
+        // SELF EDIT & FORGOT (UPDATED PROFESSIONAL MODAL LOGIC + UPLOAD)
         function openProfileModal() { 
             if(!currentUser) return;
             document.getElementById('profile-modal').style.display='flex'; 
+            document.getElementById('prof-file-input').value = ""; // Reset input
             
             // Set Form Values (Untuk Edit)
             document.getElementById('prof-name').value = currentUser.name; 
@@ -920,10 +1028,15 @@
         
         function saveProfile() {
             const name=document.getElementById('prof-name').value, user=document.getElementById('prof-username').value, pass=document.getElementById('prof-password').value;
+            const avatarSrc = document.getElementById('prof-img-display').src;
+
             const idx = db.users.findIndex(u=>u.id===currentUser.id);
             if(idx!==-1) { 
                 db.users[idx].name=name; 
                 db.users[idx].username=user; 
+                // Save new avatar if changed
+                db.users[idx].avatar = avatarSrc;
+
                 if(pass) db.users[idx].password=pass; 
                 currentUser=db.users[idx]; 
                 saveDb(); 
