@@ -190,7 +190,7 @@
     <section id="screen-login" class="hidden max-w-md mx-auto min-h-screen flex flex-col justify-center">
         <div class="text-center mb-8">
             <div class="flex justify-center mb-4">
-                <img src="Logo GKPS.png" alt="" class="h-24 w-auto object-contain" onerror="this.style.display='none'">
+                <img src="Logo GKPS.png" alt="Logo GKPS" class="h-24 w-auto object-contain" onerror="this.style.display='none'">
             </div>
             <h1 onclick="triggerSecretReset()" class="text-3xl font-extrabold text-blue-900 tracking-tight cursor-pointer select-none">GKPS TANGERANG</h1>
             <p class="text-gray-500 font-medium">Sistem Absensi Terpadu</p>
@@ -278,7 +278,7 @@
             </div>
 
             <div class="flex gap-3 items-center">
-                 <img src="Logo Tema.png" alt="" class="h-10 w-auto object-contain hidden md:block" onerror="this.style.display='none'">
+                 <img src="Logo Tema.png" alt="Logo Tema" class="h-10 w-auto object-contain hidden md:block" onerror="this.style.display='none'">
 
                  <div class="relative notif-container">
                     <button onclick="toggleDropdown('dash-notif-dropdown', event)" class="text-2xl text-gray-600 relative focus:outline-none mt-1">
@@ -485,7 +485,7 @@
                     <span class="text-3xl">📍</span>
                 </div>
                 <h3 class="text-xl font-bold text-gray-800">Absen Manual</h3>
-                <p class="text-xs text-gray-500">Silakan pilih status kehadiran Anda.</p>
+                <p class="text-xs text-gray-500">Pilih status kehadiran:</p>
             </div>
 
             <div class="grid grid-cols-2 gap-3 mb-4">
@@ -495,13 +495,13 @@
                 <button onclick="submitManualAbsen('Alpha')" class="bg-red-100 text-red-700 border border-red-200 py-3 rounded-xl font-bold hover:bg-red-200 transition">❌ ALPHA</button>
             </div>
 
-            <div id="manual-note-section" class="hidden">
-                <label class="text-[10px] font-bold text-gray-500 uppercase">Keterangan (Wajib)</label>
-                <textarea id="manual-note" class="pro-input h-20 mb-2" placeholder="Tulis alasan..."></textarea>
-                <button id="btn-submit-note" class="w-full bg-gray-800 text-white font-bold py-2 rounded-lg" onclick="">Kirim</button>
+            <div id="manual-note-section" class="hidden bg-gray-50 p-3 rounded-lg border border-gray-200 mb-2">
+                <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Keterangan (Wajib Diisi)</label>
+                <textarea id="manual-note" class="pro-input h-20 mb-2 text-sm" placeholder="Contoh: Sakit demam sejak pagi..."></textarea>
+                <button id="btn-submit-note" class="w-full bg-gray-800 text-white font-bold py-2 rounded-lg text-xs hover:bg-gray-900">KIRIM ABSEN</button>
             </div>
 
-            <button onclick="document.getElementById('manual-modal').style.display='none'" class="w-full mt-4 text-gray-400 text-xs hover:text-gray-600">Batal</button>
+            <button onclick="document.getElementById('manual-modal').style.display='none'" class="w-full mt-4 text-gray-400 text-xs hover:text-gray-600 font-bold">BATAL</button>
         </div>
     </div>
 
@@ -805,7 +805,8 @@
                     if(!db.messages) db.messages = [];
                     if(!db.users) db.users = [];
                     if(!db.attendance) db.attendance = [];
-                    if(!db.settings) db.settings = { manual: false, start: "07:00", end: "12:00" }; // Default settings
+                    // FIX: DEFAULT MANUAL ATTENDANCE TO TRUE FOR TESTING IF NOT SET
+                    if(!db.settings) db.settings = { manual: true, start: "00:00", end: "23:59" }; 
                     
                     if(currentUser) {
                         // Refresh user data from DB to stay in sync
@@ -854,7 +855,8 @@
                 posX: 50, posY: 50
             }];
             db.isSetup = true;
-            db.settings = { manual: false, start: "07:00", end: "12:00" };
+            // ENABLE MANUAL ABSEN BY DEFAULT FOR NEW INSTALL
+            db.settings = { manual: true, start: "07:00", end: "23:00" };
             saveDb();
         }
 
@@ -901,6 +903,9 @@
                 currentUser = foundUser;
                 // Save Session
                 localStorage.setItem('gkps_session', JSON.stringify(currentUser));
+                
+                // RESET TAB TO HOME FOR FRESH LOGIN
+                localStorage.setItem('gkps_tab', 'home');
 
                 if(!currentUser.avatar) {
                     currentUser.avatar = 'https://api.dicebear.com/7.x/notionists/svg?seed=' + currentUser.name;
