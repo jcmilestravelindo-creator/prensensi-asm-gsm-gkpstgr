@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Absensi GKPS - PRO ULTIMATE (QR High Speed)</title>
+    <title>Sistem Absensi GKPS - PRO ULTIMATE (Barcode ID Card)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -35,9 +36,9 @@
         .nav-pill { padding: 0.5rem 1rem; border-radius: 99px; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: 0.2s; color: #64748b; background: white; border: 1px solid transparent; white-space: nowrap; }
         .nav-pill.active { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(14, 165, 233, 0.4); }
 
-        /* STUDENT ID CARD STYLING (UPDATED FOR QR) */
+        /* NEW: STUDENT ID CARD STYLING */
         .student-card {
-            width: 100%; max-width: 350px; 
+            width: 100%; max-width: 350px; aspect-ratio: 1.586/1; /* Credit Card Ratio */
             margin: 0 auto;
             background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
             border-radius: 16px;
@@ -62,13 +63,10 @@
             display: inline-block; background: #0ea5e9; color: white; font-size: 0.6rem; font-weight: 700; padding: 2px 8px; border-radius: 99px; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px;
         }
         .card-footer {
-            background: white; padding: 1rem; text-align: center; border-top: 1px dashed #e2e8f0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: white; padding: 0.8rem; text-align: center; border-top: 1px dashed #e2e8f0;
         }
-        /* QR Code Container Styling */
-        #qrcode { 
-            padding: 5px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; 
-        }
-        #qrcode img { display: block; }
+        /* Barcode SVG styling */
+        #barcode { width: 100%; height: 40px; }
         
         /* Table Styling */
         .admin-table th { background: #f1f5f9; color: #64748b; font-size: 0.75rem; text-transform: uppercase; padding: 0.8rem; text-align: left; user-select: none; }
@@ -182,8 +180,8 @@
                 </div>
             </div>
             <div class="card-footer">
-                <div id="qrcode"></div>
-                <p class="text-[9px] text-gray-400 mt-2">Scan QR ini untuk absensi</p>
+                <svg id="barcode" class="mx-auto"></svg>
+                <p class="text-[9px] text-gray-400 mt-1">Scan barcode ini untuk absensi</p>
             </div>
         </div>
     </section>
@@ -253,7 +251,7 @@
             <div class="max-w-md mx-auto">
                 <div class="bg-black rounded-3xl overflow-hidden shadow-2xl relative w-full">
                     <div id="reader"></div>
-                    <div class="absolute bottom-0 w-full text-center text-white font-bold text-xs bg-black/50 py-2 z-10">Arahkan ke QR Code</div>
+                    <div class="absolute bottom-0 w-full text-center text-white font-bold text-xs bg-black/50 py-2 z-10">Scan Barcode / QR</div>
                 </div>
                 <div id="scan-status" class="mt-4 text-center font-bold p-3 rounded-xl hidden shadow-lg text-sm"></div>
             </div>
@@ -490,7 +488,7 @@
             dbRef.on('value', (snapshot) => {
                 const val = snapshot.val();
                 if (val) {
-                    // FIX DATA TYPE: FORCE TO ARRAY
+                    // FIX DATA TYPE: FORCE USERS TO ARRAY (SOLUSI SCANNER MACET)
                     if (val.users && typeof val.users === 'object' && !Array.isArray(val.users)) {
                         val.users = Object.values(val.users);
                     }
@@ -504,8 +502,10 @@
                     db = val; // Update local state dari cloud
                     if(!db.messages) db.messages = [];
                     if(!db.users) db.users = [];
-                    if(!db.attendance) db.attendance = [];
+                    if(!db.attendance) db.attendance = []; // FIX: Handle empty attendance
+                    console.log("Data Sync: Updated from Cloud");
                     
+                    // Refresh UI jika sedang di dashboard
                     if(currentUser) {
                         if(currentUser.role === 'admin') {
                             renderUserTable(document.getElementById('search-user').value);
@@ -517,6 +517,7 @@
                         checkBroadcasts(currentUser.role);
                     }
                 } else {
+                    // Jika database kosong (pertama kali), buat admin default
                     createDefaultAdmin();
                 }
             });
@@ -534,6 +535,7 @@
             saveDb(); // Push ke Cloud
         }
 
+        // FUNGSI SIMPAN (PUSH KE CLOUD)
         function saveDb() {
             if(dbRef) {
                 dbRef.set(db).catch(err => alert("Gagal Simpan ke Cloud: " + err.message));
@@ -567,12 +569,15 @@
         function handleLogin() {
             const user = document.getElementById('login-username').value;
             const pass = document.getElementById('login-password').value;
+            
+            // Safe find handling
             const usersList = Array.isArray(db.users) ? db.users : [];
             const foundUser = usersList.find(u => u.username === user && u.password === pass);
             
             if (foundUser) {
                 if (foundUser.disabled) return alert("AKUN DIBLOKIR!");
                 currentUser = foundUser;
+                // Fix Avatar Fallback
                 if(!currentUser.avatar) {
                     currentUser.avatar = 'https://api.dicebear.com/7.x/adventurer/svg?seed=' + currentUser.name;
                     saveDb();
@@ -596,7 +601,7 @@
             const schedule = time ? new Date(time).getTime() : Date.now();
             if(!content) return alert("Isi pesan!");
             
-            if(!Array.isArray(db.messages)) db.messages = [];
+            if(!Array.isArray(db.messages)) db.messages = []; // Safety check
             db.messages.push({ id: 'MSG_' + Date.now(), content, target, schedule, sender: currentUser.name });
             saveDb(); alert("Terkirim!");
             document.getElementById('msg-content').value = '';
@@ -695,7 +700,7 @@
             updateDeleteBtn();
         }
 
-        // SISWA SCREEN (GENERATE QR CODE)
+        // SISWA SCREEN
         function renderSiswaScreen() {
             document.getElementById('siswa-greet-name').innerText = currentUser.name;
             
@@ -707,16 +712,15 @@
             document.getElementById('card-class-display').innerText = "KELAS " + (currentUser.kelas || "-");
             document.getElementById('card-role-display').innerText = currentUser.role;
 
-            // GENERATE QR CODE (HIGH QUALITY)
+            // GENERATE BARCODE
             const codeData = `GKPS|${currentUser.username}|${currentUser.name}|${currentUser.role}|${currentUser.kelas||'-'}`;
-            document.getElementById("qrcode").innerHTML = "";
-            new QRCode(document.getElementById("qrcode"), {
-                text: codeData,
-                width: 128,
-                height: 128,
-                colorDark : "#000000",
-                colorLight : "#ffffff",
-                correctLevel : QRCode.CorrectLevel.H
+            JsBarcode("#barcode", codeData, {
+                format: "CODE128",
+                displayValue: false, // Sembunyikan teks di bawah barcode (kita buat custom)
+                height: 40,
+                width: 1.5,
+                margin: 0,
+                background: "#ffffff"
             });
         }
 
@@ -819,15 +823,20 @@
             reader.readAsText(file);
         }
 
-        // SCANNER LOGIC (SUPER FAST QR)
+        // SCANNER LOGIC (IMPROVED FOR BARCODE)
         let scanner;
         function startScanner() {
             if(scanner) return;
             setTimeout(() => {
                 scanner = new Html5QrcodeScanner("reader", { 
-                    fps: 30, // BOOST FPS FOR SPEED
-                    qrbox: 250, // SQUARE BOX FOR QR
-                    rememberLastUsedCamera: true
+                    fps: 10, 
+                    qrbox: { width: 250, height: 150 }, // Rectangular box for barcodes
+                    rememberLastUsedCamera: true,
+                    // IMPORTANT: Support both QR and Code 128
+                    formatsToSupport: [ 
+                        Html5QrcodeSupportedFormats.QR_CODE, 
+                        Html5QrcodeSupportedFormats.CODE_128 
+                    ]
                 });
                 scanner.render(onScanSuccess, onScanFailure);
             }, 300);
@@ -838,7 +847,7 @@
         function onScanSuccess(decodedText) {
             if(document.getElementById('scan-status').innerText.includes('HADIR') && !document.getElementById('scan-status').classList.contains('hidden')) return;
 
-            if(!decodedText.startsWith('GKPS')) return showStatus('QR Tidak Valid', 'red');
+            if(!decodedText.startsWith('GKPS')) return showStatus('QR/Barcode Tidak Valid', 'red');
             const parts = decodedText.split('|'); const username = parts[1];
             
             if(!db.users || !Array.isArray(db.users)) db.users = [];
@@ -878,4 +887,3 @@
     </script>
 </body>
 </html>
-
