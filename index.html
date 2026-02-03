@@ -138,9 +138,11 @@
         @keyframes slideUp { from { transform: translateY(20px);
             opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         
-        /* Notification Dropdown styles */
+        /* Notification Dropdown styles - FIXED FOR MOBILE */
         .notif-dropdown { display: none;
-            position: absolute; right: 0; top: 100%; margin-top: 0.5rem; width: 20rem; background: white; border-radius: 1rem; box-shadow: 0 10px 30px -5px rgba(0,0,0,0.2);
+            position: absolute; right: 0; top: 100%; margin-top: 0.5rem; 
+            width: 85vw; max-width: 20rem; /* Responsive width */
+            background: white; border-radius: 1rem; box-shadow: 0 10px 30px -5px rgba(0,0,0,0.2);
             border: 1px solid #e2e8f0; z-index: 60; max-height: 24rem; overflow-y: auto;
         }
         .notif-dropdown.show { display: block; animation: slideUp 0.2s ease;
@@ -190,7 +192,7 @@
     <section id="screen-login" class="hidden max-w-md mx-auto min-h-screen flex flex-col justify-center">
         <div class="text-center mb-8">
             <div class="flex justify-center mb-4">
-                <img src="Logo GKPS.png" alt="Logo GKPS" class="h-24 w-auto object-contain" onerror="this.style.display='none'">
+                <img src="Logo GKPS.png" alt="" class="h-24 w-auto object-contain" onerror="this.style.display='none'">
             </div>
             <h1 onclick="triggerSecretReset()" class="text-3xl font-extrabold text-blue-900 tracking-tight cursor-pointer select-none">GKPS TANGERANG</h1>
             <p class="text-gray-500 font-medium">Sistem Absensi Terpadu</p>
@@ -326,8 +328,11 @@
 
             <div class="pro-card">
                 <div class="flex justify-between items-center mb-4 border-b pb-2">
-                    <h3 class="font-bold text-gray-800">Log Kehadiran</h3>
-                    <button onclick="exportExcel()" class="text-green-600 text-xs font-bold bg-green-50 px-2 py-1 rounded">Excel</button>
+                    <h3 class="font-bold text-gray-800">Log Kehadiran (Hari Ini)</h3>
+                    <div class="flex gap-2">
+                        <button onclick="openArchiveModal()" class="text-blue-600 text-xs font-bold bg-blue-50 px-2 py-1 rounded border border-blue-200">📂 Lihat Arsip</button>
+                        <button onclick="exportExcel()" class="text-green-600 text-xs font-bold bg-green-50 px-2 py-1 rounded border border-green-200">Excel</button>
+                    </div>
                 </div>
                 <div class="overflow-x-auto max-h-[300px]">
                     <table class="w-full admin-table">
@@ -435,16 +440,6 @@
                             <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
                         </label>
                     </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="text-[10px] font-bold uppercase text-gray-500">Jam Buka</label>
-                            <input type="time" id="sett-manual-start" class="pro-input bg-white py-1 text-center">
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-bold uppercase text-gray-500">Jam Tutup</label>
-                            <input type="time" id="sett-manual-end" class="pro-input bg-white py-1 text-center">
-                        </div>
-                    </div>
                     <button onclick="saveSettings()" class="w-full bg-green-600 text-white font-bold py-2 rounded-lg text-xs hover:bg-green-700">Simpan Pengaturan</button>
                 </div>
             </div>
@@ -502,6 +497,28 @@
             </div>
 
             <button onclick="document.getElementById('manual-modal').style.display='none'" class="w-full mt-4 text-gray-400 text-xs hover:text-gray-600 font-bold">BATAL</button>
+        </div>
+    </div>
+
+    <div id="archive-modal" class="modal-overlay">
+        <div class="modal-content bg-white" style="max-width: 600px;">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-gray-800">📂 Arsip Absensi</h3>
+                <button onclick="document.getElementById('archive-modal').style.display='none'" class="text-gray-400 font-bold">✕</button>
+            </div>
+            <div class="overflow-y-auto max-h-[400px]">
+                <table class="w-full admin-table text-xs">
+                    <thead class="sticky top-0 bg-white">
+                        <tr>
+                            <th>Tanggal</th>
+                            <th>Nama</th>
+                            <th>Status</th>
+                            <th>Ket</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-archive-body"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -805,8 +822,8 @@
                     if(!db.messages) db.messages = [];
                     if(!db.users) db.users = [];
                     if(!db.attendance) db.attendance = [];
-                    // FIX: DEFAULT MANUAL ABSEN TO TRUE IF NOT SET
-                    if(!db.settings) db.settings = { manual: true, start: "00:00", end: "23:59" }; 
+                    // FIX: DEFAULT MANUAL ATTENDANCE TO TRUE FOR TESTING IF NOT SET
+                    if(!db.settings) db.settings = { manualOpen: true }; 
                     
                     if(currentUser) {
                         // Refresh user data from DB to stay in sync
@@ -829,10 +846,10 @@
                         checkBroadcasts(currentUser.role);
                         checkManualAttendanceVisibility(); 
                         
-                        // FIX: Force re-render admin tabs if refresh on dashboard
+                        // FIX: Ensure correct screen showing if session valid
                         const lastScreen = localStorage.getItem('gkps_last_screen');
                         if (lastScreen === 'dashboard' && currentUser.role === 'admin') {
-                             renderDashboardScreen(); 
+                             renderDashboardScreen(); // Force re-render admin tabs
                         }
 
                     } else {
@@ -856,7 +873,7 @@
             }];
             db.isSetup = true;
             // ENABLE MANUAL ABSEN BY DEFAULT FOR NEW INSTALL
-            db.settings = { manual: true, start: "00:00", end: "23:59" };
+            db.settings = { manualOpen: true };
             saveDb();
         }
 
@@ -934,16 +951,12 @@
         
         function loadSettingsToUI() {
             if(!db.settings) return;
-            document.getElementById('sett-manual-toggle').checked = db.settings.manual || false;
-            document.getElementById('sett-manual-start').value = db.settings.start || "07:00";
-            document.getElementById('sett-manual-end').value = db.settings.end || "12:00";
+            document.getElementById('sett-manual-toggle').checked = db.settings.manualOpen || false;
         }
 
         function saveSettings() {
             if(!db.settings) db.settings = {};
-            db.settings.manual = document.getElementById('sett-manual-toggle').checked;
-            db.settings.start = document.getElementById('sett-manual-start').value;
-            db.settings.end = document.getElementById('sett-manual-end').value;
+            db.settings.manualOpen = document.getElementById('sett-manual-toggle').checked;
             saveDb();
             alert("Pengaturan Disimpan!");
         }
@@ -961,15 +974,8 @@
             if(btnDash) btnDash.classList.add('hidden');
 
             // Default to TRUE if undefined to fix visibility issue
-            const manualEnabled = db.settings ? db.settings.manual : true;
+            const manualEnabled = db.settings ? db.settings.manualOpen : true;
             if(!manualEnabled) return; 
-
-            const now = new Date();
-            const currentTime = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
-            const startTime = (db.settings && db.settings.start) ? db.settings.start : "00:00";
-            const endTime = (db.settings && db.settings.end) ? db.settings.end : "23:59";
-            
-            if(currentTime < startTime || currentTime > endTime) return; 
 
             const today = new Date().toLocaleDateString();
             const already = db.attendance.find(a => a.username === currentUser.username && a.date === today);
@@ -1239,6 +1245,35 @@
                 </tr>`;
             }).join('');
         }
+        
+        // --- ARCHIVE FEATURE ---
+        function openArchiveModal() {
+            document.getElementById('archive-modal').style.display = 'flex';
+            const tbody = document.getElementById('table-archive-body');
+            const att = Array.isArray(db.attendance) ? db.attendance : [];
+            
+            // Sort by Date Descending
+            const sorted = [...att].reverse();
+            
+            if(sorted.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center p-4 text-gray-400">Tidak ada data</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = sorted.map(l => {
+                 let colorClass = 'text-green-600';
+                 if (l.status === 'Sakit') colorClass = 'text-yellow-600';
+                 else if (l.status === 'Izin') colorClass = 'text-blue-600';
+                 else if (l.status === 'Alpha') colorClass = 'text-red-600';
+                 
+                 return `<tr>
+                    <td>${l.date}<br><span class="text-gray-400">${l.time}</span></td>
+                    <td class="font-bold">${l.name}</td>
+                    <td class="${colorClass} font-bold">${l.status || 'Hadir'}</td>
+                    <td class="italic text-gray-500">${l.note || '-'}</td>
+                 </tr>`;
+            }).join('');
+        }
 
         // --- FIXED: AUTO COMPRESS & RANDOM AVATAR & POSITION ---
         function handleImageUpload(input, previewId) {
@@ -1343,7 +1378,7 @@
                 if(pass) db.users[idx].password = pass;
             } else {
                 if(!Array.isArray(db.users)) db.users = [];
-                db.users.push({ id:'USR_'+Date.now(), name, username:user, password:pass||'123', role, gender, kelas, disabled:status==='disabled', avatar: avatarUrl, posX: posX, posY: posY });
+                db.users.push({ id:'USR_'+Date.now(), name, username:user, password:pass||'123', role, gender, kelas, disabled:status==='disabled', avatar:avatarUrl, posX: posX, posY: posY });
             }
             saveDb(); closeModal(); renderUserTable();
         }
