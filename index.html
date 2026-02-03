@@ -726,10 +726,25 @@
                 soundFail.play().then(() => { soundFail.pause(); soundFail.currentTime = 0; }).catch(()=>{});
             }, { once: true });
 
-            // 1. Restore Session & Last Screen
+            // 1. Restore Session & Last Screen IMMEDIATELLY
             const savedSession = localStorage.getItem('gkps_session');
             if (savedSession) {
                 currentUser = JSON.parse(savedSession);
+                
+                // RENDER UI IMMEDIATELY (Don't wait for Firebase)
+                const lastScreen = localStorage.getItem('gkps_last_screen');
+                if(lastScreen === 'siswa') {
+                    renderSiswaScreen();
+                    showScreen('siswa');
+                } else {
+                    renderDashboardScreen(); // This reveals the admin tabs!
+                    showScreen('dashboard');
+                    // Restore Tab
+                    const lastTab = localStorage.getItem('gkps_tab');
+                    if(lastTab) switchTab(lastTab);
+                }
+            } else {
+                showScreen('login');
             }
 
             const connStat = document.getElementById('conn-indicator');
@@ -769,6 +784,8 @@
                         if(freshUser) {
                             currentUser = freshUser;
                             localStorage.setItem('gkps_session', JSON.stringify(currentUser));
+                            // Re-render to ensure role updates are reflected
+                            if(currentUser.role === 'admin') renderDashboardScreen();
                         }
 
                         if(currentUser.role === 'admin') {
@@ -781,26 +798,11 @@
                         }
                         checkBroadcasts(currentUser.role);
                         checkManualAttendanceVisibility(); 
-                        
-                        // Restore last screen
-                        const lastScreen = localStorage.getItem('gkps_last_screen');
-                        if(lastScreen === 'siswa') showScreen('siswa');
-                        else showScreen('dashboard');
-                        
-                        // Restore last tab if on dashboard
-                        const lastTab = localStorage.getItem('gkps_tab');
-                        if(currentUser.role !== 'siswa' && lastTab) switchTab(lastTab);
-
-                    } else {
-                        showScreen('login');
-                    }
+                    } 
                 } else {
                     createDefaultAdmin();
                 }
             });
-            
-            // If no session found initially, show login
-            if(!currentUser) showScreen('login');
         }
 
         function createDefaultAdmin() {
@@ -901,26 +903,31 @@
         }
 
         function checkManualAttendanceVisibility() {
+            // Check global switch, time range, and if already present
             if(!currentUser) return;
             
             const btnSiswa = document.getElementById('manual-absen-container-siswa');
             const btnGuru = document.getElementById('manual-absen-container-guru');
             const btnDash = document.getElementById('manual-absen-container-dash');
             
+            // Default hide all
             if(btnSiswa) btnSiswa.classList.add('hidden');
             if(btnGuru) btnGuru.classList.add('hidden');
             if(btnDash) btnDash.classList.add('hidden');
 
-            if(!db.settings || !db.settings.manual) return; 
+            if(!db.settings || !db.settings.manual) return; // Feature disabled by admin
 
+            // Check Time
             const now = new Date();
             const currentTime = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
-            if(currentTime < db.settings.start || currentTime > db.settings.end) return; 
+            if(currentTime < db.settings.start || currentTime > db.settings.end) return; // Out of time
 
+            // Check if already present
             const today = new Date().toLocaleDateString();
             const already = db.attendance.find(a => a.username === currentUser.username && a.date === today);
-            if(already) return; 
+            if(already) return; // Already present
 
+            // Show Buttons
             if(currentUser.role === 'siswa' && btnSiswa) btnSiswa.classList.remove('hidden');
             if(currentUser.role !== 'siswa') {
                 if(btnDash) btnDash.classList.remove('hidden');
@@ -931,6 +938,7 @@
         function handleManualAttendance() {
             if(confirm("Anda yakin ingin melakukan Absen Manual?")) {
                 const today = new Date().toLocaleDateString();
+                // Double check
                 if(db.attendance.find(a => a.username === currentUser.username && a.date === today)) {
                     alert("Anda sudah absen hari ini!");
                     checkManualAttendanceVisibility();
@@ -941,7 +949,7 @@
                 db.attendance.push({ username: currentUser.username, name: currentUser.name, date: today, time: new Date().toLocaleTimeString(), type: 'MANUAL' });
                 saveDb();
                 alert("Absen Manual Berhasil!");
-                checkManualAttendanceVisibility(); 
+                checkManualAttendanceVisibility(); // Hide button
                 if(currentUser.role !== 'siswa') renderHomeStats();
             }
         }
@@ -1004,8 +1012,7 @@
             document.getElementById('tab-messages').className = isAdmin ? 'nav-pill' : 'nav-pill hidden';
             document.getElementById('tab-settings').className = isAdmin ? 'nav-pill' : 'nav-pill hidden';
             
-            // Do NOT switchTab here to avoid resetting to 'home' on every render.
-            // Let initApp or manual click handle switching.
+            // Note: We do NOT force switchTab here anymore to allow restoration of last tab
         }
         function switchTab(tab) {
             document.querySelectorAll('.tab-view').forEach(el => el.classList.add('hidden'));
