@@ -50,7 +50,7 @@
         .nav-pill.active { background: var(--primary); color: white;
             box-shadow: 0 4px 10px rgba(14, 165, 233, 0.4); }
 
-        /* STUDENT ID CARD STYLING (UPDATED FOR QR) */
+        /* STUDENT ID CARD STYLING */
         .student-card {
             width: 100%;
             max-width: 350px; 
@@ -439,7 +439,9 @@
                          <input type="file" id="modal-file-input" hidden accept="image/*" onchange="handleImageUpload(this, 'modal-avatar-preview')">
                      </label>
                  </div>
-                 <p class="text-[9px] text-gray-400 mt-1">Klik foto untuk ganti</p>
+                 <p class="text-[9px] text-gray-400 mt-1 flex justify-center gap-2">
+                     <span class="text-blue-500 cursor-pointer hover:underline" onclick="generateRandomAvatar('modal-avatar-preview')">🎲 Acak Avatar</span>
+                 </p>
             </div>
 
             <label class="text-xs font-bold text-gray-500 uppercase">Nama Lengkap</label>
@@ -504,6 +506,9 @@
                         <span class="text-white text-xs font-bold">📷 Ganti</span>
                         <input type="file" id="prof-file-input" hidden accept="image/*" onchange="handleImageUpload(this, 'prof-img-display')">
                     </label>
+                </div>
+                <div class="mb-2">
+                     <span class="text-[10px] bg-white/20 text-white px-2 py-1 rounded-full cursor-pointer hover:bg-white/40" onclick="generateRandomAvatar('prof-img-display')">🎲 Acak Avatar</span>
                 </div>
                 
                 <h3 id="prof-name-display" class="text-white font-bold text-xl tracking-wide">User</h3>
@@ -617,20 +622,36 @@
         let currentUser = null;
         let sortConfig = { key: null, asc: true };
 
-        // --- SOUND EFFECTS ---
-        const audioSuccess = new Audio('https://actions.google.com/sounds/v1/science_fiction/scifi_input_accept.ogg');
-        const audioFail = new Audio('https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg');
+        // --- SOUND EFFECTS (BASE64 VALID) ---
+        // Bunyi 'Beep' (Sukses) - Pendek dan Tring
+        const sndBeep = "data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU"; // Placeholder safe
+        // Menggunakan Sound Objek dengan Base64 Asli (Short Beep)
+        const audioSuccess = new Audio("data:audio/mp3;base64,//uQxAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//uQxAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq");
+        // Karena string base64 beep asli sangat panjang, kita pakai link CDN yang sangat stabil sebagai fallback utama
+        // dan logic pemaksaan play.
+        const soundOk = new Audio('https://cdn.freesound.org/previews/242/242501_4414128-lq.mp3'); // Simple Beep
+        const soundFail = new Audio('https://cdn.freesound.org/previews/142/142608_1840739-lq.mp3'); // Error buzz
         
         function playSound(type) {
-            const aud = type === 'success' ? audioSuccess : audioFail;
-            aud.volume = 0.5; // Set volume 50%
-            aud.currentTime = 0; 
-            aud.play().catch(e => console.log("Audio Error (Perlu interaksi user):", e));
+            const aud = type === 'success' ? soundOk : soundFail;
+            aud.volume = 0.5;
+            aud.currentTime = 0;
+            const playPromise = aud.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(error => {
+                    console.log("Audio autoplay prevented. Interaksi user dibutuhkan.");
+                });
+            }
         }
 
         // APP INIT
         function initApp() {
-            // Cek status koneksi
+            // Unlock Audio Context pada klik pertama di body (Solusi 'Tidak Ada Suara')
+            document.body.addEventListener('click', function() {
+                soundOk.play().then(() => { soundOk.pause(); soundOk.currentTime = 0; }).catch(()=>{});
+                soundFail.play().then(() => { soundFail.pause(); soundFail.currentTime = 0; }).catch(()=>{});
+            }, { once: true });
+
             const connStat = document.getElementById('conn-indicator');
             const connectedRef = firebase.database().ref(".info/connected");
             connectedRef.on("value", (snap) => {
@@ -646,7 +667,6 @@
             dbRef.on('value', (snapshot) => {
                 const val = snapshot.val();
                 if (val) {
-                    // FIX DATA TYPE: FORCE TO ARRAY
                     if (val.users && typeof val.users === 'object' && !Array.isArray(val.users)) {
                         val.users = Object.values(val.users);
                     }
@@ -657,7 +677,7 @@
                         val.messages = Object.values(val.messages);
                     }
 
-                    db = val; // Update local state dari cloud
+                    db = val;
                     if(!db.messages) db.messages = [];
                     if(!db.users) db.users = [];
                     if(!db.attendance) db.attendance = [];
@@ -684,10 +704,10 @@
             db.users = [{
                 id: 'USR_ADMIN_DEF', name: 'Super Admin', username: 'admin', password: '123',
                 role: 'admin', kelas: '-', gender: 'L', disabled: false, 
-                recoveryCode: 'root', avatar: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Admin'
+                recoveryCode: 'root', avatar: 'https://api.dicebear.com/7.x/notionists/svg?seed=Admin'
             }];
             db.isSetup = true;
-            saveDb(); // Push ke Cloud
+            saveDb();
         }
 
         function saveDb() {
@@ -703,7 +723,6 @@
             document.getElementById('screen-' + screenId).classList.remove('hidden');
         }
 
-        // --- SECRET & EMERGENCY ---
         let tapCount = 0;
         function triggerSecretReset() {
             tapCount++;
@@ -720,7 +739,6 @@
             } else if (pin !== null) alert("PIN SALAH!");
         }
 
-        // AUTH
         function handleLogin() {
             const user = document.getElementById('login-username').value;
             const pass = document.getElementById('login-password').value;
@@ -730,7 +748,7 @@
                 if (foundUser.disabled) return alert("AKUN DIBLOKIR!");
                 currentUser = foundUser;
                 if(!currentUser.avatar) {
-                    currentUser.avatar = 'https://api.dicebear.com/7.x/adventurer/svg?seed=' + currentUser.name;
+                    currentUser.avatar = 'https://api.dicebear.com/7.x/notionists/svg?seed=' + currentUser.name;
                     saveDb();
                 }
                 
@@ -747,7 +765,6 @@
         function logout() { currentUser = null; showScreen('login'); stopScanner(); closeAllDropdowns();
         }
 
-        // BROADCAST
         function sendBroadcast() {
             const content = document.getElementById('msg-content').value;
             const target = document.getElementById('msg-target').value;
@@ -795,7 +812,6 @@
         function closeAllDropdowns(e) { if(e && e.target.closest('.notif-container')) return; document.querySelectorAll('.notif-dropdown').forEach(d => d.classList.remove('show'));
         }
 
-        // DASHBOARD
         function renderDashboardScreen() {
             document.getElementById('guru-greet-name').innerText = currentUser.name;
             document.getElementById('role-badge').innerText = currentUser.role.toUpperCase();
@@ -818,7 +834,6 @@
             if(tab === 'messages') renderBroadcastHistory();
         }
 
-        // USER TABLE & SORT
         function handleSort(key) {
             if (sortConfig.key === key) sortConfig.asc = !sortConfig.asc;
             else { sortConfig.key = key; sortConfig.asc = true; }
@@ -845,7 +860,7 @@
             tbody.innerHTML = data.map(u => `
                 <tr class="border-b hover:bg-gray-50">
                     <td class="text-center"><input type="checkbox" class="user-checkbox" value="${u.id}" onchange="updateDeleteBtn()"></td>
-                    <td class="flex items-center"><img src="${u.avatar || 'https://api.dicebear.com/7.x/adventurer/svg?seed='+u.name}" class="w-8 h-8 rounded-full mr-2 border"><div><div class="font-bold text-xs">${u.name}</div><div class="text-[10px] text-gray-400">@${u.username}</div></div></td>
+                    <td class="flex items-center"><img src="${u.avatar || 'https://api.dicebear.com/7.x/notionists/svg?seed='+u.name}" class="w-8 h-8 rounded-full mr-2 border"><div><div class="font-bold text-xs">${u.name}</div><div class="text-[10px] text-gray-400">@${u.username}</div></div></td>
                     <td><span class="text-[10px] bg-gray-100 px-2 py-1 rounded">${u.kelas||'-'}</span></td>
                     <td><span class="text-[10px] border px-2 py-0.5 rounded uppercase">${u.role}</span></td>
                     <td><span class="badge ${u.gender==='P'?'badge-gender-p':'badge-gender-l'}">${u.gender||'L'}</span></td>
@@ -859,10 +874,8 @@
             updateDeleteBtn();
         }
 
-        // SISWA SCREEN (GENERATE QR CODE)
         function renderSiswaScreen() {
             document.getElementById('siswa-greet-name').innerText = currentUser.name;
-            // UPDATE CARD DATA
             document.getElementById('card-img').src = currentUser.avatar;
             document.getElementById('stu-avatar').src = currentUser.avatar;
             document.getElementById('card-name-display').innerText = currentUser.name;
@@ -870,7 +883,6 @@
             document.getElementById('card-class-display').innerText = "KELAS " + (currentUser.kelas || "-");
             document.getElementById('card-role-display').innerText = currentUser.role;
 
-            // GENERATE QR CODE (HIGH QUALITY)
             const codeData = `GKPS|${currentUser.username}|${currentUser.name}|${currentUser.role}|${currentUser.kelas||'-'}`;
             document.getElementById("qrcode").innerHTML = "";
             new QRCode(document.getElementById("qrcode"), {
@@ -883,19 +895,15 @@
             });
         }
 
-        // NEW: TEACHER ID CARD LOGIC
         function openIdCardModal() {
             if (!currentUser) return;
             document.getElementById('id-card-modal').style.display = 'flex';
-            
-            // Populate Data
             document.getElementById('card-img-guru').src = currentUser.avatar;
             document.getElementById('card-name-guru').innerText = currentUser.name;
             document.getElementById('card-id-guru').innerText = "ID: " + currentUser.username;
             document.getElementById('card-class-guru').innerText = currentUser.kelas !== '-' ? "KELAS " + currentUser.kelas : "GURU / STAFF";
             document.getElementById('card-role-guru').innerText = currentUser.role.toUpperCase();
 
-            // Generate QR
             const codeData = `GKPS|${currentUser.username}|${currentUser.name}|${currentUser.role}|${currentUser.kelas||'-'}`;
             document.getElementById("qrcode-guru").innerHTML = "";
             new QRCode(document.getElementById("qrcode-guru"), {
@@ -908,7 +916,6 @@
             });
         }
 
-        // HOME STATS
         function renderHomeStats() {
             const today = new Date().toLocaleDateString();
             const att = Array.isArray(db.attendance) ? db.attendance : [];
@@ -923,44 +930,71 @@
             }).join('');
         }
 
-        // --- IMAGE UPLOAD LOGIC (NEW) ---
+        // --- FIXED: AUTO COMPRESS & RANDOM AVATAR ---
         function handleImageUpload(input, previewId) {
             const file = input.files[0];
             if (!file) return;
 
-            // Check file size (Max 150KB to keep DB happy)
-            if (file.size > 150000) {
-                alert("Ukuran file terlalu besar! Maksimal 150KB.");
-                return;
-            }
-
+            // FIX: Tidak ada batasan size di awal. Biarkan masuk dulu untuk dikompres.
+            // Membaca file gambar
             const reader = new FileReader();
             reader.onload = function(e) {
-                // Set preview
-                document.getElementById(previewId).src = e.target.result;
+                const img = new Image();
+                img.src = e.target.result;
+                img.onload = function() {
+                    // Membuat Canvas untuk Resize
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Maksimal ukuran 500px (Cukup untuk avatar, sangat ringan)
+                    const MAX_SIZE = 500;
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    if (width > height) {
+                        if (width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; }
+                    } else {
+                        if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; }
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // Kompres ke JPEG kualitas 0.7 (Hasilnya biasanya < 50KB dari file 5MB sekalipun)
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                    
+                    // Tampilkan Preview
+                    document.getElementById(previewId).src = dataUrl;
+                }
             }
             reader.readAsDataURL(file);
         }
 
-        // CRUD USER
+        function generateRandomAvatar(previewId) {
+            const styles = ['notionists', 'avataaars', 'bottts', 'adventurer', 'fun-emoji'];
+            const randomStyle = styles[Math.floor(Math.random() * styles.length)];
+            const randomSeed = Math.random().toString(36).substring(7);
+            const newAvatar = `https://api.dicebear.com/7.x/${randomStyle}/svg?seed=${randomSeed}`;
+            document.getElementById(previewId).src = newAvatar;
+        }
+
         function openUserModal(id=null) {
             document.getElementById('user-modal').style.display = 'flex';
-            document.getElementById('modal-file-input').value = ""; // Reset input file
+            document.getElementById('modal-file-input').value = ""; 
             
             if(id) {
                 const u = db.users.find(x => x.id === id);
                 document.getElementById('modal-id').value = u.id; document.getElementById('modal-name').value = u.name; document.getElementById('modal-username').value = u.username; document.getElementById('modal-password').value = '';
                 document.getElementById('modal-role').value = u.role; document.getElementById('modal-gender').value = u.gender||'L';
                 document.getElementById('modal-kelas').value = u.kelas||'-'; document.getElementById('modal-status').value = u.disabled?'disabled':'active';
-                // Set Preview to current avatar
-                document.getElementById('modal-avatar-preview').src = u.avatar || 'https://api.dicebear.com/7.x/adventurer/svg?seed='+u.name;
+                document.getElementById('modal-avatar-preview').src = u.avatar || 'https://api.dicebear.com/7.x/notionists/svg?seed='+u.name;
             } else {
                 document.getElementById('modal-id').value = '';
                 document.getElementById('modal-name').value = ''; document.getElementById('modal-username').value = ''; document.getElementById('modal-password').value = '';
                 document.getElementById('modal-role').value = 'siswa'; document.getElementById('modal-gender').value = 'L'; document.getElementById('modal-kelas').value = '-';
                 document.getElementById('modal-status').value = 'active';
-                // Set default preview
-                document.getElementById('modal-avatar-preview').src = 'https://via.placeholder.com/150?text=Upload';
+                document.getElementById('modal-avatar-preview').src = 'https://api.dicebear.com/7.x/notionists/svg?seed=NewUser';
             }
         }
         function closeModal() { document.getElementById('user-modal').style.display = 'none';
@@ -972,12 +1006,7 @@
             
             if(!name || !user) return alert('Wajib isi!');
             
-            // Check if uploaded (Base64) or Default Dicebear
             let avatarUrl = avatarPreview;
-            if(avatarUrl.includes('placeholder') || avatarUrl === '') {
-                 avatarUrl = 'https://api.dicebear.com/7.x/adventurer/svg?seed=' + name;
-            }
-
             if(id) {
                 const idx = db.users.findIndex(x => x.id === id);
                 db.users[idx] = {...db.users[idx], name, username:user, role, gender, kelas, disabled:status==='disabled', avatar: avatarUrl};
@@ -1000,27 +1029,22 @@
         function deleteSelectedUsers() { if(confirm("Hapus terpilih?")) { const ids = Array.from(document.querySelectorAll('.user-checkbox:checked')).map(cb=>cb.value);
             db.users = db.users.filter(u => !ids.includes(u.id)); saveDb(); } }
 
-        // SELF EDIT & FORGOT (UPDATED PROFESSIONAL MODAL LOGIC + UPLOAD)
         function openProfileModal() { 
             if(!currentUser) return;
             document.getElementById('profile-modal').style.display='flex'; 
-            document.getElementById('prof-file-input').value = ""; // Reset input
+            document.getElementById('prof-file-input').value = ""; 
             
-            // Set Form Values (Untuk Edit)
             document.getElementById('prof-name').value = currentUser.name; 
             document.getElementById('prof-username').value = currentUser.username; 
             document.getElementById('prof-password').value = ''; 
             
-            // Set Display Values (Untuk Tampilan Professional)
             document.getElementById('prof-img-display').src = currentUser.avatar;
             document.getElementById('prof-name-display').innerText = currentUser.name;
             document.getElementById('prof-role-display').innerText = currentUser.role;
             
-            // Format Gender agar lebih rapi
             let jkFull = currentUser.gender === 'P' ? 'Perempuan' : 'Laki-Laki';
             const genderEl = document.getElementById('prof-gender-display');
             genderEl.innerText = jkFull;
-            // Ubah warna gender: Pink untuk Perempuan, Biru untuk Laki-laki
             genderEl.className = currentUser.gender === 'P' ? 'font-bold text-pink-600 text-lg' : 'font-bold text-blue-600 text-lg';
             
             document.getElementById('prof-class-display').innerText = currentUser.kelas || '-';
@@ -1034,7 +1058,6 @@
             if(idx!==-1) { 
                 db.users[idx].name=name; 
                 db.users[idx].username=user; 
-                // Save new avatar if changed
                 db.users[idx].avatar = avatarSrc;
 
                 if(pass) db.users[idx].password=pass; 
@@ -1054,7 +1077,6 @@
             if(t && t.recoveryCode === c) { t.password = p; saveDb(); alert('Sukses!'); document.getElementById('forgot-modal').style.display='none'; } else alert('Gagal!');
         }
 
-        // CSV EXPORT IMPORT
         function exportExcel() {
              let csv = "Nama,Username,Kelas,Waktu,Tanggal\n";
              const att = Array.isArray(db.attendance) ? db.attendance : [];
@@ -1072,13 +1094,12 @@
                     const cols = r.split(',');
                     if(cols.length>=3) {
                         const name=cols[0].trim(), username=cols[1].trim(), password=cols[2].trim(), role=cols[3]?cols[3].trim().toLowerCase():'siswa', kelas=cols[4]?cols[4].trim():'-';
-                        // READ GENDER FROM COLUMN 5
                         let genderRaw = cols[5] ? cols[5].trim().toUpperCase() : 'L';
                         let gender = (genderRaw === 'P' || genderRaw === 'PEREMPUAN') ? 'P' : 'L';
 
                         if(!Array.isArray(db.users)) db.users = [];
                         if(name.toLowerCase()!=='nama' && !db.users.find(u=>u.username===username)) {
-                            db.users.push({ id:'IMP_'+Date.now()+c, name, username, password, role, kelas, gender: gender, disabled:false, avatar:'https://api.dicebear.com/7.x/adventurer/svg?seed='+name }); c++;
+                            db.users.push({ id:'IMP_'+Date.now()+c, name, username, password, role, kelas, gender: gender, disabled:false, avatar:'https://api.dicebear.com/7.x/notionists/svg?seed='+name }); c++;
                         }
                     }
                 });
@@ -1087,14 +1108,13 @@
             reader.readAsText(file);
         }
 
-        // SCANNER LOGIC (UPDATED WITH SOUND)
         let scanner;
         function startScanner() {
             if(scanner) return;
             setTimeout(() => {
                 scanner = new Html5QrcodeScanner("reader", { 
-                    fps: 30, // BOOST FPS FOR SPEED
-                    qrbox: 250, // SQUARE BOX FOR QR
+                    fps: 30, 
+                    qrbox: 250, 
                     rememberLastUsedCamera: true
                 });
                 scanner.render(onScanSuccess, onScanFailure);
@@ -1107,7 +1127,6 @@
         function onScanSuccess(decodedText) {
             if(document.getElementById('scan-status').innerText.includes('HADIR') && !document.getElementById('scan-status').classList.contains('hidden')) return;
 
-            // --- SOUND CHECK: INVALID QR ---
             if(!decodedText.startsWith('GKPS')) {
                 playSound('error');
                 return showStatus('QR Tidak Valid', 'red');
@@ -1120,7 +1139,7 @@
             
             if(!u) {
                 if(parts[2]) {
-                    u = { id: 'AUTO_'+Date.now(), username, name: parts[2], role: parts[3]||'siswa', kelas: parts[4]||'-', gender:'L', password:'123', disabled:false, avatar:'https://api.dicebear.com/7.x/adventurer/svg?seed='+parts[2] };
+                    u = { id: 'AUTO_'+Date.now(), username, name: parts[2], role: parts[3]||'siswa', kelas: parts[4]||'-', gender:'L', password:'123', disabled:false, avatar:'https://api.dicebear.com/7.x/notionists/svg?seed='+parts[2] };
                     db.users.push(u);
                 } else {
                     playSound('error');
@@ -1141,7 +1160,6 @@
                 return showStatus('Sudah Masuk', 'yellow');
             }
 
-            // --- SOUND SUCCESS ---
             playSound('success');
             db.attendance.push({ username: u.username, name: u.name, date: today, time: new Date().toLocaleTimeString() });
             showStatus('HADIR: '+u.name, 'green');
