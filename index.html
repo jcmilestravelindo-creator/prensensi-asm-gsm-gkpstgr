@@ -13,6 +13,7 @@
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+        /* Variable & Body */
         :root {
             --primary: #0ea5e9; --primary-dark: #0284c7;
             --accent: #facc15;
@@ -23,6 +24,7 @@
             background: linear-gradient(180deg, #e0f2fe 0%, #f0f9ff 100%); min-height: 100vh; padding-bottom: 2rem;
         }
         
+        /* UI Components */
         .pro-card { background: white;
             border-radius: 1.5rem; padding: 1.5rem; box-shadow: 0 10px 30px -5px rgba(14, 165, 233, 0.15); border: 1px solid #e2e8f0; margin-bottom: 1.5rem;
         }
@@ -42,12 +44,14 @@
         .btn-yellow { background: var(--accent);
             color: #713f12; } .btn-yellow:hover { background: #eab308; }
 
+        /* Navigation Pills */
         .nav-pill { padding: 0.5rem 1rem;
             border-radius: 99px; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: 0.2s; color: #64748b; background: white; border: 1px solid transparent; white-space: nowrap;
         }
         .nav-pill.active { background: var(--primary); color: white;
             box-shadow: 0 4px 10px rgba(14, 165, 233, 0.4); }
 
+        /* STUDENT ID CARD STYLING */
         .student-card {
             width: 100%;
             max-width: 350px; 
@@ -97,6 +101,7 @@
             background: white;
             padding: 1rem; text-align: center; border-top: 1px dashed #e2e8f0; display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
+        /* QR Code Container Styling */
         #qrcode, #qrcode-guru { 
             padding: 5px;
             background: white; border: 1px solid #e2e8f0; border-radius: 8px; 
@@ -104,6 +109,7 @@
         #qrcode img, #qrcode-guru img { display: block;
         }
         
+        /* Table Styling */
         .admin-table th { background: #f1f5f9;
             color: #64748b; font-size: 0.75rem; text-transform: uppercase; padding: 0.8rem; text-align: left; user-select: none;
         }
@@ -114,6 +120,7 @@
         .admin-table td { padding: 0.8rem; border-bottom: 1px solid #f1f5f9; font-size: 0.85rem;
             vertical-align: middle; }
         
+        /* Status Badges */
         .badge { font-size: 0.7rem;
             padding: 2px 8px; border-radius: 99px; font-weight: 700; display: inline-block; }
         .badge-active { background: #dcfce7;
@@ -127,6 +134,7 @@
         .badge-gender-p { background: #fce7f3; color: #9d174d;
             border: 1px solid #f9a8d4; }
 
+        /* Modal Layout Fix (SCROLLABLE) */
         .modal-overlay { position: fixed;
             inset: 0; background: rgba(0,0,0,0.5); z-index: 50; display: none; justify-content: center; align-items: center; padding: 1rem; backdrop-filter: blur(2px);
         }
@@ -134,23 +142,25 @@
             background: white;
             border-radius: 1.5rem; 
             width: 100%; max-width: 400px;
-            max-height: 85vh;
+            max-height: 85vh; /* Limit height */
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            overflow: hidden; /* Prevent double scroll */
             animation: slideUp 0.3s ease;
         }
         
+        /* New Scrollable Body Class */
         .modal-body-scroll {
             overflow-y: auto;
-            flex: 1;
+            flex: 1; /* Take remaining space */
             padding: 1.5rem;
-            -webkit-overflow-scrolling: touch;
+            -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
         }
 
         @keyframes slideUp { from { transform: translateY(20px);
             opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         
+        /* Notification Dropdown styles */
         .notif-dropdown { display: none;
             position: absolute; right: 0; top: 100%; margin-top: 0.5rem; width: 85vw; max-width: 20rem; background: white; border-radius: 1rem;
             box-shadow: 0 10px 30px -5px rgba(0,0,0,0.2);
@@ -159,6 +169,7 @@
         .notif-dropdown.show { display: block; animation: slideUp 0.2s ease;
         }
 
+        /* Connection Status */
         .conn-status { position: fixed;
             bottom: 10px; left: 50%; transform: translateX(-50%); background: #22c55e; color: white; padding: 5px 15px; border-radius: 20px; font-size: 10px; font-weight: bold;
             z-index: 100; box-shadow: 0 5px 15px rgba(0,0,0,0.2); display: flex; align-items: center;
@@ -170,21 +181,23 @@
         @keyframes blinker { 50% { opacity: 0;
         } }
 
+        /* --- SCANNER FIXES --- */
         #reader { 
             border: none !important;
             width: 100% !important; 
             border-radius: 1.5rem;
-            overflow: hidden;
+            overflow: hidden; /* Menghindari konten keluar */
         }
         #reader video { 
             object-fit: cover; 
             border-radius: 1.5rem;
             width: 100% !important;
-            height: auto !important;
+            height: auto !important; /* Biarkan tinggi menyesuaikan agar tidak gepeng */
         }
         #reader__dashboard_section_csr span, #reader__dashboard_section_swaplink { display: none !important;
         }
 
+        /* Custom Range Slider */
         input[type=range] {
             width: 100%;
             margin: 5px 0; accent-color: var(--primary);
@@ -372,13 +385,14 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
                 <div id="scan-status" class="mt-4 text-center font-bold p-3 rounded-xl hidden shadow-lg text-sm"></div>
                 
                 <div class="mt-4 bg-white p-4 rounded-xl shadow-lg border border-gray-100">
-                    <h4 class="font-bold text-gray-700 text-sm mb-2 pb-1 border-b">Aktivitas Scan Sesi Ini <span class="text-[10px] text-gray-500 font-normal">(hanya untuk sesi browser saat ini)</span></h4>
+                    <h4 class="font-bold text-gray-700 text-sm mb-2 pb-1 border-b">Aktivitas Scan Sesi Ini</h4>
                     <div class="overflow-y-auto max-h-40">
                         <table class="w-full text-xs text-left">
                             <thead class="bg-gray-50 text-gray-500">
                                 <tr><th class="p-2">Waktu</th><th class="p-2">Nama</th><th class="p-2">Status</th></tr>
                             </thead>
-                            <tbody id="scan-session-log"></tbody>
+                            <tbody id="scan-session-log">
+                                </tbody>
                         </table>
                     </div>
                 </div>
@@ -809,8 +823,13 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
         let db = { users: [], attendance: [], messages: [], settings: {}, folders: [], isSetup: false };
         let currentUser = null;
         let sortConfig = { key: null, asc: true };
+        let scanner = null; 
+        let scannerTimer; // Fix Scanner: Added timer variable
         
         // SOUND EFFECTS
+        const sndBeep = "data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU";
+        const audioSuccess = new Audio("data:audio/mp3;base64,//uQxAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq");
+        
         const soundOk = new Audio('https://cdn.freesound.org/previews/242/242501_4414128-lq.mp3'); 
         const soundFail = new Audio('https://cdn.freesound.org/previews/142/142608_1840739-lq.mp3');
         function playSound(type) {
@@ -866,13 +885,13 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
                     connStat.className = "conn-status offline blink";
                 }
             });
-
             dbRef.on('value', (snapshot) => {
                 const val = snapshot.val();
                 if (val) {
                     if (val.users && typeof val.users === 'object' && !Array.isArray(val.users)) val.users = Object.values(val.users);
                     if (val.attendance && typeof val.attendance === 'object' && !Array.isArray(val.attendance)) val.attendance = Object.values(val.attendance);
                     if (val.messages && typeof val.messages === 'object' && !Array.isArray(val.messages)) val.messages = Object.values(val.messages);
+                    // Handle Folders array/object
                     if (val.folders && typeof val.folders === 'object' && !Array.isArray(val.folders)) val.folders = Object.values(val.folders);
 
                     db = val;
@@ -882,11 +901,6 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
                     if(!db.folders) db.folders = [];
                     if(!db.settings) db.settings = { manualOpen: true };
                     
-                    // Pastikan setiap user memiliki readMessages
-                    db.users.forEach(u => {
-                        if (!u.readMessages || !Array.isArray(u.readMessages)) u.readMessages = [];
-                    });
-
                     if(currentUser) {
                         const freshUser = db.users.find(u => u.username === currentUser.username);
                         if(freshUser) {
@@ -896,17 +910,19 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
                         }
 
                         if(currentUser.role === 'admin') {
-                            renderUserTable(document.getElementById('search-user')?.value || '');
+                            renderUserTable(document.getElementById('search-user').value);
                             renderHomeStats();
                             renderBroadcastHistory();
                             loadSettingsToUI();
                             renderFolderOptions(); 
+                            // Pastikan list folder inline ter-render meski hidden
                             renderInlineFolderList();
                         } else {
                             renderSiswaScreen();
                         }
                         checkBroadcasts(currentUser.role);
                         checkManualAttendanceVisibility(); 
+                        renderScanSessionLog(); // PERBAIKAN 3: Memastikan log scan dirender saat ada update data (persistent)
                         
                         const lastScreen = localStorage.getItem('gkps_last_screen');
                         if (lastScreen === 'dashboard' && currentUser.role === 'admin') renderDashboardScreen();
@@ -920,13 +936,13 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
             if(!currentUser) showScreen('login');
         }
 
-        // Default Admin – tambah readMessages
+        // Default Admin
         function createDefaultAdmin() {
             db.users = [{
                 id: 'USR_ADMIN_DEF', name: 'Super Admin', username: 'admin', password: '123',
                 role: 'admin', kelas: '-', gender: 'L', disabled: false, folder: '-',
                 recoveryCode: 'root', avatar: 'https://api.dicebear.com/7.x/notionists/svg?seed=Admin',
-                posX: 50, posY: 50, readMessages: []
+                posX: 50, posY: 50
             }];
             db.isSetup = true;
             db.folders = [];
@@ -993,8 +1009,8 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
         function logout() { 
             if(confirm("Apakah Anda yakin ingin keluar?")) {
                 currentUser = null;
-                localStorage.clear();
-                location.reload();
+                localStorage.clear(); 
+                location.reload(); 
             }
         }
         
@@ -1086,7 +1102,7 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
             if(currentUser.role !== 'siswa') renderHomeStats();
         }
 
-        // Broadcast Logic
+        // --- PERBAIKAN 1: PERSISTENSI NOTIFIKASI ---
         function sendBroadcast() {
             const content = document.getElementById('msg-content').value;
             const target = document.getElementById('msg-target').value;
@@ -1095,8 +1111,7 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
             if(!content) return alert("Isi pesan!");
             
             if(!Array.isArray(db.messages)) db.messages = [];
-            const newMsg = { id: 'MSG_' + Date.now(), content, target, schedule, sender: currentUser.name };
-            db.messages.push(newMsg);
+            db.messages.push({ id: 'MSG_' + Date.now(), content, target, schedule, sender: currentUser.name });
             saveDb();
             alert("Terkirim!");
             document.getElementById('msg-content').value = '';
@@ -1116,112 +1131,80 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
                 </div>`).join('');
         }
         function deleteMsg(id) { if(confirm("Hapus?")) { db.messages = db.messages.filter(m => m.id !== id);
-            saveDb(); renderBroadcastHistory(); } }
+            saveDb(); } }
         
-        // PERBAIKAN NOTIFIKASI (POIN 1)
         function checkBroadcasts(role) {
             const now = Date.now();
             const msgs = Array.isArray(db.messages) ? db.messages : [];
-            const unread = msgs.filter(m => 
-                (m.target === 'all' || m.target === role) && 
-                m.schedule <= now &&
-                !currentUser.readMessages.includes(m.id)
-            );
+            // Ambil ID yang sudah dibaca (disimpan di LocalStorage)
+            let readIds = JSON.parse(localStorage.getItem('gkps_read_msgs') || '[]');
+            
+            const valid = msgs.filter(m => (m.target === 'all' || m.target === role) && m.schedule <= now);
+            
+            // Hitung unread berdasarkan filtering ID
+            const unreadCount = valid.filter(m => !readIds.includes(m.id)).length;
 
-            const badge = role==='siswa' ? 'siswa-notif-badge' : 'dash-notif-badge';
-            const list = role==='siswa' ? 'siswa-notif-list' : 'dash-notif-list';
+            const badgeId = role==='siswa' ? 'siswa-notif-badge' : 'dash-notif-badge';
+            const listId = role==='siswa' ? 'siswa-notif-list' : 'dash-notif-list';
             
-            document.getElementById(badge).innerText = unread.length;
-            document.getElementById(badge).classList.toggle('hidden', unread.length === 0);
+            // Gunakan unreadCount untuk menampilkan badge, bukan valid.length
+            document.getElementById(badgeId).innerText = unreadCount;
+            document.getElementById(badgeId).className = unreadCount > 0 ? "absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white" : "hidden";
             
-            document.getElementById(list).innerHTML = unread.length === 0 ? '<p class="text-xs text-center text-gray-400 p-2">Kosong</p>' : 
-                unread.slice().reverse().map(m => `<div class="bg-yellow-50 p-2 rounded border-l-4 border-yellow-400 mb-2 shadow-sm text-sm">${m.content}</div>`).join('');
+            document.getElementById(listId).innerHTML = valid.length === 0 ? '<p class="text-xs text-center text-gray-400 p-2">Kosong</p>' : 
+                valid.slice().reverse().map(m => `<div class="bg-yellow-50 p-2 rounded border-l-4 border-yellow-400 mb-2 shadow-sm text-sm">${m.content}</div>`).join('');
         }
-
+        
         function toggleDropdown(id, e) {
             e.stopPropagation();
             closeAllDropdowns();
-            document.getElementById(id).classList.toggle('show');
+            const el = document.getElementById(id);
+            el.classList.toggle('show');
             
-            // Tandai semua pesan yang ditampilkan sebagai sudah dibaca
-            if (currentUser && (id === 'siswa-notif-dropdown' || id === 'dash-notif-dropdown')) {
-                const now = Date.now();
+            // Saat dropdown dibuka, tandai semua pesan yang valid saat ini sebagai "read"
+            if (el.classList.contains('show')) {
+                const role = currentUser.role;
                 const msgs = Array.isArray(db.messages) ? db.messages : [];
-                const toMark = msgs.filter(m => 
-                    (m.target === 'all' || m.target === currentUser.role) && 
-                    m.schedule <= now &&
-                    !currentUser.readMessages.includes(m.id)
-                );
-                toMark.forEach(m => {
-                    if (!currentUser.readMessages.includes(m.id)) {
-                        currentUser.readMessages.push(m.id);
-                    }
-                });
-                if (toMark.length > 0) {
-                    const idx = db.users.findIndex(u => u.id === currentUser.id);
-                    if (idx !== -1) {
-                        db.users[idx].readMessages = currentUser.readMessages;
-                        saveDb();
-                    }
-                    // Sembunyikan badge langsung
-                    const badge = id === 'siswa-notif-dropdown' ? 'siswa-notif-badge' : 'dash-notif-badge';
-                    document.getElementById(badge).classList.add('hidden');
+                // Ambil ID pesan yang valid saat ini
+                const validIds = msgs.filter(m => (m.target === 'all' || m.target === role) && m.schedule <= Date.now()).map(m => m.id);
+                
+                let readIds = JSON.parse(localStorage.getItem('gkps_read_msgs') || '[]');
+                // Gabungkan dengan yang baru dibaca tanpa duplikasi
+                const updatedReadIds = [...new Set([...readIds, ...validIds])];
+                localStorage.setItem('gkps_read_msgs', JSON.stringify(updatedReadIds));
+                
+                // Sembunyikan badge segera secara visual
+                if (id === 'siswa-notif-dropdown') {
+                    document.getElementById('siswa-notif-badge').classList.add('hidden');
+                } else if (id === 'dash-notif-dropdown') {
+                    document.getElementById('dash-notif-badge').classList.add('hidden');
                 }
             }
         }
         
-        function closeAllDropdowns(e) { 
-            if(e && e.target.closest('.notif-container')) return; 
-            document.querySelectorAll('.notif-dropdown').forEach(d => d.classList.remove('show'));
+        function closeAllDropdowns(e) { if(e && e.target.closest('.notif-container')) return; document.querySelectorAll('.notif-dropdown').forEach(d => d.classList.remove('show'));
         }
 
         // Dashboard Logic
         function renderDashboardScreen() {
             document.getElementById('guru-greet-name').innerText = currentUser.name;
             document.getElementById('role-badge').innerText = currentUser.role.toUpperCase();
-            document.getElementById('dash-avatar').src = currentUser.avatar || 'https://api.dicebear.com/7.x/notionists/svg?seed=' + currentUser.name;
+            document.getElementById('dash-avatar').src = currentUser.avatar;
             document.getElementById('dash-avatar').style.objectPosition = `${currentUser.posX||50}% ${currentUser.posY||50}%`;
             
             const isAdmin = currentUser.role === 'admin';
-            document.getElementById('tab-users').classList.toggle('hidden', !isAdmin);
-            document.getElementById('tab-messages').classList.toggle('hidden', !isAdmin);
-            document.getElementById('tab-settings').classList.toggle('hidden', !isAdmin);
+            if (isAdmin) {
+                document.getElementById('tab-users').classList.remove('hidden');
+                document.getElementById('tab-messages').classList.remove('hidden');
+                document.getElementById('tab-settings').classList.remove('hidden');
+            } else {
+                document.getElementById('tab-users').classList.add('hidden');
+                document.getElementById('tab-messages').classList.add('hidden');
+                document.getElementById('tab-settings').classList.add('hidden');
+                const activeTab = localStorage.getItem('gkps_tab');
+                if(['users', 'messages', 'settings'].includes(activeTab)) switchTab('home');
+            }
         }
-
-        // PERBAIKAN SCANNER (POIN 2)
-        let scanner = null;
-        function startScanner() {
-            if (scanner) return;
-            setTimeout(() => {
-                const config = { 
-                    fps: 15,
-                    aspectRatio: 1.333,
-                    disableFlip: true,
-                    rememberLastUsedCamera: true
-                };
-
-                scanner = new Html5QrcodeScanner("reader", {
-                    ...config,
-                    qrbox: (viewfinderWidth, viewfinderHeight) => {
-                        const size = Math.min(viewfinderWidth, viewfinderHeight) * 0.75;
-                        return { width: size, height: size };
-                    }
-                }, false);
-
-                scanner.render(onScanSuccess, onScanFailure);
-            }, 300);
-        }
-
-        function stopScanner() { 
-            if (scanner) { 
-                scanner.clear().then(() => { scanner = null; }).catch(err => console.warn("Scanner clear error:", err)); 
-            } 
-        }
-
-        function onScanFailure(err) {
-            // Silent
-        }
-
         function switchTab(tab) {
             document.querySelectorAll('.tab-view').forEach(el => el.classList.add('hidden'));
             document.getElementById('view-'+tab).classList.remove('hidden');
@@ -1229,13 +1212,12 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
             document.getElementById('tab-'+tab).classList.add('active');
             localStorage.setItem('gkps_tab', tab);
             if(tab === 'home') renderHomeStats();
-            if(tab === 'scan') startScanner(); 
-            else stopScanner();
+            if(tab === 'scan') startScanner(); else stopScanner();
             if(tab === 'users') renderUserTable();
             if(tab === 'messages') renderBroadcastHistory();
         }
 
-        // User Table Logic
+        // User Table Logic (UPDATED FOR FOLDER)
         function handleSort(key) {
             if (sortConfig.key === key) sortConfig.asc = !sortConfig.asc;
             else { sortConfig.key = key; sortConfig.asc = true; }
@@ -1245,7 +1227,8 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
         }
         
         function renderUserTable(filter = '') {
-            const folderFilter = document.getElementById('filter-folder').value;
+            const folderFilter = document.getElementById('filter-folder') ?
+            document.getElementById('filter-folder').value : 'all';
             const tbody = document.getElementById('table-users');
             const users = Array.isArray(db.users) ? db.users : [];
             let data = users.filter(u => {
@@ -1282,25 +1265,27 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
                     <td><span class="badge ${u.disabled?'badge-disabled':'badge-active'}">${u.disabled?'Blocked':'Active'}</span></td>
                     <td class="text-right flex gap-1 justify-end items-center h-full pt-3">
                         <button onclick="openUserModal('${u.id}')" class="bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded font-bold">Edit</button>
-                        ${u.role!=='admin' ? `<button onclick="toggleStatus('${u.id}')" class="bg-orange-100 text-orange-600 text-xs px-2 py-1 rounded">Sts</button><button onclick="deleteUser('${u.id}')" class="bg-red-100 text-red-600 text-xs px-2 py-1 rounded">Del</button>` : ''}
+                        ${u.role!=='admin' ?
+                        `<button onclick="toggleStatus('${u.id}')" class="bg-orange-100 text-orange-600 text-xs px-2 py-1 rounded">Sts</button><button onclick="deleteUser('${u.id}')" class="bg-red-100 text-red-600 text-xs px-2 py-1 rounded">Del</button>` : ''}
                     </td>
                 </tr>`).join('');
             updateDeleteBtn();
         }
 
+        // Render Siswa
         function renderSiswaScreen() {
             document.getElementById('siswa-greet-name').innerText = currentUser.name;
             const img = document.getElementById('card-img');
             const avatar = document.getElementById('stu-avatar');
-            img.src = currentUser.avatar || 'https://api.dicebear.com/7.x/notionists/svg?seed=' + currentUser.name;
+            img.src = currentUser.avatar;
             img.style.objectPosition = `${currentUser.posX || 50}% ${currentUser.posY || 50}%`;
-            avatar.src = currentUser.avatar || 'https://api.dicebear.com/7.x/notionists/svg?seed=' + currentUser.name;
+            avatar.src = currentUser.avatar;
             avatar.style.objectPosition = `${currentUser.posX || 50}% ${currentUser.posY || 50}%`;
 
             document.getElementById('card-name-display').innerText = currentUser.name;
             document.getElementById('card-id-display').innerText = "ID: " + currentUser.username;
             document.getElementById('card-class-display').innerText = "KELAS " + (currentUser.kelas || "-");
-            document.getElementById('card-role-display').innerText = currentUser.role.toUpperCase();
+            document.getElementById('card-role-display').innerText = currentUser.role;
 
             const codeData = `GKPS|${currentUser.username}|${currentUser.name}|${currentUser.role}|${currentUser.kelas||'-'}`;
             document.getElementById("qrcode").innerHTML = "";
@@ -1314,11 +1299,12 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
             if (!currentUser) return;
             document.getElementById('id-card-modal').style.display = 'flex';
             const img = document.getElementById('card-img-guru');
-            img.src = currentUser.avatar || 'https://api.dicebear.com/7.x/notionists/svg?seed=' + currentUser.name;
+            img.src = currentUser.avatar;
             img.style.objectPosition = `${currentUser.posX || 50}% ${currentUser.posY || 50}%`;
             document.getElementById('card-name-guru').innerText = currentUser.name;
             document.getElementById('card-id-guru').innerText = "ID: " + currentUser.username;
-            document.getElementById('card-class-guru').innerText = currentUser.kelas !== '-' ? "KELAS " + currentUser.kelas : "GURU / STAFF";
+            document.getElementById('card-class-guru').innerText = currentUser.kelas !== '-' ?
+            "KELAS " + currentUser.kelas : "GURU / STAFF";
             document.getElementById('card-role-guru').innerText = currentUser.role.toUpperCase();
 
             const codeData = `GKPS|${currentUser.username}|${currentUser.name}|${currentUser.role}|${currentUser.kelas||'-'}`;
@@ -1339,6 +1325,7 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
             if(logs.length===0) tbody.innerHTML = '<tr><td colspan="5" class="text-center p-4 text-gray-400">Belum ada absen</td></tr>';
             else tbody.innerHTML = logs.slice().reverse().map(l => {
                 const u = db.users.find(x => x.username === l.username);
+                let statusLabel = l.status;
                 let colorClass = 'bg-green-100 text-green-800';
                 if (l.status === 'Sakit') colorClass = 'bg-yellow-100 text-yellow-800';
                 else if (l.status === 'Izin') colorClass = 'bg-blue-100 text-blue-800';
@@ -1348,7 +1335,7 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
                     <td class="text-gray-500 font-mono text-xs">${l.time}</td>
                     <td class="font-bold text-sm">${l.name}</td>
                     <td><span class="badge badge-class">${u?u.kelas:'-'}</span></td>
-                    <td><span class="text-xs ${colorClass} px-2 py-1 rounded">${l.status}</span></td>
+                    <td><span class="text-xs ${colorClass} px-2 py-1 rounded">${statusLabel}</span></td>
                     <td class="text-[10px] text-gray-500 italic">${l.note || '-'}</td>
                 </tr>`;
             }).join('');
@@ -1377,105 +1364,29 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
             }).join('');
         }
 
-        // Folder Logic
+        // --- FOLDER LOGIC (FITUR BARU) ---
+        function initFolders() {
+            if(!db.folders) db.folders = [];
+            renderFolderOptions();
+        }
+
         function renderFolderOptions() {
             const fSelect = document.getElementById('modal-folder');
             const filterSelect = document.getElementById('filter-folder');
-            const bulkSelect = document.getElementById('bulk-move-select');
             const folders = db.folders || [];
             
             let options = `<option value="-">Tanpa Folder</option>`;
             let filterOptions = `<option value="all">📁 Tampilkan Semua Folder</option>`;
-            let bulkOptions = `<option value="">- Pindah ke -</option><option value="-">Tanpa Folder</option>`;
             
             folders.forEach(f => {
                 options += `<option value="${f}">${f}</option>`;
                 filterOptions += `<option value="${f}">${f}</option>`;
-                bulkOptions += `<option value="${f}">${f}</option>`;
             });
             if(fSelect) fSelect.innerHTML = options;
             if(filterSelect) filterSelect.innerHTML = filterOptions;
-            if(bulkSelect) bulkSelect.innerHTML = bulkOptions;
         }
 
-        function toggleFolderPanel() {
-            const panel = document.getElementById('folder-panel');
-            panel.classList.toggle('hidden');
-            if (!panel.classList.contains('hidden')) renderInlineFolderList();
-        }
-
-        function addNewFolderInline() {
-            const nameInput = document.getElementById('new-folder-input');
-            const name = nameInput.value.trim();
-            if(!name) return alert("Nama folder tidak boleh kosong");
-            if(db.folders.includes(name)) return alert("Folder sudah ada!");
-            db.folders.push(name);
-            nameInput.value = '';
-            saveDb();
-            renderFolderOptions();
-            renderInlineFolderList();
-        }
-
-        function renderInlineFolderList() {
-            const list = document.getElementById('folder-list-inline');
-            if(!db.folders || db.folders.length === 0) {
-                list.innerHTML = '<p class="text-gray-400 text-xs italic col-span-2 text-center">Belum ada folder dibuat.</p>';
-                return;
-            }
-            list.innerHTML = db.folders.map(f => `
-                <div class="flex justify-between items-center bg-white p-2 rounded border border-amber-100 shadow-sm">
-                    <span class="text-xs font-bold text-gray-700">📁 ${f}</span>
-                    <div class="flex gap-1">
-                        <button onclick="renameFolder('${f}')" class="text-blue-500 hover:text-blue-700 text-[10px] font-bold border border-blue-200 px-2 rounded">Edit</button>
-                        <button onclick="deleteFolderInline('${f}')" class="text-red-500 hover:text-red-700 text-[10px] font-bold border border-red-200 px-2 rounded">Hapus</button>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function renameFolder(oldName) {
-            const newName = prompt("Ubah nama folder menjadi:", oldName);
-            if(newName && newName !== oldName && !db.folders.includes(newName)) {
-                const idx = db.folders.indexOf(oldName);
-                if(idx !== -1) db.folders[idx] = newName;
-                db.users.forEach(u => { if(u.folder === oldName) u.folder = newName; });
-                saveDb();
-                renderFolderOptions();
-                renderInlineFolderList();
-                renderUserTable();
-            }
-        }
-
-        function deleteFolderInline(name) {
-            if(confirm(`Hapus folder "${name}"? User di dalamnya akan dipindah ke "Tanpa Folder".`)) {
-                db.folders = db.folders.filter(f => f !== name);
-                db.users.forEach(u => { if(u.folder === name) u.folder = '-'; });
-                saveDb();
-                renderFolderOptions();
-                renderInlineFolderList();
-                renderUserTable();
-            }
-        }
-
-        function updateDeleteBtn() { 
-            const checked = document.querySelectorAll('.user-checkbox:checked').length;
-            document.getElementById('bulk-action-area').classList.toggle('hidden', checked === 0);
-        }
-
-        function moveSelectedUsers() {
-            const target = document.getElementById('bulk-move-select').value;
-            if(!target) return alert("Pilih folder tujuan!");
-            const ids = Array.from(document.querySelectorAll('.user-checkbox:checked')).map(cb => cb.value);
-            if(confirm(`Pindahkan ${ids.length} user ke "${target === '-' ? 'Tanpa Folder' : target}"?`)) {
-                db.users.forEach(u => { if(ids.includes(u.id)) u.folder = target; });
-                saveDb();
-                renderUserTable();
-                document.querySelectorAll('.user-checkbox').forEach(cb => cb.checked = false);
-                updateDeleteBtn();
-            }
-        }
-
-        // Image & Avatar
+        // Handle Image
         function handleImageUpload(input, previewId) {
             const file = input.files[0];
             if (!file) return;
@@ -1488,8 +1399,10 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
                     const ctx = canvas.getContext('2d');
                     const MAX_SIZE = 500;
                     let width = img.width; let height = img.height;
-                    if (width > height) { if (width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; } } 
-                    else { if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; } }
+                    if (width > height) { if (width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE;
+                    } } 
+                    else { if (height > MAX_SIZE) { width *= MAX_SIZE / height;
+                    height = MAX_SIZE; } }
                     canvas.width = width;
                     canvas.height = height;
                     ctx.drawImage(img, 0, 0, width, height);
@@ -1505,29 +1418,25 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
             const randomSeed = Math.random().toString(36).substring(7);
             document.getElementById(previewId).src = `https://api.dicebear.com/7.x/${randomStyle}/svg?seed=${randomSeed}`;
         }
-
         function previewPosition(imgId, x, y) {
             const img = document.getElementById(imgId);
             if(img) img.style.objectPosition = `${x}% ${y}%`;
         }
 
-        // User Modal
+        // --- User Modal (Updated for Folder) ---
         function openUserModal(id=null) {
             document.getElementById('user-modal').style.display = 'flex';
             document.getElementById('modal-file-input').value = ""; 
-            renderFolderOptions();
+            renderFolderOptions(); // Refresh folder list
             
             if(id) {
                 const u = db.users.find(x => x.id === id);
-                document.getElementById('modal-id').value = u.id;
-                document.getElementById('modal-name').value = u.name;
-                document.getElementById('modal-username').value = u.username;
-                document.getElementById('modal-password').value = '';
-                document.getElementById('modal-role').value = u.role;
-                document.getElementById('modal-gender').value = u.gender||'L';
-                document.getElementById('modal-kelas').value = u.kelas||'-';
-                document.getElementById('modal-folder').value = u.folder || '-';
-                document.getElementById('modal-status').value = u.disabled?'disabled':'active';
+                document.getElementById('modal-id').value = u.id; document.getElementById('modal-name').value = u.name; document.getElementById('modal-username').value = u.username; document.getElementById('modal-password').value = '';
+                document.getElementById('modal-role').value = u.role; document.getElementById('modal-gender').value = u.gender||'L';
+                document.getElementById('modal-kelas').value = u.kelas||'-'; document.getElementById('modal-status').value = u.disabled?'disabled':'active';
+                // SET FOLDER
+                document.getElementById('modal-folder').value = u.folder ||
+                '-';
 
                 const img = document.getElementById('modal-avatar-preview');
                 img.src = u.avatar || 'https://api.dicebear.com/7.x/notionists/svg?seed='+u.name;
@@ -1536,14 +1445,11 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
                 document.getElementById('modal-pos-y').value = u.posY || 50;
             } else {
                 document.getElementById('modal-id').value = '';
-                document.getElementById('modal-name').value = '';
-                document.getElementById('modal-username').value = '';
-                document.getElementById('modal-password').value = '';
-                document.getElementById('modal-role').value = 'siswa';
-                document.getElementById('modal-gender').value = 'L';
-                document.getElementById('modal-kelas').value = '-';
-                document.getElementById('modal-folder').value = '-';
+                document.getElementById('modal-name').value = ''; document.getElementById('modal-username').value = ''; document.getElementById('modal-password').value = '';
+                document.getElementById('modal-role').value = 'siswa'; document.getElementById('modal-gender').value = 'L'; document.getElementById('modal-kelas').value = '-';
                 document.getElementById('modal-status').value = 'active';
+                // SET FOLDER DEFAULT
+                document.getElementById('modal-folder').value = '-';
                 const img = document.getElementById('modal-avatar-preview');
                 img.src = 'https://api.dicebear.com/7.x/notionists/svg?seed=NewUser';
                 img.style.objectPosition = '50% 50%';
@@ -1551,65 +1457,39 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
                 document.getElementById('modal-pos-y').value = 50;
             }
         }
-
-        function closeModal() { 
-            document.getElementById('user-modal').style.display = 'none';
+        function closeModal() { document.getElementById('user-modal').style.display = 'none';
         }
         
         function saveUser() {
-            const id = document.getElementById('modal-id').value;
-            const name = document.getElementById('modal-name').value;
-            const user = document.getElementById('modal-username').value;
-            const pass = document.getElementById('modal-password').value;
-            const role = document.getElementById('modal-role').value;
-            const gender = document.getElementById('modal-gender').value;
-            const kelas = document.getElementById('modal-kelas').value;
-            const folder = document.getElementById('modal-folder').value;
-            const status = document.getElementById('modal-status').value;
+            const id=document.getElementById('modal-id').value, name=document.getElementById('modal-name').value, user=document.getElementById('modal-username').value, pass=document.getElementById('modal-password').value;
+            const role=document.getElementById('modal-role').value, gender=document.getElementById('modal-gender').value, kelas=document.getElementById('modal-kelas').value, status=document.getElementById('modal-status').value;
             const avatarPreview = document.getElementById('modal-avatar-preview').src;
             const posX = document.getElementById('modal-pos-x').value;
             const posY = document.getElementById('modal-pos-y').value;
-
-            if(!name || !user) return alert('Wajib isi nama dan username!');
+            // SAVE FOLDER
+            const folder = document.getElementById('modal-folder').value;
+            if(!name || !user) return alert('Wajib isi!');
             
+            let avatarUrl = avatarPreview;
             if(id) {
                 const idx = db.users.findIndex(x => x.id === id);
-                db.users[idx] = {...db.users[idx], name, username:user, role, gender, kelas, folder, disabled:status==='disabled', avatar: avatarPreview, posX: posX, posY: posY};
+                db.users[idx] = {...db.users[idx], name, username:user, role, gender, kelas, disabled:status==='disabled', avatar: avatarUrl, posX: posX, posY: posY, folder: folder};
                 if(pass) db.users[idx].password = pass;
             } else {
-                db.users.push({ 
-                    id:'USR_'+Date.now(), name, username:user, password:pass||'123', role, gender, kelas, folder, disabled:status==='disabled', 
-                    avatar: avatarPreview, posX: posX, posY: posY, readMessages: []
-                });
+                if(!Array.isArray(db.users)) db.users = [];
+                db.users.push({ id:'USR_'+Date.now(), name, username:user, password:pass||'123', role, gender, kelas, disabled:status==='disabled', avatar: avatarUrl, posX: posX, posY: posY, folder: folder });
             }
-            saveDb(); 
-            closeModal(); 
-            renderUserTable();
+            saveDb(); closeModal(); renderUserTable();
         }
         
-        function toggleStatus(id) { 
-            const idx = db.users.findIndex(x => x.id === id);
-            if(idx!==-1) { db.users[idx].disabled = !db.users[idx].disabled; saveDb(); renderUserTable(); } 
+        function toggleStatus(id) { const idx = db.users.findIndex(x => x.id === id);
+            if(idx!==-1) { db.users[idx].disabled = !db.users[idx].disabled; saveDb(); } }
+        function deleteUser(id) { if(confirm("Hapus?")) { db.users = db.users.filter(u => u.id !== id);
+            saveDb(); } }
+        function toggleSelectAll(src) { document.querySelectorAll('.user-checkbox').forEach(cb => cb.checked = src.checked); updateDeleteBtn();
         }
-        function deleteUser(id) { 
-            if(confirm("Hapus user ini?")) { 
-                db.users = db.users.filter(u => u.id !== id);
-                saveDb(); 
-                renderUserTable(); 
-            } 
-        }
-        function toggleSelectAll(src) { 
-            document.querySelectorAll('.user-checkbox').forEach(cb => cb.checked = src.checked); 
-            updateDeleteBtn();
-        }
-        function deleteSelectedUsers() { 
-            if(confirm("Hapus user terpilih secara permanen?")) { 
-                const ids = Array.from(document.querySelectorAll('.user-checkbox:checked')).map(cb=>cb.value);
-                db.users = db.users.filter(u => !ids.includes(u.id)); 
-                saveDb(); 
-                renderUserTable(); 
-            } 
-        }
+        function deleteSelectedUsers() { if(confirm("Hapus terpilih?")) { const ids = Array.from(document.querySelectorAll('.user-checkbox:checked')).map(cb=>cb.value);
+            db.users = db.users.filter(u => !ids.includes(u.id)); saveDb(); } }
 
         function openProfileModal() { 
             if(!currentUser) return;
@@ -1621,33 +1501,37 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
             document.getElementById('prof-password').value = ''; 
             
             const img = document.getElementById('prof-img-display');
-            img.src = currentUser.avatar || 'https://api.dicebear.com/7.x/notionists/svg?seed=' + currentUser.name;
+            img.src = currentUser.avatar;
             img.style.objectPosition = `${currentUser.posX||50}% ${currentUser.posY||50}%`;
             document.getElementById('prof-pos-x').value = currentUser.posX || 50;
             document.getElementById('prof-pos-y').value = currentUser.posY || 50;
 
             document.getElementById('prof-name-display').innerText = currentUser.name;
-            document.getElementById('prof-role-display').innerText = currentUser.role.toUpperCase();
-            const jkFull = currentUser.gender === 'P' ? 'Perempuan' : 'Laki-Laki';
-            document.getElementById('prof-gender-display').innerText = jkFull;
+            document.getElementById('prof-role-display').innerText = currentUser.role;
+            let jkFull = currentUser.gender === 'P' ? 'Perempuan' : 'Laki-Laki';
+            const genderEl = document.getElementById('prof-gender-display');
+            genderEl.innerText = jkFull;
+            genderEl.className = currentUser.gender === 'P' ? 'font-bold text-pink-600 text-lg' : 'font-bold text-blue-600 text-lg';
+            
             document.getElementById('prof-class-display').innerText = currentUser.kelas || '-';
         }
         
         function saveProfile() {
-            const name = document.getElementById('prof-name').value;
-            const pass = document.getElementById('prof-password').value;
+            const name=document.getElementById('prof-name').value, user=document.getElementById('prof-username').value, pass=document.getElementById('prof-password').value;
             const avatarSrc = document.getElementById('prof-img-display').src;
             const posX = document.getElementById('prof-pos-x').value;
             const posY = document.getElementById('prof-pos-y').value;
 
             const idx = db.users.findIndex(u=>u.id===currentUser.id);
             if(idx!==-1) { 
-                db.users[idx].name = name; 
+                db.users[idx].name=name; 
+                db.users[idx].username=user;
                 db.users[idx].avatar = avatarSrc;
                 db.users[idx].posX = posX;
                 db.users[idx].posY = posY;
-                if(pass) db.users[idx].password = pass; 
-                currentUser = db.users[idx]; 
+
+                if(pass) db.users[idx].password=pass; 
+                currentUser=db.users[idx]; 
                 saveDb();
                 localStorage.setItem('gkps_session', JSON.stringify(currentUser));
                 alert('Profil Berhasil Diupdate!'); 
@@ -1656,37 +1540,20 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
                 else renderDashboardScreen();
             }
         }
-
-        function openForgotModal() { 
-            document.getElementById('forgot-modal').style.display='flex';
+        function openForgotModal() { document.getElementById('forgot-modal').style.display='flex';
         }
-
         function resetAdminPassword() {
-            const u = document.getElementById('forgot-username').value;
-            const c = document.getElementById('forgot-code').value;
-            const p = document.getElementById('forgot-newpass').value;
+            const u = document.getElementById('forgot-username').value, c = document.getElementById('forgot-code').value, p = document.getElementById('forgot-newpass').value;
             const t = db.users.find(x => x.username === u && x.role === 'admin');
-            if(t && t.recoveryCode === c) { 
-                t.password = p; 
-                saveDb(); 
-                alert('Password admin berhasil direset!'); 
-                document.getElementById('forgot-modal').style.display='none'; 
-            } else alert('Data salah!');
+            if(t && t.recoveryCode === c) { t.password = p; saveDb(); alert('Sukses!'); document.getElementById('forgot-modal').style.display='none'; } else alert('Gagal!');
         }
 
         function exportExcel() {
-            let csv = "Nama,Username,Kelas,Waktu,Tanggal,Status,Ket\n";
+             let csv = "Nama,Username,Kelas,Waktu,Tanggal\n";
             const att = Array.isArray(db.attendance) ? db.attendance : [];
-            att.forEach(r => { 
-                const u = db.users.find(usr => usr.username === r.username); 
-                csv += `${r.name},${r.username},${u?u.kelas:'-'},${r.time},${r.date},${r.status},${r.note}\n`; 
-            });
-            const a = document.createElement('a'); 
-            a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'})); 
-            a.download = `Absensi_GKPS_${new Date().toLocaleDateString('id-ID')}.csv`; 
-            a.click();
+             att.forEach(r => { const u = db.users.find(usr => usr.username === r.username); csv += `${r.name},${r.username},${u?u.kelas:'-'},${r.time},${r.date}\n` });
+            const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'})); a.download = `Absensi_${new Date().toLocaleDateString()}.csv`; a.click();
         }
-
         function importCSV(input) {
             const file = input.files[0];
             if(!file) return;
@@ -1697,78 +1564,247 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
                 rows.forEach(r => {
                     const cols = r.split(',');
                     if(cols.length>=3) {
-                        const name=cols[0].trim(), username=cols[1].trim(), password=cols[2].trim(), 
-                              role=(cols[3]||'siswa').trim().toLowerCase(), kelas=(cols[4]||'-').trim();
-                        let gender = 'L';
-                        if(cols[5]) {
-                            const g = cols[5].trim().toUpperCase();
-                            gender = (g === 'P' || g === 'PEREMPUAN') ? 'P' : 'L';
-                        }
+                        const name=cols[0].trim(), username=cols[1].trim(), password=cols[2].trim(), role=cols[3]?cols[3].trim().toLowerCase():'siswa', kelas=cols[4]?cols[4].trim():'-';
+                       
+                        let genderRaw = cols[5] ? cols[5].trim().toUpperCase() : 'L';
+                        let gender = (genderRaw === 'P' || genderRaw === 'PEREMPUAN') ? 'P' : 'L';
+                        // Handle Folder Import if exists in CSV? Currently not supported in CSV structure, default to '-'
+                        
+                        if(!Array.isArray(db.users)) db.users = [];
                         if(name.toLowerCase()!=='nama' && !db.users.find(u=>u.username===username)) {
-                             db.users.push({ 
-                                id:'IMP_'+Date.now()+c, name, username, password, role, kelas, gender, 
-                                disabled:false, avatar:'https://api.dicebear.com/7.x/notionists/svg?seed='+name, 
-                                posX: 50, posY: 50, folder: '-', readMessages: [] 
-                             }); 
-                             c++;
+                             db.users.push({ id:'IMP_'+Date.now()+c, name, username, password, role, kelas, gender: 
+                            gender, disabled:false, avatar:'https://api.dicebear.com/7.x/notionists/svg?seed='+name, posX: 50, posY: 50, folder: '-' }); c++;
                         }
                     }
                 });
-                saveDb(); 
-                alert(`Import berhasil: ${c} user baru ditambahkan!`);
-                renderUserTable();
+                saveDb(); alert(`Import ${c} Sukses!`);
             };
             reader.readAsText(file);
         }
 
-        // Scan Success
+        // --- LOGIKA MANAJEMEN FOLDER TERINTEGRASI ---
+
+        // Toggle Panel Folder
+        function toggleFolderPanel() {
+            const panel = document.getElementById('folder-panel');
+            if (panel.classList.contains('hidden')) {
+                panel.classList.remove('hidden');
+                renderInlineFolderList();
+            } else {
+                panel.classList.add('hidden');
+            }
+        }
+
+        // Tambah Folder Baru
+        function addNewFolderInline() {
+            const nameInput = document.getElementById('new-folder-input');
+            const name = nameInput.value.trim();
+            if(!name) return alert("Nama folder tidak boleh kosong");
+            
+            if(!db.folders) db.folders = [];
+            if(db.folders.includes(name)) return alert("Folder sudah ada!");
+            
+            db.folders.push(name);
+            nameInput.value = '';
+            saveDb();
+            renderInlineFolderList(); // Refresh list
+            renderFolderOptions(); // Refresh dropdown filter & modal
+        }
+
+        // Render List Folder dengan Tombol Edit & Hapus
+        function renderInlineFolderList() {
+            const list = document.getElementById('folder-list-inline');
+            if(!db.folders || db.folders.length === 0) {
+                list.innerHTML = '<p class="text-gray-400 text-xs italic col-span-2 text-center">Belum ada folder dibuat.</p>';
+                return;
+            }
+            
+            list.innerHTML = db.folders.map(f => `
+                <div class="flex justify-between items-center bg-white p-2 rounded border border-amber-100 shadow-sm">
+                    <span class="text-xs font-bold text-gray-700">📁 ${f}</span>
+                    <div class="flex gap-1">
+                        <button onclick="renameFolder('${f}')" class="text-blue-500 hover:text-blue-700 text-[10px] font-bold border border-blue-200 px-2 rounded">Edit</button>
+                        <button onclick="deleteFolderInline('${f}')" class="text-red-500 hover:text-red-700 text-[10px] font-bold border border-red-200 px-2 rounded">Hapus</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Fitur Edit/Rename Folder
+        function renameFolder(oldName) {
+            const newName = prompt("Ubah nama folder menjadi:", oldName);
+            if(newName && newName !== oldName) {
+                if(db.folders.includes(newName)) return alert("Nama folder sudah digunakan!");
+                
+                // 1. Update nama di array folders
+                const idx = db.folders.indexOf(oldName);
+                if(idx !== -1) db.folders[idx] = newName;
+                
+                // 2. Update semua user yang ada di folder lama ke folder baru
+                let count = 0;
+                db.users.forEach(u => {
+                    if(u.folder === oldName) {
+                        u.folder = newName;
+                        count++;
+                    }
+                });
+                
+                saveDb();
+                renderInlineFolderList();
+                renderFolderOptions();
+                renderUserTable(); // Refresh tabel user
+                alert(`Folder diubah. ${count} user diperbarui.`);
+            }
+        }
+
+        // Hapus Folder
+        function deleteFolderInline(name) {
+            if(confirm(`Hapus folder "${name}"? User di dalamnya TIDAK akan terhapus (folder akan di-reset).`)) {
+                db.folders = db.folders.filter(f => f !== name);
+                // Reset user folder ke "-"
+                db.users.forEach(u => { if(u.folder === name) u.folder = '-'; });
+                
+                saveDb();
+                renderInlineFolderList();
+                renderFolderOptions();
+                renderUserTable();
+            }
+        }
+
+        // --- LOGIKA PINDAH USER (BULK MOVE) ---
+
+        // Update fungsi updateDeleteBtn yang lama untuk menghandle tampilan Bulk Action
+        function updateDeleteBtn() { 
+            const checkedBoxes = document.querySelectorAll('.user-checkbox:checked');
+            const count = checkedBoxes.length; 
+            const area = document.getElementById('bulk-action-area');
+            
+            if(count > 0) {
+                area.classList.remove('hidden');
+                // Update dropdown pilihan folder di area bulk action
+                const selectMove = document.getElementById('bulk-move-select');
+                let opts = `<option value="">- Pindah ke -</option><option value="-">Tanpa Folder</option>`;
+                (db.folders || []).forEach(f => {
+                    opts += `<option value="${f}">${f}</option>`;
+                });
+                selectMove.innerHTML = opts;
+            } else {
+                area.classList.add('hidden');
+            }
+        }
+
+        // Fungsi Eksekusi Pindah User
+        function moveSelectedUsers() {
+            const targetFolder = document.getElementById('bulk-move-select').value;
+            if(!targetFolder) return alert("Pilih folder tujuan terlebih dahulu!");
+            
+            const ids = Array.from(document.querySelectorAll('.user-checkbox:checked')).map(cb => cb.value);
+            
+            if(confirm(`Pindahkan ${ids.length} user terpilih ke folder "${targetFolder}"?`)) {
+                let count = 0;
+                db.users.forEach(u => {
+                    if(ids.includes(u.id)) {
+                        u.folder = targetFolder;
+                        count++;
+                    }
+                });
+                
+                saveDb();
+                renderUserTable();
+                // Uncheck all
+                document.querySelectorAll('.user-checkbox').forEach(cb => cb.checked = false);
+                updateDeleteBtn();
+                alert(`${count} user berhasil dipindahkan.`);
+            }
+        }
+
+        // --- SCANNER LOGIC (UPDATED WITH LOG) ---
+        // PERBAIKAN 2: Scanner Fix Loop (Race Condition Timer)
+        function startScanner() {
+            if(scanner) return;
+            clearTimeout(scannerTimer); // Reset pending timer
+            
+            scannerTimer = setTimeout(() => {
+                const config = { 
+                    fps: 20, 
+                    qrbox: 250, 
+                    showTorchButtonIfSupported: true, 
+                    rememberLastUsedCamera: true
+                };
+                
+                try {
+                    scanner = new Html5QrcodeScanner("reader", config);
+                    scanner.render(onScanSuccess, onScanFailure);
+                } catch(e) {
+                    console.log("Scanner init error or container hidden");
+                }
+            }, 300);
+        }
+        
+        function stopScanner() { 
+            clearTimeout(scannerTimer); // Stop pending start
+            if(scanner) { 
+                scanner.clear().then(_=>scanner=null).catch(e => scanner=null);
+            } 
+        }
+        
+        // PERBAIKAN 3: Log Persisten
+        function renderScanSessionLog() {
+            const logBody = document.getElementById('scan-session-log');
+            if(!logBody) return;
+            const today = getTodayDate();
+            // Ambil dari DB, filter hari ini & hadir
+            const logs = (db.attendance || []).filter(a => a.date === today && a.status === 'Hadir').slice().reverse();
+            
+            if(logs.length === 0) {
+                 logBody.innerHTML = '<tr><td colspan="3" class="p-2 text-center text-gray-400">Belum ada scan sesi ini</td></tr>';
+                 return;
+            }
+
+            logBody.innerHTML = logs.map(l => `<tr class="border-b"><td class="p-2 text-gray-500">${l.time}</td><td class="p-2 font-bold">${l.name}</td><td class="p-2 text-green-600 font-bold">Hadir</td></tr>`).join('');
+        }
+
         function onScanSuccess(decodedText) {
-            if(!decodedText.startsWith('GKPS')) { playSound('fail'); return showStatus('QR Tidak Valid', 'red'); }
+            if(document.getElementById('scan-status').innerText.includes('HADIR') && !document.getElementById('scan-status').classList.contains('hidden')) return;
+            if(!decodedText.startsWith('GKPS')) { playSound('error'); return showStatus('QR Tidak Valid', 'red'); }
 
             const parts = decodedText.split('|');
             const username = parts[1];
             
+            if(!db.users || !Array.isArray(db.users)) db.users = [];
             let u = db.users.find(x => x.username === username);
             if(!u) {
                 if(parts[2]) {
-                    u = { 
-                        id: 'AUTO_'+Date.now(), username, name: parts[2], role: parts[3]||'siswa', kelas: parts[4]||'-', 
-                        gender:'L', password:'123', disabled:false, 
-                        avatar:'https://api.dicebear.com/7.x/notionists/svg?seed='+parts[2], posX: 50, posY: 50, folder: '-', readMessages: []
-                    };
+                    u = { id: 'AUTO_'+Date.now(), username, name: parts[2], role: parts[3]||'siswa', kelas: parts[4]||'-', gender:'L', password:'123', disabled:false, avatar:'https://api.dicebear.com/7.x/notionists/svg?seed='+parts[2], posX: 50, posY: 50, folder: '-' };
                     db.users.push(u);
-                    saveDb();
                 } else {
-                    playSound('fail');
-                    return showStatus('User Tidak Ditemukan', 'red');
+                    playSound('error');
+                    return showStatus('User Tidak Ada', 'red');
                 }
             }
-            if(u.disabled) { playSound('fail'); return showStatus('AKUN DIBLOKIR', 'red'); }
+            if(u.disabled) { playSound('error');
+            return showStatus('AKSES DITOLAK', 'red'); }
             
             const today = getTodayDate();
+            if(!db.attendance || !Array.isArray(db.attendance)) db.attendance = [];
+            
             if(db.attendance.find(a => a.username === u.username && a.date === today)) {
-                playSound('fail');
-                return showStatus('Sudah Absen Hari Ini', 'yellow');
+                playSound('error');
+                return showStatus('Sudah Masuk', 'yellow');
             }
 
             playSound('success');
-            db.attendance.push({ username: u.username, name: u.name, date: today, time: new Date().toLocaleTimeString(), status: 'Hadir', note: '-' });
-            saveDb();
+            db.attendance.push({ username: u.username, name: u.name, date: today, time: new Date().toLocaleTimeString(), status: 'Hadir' });
             showStatus('HADIR: '+u.name, 'green');
-            renderHomeStats();
-
-            // Log sesi scan (hanya sementara)
-            const logBody = document.getElementById('scan-session-log');
-            const row = `<tr class="border-b"><td class="p-2">${new Date().toLocaleTimeString()}</td><td class="p-2 font-bold">${u.name}</td><td class="p-2 text-green-600 font-bold">Hadir</td></tr>`;
-            logBody.innerHTML = row + logBody.innerHTML;
+            saveDb(); // Ini akan trigger dbRef.on -> renderScanSessionLog
         }
+        
+        function onScanFailure(err) { }
 
         function showStatus(msg, color) {
             const el = document.getElementById('scan-status');
-            el.innerText = msg;
-            el.className = `mt-4 text-center font-bold p-3 rounded-xl shadow-lg text-sm bg-${color}-100 text-${color}-800 border border-${color}-200`;
-            el.classList.remove('hidden');
-            setTimeout(() => el.classList.add('hidden'), 3000);
+            el.innerText=msg; el.className=`mt-4 text-center font-bold p-3 rounded-xl shadow-lg text-sm bg-${color}-100 text-${color}-800`;
+            el.classList.remove('hidden'); setTimeout(()=>el.classList.add('hidden'), 2000);
         }
 
         window.onload = initApp;
