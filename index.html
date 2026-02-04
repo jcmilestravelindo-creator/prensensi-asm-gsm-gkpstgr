@@ -181,7 +181,7 @@
         @keyframes blinker { 50% { opacity: 0;
         } }
 
-        /* --- SCANNER FIXES (UPDATED) --- */
+        /* --- SCANNER FIXES --- */
         #reader { 
             border: none !important;
             width: 100% !important; 
@@ -383,6 +383,19 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
                     <div class="absolute bottom-0 w-full text-center text-white font-bold text-xs bg-black/50 py-2 z-10">Arahkan ke QR Code</div>
                 </div>
                 <div id="scan-status" class="mt-4 text-center font-bold p-3 rounded-xl hidden shadow-lg text-sm"></div>
+                
+                <div class="mt-4 bg-white p-4 rounded-xl shadow-lg border border-gray-100">
+                    <h4 class="font-bold text-gray-700 text-sm mb-2 pb-1 border-b">Riwayat Scan Sesi Ini</h4>
+                    <div class="overflow-y-auto max-h-40">
+                        <table class="w-full text-xs text-left">
+                            <thead class="bg-gray-50 text-gray-500">
+                                <tr><th class="p-2">Waktu</th><th class="p-2">Nama</th><th class="p-2">Status</th></tr>
+                            </thead>
+                            <tbody id="scan-session-log">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -1130,8 +1143,21 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
             document.getElementById(list).innerHTML = valid.length === 0 ? '<p class="text-xs text-center text-gray-400 p-2">Kosong</p>' : 
                 valid.slice().reverse().map(m => `<div class="bg-yellow-50 p-2 rounded border-l-4 border-yellow-400 mb-2 shadow-sm text-sm">${m.content}</div>`).join('');
         }
-        function toggleDropdown(id, e) { e.stopPropagation(); closeAllDropdowns(); document.getElementById(id).classList.toggle('show');
+        
+        // MODIFIED: toggleDropdown to hide badge on click
+        function toggleDropdown(id, e) {
+            e.stopPropagation();
+            closeAllDropdowns();
+            document.getElementById(id).classList.toggle('show');
+            
+            // Logic to hide badge (mark as read)
+            if (id === 'siswa-notif-dropdown') {
+                document.getElementById('siswa-notif-badge').classList.add('hidden');
+            } else if (id === 'dash-notif-dropdown') {
+                document.getElementById('dash-notif-badge').classList.add('hidden');
+            }
         }
+        
         function closeAllDropdowns(e) { if(e && e.target.closest('.notif-container')) return; document.querySelectorAll('.notif-dropdown').forEach(d => d.classList.remove('show'));
         }
 
@@ -1532,76 +1558,7 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
             reader.readAsText(file);
         }
 
-        // --- SCANNER LOGIC (UPDATED) ---
-        let scanner;
-        function startScanner() {
-            if(scanner) return;
-            setTimeout(() => {
-                const config = { 
-                    fps: 20, // Low FPS for better precision on webcam
-                    qrbox: 250, 
-                    // aspectRatio removed to prevent distortion on wide cameras
-                    showTorchButtonIfSupported: true, 
-                    rememberLastUsedCamera: true,
-                    supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA]
-                };
-                
-                scanner = new Html5QrcodeScanner("reader", config);
-                scanner.render(onScanSuccess, onScanFailure);
-            }, 300);
-        }
-        
-        function stopScanner() { if(scanner) { scanner.clear().then(_=>scanner=null);
-        } }
-        
-        function onScanSuccess(decodedText) {
-            if(document.getElementById('scan-status').innerText.includes('HADIR') && !document.getElementById('scan-status').classList.contains('hidden')) return;
-            if(!decodedText.startsWith('GKPS')) { playSound('error'); return showStatus('QR Tidak Valid', 'red'); }
-
-            const parts = decodedText.split('|');
-            const username = parts[1];
-            
-            if(!db.users || !Array.isArray(db.users)) db.users = [];
-            let u = db.users.find(x => x.username === username);
-            if(!u) {
-                if(parts[2]) {
-                    u = { id: 'AUTO_'+Date.now(), username, name: parts[2], role: parts[3]||'siswa', kelas: parts[4]||'-', gender:'L', password:'123', disabled:false, avatar:'https://api.dicebear.com/7.x/notionists/svg?seed='+parts[2], posX: 50, posY: 50, folder: '-' };
-                    db.users.push(u);
-                } else {
-                    playSound('error');
-                    return showStatus('User Tidak Ada', 'red');
-                }
-            }
-            if(u.disabled) { playSound('error');
-            return showStatus('AKSES DITOLAK', 'red'); }
-            
-            const today = getTodayDate();
-            if(!db.attendance || !Array.isArray(db.attendance)) db.attendance = [];
-            
-            if(db.attendance.find(a => a.username === u.username && a.date === today)) {
-                playSound('error');
-                return showStatus('Sudah Masuk', 'yellow');
-            }
-
-            playSound('success');
-            db.attendance.push({ username: u.username, name: u.name, date: today, time: new Date().toLocaleTimeString(), status: 'Hadir' });
-            showStatus('HADIR: '+u.name, 'green');
-            saveDb();
-        }
-        
-        function onScanFailure(err) { }
-
-        function showStatus(msg, color) {
-            const el = document.getElementById('scan-status');
-            el.innerText=msg; el.className=`mt-4 text-center font-bold p-3 rounded-xl shadow-lg text-sm bg-${color}-100 text-${color}-800`;
-            el.classList.remove('hidden'); setTimeout(()=>el.classList.add('hidden'), 2000);
-        }
-
-        if(firebaseConfig.apiKey === "IS API KEY ANDA DISINI") {
-            alert("PERHATIAN: Anda belum mengisi 'firebaseConfig' di dalam kode.");
-        }
-
-        // --- LOGIKA MANAJEMEN FOLDER TERINTEGRASI (Update Step 2B) ---
+        // --- LOGIKA MANAJEMEN FOLDER TERINTEGRASI ---
 
         // Toggle Panel Folder
         function toggleFolderPanel() {
@@ -1735,6 +1692,76 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
                 updateDeleteBtn();
                 alert(`${count} user berhasil dipindahkan.`);
             }
+        }
+
+        // --- SCANNER LOGIC (UPDATED WITH LOG) ---
+        let scanner;
+        function startScanner() {
+            if(scanner) return;
+            setTimeout(() => {
+                const config = { 
+                    fps: 20, 
+                    qrbox: 250, 
+                    showTorchButtonIfSupported: true, 
+                    rememberLastUsedCamera: true
+                };
+                
+                scanner = new Html5QrcodeScanner("reader", config);
+                scanner.render(onScanSuccess, onScanFailure);
+            }, 300);
+        }
+        
+        function stopScanner() { if(scanner) { scanner.clear().then(_=>scanner=null);
+        } }
+        
+        function onScanSuccess(decodedText) {
+            if(document.getElementById('scan-status').innerText.includes('HADIR') && !document.getElementById('scan-status').classList.contains('hidden')) return;
+            if(!decodedText.startsWith('GKPS')) { playSound('error'); return showStatus('QR Tidak Valid', 'red'); }
+
+            const parts = decodedText.split('|');
+            const username = parts[1];
+            
+            if(!db.users || !Array.isArray(db.users)) db.users = [];
+            let u = db.users.find(x => x.username === username);
+            if(!u) {
+                if(parts[2]) {
+                    u = { id: 'AUTO_'+Date.now(), username, name: parts[2], role: parts[3]||'siswa', kelas: parts[4]||'-', gender:'L', password:'123', disabled:false, avatar:'https://api.dicebear.com/7.x/notionists/svg?seed='+parts[2], posX: 50, posY: 50, folder: '-' };
+                    db.users.push(u);
+                } else {
+                    playSound('error');
+                    return showStatus('User Tidak Ada', 'red');
+                }
+            }
+            if(u.disabled) { playSound('error');
+            return showStatus('AKSES DITOLAK', 'red'); }
+            
+            const today = getTodayDate();
+            if(!db.attendance || !Array.isArray(db.attendance)) db.attendance = [];
+            
+            if(db.attendance.find(a => a.username === u.username && a.date === today)) {
+                playSound('error');
+                return showStatus('Sudah Masuk', 'yellow');
+            }
+
+            playSound('success');
+            db.attendance.push({ username: u.username, name: u.name, date: today, time: new Date().toLocaleTimeString(), status: 'Hadir' });
+            showStatus('HADIR: '+u.name, 'green');
+            saveDb();
+            
+            // MODIFIED: Update Scan Session Log
+            const logBody = document.getElementById('scan-session-log');
+            if(logBody) {
+                const row = `<tr class="border-b"><td class="p-2">${new Date().toLocaleTimeString()}</td><td class="p-2 font-bold">${u.name}</td><td class="p-2 text-green-600 font-bold">Hadir</td></tr>`;
+                logBody.innerHTML = row + logBody.innerHTML;
+            }
+        }
+        
+        function onScanFailure(err) { }
+
+        function showStatus(msg, color) {
+            const el = document.getElementById('scan-status');
+            el.innerText=msg; el.className=`mt-4 text-center font-bold p-3 rounded-xl shadow-lg text-sm bg-${color}-100 text-${color}-800`;
+            el.classList.remove('hidden'); setTimeout(()=>el.classList.add('hidden'), 2000);
         }
 
         window.onload = initApp;
