@@ -181,10 +181,18 @@
         @keyframes blinker { 50% { opacity: 0;
         } }
 
-        /* --- SCANNER FIXES --- */
-        #reader { border: none !important;
-            width: 100% !important; }
-        #reader video { object-fit: cover; border-radius: 1.5rem;
+        /* --- SCANNER FIXES (UPDATED) --- */
+        #reader { 
+            border: none !important;
+            width: 100% !important; 
+            border-radius: 1.5rem;
+            overflow: hidden; /* Menghindari konten keluar */
+        }
+        #reader video { 
+            object-fit: cover; 
+            border-radius: 1.5rem;
+            width: 100% !important;
+            height: auto !important; /* Biarkan tinggi menyesuaikan agar tidak gepeng */
         }
         #reader__dashboard_section_csr span, #reader__dashboard_section_swaplink { display: none !important;
         }
@@ -254,14 +262,12 @@ rounded-full border-2 border-white">0</span>
                     </button>
                     <div id="siswa-notif-dropdown" class="notif-dropdown">
                         <div class="p-3 border-b font-bold text-gray-700 text-sm bg-gray-50 rounded-t-xl">📢 Pengumuman</div>
-                        
                         <div id="siswa-notif-list" class="p-2 space-y-2"></div>
                     </div>
                 </div>
 
                 <div class="flex gap-2">
                     <button onclick="openProfileModal()" class="text-blue-500 text-xs font-bold border border-blue-200 px-3 py-1 rounded-full">Profil</button>
-              
                     <button onclick="logout()" class="text-red-500 text-xs font-bold border border-red-200 px-3 py-1 rounded-full">Keluar</button>
                 </div>
             </div>
@@ -1292,7 +1298,7 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
             const sorted = [...att].reverse();
             if(sorted.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="4" class="text-center p-4 text-gray-400">Tidak ada data</td></tr>';
-            return;
+                return;
             }
             tbody.innerHTML = sorted.map(l => {
                  let colorClass = 'text-green-600';
@@ -1367,11 +1373,11 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
             if(img) img.style.objectPosition = `${x}% ${y}%`;
         }
 
-        // User Modal
+        // --- User Modal (Updated for Folder) ---
         function openUserModal(id=null) {
             document.getElementById('user-modal').style.display = 'flex';
             document.getElementById('modal-file-input').value = ""; 
-            renderFolderOptions(); 
+            renderFolderOptions(); // Refresh folder list
             
             if(id) {
                 const u = db.users.find(x => x.id === id);
@@ -1379,7 +1385,8 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
                 document.getElementById('modal-role').value = u.role; document.getElementById('modal-gender').value = u.gender||'L';
                 document.getElementById('modal-kelas').value = u.kelas||'-'; document.getElementById('modal-status').value = u.disabled?'disabled':'active';
                 // SET FOLDER
-                document.getElementById('modal-folder').value = u.folder || '-';
+                document.getElementById('modal-folder').value = u.folder ||
+                '-';
 
                 const img = document.getElementById('modal-avatar-preview');
                 img.src = u.avatar || 'https://api.dicebear.com/7.x/notionists/svg?seed='+u.name;
@@ -1478,7 +1485,7 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
                 saveDb();
                 localStorage.setItem('gkps_session', JSON.stringify(currentUser));
                 alert('Profil Berhasil Diupdate!'); 
-                document.getElementById('profile-modal').style.display='none';
+                document.getElementById('profile-modal').style.display='none'; 
                 if(currentUser.role==='siswa') renderSiswaScreen(); 
                 else renderDashboardScreen();
             }
@@ -1525,11 +1532,21 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
             reader.readAsText(file);
         }
 
+        // --- SCANNER LOGIC (UPDATED) ---
         let scanner;
         function startScanner() {
             if(scanner) return;
             setTimeout(() => {
-                scanner = new Html5QrcodeScanner("reader", { fps: 50, qrbox: 250, aspectRatio: 1.0, showTorchButtonIfSupported: true, rememberLastUsedCamera: true });
+                const config = { 
+                    fps: 20, // Low FPS for better precision on webcam
+                    qrbox: 250, 
+                    // aspectRatio removed to prevent distortion on wide cameras
+                    showTorchButtonIfSupported: true, 
+                    rememberLastUsedCamera: true,
+                    supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA]
+                };
+                
+                scanner = new Html5QrcodeScanner("reader", config);
                 scanner.render(onScanSuccess, onScanFailure);
             }, 300);
         }
@@ -1724,4 +1741,3 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
     </script>
 </body>
 </html>
-
