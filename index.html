@@ -13,7 +13,6 @@
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
-        /* [Source 2-4] Variable & Body */
         :root {
             --primary: #0ea5e9; --primary-dark: #0284c7;
             --accent: #facc15;
@@ -24,7 +23,7 @@
             background: linear-gradient(180deg, #e0f2fe 0%, #f0f9ff 100%); min-height: 100vh; padding-bottom: 2rem;
         }
         
-        /* [Source 5-15] UI Components */
+        /* UI Components */
         .pro-card { background: white;
             border-radius: 1.5rem; padding: 1.5rem; box-shadow: 0 10px 30px -5px rgba(14, 165, 233, 0.15); border: 1px solid #e2e8f0; margin-bottom: 1.5rem;
         }
@@ -44,14 +43,14 @@
         .btn-yellow { background: var(--accent);
             color: #713f12; } .btn-yellow:hover { background: #eab308; }
 
-        /* [Source 16-18] Navigation Pills */
+        /* Navigation Pills */
         .nav-pill { padding: 0.5rem 1rem;
             border-radius: 99px; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: 0.2s; color: #64748b; background: white; border: 1px solid transparent; white-space: nowrap;
         }
         .nav-pill.active { background: var(--primary); color: white;
             box-shadow: 0 4px 10px rgba(14, 165, 233, 0.4); }
 
-        /* [Source 19-36] STUDENT ID CARD STYLING */
+        /* STUDENT ID CARD STYLING */
         .student-card {
             width: 100%;
             max-width: 350px; 
@@ -109,7 +108,7 @@
         #qrcode img, #qrcode-guru img { display: block;
         }
         
-        /* [Source 37-48] Table & Badges Styling */
+        /* Table Styling */
         .admin-table th { background: #f1f5f9;
             color: #64748b; font-size: 0.75rem; text-transform: uppercase; padding: 0.8rem; text-align: left; user-select: none;
         }
@@ -134,7 +133,7 @@
         .badge-gender-p { background: #fce7f3; color: #9d174d;
             border: 1px solid #f9a8d4; }
 
-        /* [Source 49-60] Modal Layout */
+        /* Modal Layout Fix (SCROLLABLE) */
         .modal-overlay { position: fixed;
             inset: 0; background: rgba(0,0,0,0.5); z-index: 50; display: none; justify-content: center; align-items: center; padding: 1rem; backdrop-filter: blur(2px);
         }
@@ -169,7 +168,7 @@
         .notif-dropdown.show { display: block; animation: slideUp 0.2s ease;
         }
 
-        /* [Source 61-66] Connection Status */
+        /* Connection Status */
         .conn-status { position: fixed;
             bottom: 10px; left: 50%; transform: translateX(-50%); background: #22c55e; color: white; padding: 5px 15px; border-radius: 20px; font-size: 10px; font-weight: bold;
             z-index: 100; box-shadow: 0 5px 15px rgba(0,0,0,0.2); display: flex; align-items: center;
@@ -181,7 +180,7 @@
         @keyframes blinker { 50% { opacity: 0;
         } }
 
-        /* [Source 67-69] SCANNER FIXES */
+        /* --- SCANNER FIXES --- */
         #reader { border: none !important;
             width: 100% !important; }
         #reader video { object-fit: cover; border-radius: 1.5rem;
@@ -189,7 +188,7 @@
         #reader__dashboard_section_csr span, #reader__dashboard_section_swaplink { display: none !important;
         }
 
-        /* [Source 70] Custom Range Slider */
+        /* Custom Range Slider */
         input[type=range] {
             width: 100%;
             margin: 5px 0; accent-color: var(--primary);
@@ -728,7 +727,7 @@
             </div>
         </div>
     </div>
-
+    
     <div id="id-card-modal" class="modal-overlay">
         <div class="modal-content" style="max-width: 350px;">
             <div class="student-card">
@@ -772,7 +771,6 @@
     </div>
 
     <script>
-        // --- [Source 171-174] KONFIGURASI FIREBASE ---
         const firebaseConfig = {
             apiKey: "AIzaSyCH-_9wgq0Mw8JSqw2PtUUJy7KEPaHHZxM",
             authDomain: "absensigkps.firebaseapp.com",
@@ -792,12 +790,12 @@
             console.error("Firebase Error: Config belum diisi dengan benar.");
         }
 
-        // [Source 175-176] LOCAL STATE (Ditambah Folders)
+        // --- LOCAL STATE (Ditambah Folders) ---
         let db = { users: [], attendance: [], messages: [], settings: {}, folders: [], isSetup: false };
         let currentUser = null;
         let sortConfig = { key: null, asc: true };
 
-        // [Source 177-182] SOUND EFFECTS
+        // --- SOUND EFFECTS ---
         const sndBeep = "data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU";
         const audioSuccess = new Audio("data:audio/mp3;base64,//uQxAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq");
         
@@ -815,13 +813,12 @@
             }
         }
         
-        // [Source 183] Helper Date
         function getTodayDate() {
             const d = new Date();
             return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth()+1).toString().padStart(2, '0')}/${d.getFullYear()}`;
         }
 
-        // [Source 184-210] APP INIT (Diupdate untuk Folder)
+        // --- APP INIT ---
         function initApp() {
             document.body.addEventListener('click', function() {
                 soundOk.play().then(() => { soundOk.pause(); soundOk.currentTime = 0; }).catch(()=>{});
@@ -906,7 +903,7 @@
             if(!currentUser) showScreen('login');
         }
 
-        // [Source 211-213] Default Admin (Diupdate folder default)
+        // --- Default Admin (Diupdate folder default) ---
         function createDefaultAdmin() {
             db.users = [{
                 id: 'USR_ADMIN_DEF', name: 'Super Admin', username: 'admin', password: '123',
@@ -995,7 +992,7 @@
             }
         }
 
-        // [Source 240-260] SETTINGS & MANUAL ATTENDANCE
+        // --- SETTINGS & MANUAL ATTENDANCE ---
         function loadSettingsToUI() {
             if(!db.settings) return;
             document.getElementById('sett-manual-toggle').checked = db.settings.manualOpen || false;
@@ -1069,7 +1066,7 @@
             if(currentUser.role !== 'siswa') renderHomeStats();
         }
 
-        // [Source 261-274] Broadcast Logic
+        // --- Broadcast Logic ---
         function sendBroadcast() {
             const content = document.getElementById('msg-content').value;
             const target = document.getElementById('msg-target').value;
@@ -1113,7 +1110,7 @@
         function toggleDropdown(id, e) { e.stopPropagation(); closeAllDropdowns(); document.getElementById(id).classList.toggle('show'); }
         function closeAllDropdowns(e) { if(e && e.target.closest('.notif-container')) return; document.querySelectorAll('.notif-dropdown').forEach(d => d.classList.remove('show')); }
 
-        // [Source 276-284] Dashboard Logic
+        // --- Dashboard Logic ---
         function renderDashboardScreen() {
             document.getElementById('guru-greet-name').innerText = currentUser.name;
             document.getElementById('role-badge').innerText = currentUser.role.toUpperCase();
@@ -1145,7 +1142,7 @@
             if(tab === 'messages') renderBroadcastHistory();
         }
 
-        // [Source 285-295] User Table Logic (UPDATED FOR FOLDER)
+        // --- User Table Logic (UPDATED FOR FOLDER) ---
         function handleSort(key) {
             if (sortConfig.key === key) sortConfig.asc = !sortConfig.asc;
             else { sortConfig.key = key; sortConfig.asc = true; }
@@ -1199,7 +1196,7 @@
             updateDeleteBtn();
         }
 
-        // [Source 296-301] Render Siswa
+        // --- Render Siswa ---
         function renderSiswaScreen() {
             document.getElementById('siswa-greet-name').innerText = currentUser.name;
             const img = document.getElementById('card-img');
@@ -1349,7 +1346,7 @@
         }
 
 
-        // [Source 322-333] Handle Image
+        // --- Handle Image ---
         function handleImageUpload(input, previewId) {
             const file = input.files[0]; if (!file) return;
             const reader = new FileReader();
@@ -1381,7 +1378,7 @@
             if(img) img.style.objectPosition = `${x}% ${y}%`;
         }
 
-        // [Source 337-353] User Modal (Updated for Folder)
+        // --- User Modal (Updated for Folder) ---
         function openUserModal(id=null) {
             document.getElementById('user-modal').style.display = 'flex';
             document.getElementById('modal-file-input').value = ""; 
