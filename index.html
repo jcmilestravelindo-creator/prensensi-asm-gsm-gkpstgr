@@ -940,7 +940,7 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
                 id: 'USR_ADMIN_DEF', name: 'Super Admin', username: 'admin', password: '123',
                 role: 'admin', kelas: '-', gender: 'L', disabled: false, folder: '-',
                 recoveryCode: 'root', avatar: 'https://api.dicebear.com/7.x/notionists/svg?seed=Admin',
-                posX: 50, posY: 50
+                posX: 50, posY: 50, readMsgs: []
             }];
             db.isSetup = true;
             db.folders = [];
@@ -1100,7 +1100,7 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
             if(currentUser.role !== 'siswa') renderHomeStats();
         }
 
-        // --- PERBAIKAN 1: PERSISTENSI NOTIFIKASI ---
+        // --- PERBAIKAN 1: PERSISTENSI NOTIFIKASI USER ---
         function sendBroadcast() {
             const content = document.getElementById('msg-content').value;
             const target = document.getElementById('msg-target').value;
@@ -1134,23 +1134,38 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
         function checkBroadcasts(role) {
             const now = Date.now();
             const msgs = Array.isArray(db.messages) ? db.messages : [];
-            // PERBAIKAN 1: Ambil ID yang sudah dibaca (disimpan di LocalStorage)
-            let readIds = JSON.parse(localStorage.getItem('gkps_read_msgs') || '[]');
+            // FIX: Ambil 'readMsgs' dari object user di database, bukan localStorage
+            // Jika user belum punya property readMsgs, anggap array kosong
+            let readIds = (currentUser && currentUser.readMsgs) ? currentUser.readMsgs : [];
             
             const valid = msgs.filter(m => (m.target === 'all' || m.target === role) && m.schedule <= now);
             
-            // Hitung unread berdasarkan filtering ID, bukan total valid messages
+            // Hitung yang belum dibaca
             const unreadCount = valid.filter(m => !readIds.includes(m.id)).length;
 
             const badgeId = role==='siswa' ? 'siswa-notif-badge' : 'dash-notif-badge';
             const listId = role==='siswa' ? 'siswa-notif-list' : 'dash-notif-list';
             
-            // Gunakan unreadCount untuk menampilkan badge
-            document.getElementById(badgeId).innerText = unreadCount;
-            document.getElementById(badgeId).className = unreadCount > 0 ? "absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white" : "hidden";
+            // Tampilkan badge jika ada pesan belum dibaca
+            const badgeEl = document.getElementById(badgeId);
+            if(badgeEl) {
+                badgeEl.innerText = unreadCount;
+                badgeEl.className = unreadCount > 0 ? "absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white" : "hidden";
+            }
             
-            document.getElementById(listId).innerHTML = valid.length === 0 ? '<p class="text-xs text-center text-gray-400 p-2">Kosong</p>' : 
-                valid.slice().reverse().map(m => `<div class="bg-yellow-50 p-2 rounded border-l-4 border-yellow-400 mb-2 shadow-sm text-sm">${m.content}</div>`).join('');
+            const listEl = document.getElementById(listId);
+            if(listEl) {
+                listEl.innerHTML = valid.length === 0 ? '<p class="text-xs text-center text-gray-400 p-2">Kosong</p>' : 
+                    valid.slice().reverse().map(m => {
+                        const isRead = readIds.includes(m.id);
+                        // Style berbeda untuk pesan yang belum dibaca
+                        const bgClass = isRead ? "bg-gray-50 border-gray-200" : "bg-yellow-50 border-yellow-400 border-l-4";
+                        return `<div class="p-2 rounded mb-2 shadow-sm text-sm ${bgClass}">
+                            ${m.content}
+                            ${!isRead ? `<div class="text-[9px] text-blue-500 font-bold mt-1 text-right">BARU</div>` : ''}
+                        </div>`;
+                    }).join('');
+            }
         }
         
         function toggleDropdown(id, e) {
@@ -1159,19 +1174,36 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
             const el = document.getElementById(id);
             el.classList.toggle('show');
             
-            // PERBAIKAN 1: Simpan ID pesan saat dropdown dibuka
+            // FIX: Saat dropdown dibuka, tandai semua notifikasi valid sebagai READ di DATABASE User
             if (el.classList.contains('show')) {
                 const role = currentUser.role;
                 const msgs = Array.isArray(db.messages) ? db.messages : [];
-                // Ambil ID pesan yang valid saat ini
+                
+                // Cari ID pesan yang valid saat ini
                 const validIds = msgs.filter(m => (m.target === 'all' || m.target === role) && m.schedule <= Date.now()).map(m => m.id);
                 
-                let readIds = JSON.parse(localStorage.getItem('gkps_read_msgs') || '[]');
-                // Gabungkan dengan yang baru dibaca tanpa duplikasi
-                const updatedReadIds = [...new Set([...readIds, ...validIds])];
-                localStorage.setItem('gkps_read_msgs', JSON.stringify(updatedReadIds));
+                // Update property readMsgs user saat ini
+                let userRead = currentUser.readMsgs || [];
+                const newIds = validIds.filter(id => !userRead.includes(id));
                 
-                // Sembunyikan badge segera secara visual
+                if (newIds.length > 0) {
+                    // Gabungkan ID lama dan baru
+                    const updatedReadIds = [...userRead, ...newIds];
+                    
+                    // Update lokal state
+                    currentUser.readMsgs = updatedReadIds;
+                    
+                    // Update ke database users array
+                    const userIdx = db.users.findIndex(u => u.username === currentUser.username);
+                    if(userIdx !== -1) {
+                        db.users[userIdx].readMsgs = updatedReadIds;
+                        saveDb(); // Simpan ke Firebase
+                    }
+                    // Update juga session storage agar konsisten jika reload
+                    localStorage.setItem('gkps_session', JSON.stringify(currentUser));
+                }
+
+                // Sembunyikan badge secara visual langsung agar responsif
                 if (id === 'siswa-notif-dropdown') {
                     document.getElementById('siswa-notif-badge').classList.add('hidden');
                 } else if (id === 'dash-notif-dropdown') {
@@ -1475,7 +1507,8 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
                 if(pass) db.users[idx].password = pass;
             } else {
                 if(!Array.isArray(db.users)) db.users = [];
-                db.users.push({ id:'USR_'+Date.now(), name, username:user, password:pass||'123', role, gender, kelas, disabled:status==='disabled', avatar: avatarUrl, posX: posX, posY: posY, folder: folder });
+                // readMsgs ditambahkan untuk user baru
+                db.users.push({ id:'USR_'+Date.now(), name, username:user, password:pass||'123', role, gender, kelas, disabled:status==='disabled', avatar: avatarUrl, posX: posX, posY: posY, folder: folder, readMsgs: [] });
             }
             saveDb(); closeModal(); renderUserTable();
         }
@@ -1571,7 +1604,7 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
                         if(!Array.isArray(db.users)) db.users = [];
                         if(name.toLowerCase()!=='nama' && !db.users.find(u=>u.username===username)) {
                              db.users.push({ id:'IMP_'+Date.now()+c, name, username, password, role, kelas, gender: 
-                            gender, disabled:false, avatar:'https://api.dicebear.com/7.x/notionists/svg?seed='+name, posX: 50, posY: 50, folder: '-' }); c++;
+                            gender, disabled:false, avatar:'https://api.dicebear.com/7.x/notionists/svg?seed='+name, posX: 50, posY: 50, folder: '-', readMsgs: [] }); c++;
                         }
                     }
                 });
@@ -1767,13 +1800,14 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
             } 
         }
         
-        // --- LOG SCAN PERSISTEN (PERBAIKAN 3) ---
+        // --- PERBAIKAN 2: LOG SCAN PERSISTEN (Ambil dari Database Hari Ini) ---
         function renderScanSessionLog() {
             const logBody = document.getElementById('scan-session-log');
             if(!logBody) return;
             
             const today = getTodayDate();
-            // Ambil data langsung dari Database, bukan manipulasi HTML
+            
+            // Logika baru: Ambil data dari 'db.attendance', BUKAN manipulasi HTML string
             // Filter hanya log hari ini yang statusnya 'Hadir'
             const logs = (db.attendance || [])
                 .filter(a => a.date === today && a.status === 'Hadir')
@@ -1830,7 +1864,7 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
             db.attendance.push({ username: u.username, name: u.name, date: today, time: new Date().toLocaleTimeString(), status: 'Hadir' });
             showStatus('HADIR: '+u.name, 'green');
             saveDb(); 
-            // Tidak perlu update manual logBody disini karena saveDb() akan mentrigger dbRef.on -> renderScanSessionLog()
+            // Tidak perlu update manual logBody disini karena saveDb() akan mentrigger dbRef.on -> renderScanSessionLog() secara otomatis
         }
         
         function onScanFailure(err) { }
