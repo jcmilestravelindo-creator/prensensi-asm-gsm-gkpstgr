@@ -1062,20 +1062,45 @@ uppercase">Password Baru</label>
     </div>
 
     <div id="forgot-modal" class="modal-overlay">
-        <div class="modal-content bg-yellow-50">
-            <h3 class="text-lg font-bold mb-4 text-yellow-800">Reset Admin</h3>
-            <p class="text-xs text-gray-600 mb-4">Masukkan Kode Pemulihan (Default: root)</p>
-            <label class="text-xs font-bold text-gray-500 uppercase">Username Admin</label>
-    
-         <input type="text" id="forgot-username" class="pro-input">
-            <label class="text-xs font-bold text-gray-500 uppercase">Kode Pemulihan</label>
-            <input type="password" id="forgot-code" class="pro-input">
-            <label class="text-xs font-bold text-gray-500 uppercase">Password Baru</label>
-            <input type="text" id="forgot-newpass" class="pro-input">
-            <div class="flex gap-2">
-           
-      <button onclick="resetAdminPassword()" class="pro-btn btn-yellow text-yellow-900">Reset</button>
-                <button onclick="document.getElementById('forgot-modal').style.display='none'" class="pro-btn bg-gray-200 text-gray-600">Batal</button>
+        <div class="modal-content bg-white rounded-2xl shadow-2xl overflow-hidden max-w-sm w-full mx-4">
+            
+            <div class="bg-gradient-to-r from-amber-400 to-orange-500 p-6 text-center">
+                <div class="bg-white/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 backdrop-blur-sm">
+                    <span class="text-3xl">🔐</span>
+                </div>
+                <h3 class="text-xl font-extrabold text-white tracking-wide">Reset Admin</h3>
+                <p class="text-amber-50 text-xs mt-1">Pemulihan Akses Darurat</p>
+            </div>
+
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Username Admin</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-2.5 text-gray-400">👤</span>
+                        <input type="text" id="forgot-username" class="pro-input pl-9" placeholder="Masukkan Username">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Kode Pemulihan</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-2.5 text-gray-400">🔑</span>
+                        <input type="password" id="forgot-code" class="pro-input pl-9" placeholder="Kode Rahasia">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Password Baru</label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-2.5 text-gray-400">🔒</span>
+                        <input type="text" id="forgot-newpass" class="pro-input pl-9" placeholder="Password Baru">
+                    </div>
+                </div>
+
+                <div class="pt-2 flex gap-3">
+                    <button onclick="document.getElementById('forgot-modal').style.display='none'" class="flex-1 py-3 rounded-xl font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 transition text-xs">Batal</button>
+                    <button onclick="resetAdminPassword()" class="flex-1 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 shadow-lg shadow-orange-200 transition text-xs">Reset Password</button>
+                </div>
             </div>
         </div>
     </div>
