@@ -164,25 +164,38 @@
         @keyframes slideUp { from { transform: translateY(20px);
             opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         
-        /* --- WHATSAPP STYLE NOTIFICATION --- */
+        /* --- WHATSAPP STYLE NOTIFICATION (FIXED MOBILE) --- */
         .notif-container { position: relative; }
         
         /* Panel Chat Dropdown */
         .wa-dropdown { 
             display: none;
-            position: absolute; right: 0; top: 120%; 
-            width: 90vw; max-width: 320px; 
+            /* Default untuk Desktop (Absolute terhadap tombol) */
+            position: absolute; right: -10px; top: 140%; 
+            width: 320px; 
             background: #efe7dd url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); /* WA Doodle Bg */
             background-blend-mode: overlay;
             border-radius: 12px;
-            box-shadow: 0 10px 40px -5px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 50px rgba(0,0,0,0.3);
             border: 1px solid #d1d7db; 
-            z-index: 70; 
-            max-height: 400px; 
+            z-index: 100; /* Z-Index Tinggi agar di atas elemen lain */
+            max-height: 60vh; 
             overflow: hidden;
             flex-direction: column;
         }
         .wa-dropdown.show { display: flex; animation: slideUp 0.2s ease; }
+
+        /* MOBILE FIX: Agar tidak terpotong layar */
+        @media (max-width: 640px) {
+            .wa-dropdown {
+                position: fixed; /* Fixed viewport */
+                top: 80px; /* Jarak dari atas */
+                right: 16px; /* Jarak kanan layar */
+                left: 16px; /* Jarak kiri layar */
+                width: auto; /* Otomatis isi lebar */
+                max-width: none;
+            }
+        }
 
         .wa-header {
             background: var(--wa-teal);
