@@ -1849,7 +1849,7 @@ text-sm">${l.name}</td>
                         let genderRaw = cols[5] ? cols[5].trim().toUpperCase() : 'L';
                         let gender = (genderRaw === 'P' || genderRaw === 'PEREMPUAN') ? 'P' : 'L';
                         // Handle Folder Import if exists in CSV? 
- Currently not supported in CSV structure, default to '-'
+ // Currently not supported in CSV structure, default to '-'
                         
                         if(!Array.isArray(db.users)) db.users = [];
                         if(name.toLowerCase()!=='nama' && !db.users.find(u=>u.username===username)) {
