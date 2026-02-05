@@ -823,8 +823,6 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
         let db = { users: [], attendance: [], messages: [], settings: {}, folders: [], isSetup: false };
         let currentUser = null;
         let sortConfig = { key: null, asc: true };
-        let scanner = null; 
-        let scannerTimer = null; // OPTIMASI SCANNER 1: Timer Variable
         
         // SOUND EFFECTS
         const sndBeep = "data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU";
@@ -1004,11 +1002,12 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
             } else alert('Login Gagal!');
         }
         
+        // --- PERBAIKAN LOGOUT ---
         function logout() { 
             if(confirm("Apakah Anda yakin ingin keluar?")) {
                 currentUser = null;
-                localStorage.clear(); 
-                location.reload(); 
+                localStorage.clear(); // Hapus semua sesi
+                location.reload(); // Force reload untuk membersihkan memori JS dan mencegah sesi admin bocor
             }
         }
         
@@ -1100,7 +1099,7 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
             if(currentUser.role !== 'siswa') renderHomeStats();
         }
 
-        // --- PERBAIKAN 1: PERSISTENSI NOTIFIKASI USER ---
+        // --- PERBAIKAN 1: PERSISTENSI NOTIFIKASI ---
         function sendBroadcast() {
             const content = document.getElementById('msg-content').value;
             const target = document.getElementById('msg-target').value;
@@ -1134,38 +1133,23 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
         function checkBroadcasts(role) {
             const now = Date.now();
             const msgs = Array.isArray(db.messages) ? db.messages : [];
-            // FIX: Ambil 'readMsgs' dari object user di database, bukan localStorage
-            // Jika user belum punya property readMsgs, anggap array kosong
-            let readIds = (currentUser && currentUser.readMsgs) ? currentUser.readMsgs : [];
+            // PERBAIKAN 1: Ambil ID yang sudah dibaca (disimpan di LocalStorage)
+            let readIds = JSON.parse(localStorage.getItem('gkps_read_msgs') || '[]');
             
             const valid = msgs.filter(m => (m.target === 'all' || m.target === role) && m.schedule <= now);
             
-            // Hitung yang belum dibaca
+            // Hitung unread berdasarkan filtering ID, bukan total valid messages
             const unreadCount = valid.filter(m => !readIds.includes(m.id)).length;
 
             const badgeId = role==='siswa' ? 'siswa-notif-badge' : 'dash-notif-badge';
             const listId = role==='siswa' ? 'siswa-notif-list' : 'dash-notif-list';
             
-            // Tampilkan badge jika ada pesan belum dibaca
-            const badgeEl = document.getElementById(badgeId);
-            if(badgeEl) {
-                badgeEl.innerText = unreadCount;
-                badgeEl.className = unreadCount > 0 ? "absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white" : "hidden";
-            }
+            // Gunakan unreadCount untuk menampilkan badge
+            document.getElementById(badgeId).innerText = unreadCount;
+            document.getElementById(badgeId).className = unreadCount > 0 ? "absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white" : "hidden";
             
-            const listEl = document.getElementById(listId);
-            if(listEl) {
-                listEl.innerHTML = valid.length === 0 ? '<p class="text-xs text-center text-gray-400 p-2">Kosong</p>' : 
-                    valid.slice().reverse().map(m => {
-                        const isRead = readIds.includes(m.id);
-                        // Style berbeda untuk pesan yang belum dibaca
-                        const bgClass = isRead ? "bg-gray-50 border-gray-200" : "bg-yellow-50 border-yellow-400 border-l-4";
-                        return `<div class="p-2 rounded mb-2 shadow-sm text-sm ${bgClass}">
-                            ${m.content}
-                            ${!isRead ? `<div class="text-[9px] text-blue-500 font-bold mt-1 text-right">BARU</div>` : ''}
-                        </div>`;
-                    }).join('');
-            }
+            document.getElementById(listId).innerHTML = valid.length === 0 ? '<p class="text-xs text-center text-gray-400 p-2">Kosong</p>' : 
+                valid.slice().reverse().map(m => `<div class="bg-yellow-50 p-2 rounded border-l-4 border-yellow-400 mb-2 shadow-sm text-sm">${m.content}</div>`).join('');
         }
         
         function toggleDropdown(id, e) {
@@ -1174,36 +1158,19 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
             const el = document.getElementById(id);
             el.classList.toggle('show');
             
-            // FIX: Saat dropdown dibuka, tandai semua notifikasi valid sebagai READ di DATABASE User
+            // PERBAIKAN 1: Simpan ID pesan saat dropdown dibuka
             if (el.classList.contains('show')) {
                 const role = currentUser.role;
                 const msgs = Array.isArray(db.messages) ? db.messages : [];
-                
-                // Cari ID pesan yang valid saat ini
+                // Ambil ID pesan yang valid saat ini
                 const validIds = msgs.filter(m => (m.target === 'all' || m.target === role) && m.schedule <= Date.now()).map(m => m.id);
                 
-                // Update property readMsgs user saat ini
-                let userRead = currentUser.readMsgs || [];
-                const newIds = validIds.filter(id => !userRead.includes(id));
+                let readIds = JSON.parse(localStorage.getItem('gkps_read_msgs') || '[]');
+                // Gabungkan dengan yang baru dibaca tanpa duplikasi
+                const updatedReadIds = [...new Set([...readIds, ...validIds])];
+                localStorage.setItem('gkps_read_msgs', JSON.stringify(updatedReadIds));
                 
-                if (newIds.length > 0) {
-                    // Gabungkan ID lama dan baru
-                    const updatedReadIds = [...userRead, ...newIds];
-                    
-                    // Update lokal state
-                    currentUser.readMsgs = updatedReadIds;
-                    
-                    // Update ke database users array
-                    const userIdx = db.users.findIndex(u => u.username === currentUser.username);
-                    if(userIdx !== -1) {
-                        db.users[userIdx].readMsgs = updatedReadIds;
-                        saveDb(); // Simpan ke Firebase
-                    }
-                    // Update juga session storage agar konsisten jika reload
-                    localStorage.setItem('gkps_session', JSON.stringify(currentUser));
-                }
-
-                // Sembunyikan badge secara visual langsung agar responsif
+                // Sembunyikan badge segera secara visual
                 if (id === 'siswa-notif-dropdown') {
                     document.getElementById('siswa-notif-badge').classList.add('hidden');
                 } else if (id === 'dash-notif-dropdown') {
@@ -1749,122 +1716,166 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
             }
         }
 
-        // --- SCANNER LOGIC (OPTIMIZED - PERBAIKAN 2) ---
-        // Menambahkan mekanisme timer guard untuk mencegah inisialisasi ganda
+        // --- PROFESSIONAL SCANNER LOGIC (Rombak Total) ---
+        let html5QrcodeScanner = null;
+        let isProcessingScan = false; // Mutex untuk mencegah double processing
+
         function startScanner() {
-            if(scanner) return; // Jika sudah ada, jangan buat baru
-            
-            // Hapus timer pending sebelumnya jika ada
-            if (scannerTimer) clearTimeout(scannerTimer);
-            
-            // Beri sedikit delay agar DOM benar-benar siap dan mencegah spam klik
-            scannerTimer = setTimeout(() => {
-                const readerEl = document.getElementById('reader');
-                if (!readerEl) return; // Safety check
+            // Cek apakah elemen reader ada
+            const readerElement = document.getElementById('reader');
+            if (!readerElement) return;
 
-                const config = { 
-                    fps: 15, // OPTIMASI: FPS diturunkan ke 15 agar lebih stabil di laptop
-                    qrbox: { width: 250, height: 250 }, 
-                    aspectRatio: 1.0,
-                    showTorchButtonIfSupported: true,
-                    rememberLastUsedCamera: true
-                };
+            // Jika scanner sudah ada, jangan inisialisasi ulang (mencegah blink/restart)
+            if (html5QrcodeScanner) {
+                // Pastikan state UI bersih jika perlu, tapi biasanya library handle ini.
+                return; 
+            }
+
+            // Konfigurasi Profesional
+            const config = {
+                fps: 20, // Frame per second yang seimbang performance vs battery
+                qrbox: { width: 250, height: 250 }, // Area fokus scan
+                aspectRatio: 1.0,
+                disableFlip: false, // Auto detect flip (selfie mode)
+                showTorchButtonIfSupported: true,
+                showZoomSliderIfSupported: true,
+                defaultZoomValueIfSupported: 1.5 // Zoom dikit biar enak
+            };
+
+            // Inisialisasi Library
+            // Gunakan try-catch untuk handle error kamera tidak support/blocked
+            try {
+                // Clear elemen dulu biar bersih
+                readerElement.innerHTML = "";
                 
+                html5QrcodeScanner = new Html5QrcodeScanner("reader", config, /* verbose= */ false);
+                
+                // Render dengan callback sukses dan error
+                html5QrcodeScanner.render(
+                    (decodedText, decodedResult) => {
+                        // Success Callback
+                        processScanResult(decodedText);
+                    }, 
+                    (errorMessage) => {
+                        // Scan Error / Waiting (Normal loop, ignore log to keep console clean)
+                    }
+                );
+            } catch (err) {
+                console.error("Gagal start scanner:", err);
+                alert("Gagal akses kamera. Pastikan izin diberikan.");
+            }
+        }
+
+        function stopScanner() {
+            if (html5QrcodeScanner) {
                 try {
-                    scanner = new Html5QrcodeScanner("reader", config, /* verbose= */ false);
-                    scanner.render(onScanSuccess, onScanFailure);
+                    html5QrcodeScanner.clear().then(() => {
+                        // Berhasil stop
+                        html5QrcodeScanner = null;
+                        const reader = document.getElementById('reader');
+                        if (reader) reader.innerHTML = "";
+                    }).catch((error) => {
+                        console.error("Failed to clear scanner. ", error);
+                        html5QrcodeScanner = null;
+                    });
                 } catch(e) {
-                    console.error("Scanner init error:", e);
-                    scanner = null;
-                }
-            }, 500); // Delay dinaikkan sedikit untuk stabilitas
-        }
-        
-        function stopScanner() { 
-            // Batalkan timer pending start jika ada
-            if (scannerTimer) {
-                clearTimeout(scannerTimer);
-                scannerTimer = null;
-            }
-
-            if(scanner) { 
-                scanner.clear().then(() => {
-                    scanner = null;
-                    // Bersihkan sisa elemen DOM agar bersih saat start ulang
-                    const reader = document.getElementById('reader');
-                    if(reader) reader.innerHTML = "";
-                }).catch(err => {
-                    console.error("Failed to clear scanner", err);
-                    scanner = null;
-                });
-            } 
-        }
-        
-        // --- PERBAIKAN 2: LOG SCAN PERSISTEN (Ambil dari Database Hari Ini) ---
-        function renderScanSessionLog() {
-            const logBody = document.getElementById('scan-session-log');
-            if(!logBody) return;
-            
-            const today = getTodayDate();
-            
-            // Logika baru: Ambil data dari 'db.attendance', BUKAN manipulasi HTML string
-            // Filter hanya log hari ini yang statusnya 'Hadir'
-            const logs = (db.attendance || [])
-                .filter(a => a.date === today && a.status === 'Hadir')
-                .slice().reverse(); // Urutkan terbaru di atas
-            
-            if(logs.length === 0) {
-                 logBody.innerHTML = '<tr><td colspan="3" class="p-2 text-center text-gray-400">Belum ada scan sesi ini</td></tr>';
-                 return;
-            }
-
-            logBody.innerHTML = logs.map(l => `
-                <tr class="border-b">
-                    <td class="p-2 text-gray-500 text-[10px]">${l.time}</td>
-                    <td class="p-2 font-bold text-xs">${l.name}</td>
-                    <td class="p-2 text-green-600 font-bold text-xs">Hadir</td>
-                </tr>
-            `).join('');
-        }
-
-        function onScanSuccess(decodedText) {
-            // Mencegah multiple scan dalam waktu singkat (debounce visual)
-            if(document.getElementById('scan-status').innerText.includes('HADIR') && !document.getElementById('scan-status').classList.contains('hidden')) return;
-            
-            if(!decodedText.startsWith('GKPS')) { playSound('error'); return showStatus('QR Tidak Valid', 'red'); }
-
-            const parts = decodedText.split('|');
-            const username = parts[1];
-            
-            if(!db.users || !Array.isArray(db.users)) db.users = [];
-            let u = db.users.find(x => x.username === username);
-            
-            // Auto Register logic (jika QR valid tapi user belum ada)
-            if(!u) {
-                if(parts[2]) {
-                    u = { id: 'AUTO_'+Date.now(), username, name: parts[2], role: parts[3]||'siswa', kelas: parts[4]||'-', gender:'L', password:'123', disabled:false, avatar:'https://api.dicebear.com/7.x/notionists/svg?seed='+parts[2], posX: 50, posY: 50, folder: '-' };
-                    db.users.push(u);
-                } else {
-                    playSound('error');
-                    return showStatus('User Tidak Ada', 'red');
+                    // Force clean variable if library fails
+                    html5QrcodeScanner = null;
                 }
             }
-            if(u.disabled) { playSound('error');
-            return showStatus('AKSES DITOLAK', 'red'); }
+        }
+
+        // Logic Pemrosesan Scan yang Lebih Pintar
+        async function processScanResult(decodedText) {
+            // 1. Debounce / Throttling: Jangan proses jika sedang memproses scan sebelumnya
+            if (isProcessingScan) return;
             
-            const today = getTodayDate();
-            if(!db.attendance || !Array.isArray(db.attendance)) db.attendance = [];
-            
-            if(db.attendance.find(a => a.username === u.username && a.date === today)) {
-                playSound('error');
-                return showStatus('Sudah Masuk', 'yellow');
+            // 2. Cek Format Dasar
+            if (!decodedText.startsWith('GKPS')) {
+                // Feedback visual/audio ringan untuk salah QR (opsional, biar ga spam error)
+                return; 
             }
 
+            // Lock processing
+            isProcessingScan = true;
+
+            // 3. Feedback Langsung (Haptic & Sound)
+            if (navigator.vibrate) navigator.vibrate(200); // Getar HP
             playSound('success');
-            db.attendance.push({ username: u.username, name: u.name, date: today, time: new Date().toLocaleTimeString(), status: 'Hadir' });
-            showStatus('HADIR: '+u.name, 'green');
-            saveDb(); 
-            // Tidak perlu update manual logBody disini karena saveDb() akan mentrigger dbRef.on -> renderScanSessionLog() secara otomatis
+
+            // 4. Validasi Data
+            try {
+                const parts = decodedText.split('|');
+                const username = parts[1];
+                
+                // Pastikan DB user ready
+                if(!db.users || !Array.isArray(db.users)) db.users = [];
+                
+                let u = db.users.find(x => x.username === username);
+                
+                // -- Logic Auto Register (Sama seperti sebelumnya) --
+                if(!u && parts[2]) {
+                    u = { 
+                        id: 'AUTO_'+Date.now(), 
+                        username, 
+                        name: parts[2], 
+                        role: parts[3]||'siswa', 
+                        kelas: parts[4]||'-', 
+                        gender:'L', password:'123', disabled:false, 
+                        avatar:'https://api.dicebear.com/7.x/notionists/svg?seed='+parts[2], 
+                        posX: 50, posY: 50, folder: '-', readMsgs: [] 
+                    };
+                    db.users.push(u);
+                }
+
+                if (!u) {
+                    showStatus('User Tidak Dikenal', 'red');
+                    throw new Error("User not found");
+                }
+
+                if(u.disabled) {
+                    showStatus('AKSES DITOLAK', 'red');
+                    throw new Error("Blocked");
+                }
+
+                // Cek Absen Hari Ini
+                const today = getTodayDate();
+                if(!db.attendance) db.attendance = [];
+                const alreadyPresent = db.attendance.find(a => a.username === u.username && a.date === today);
+
+                if (alreadyPresent) {
+                    showStatus('Sudah Masuk: ' + u.name, 'yellow');
+                } else {
+                    // Catat Absen
+                    db.attendance.push({ 
+                        username: u.username, 
+                        name: u.name, 
+                        date: today, 
+                        time: new Date().toLocaleTimeString(), 
+                        status: 'Hadir' 
+                    });
+                    saveDb();
+                    showStatus('HADIR: ' + u.name, 'green');
+                }
+
+                // Pause Scanner sebentar biar user bisa baca status (UX Pro)
+                if(html5QrcodeScanner) html5QrcodeScanner.pause();
+                
+                await new Promise(r => setTimeout(r, 2000)); // Delay 2 detik
+                
+                if(html5QrcodeScanner) html5QrcodeScanner.resume();
+
+            } catch (e) {
+                // Error handling soft
+                if(e.message !== "Blocked" && e.message !== "User not found") {
+                    console.error(e);
+                }
+                // Delay sebentar sebelum bisa scan lagi jika error
+                await new Promise(r => setTimeout(r, 1000));
+            } finally {
+                // Unlock processing
+                isProcessingScan = false;
+            }
         }
         
         function onScanFailure(err) { }
