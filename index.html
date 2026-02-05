@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistem Absensi GKPS - PRO ULTIMATE</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -181,6 +182,115 @@
         }
         @keyframes blinker { 50% { opacity: 0;
         } }
+
+        /* --- PRO SCANNER UI & CSS --- */
+        #scanner-container {
+            position: relative;
+            width: 100%;
+            background: #000;
+            border-radius: 1.5rem;
+            overflow: hidden;
+            aspect-ratio: 1/1; /* Kotak Sempurna */
+        }
+        #reader {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        /* Overlay UI di atas kamera */
+        .scan-overlay {
+            position: absolute;
+            inset: 0;
+            pointer-events: none; /* Klik tembus ke video */
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        /* Kotak Fokus */
+        .scan-frame {
+            width: 70%;
+            height: 70%;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            position: relative;
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5); /* Gelapkan area luar */
+            transition: all 0.3s ease;
+        }
+        /* Sudut-sudut bingkai */
+        .scan-frame::after, .scan-frame::before {
+            content: ''; position: absolute; width: 20px; height: 20px;
+            border-color: #3b82f6; border-style: solid; transition: all 0.2s;
+        }
+        .scan-frame::before { top: -2px; left: -2px; border-width: 4px 0 0 4px; border-radius: 4px 0 0 0; }
+        .scan-frame::after { bottom: -2px; right: -2px; border-width: 0 4px 4px 0; border-radius: 0 0 4px 0; }
+        
+        .scan-frame-right-top { position: absolute; top: -2px; right: -2px; width: 20px; height: 20px; border-top: 4px solid #3b82f6; border-right: 4px solid #3b82f6; border-radius: 0 4px 0 0; }
+        .scan-frame-left-bottom { position: absolute; bottom: -2px; left: -2px; width: 20px; height: 20px; border-bottom: 4px solid #3b82f6; border-left: 4px solid #3b82f6; border-radius: 0 0 0 4px; }
+
+        /* Garis Laser Animasi */
+        .scan-laser {
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            background: #3b82f6;
+            box-shadow: 0 0 10px #3b82f6, 0 0 20px #3b82f6;
+            top: 0;
+            animation: scanMove 2s infinite linear;
+            opacity: 0.8;
+        }
+        @keyframes scanMove {
+            0% { top: 10%; opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { top: 90%; opacity: 0; }
+        }
+
+        /* Scan Sukses Effect */
+        .scan-success-effect {
+            border-color: #22c55e !important;
+            box-shadow: 0 0 30px #22c55e !important;
+            transform: scale(1.05);
+        }
+
+        /* Controls Bar (Kamera Select & Torch) */
+        .scan-controls-bar {
+            position: absolute;
+            bottom: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+            display: flex;
+            gap: 0.5rem;
+            background: rgba(0,0,0,0.6);
+            padding: 0.5rem;
+            border-radius: 99px;
+            backdrop-filter: blur(4px);
+        }
+        .scan-btn-control {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+        .scan-btn-control:active { background: rgba(255,255,255,0.4); }
+        .camera-select {
+            background: transparent;
+            color: white;
+            border: none;
+            font-size: 0.75rem;
+            outline: none;
+            max-width: 120px;
+        }
+        .camera-select option { background: #333; color: white; }
 
         /* Custom Range Slider */
         input[type=range] {
@@ -390,11 +500,36 @@ font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex i
 
         <div id="view-scan" class="tab-view hidden">
             <div class="max-w-md mx-auto">
-                <div class="bg-white rounded-3xl p-10 text-center shadow-lg border border-gray-200 mb-6">
-                    <div class="text-4xl mb-4">📷🚫</div>
-                    <h3 class="text-xl font-bold text-gray-700">Scanner Dinonaktifkan</h3>
-                    <p class="text-sm text-gray-500 mt-2">Fitur kamera dan pemindaian QR Code telah dinonaktifkan dalam versi ini.</p>
+                <div class="bg-white rounded-3xl overflow-hidden shadow-2xl relative w-full border border-gray-200">
+                    
+                    <div id="scanner-error" class="hidden p-6 text-center text-red-500 font-bold text-sm bg-red-50">
+                        <div class="text-2xl mb-2">📷🚫</div>
+                        <span id="scanner-error-msg">Akses kamera ditolak.</span>
+                        <button onclick="startProScanner()" class="mt-4 bg-red-100 text-red-600 px-4 py-2 rounded-full text-xs">Coba Lagi</button>
+                    </div>
+
+                    <div id="scanner-container">
+                        <div id="reader"></div> <div id="scan-ui-layer" class="scan-overlay">
+                            <div id="scan-frame" class="scan-frame">
+                                <div class="scan-frame-right-top"></div>
+                                <div class="scan-frame-left-bottom"></div>
+                                <div class="scan-laser"></div>
+                            </div>
+                            <div class="mt-4 text-white text-xs font-bold bg-black/30 px-3 py-1 rounded-full backdrop-blur-sm">
+                                Arahkan QR Code ke dalam kotak
+                            </div>
+                        </div>
+
+                        <div class="scan-controls-bar">
+                            <select id="camera-select" class="camera-select" onchange="switchCamera()">
+                                <option value="" disabled selected>Memuat...</option>
+                            </select>
+                            <button id="btn-torch" onclick="toggleTorch()" class="scan-btn-control hidden">⚡</button>
+                        </div>
+                    </div>
                 </div>
+
+                <div id="scan-status" class="mt-4 text-center font-bold p-3 rounded-xl hidden shadow-lg text-sm transition-all duration-300 transform scale-95"></div>
                 
                 <div class="mt-4 bg-white p-4 rounded-xl shadow-lg border border-gray-100">
                     <h4 class="font-bold text-gray-700 text-sm mb-2 pb-1 border-b flex justify-between items-center">
@@ -919,8 +1054,6 @@ class="card-header-strip"></div>
         let db = { users: [], attendance: [], messages: [], settings: {}, folders: [], isSetup: false };
  let currentUser = null;
         let sortConfig = { key: null, asc: true };
-        // let scanner = null; // DIHAPUS
-        // let scannerTimer = null; // DIHAPUS
         
         // SOUND EFFECTS
         const sndBeep = "data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU";
@@ -1340,7 +1473,6 @@ class="card-header-strip"></div>
 }
         }
         
-        // MODIFIED SWITCH TAB: REMOVE SCANNER CALLS
         function switchTab(tab) {
             document.querySelectorAll('.tab-view').forEach(el => el.classList.add('hidden'));
             document.getElementById('view-'+tab).classList.remove('hidden');
@@ -1349,7 +1481,7 @@ class="card-header-strip"></div>
             localStorage.setItem('gkps_tab', tab);
             
             if(tab === 'home') renderHomeStats();
-            // REMOVED: if(tab === 'scan') startScanner(); else stopScanner();
+            if(tab === 'scan') startProScanner(); else stopScanner(); // Re-enable Scanner Switch
             if(tab === 'users') renderUserTable();
             if(tab === 'messages') renderBroadcastHistory();
         }
@@ -1872,8 +2004,244 @@ gap-1">
             }
         }
 
-        // --- SCANNER LOGIC COMPLETELY REMOVED ---
+        // --- POWERFUL & SAFE SCANNER LOGIC (REBUILT) ---
+        let html5QrCode = null;
+        let currentCameraId = null;
+        let isScanning = false;
+        let isProcessing = false; // Mencegah spam scan
         
+        // 1. Inisialisasi Scanner saat Tab Scan dibuka
+        function startProScanner() {
+            if (isScanning) return;
+            
+            // Cek apakah elemen reader ada
+            if(!document.getElementById('reader')) return;
+
+            // Inisialisasi Library PRO
+            if(html5QrCode === null) {
+                html5QrCode = new Html5Qrcode("reader");
+            }
+
+            // Ambil daftar kamera dengan preferensi Environment (Belakang)
+            Html5Qrcode.getCameras().then(devices => {
+                if (devices && devices.length) {
+                    const select = document.getElementById('camera-select');
+                    select.innerHTML = ""; // Bersihkan opsi lama
+                    
+                    // Filter Duplicate Cameras jika ada
+                    const uniqueDevices = [];
+                    const map = new Map();
+                    for (const item of devices) {
+                        if(!map.has(item.id)){
+                            map.set(item.id, true);
+                            uniqueDevices.push(item);
+                        }
+                    }
+
+                    uniqueDevices.forEach(device => {
+                        const option = document.createElement('option');
+                        option.value = device.id;
+                        option.text = device.label || `Kamera ${select.length + 1}`;
+                        select.appendChild(option);
+                    });
+
+                    // Logika Pintar: Pilih kamera belakang terakhir (biasanya kamera utama pada HP multi-kamera)
+                    if(!currentCameraId) {
+                        // Cari yang ada label 'back' atau 'environment'
+                        const backCam = uniqueDevices.find(d => d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('belakang'));
+                        currentCameraId = backCam ? backCam.id : uniqueDevices[uniqueDevices.length - 1].id;
+                    }
+                    select.value = currentCameraId;
+
+                    runCamera(currentCameraId);
+                } else {
+                    showScannerError("Tidak ada kamera ditemukan.");
+                }
+            }).catch(err => {
+                showScannerError("Izin kamera ditolak. Pastikan HTTPS aktif.");
+            });
+        }
+
+        // 2. Fungsi Menjalankan Kamera dengan Config Optimal
+        function runCamera(cameraId) {
+            document.getElementById('scanner-container').classList.remove('hidden');
+            document.getElementById('scanner-error').classList.add('hidden');
+
+            const config = { 
+                fps: 15, // Optimal untuk performa & baterai
+                qrbox: { width: 250, height: 250 },
+                aspectRatio: 1.0,
+                focusMode: "continuous" // Penting untuk auto-focus
+            };
+
+            html5QrCode.start(
+                cameraId, 
+                config,
+                onProScanSuccess, // Callback Sukses
+                (errorMessage) => { /*baikan error frame kosong untuk performa */ }
+            ).then(() => {
+                isScanning = true;
+                
+                // SAFE TORCH CHECK (Pencegahan Crash)
+                try {
+                    const capabilities = html5QrCode.getRunningTrackCameraCapabilities();
+                    const torchBtn = document.getElementById('btn-torch');
+                    if(capabilities && capabilities.torchFeature && capabilities.torchFeature.isSupported()) {
+                        torchBtn.classList.remove('hidden');
+                    } else {
+                        torchBtn.classList.add('hidden');
+                    }
+                } catch(e) {
+                    console.log("Torch check skipped on this device");
+                }
+
+            }).catch(err => {
+                showScannerError("Gagal memulai kamera: " + err);
+            });
+        }
+
+        // 3. Callback Sukses (Logika Inti)
+        function onProScanSuccess(decodedText, decodedResult) {
+            if (isProcessing) return; // Debounce Prevention
+            isProcessing = true;
+
+            // Efek Visual: Freeze & Hijau
+            try { html5QrCode.pause(true); } catch(e){}
+            
+            const frame = document.getElementById('scan-frame');
+            frame.classList.add('scan-success-effect');
+            
+            // Haptic Feedback (Getar)
+            if (navigator.vibrate) navigator.vibrate(200);
+
+            // Validasi Data
+            if(!decodedText.startsWith('GKPS')) { 
+                handleScanResult(false, "QR Code Tidak Valid");
+            } else {
+                processAttendanceData(decodedText);
+            }
+        }
+
+        function processAttendanceData(qrData) {
+            const parts = qrData.split('|');
+            const username = parts[1];
+            const name = parts[2] || 'Unknown';
+            const role = parts[3] || 'siswa';
+            const kelas = parts[4] || '-';
+
+            // Cek User di DB Local
+            if(!Array.isArray(db.users)) db.users = [];
+            let u = db.users.find(x => x.username === username);
+
+            // Auto Register jika belum ada (Fitur Powerful)
+            if(!u) {
+                u = { 
+                    id: 'AUTO_'+Date.now(), username, name, role, kelas, 
+                    gender:'L', password:'123', disabled:false, 
+                    avatar:'https://api.dicebear.com/7.x/notionists/svg?seed='+name, 
+                    posX: 50, posY: 50, folder: '-', readMsgs: [] 
+                };
+                db.users.push(u);
+            }
+
+            if(u.disabled) {
+                handleScanResult(false, "AKUN DIBLOKIR!");
+                return;
+            }
+
+            // Cek Duplikasi Absen Hari Ini
+            const today = getTodayDate();
+            if(!Array.isArray(db.attendance)) db.attendance = [];
+            const already = db.attendance.find(a => a.username === u.username && a.date === today);
+
+            if(already) {
+                handleScanResult(false, "Sudah Absen Hari Ini", "yellow");
+            } else {
+                // Simpan Absen
+                db.attendance.push({ 
+                    username: u.username, name: u.name, date: today, 
+                    time: new Date().toLocaleTimeString(), status: 'Hadir' 
+                });
+                saveDb(); // Simpan ke Firebase
+                handleScanResult(true, `HADIR: ${u.name}`);
+            }
+        }
+
+        function handleScanResult(isSuccess, msg, colorOverride = null) {
+            const statusEl = document.getElementById('scan-status');
+            const frame = document.getElementById('scan-frame');
+            
+            // Audio Feedback
+            playSound(isSuccess ? 'success' : 'error');
+
+            // Visual Status Overlay
+            const color = isSuccess ? 'green' : (colorOverride || 'red');
+            statusEl.innerText = msg;
+            statusEl.className = `mt-4 text-center font-bold p-3 rounded-xl shadow-lg text-sm bg-${color}-100 text-${color}-800 scale-100 transform transition-all`;
+            statusEl.classList.remove('hidden');
+
+            // Auto Resume logic
+            setTimeout(() => {
+                statusEl.classList.add('hidden');
+                statusEl.classList.remove('scale-100');
+                frame.classList.remove('scan-success-effect');
+                
+                // Resume Camera Safely
+                if(isScanning) {
+                    try { 
+                        html5QrCode.resume(); 
+                    } catch(e) { 
+                        console.log("Resume failed, restarting...");
+                        // Fallback jika resume gagal
+                        runCamera(currentCameraId);
+                    }
+                    isProcessing = false;
+                }
+            }, 2000); // 2 detik delay agar user bisa baca status
+        }
+
+        // 4. Utility Functions
+        function stopScanner() {
+            if(html5QrCode && isScanning) {
+                html5QrCode.stop().then(() => {
+                    isScanning = false;
+                    document.getElementById('scanner-container').classList.add('hidden');
+                }).catch(err => console.log(err));
+            }
+        }
+
+        function switchCamera() {
+            const newId = document.getElementById('camera-select').value;
+            if(newId && newId !== currentCameraId) {
+                currentCameraId = newId;
+                stopScanner();
+                // Delay sedikit untuk memberi waktu kamera stop
+                setTimeout(() => runCamera(newId), 300);
+            }
+        }
+
+        let isTorchOn = false;
+        function toggleTorch() {
+            if(!html5QrCode) return;
+            try {
+                isTorchOn = !isTorchOn;
+                html5QrCode.applyVideoConstraints({
+                    advanced: [{ torch: isTorchOn }]
+                });
+                const btn = document.getElementById('btn-torch');
+                btn.innerHTML = isTorchOn ? '🔦' : '⚡';
+                btn.style.background = isTorchOn ? 'rgba(255,255,0,0.5)' : 'rgba(255,255,255,0.2)';
+            } catch (err) {
+                alert("Fitur Flash tidak didukung di perangkat ini.");
+            }
+        }
+
+        function showScannerError(msg) {
+            document.getElementById('scanner-container').classList.add('hidden');
+            document.getElementById('scanner-error').classList.remove('hidden');
+            document.getElementById('scanner-error-msg').innerText = msg;
+        }
+
         // Render Session Log (Tetap mempertahankan logika lama tapi mengambil data real)
         function renderScanSessionLog() {
             const logBody = document.getElementById('scan-session-log');
