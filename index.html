@@ -924,11 +924,9 @@ shadow-sm">
                         <label class="text-xs font-bold text-gray-500 uppercase">Role</label>
                         <select id="modal-role" class="pro-input bg-white py-1 mb-2">
                             <option value="siswa">Siswa</option>
-                            <option value="guru">Guru</option>
+     
+                        <option value="guru">Guru</option>
                             <option value="admin">Admin</option>
-                            <option value="psm">Pengurus Sekolah Minggu</option>
-                            <option value="pkl">Pengurus Kelas</option>
-                            <option value="wali">Wali Kelas</option>
                         </select>
                     </div>
    
@@ -1592,31 +1590,22 @@ class="card-header-strip"></div>
         // Dashboard Logic
         function renderDashboardScreen() {
             document.getElementById('guru-greet-name').innerText = currentUser.name;
-            document.getElementById('role-badge').innerText = currentUser.role.toUpperCase();
+ document.getElementById('role-badge').innerText = currentUser.role.toUpperCase();
             document.getElementById('dash-avatar').src = currentUser.avatar;
             document.getElementById('dash-avatar').style.objectPosition = `${currentUser.posX||50}% ${currentUser.posY||50}%`;
             
-            const role = currentUser.role;
-            // Define permissions
-            // Admin: All
-            // PSM: Scan, Users, Messages
-            // Wali: Scan, Users, Messages
-            // PKL: Scan only
-            
-            const canManageUsers = ['admin', 'psm', 'wali'].includes(role);
-            const canBroadcast = ['admin', 'psm', 'wali'].includes(role);
-            const canSettings = ['admin'].includes(role);
-
-            // Toggle Tabs
-            document.getElementById('tab-users').classList.toggle('hidden', !canManageUsers);
-            document.getElementById('tab-messages').classList.toggle('hidden', !canBroadcast);
-            document.getElementById('tab-settings').classList.toggle('hidden', !canSettings);
-            
-            // Redirect if current tab is forbidden
-            const currentTab = localStorage.getItem('gkps_tab');
-            if (currentTab === 'users' && !canManageUsers) switchTab('home');
-            if (currentTab === 'messages' && !canBroadcast) switchTab('home');
-            if (currentTab === 'settings' && !canSettings) switchTab('home');
+            const isAdmin = currentUser.role === 'admin';
+ if (isAdmin) {
+                document.getElementById('tab-users').classList.remove('hidden');
+                document.getElementById('tab-messages').classList.remove('hidden');
+ document.getElementById('tab-settings').classList.remove('hidden');
+            } else {
+                document.getElementById('tab-users').classList.add('hidden');
+ document.getElementById('tab-messages').classList.add('hidden');
+                document.getElementById('tab-settings').classList.add('hidden');
+                const activeTab = localStorage.getItem('gkps_tab');
+                if(['users', 'messages', 'settings'].includes(activeTab)) switchTab('home');
+}
         }
         
         function switchTab(tab) {
@@ -1643,23 +1632,15 @@ class="card-header-strip"></div>
         
         function renderUserTable(filter = '') {
             const folderFilter = document.getElementById('filter-folder') ?
-                document.getElementById('filter-folder').value : 'all';
+ document.getElementById('filter-folder').value : 'all';
             const tbody = document.getElementById('table-users');
             const users = Array.isArray(db.users) ? db.users : [];
-            
-            // Permission Logic for Viewing
-            // Admin: See all
-            // PSM: See all (but restrict edit later)
-            // Wali: See all (but restrict edit later)
-            // PKL: Can't see this tab anyway
-            
-            let data = users.filter(u => {
+ let data = users.filter(u => {
                 const matchesSearch = u.name.toLowerCase().includes(filter.toLowerCase()) || u.username.toLowerCase().includes(filter.toLowerCase());
                 const matchesFolder = (folderFilter === 'all') || (u.folder === folderFilter);
                 return matchesSearch && matchesFolder;
             });
-            
-            if(sortConfig.key) {
+ if(sortConfig.key) {
                 data.sort((a,b) => {
                     let valA = (a[sortConfig.key]||'').toString().toLowerCase();
                     let valB = (b[sortConfig.key]||'').toString().toLowerCase();
@@ -1668,32 +1649,11 @@ class="card-header-strip"></div>
              if(valA > valB) return sortConfig.asc ? 1 : -1;
                     return 0;
                 });
-            }
+}
             
             if(data.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="text-center p-4 text-gray-400">Kosong</td></tr>';
  return; }
-            tbody.innerHTML = data.map(u => {
-                // Determine if Edit/Delete button should show
-                let canEdit = false;
-                const myRole = currentUser.role;
-                
-                if (myRole === 'admin') {
-                    canEdit = true;
-                } else if (myRole === 'psm') {
-                    // PSM cannot edit Admin or Wali
-                    if (u.role !== 'admin' && u.role !== 'wali') canEdit = true;
-                } else if (myRole === 'wali') {
-                    // Wali can only edit Students (or maybe generic guru, but usually just kids)
-                    // Simplified: Wali can edit Siswa only
-                    if (u.role === 'siswa') canEdit = true;
-                }
-
-                const actionButtons = canEdit ? 
-                    `<button onclick="openUserModal('${u.id}')" class="bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded font-bold">Edit</button>
-                     ${u.role!=='admin' ? `<button onclick="toggleStatus('${u.id}')" class="bg-orange-100 text-orange-600 text-xs px-2 py-1 rounded">Sts</button><button onclick="deleteUser('${u.id}')" class="bg-red-100 text-red-600 text-xs px-2 py-1 rounded">Del</button>` : ''}` 
-                    : '<span class="text-gray-400 text-[10px]">No Access</span>';
-
-                return `
+            tbody.innerHTML = data.map(u => `
                 <tr class="border-b hover:bg-gray-50">
                     <td class="text-center"><input type="checkbox" class="user-checkbox" value="${u.id}" onchange="updateDeleteBtn()"></td>
                     <td class="flex items-center">
@@ -1701,22 +1661,24 @@ class="card-header-strip"></div>
        <img src="${u.avatar || 'https://api.dicebear.com/7.x/notionists/svg?seed='+u.name}" class="w-8 h-8 rounded-full mr-2 border" style="object-position: ${u.posX||50}% ${u.posY||50}%">
                         <div>
                             <div class="font-bold text-xs">${u.name}</div>
-                            <div class="text-[9px] text-amber-600 font-bold">${u.folder && u.folder !== '-' ? '📁 ' + u.folder : ''}</div>
+                            <div 
+class="text-[9px] text-amber-600 font-bold">${u.folder && u.folder !== '-' ? '📁 ' + u.folder : ''}</div>
                             <div class="text-[10px] text-gray-400">@${u.username}</div>
                         </div>
                     </td>
              
-                    <td><span class="text-[10px] bg-gray-100 px-2 py-1 rounded">${u.kelas||'-'}</span></td>
+       <td><span class="text-[10px] bg-gray-100 px-2 py-1 rounded">${u.kelas||'-'}</span></td>
                     <td><span class="text-[10px] border px-2 py-0.5 rounded uppercase">${u.role}</span></td>
                     <td><span class="badge ${u.gender==='P'?'badge-gender-p':'badge-gender-l'}">${u.gender||'L'}</span></td>
                     <td><span class="badge ${u.disabled?'badge-disabled':'badge-active'}">${u.disabled?'Blocked':'Active'}</span></td>
                   
-                    <td class="text-right flex gap-1 justify-end items-center h-full pt-3">
-                        ${actionButtons}
+   <td class="text-right flex gap-1 justify-end items-center h-full pt-3">
+                        <button onclick="openUserModal('${u.id}')" class="bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded font-bold">Edit</button>
+                        ${u.role!=='admin' ?
+ `<button onclick="toggleStatus('${u.id}')" class="bg-orange-100 text-orange-600 text-xs px-2 py-1 rounded">Sts</button><button onclick="deleteUser('${u.id}')" class="bg-red-100 text-red-600 text-xs px-2 py-1 rounded">Del</button>` : ''}
                     </td>
-                </tr>`;
-            }).join('');
-            updateDeleteBtn();
+                </tr>`).join('');
+ updateDeleteBtn();
         }
 
         // Render Siswa
@@ -1988,8 +1950,8 @@ text-sm">${l.name}</td>
                 saveDb();
                 localStorage.setItem('gkps_session', JSON.stringify(currentUser));
                 alert('Profil Berhasil Diupdate!'); 
-                document.getElementById('profile-modal').style.display='none'; 
-                if(currentUser.role==='siswa') renderSiswaScreen(); 
+                document.getElementById('profile-modal').style.display='none';
+ if(currentUser.role==='siswa') renderSiswaScreen(); 
                 else renderDashboardScreen();
             }
         }
@@ -2019,18 +1981,22 @@ text-sm">${l.name}</td>
                     if(cols.length>=3) {
                         const name=cols[0].trim(), username=cols[1].trim(), password=cols[2].trim(), role=cols[3]?cols[3].trim().toLowerCase():'siswa', kelas=cols[4]?cols[4].trim():'-';
                        
+ 
                         let genderRaw = cols[5] ? cols[5].trim().toUpperCase() : 'L';
                         let gender = (genderRaw === 'P' || genderRaw === 'PEREMPUAN') ? 'P' : 'L';
-                        // Handle Folder Import if exists in CSV? Currently not supported in CSV structure, default to '-'
+                        // Handle Folder Import if exists in CSV? 
+ // Currently not supported in CSV structure, default to '-'
                         
                         if(!Array.isArray(db.users)) db.users = [];
                         if(name.toLowerCase()!=='nama' && !db.users.find(u=>u.username===username)) {
-                             db.users.push({ id:'IMP_'+Date.now()+c, name, username, password, role, kelas, gender: 
-                            gender, disabled:false, avatar:'https://api.dicebear.com/7.x/notionists/svg?seed='+name, posX: 50, posY: 50, folder: '-' }); c++;
+              
+                db.users.push({ id:'IMP_'+Date.now()+c, name, username, password, role, kelas, gender: 
+                            gender, disabled:false, avatar:'https://api.dicebear.com/7.x/notionists/svg?seed='+name, posX: 50, posY: 50, folder: '-', readMsgs: [] });
+ c++;
                         }
                     }
                 });
-                saveDb(); alert(`Import ${c} Sukses!`);
+ saveDb(); alert(`Import ${c} Sukses!`);
             };
             reader.readAsText(file);
         }
@@ -2040,84 +2006,86 @@ text-sm">${l.name}</td>
         // Toggle Panel Folder
         function toggleFolderPanel() {
             const panel = document.getElementById('folder-panel');
-            if (panel.classList.contains('hidden')) {
+ if (panel.classList.contains('hidden')) {
                 panel.classList.remove('hidden');
                 renderInlineFolderList();
-            } else {
+} else {
                 panel.classList.add('hidden');
-            }
+}
         }
 
         // Tambah Folder Baru
         function addNewFolderInline() {
             const nameInput = document.getElementById('new-folder-input');
-            const name = nameInput.value.trim();
+ const name = nameInput.value.trim();
             if(!name) return alert("Nama folder tidak boleh kosong");
             
             if(!db.folders) db.folders = [];
             if(db.folders.includes(name)) return alert("Folder sudah ada!");
-            
-            db.folders.push(name);
+ db.folders.push(name);
             nameInput.value = '';
             saveDb();
             renderInlineFolderList(); // Refresh list
-            renderFolderOptions(); // Refresh dropdown filter & modal
+            renderFolderOptions();
+ // Refresh dropdown filter & modal
         }
 
         // Render List Folder dengan Tombol Edit & Hapus
         function renderInlineFolderList() {
             const list = document.getElementById('folder-list-inline');
-            if(!db.folders || db.folders.length === 0) {
+ if(!db.folders || db.folders.length === 0) {
                 list.innerHTML = '<p class="text-gray-400 text-xs italic col-span-2 text-center">Belum ada folder dibuat.</p>';
-                return;
+ return;
             }
             
             list.innerHTML = db.folders.map(f => `
                 <div class="flex justify-between items-center bg-white p-2 rounded border border-amber-100 shadow-sm">
                     <span class="text-xs font-bold text-gray-700">📁 ${f}</span>
-                    <div class="flex gap-1">
+                    <div class="flex 
+gap-1">
                         <button onclick="renameFolder('${f}')" class="text-blue-500 hover:text-blue-700 text-[10px] font-bold border border-blue-200 px-2 rounded">Edit</button>
                         <button onclick="deleteFolderInline('${f}')" class="text-red-500 hover:text-red-700 text-[10px] font-bold border border-red-200 px-2 rounded">Hapus</button>
                     </div>
-                </div>
+              
+  </div>
             `).join('');
-        }
+}
 
         // Fitur Edit/Rename Folder
         function renameFolder(oldName) {
             const newName = prompt("Ubah nama folder menjadi:", oldName);
-            if(newName && newName !== oldName) {
+ if(newName && newName !== oldName) {
                 if(db.folders.includes(newName)) return alert("Nama folder sudah digunakan!");
-                
-                // 1. Update nama di array folders
+ // 1. Update nama di array folders
                 const idx = db.folders.indexOf(oldName);
-                if(idx !== -1) db.folders[idx] = newName;
+ if(idx !== -1) db.folders[idx] = newName;
                 
                 // 2. Update semua user yang ada di folder lama ke folder baru
                 let count = 0;
-                db.users.forEach(u => {
+ db.users.forEach(u => {
                     if(u.folder === oldName) {
                         u.folder = newName;
                         count++;
                     }
-                });
+     
+           });
                 
                 saveDb();
                 renderInlineFolderList();
                 renderFolderOptions();
-                renderUserTable(); // Refresh tabel user
+                renderUserTable();
+ // Refresh tabel user
                 alert(`Folder diubah. ${count} user diperbarui.`);
-            }
+}
         }
 
         // Hapus Folder
         function deleteFolderInline(name) {
             if(confirm(`Hapus folder "${name}"? User di dalamnya TIDAK akan terhapus (folder akan di-reset).`)) {
                 db.folders = db.folders.filter(f => f !== name);
-                // Reset user folder ke "-"
+ // Reset user folder ke "-"
                 db.users.forEach(u => { if(u.folder === name) u.folder = '-'; });
-                
-                saveDb();
+ saveDb();
                 renderInlineFolderList();
                 renderFolderOptions();
                 renderUserTable();
@@ -2129,216 +2097,312 @@ text-sm">${l.name}</td>
         // Update fungsi updateDeleteBtn yang lama untuk menghandle tampilan Bulk Action
         function updateDeleteBtn() { 
             const checkedBoxes = document.querySelectorAll('.user-checkbox:checked');
-            const count = checkedBoxes.length; 
+ const count = checkedBoxes.length; 
             const area = document.getElementById('bulk-action-area');
             
             if(count > 0) {
                 area.classList.remove('hidden');
-                // Update dropdown pilihan folder di area bulk action
+ // Update dropdown pilihan folder di area bulk action
                 const selectMove = document.getElementById('bulk-move-select');
-                let opts = `<option value="">- Pindah ke -</option><option value="-">Tanpa Folder</option>`;
-                (db.folders || []).forEach(f => {
+ let opts = `<option value="">- Pindah ke -</option><option value="-">Tanpa Folder</option>`;
+ (db.folders || []).forEach(f => {
                     opts += `<option value="${f}">${f}</option>`;
                 });
-                selectMove.innerHTML = opts;
+ selectMove.innerHTML = opts;
             } else {
                 area.classList.add('hidden');
-            }
+}
         }
 
         // Fungsi Eksekusi Pindah User
         function moveSelectedUsers() {
             const targetFolder = document.getElementById('bulk-move-select').value;
-            if(!targetFolder) return alert("Pilih folder tujuan terlebih dahulu!");
+ if(!targetFolder) return alert("Pilih folder tujuan terlebih dahulu!");
             
             const ids = Array.from(document.querySelectorAll('.user-checkbox:checked')).map(cb => cb.value);
-            
-            if(confirm(`Pindahkan ${ids.length} user terpilih ke folder "${targetFolder}"?`)) {
+ if(confirm(`Pindahkan ${ids.length} user terpilih ke folder "${targetFolder}"?`)) {
                 let count = 0;
-                db.users.forEach(u => {
+ db.users.forEach(u => {
                     if(ids.includes(u.id)) {
                         u.folder = targetFolder;
                         count++;
                     }
-                });
+       
+         });
                 
                 saveDb();
                 renderUserTable();
-                // Uncheck all
+ // Uncheck all
                 document.querySelectorAll('.user-checkbox').forEach(cb => cb.checked = false);
-                updateDeleteBtn();
+ updateDeleteBtn();
                 alert(`${count} user berhasil dipindahkan.`);
             }
         }
 
-        // --- PROFESSIONAL SCANNER LOGIC (Rombak Total) ---
-        let html5QrcodeScanner = null;
-        let isProcessingScan = false; // Mutex untuk mencegah double processing
-
+        // --- POWERFUL & SAFE SCANNER LOGIC (REBUILT) ---
+        let html5QrCode = null;
+        let currentCameraId = null;
+        let isScanning = false;
+        let isProcessing = false; // Mencegah spam scan
+        
+        // 1. Inisialisasi Scanner saat Tab Scan dibuka
         function startProScanner() {
+            if (isScanning) return;
+            
             // Cek apakah elemen reader ada
-            const readerElement = document.getElementById('reader');
-            if (!readerElement) return;
+            if(!document.getElementById('reader')) return;
 
-            // Jika scanner sudah ada, jangan inisialisasi ulang (mencegah blink/restart)
-            if (html5QrcodeScanner) {
-                // Pastikan state UI bersih jika perlu, tapi biasanya library handle ini.
-                return; 
+            // Inisialisasi Library PRO
+            if(html5QrCode === null) {
+                html5QrCode = new Html5Qrcode("reader");
             }
 
-            // Konfigurasi Profesional
-            const config = {
-                fps: 20, // Frame per second yang seimbang performance vs battery
-                qrbox: { width: 250, height: 250 }, // Area fokus scan
+            // Ambil daftar kamera dengan preferensi Environment (Belakang)
+            Html5Qrcode.getCameras().then(devices => {
+                if (devices && devices.length) {
+                    const select = document.getElementById('camera-select');
+                    select.innerHTML = ""; // Bersihkan opsi lama
+                    
+                    // Filter Duplicate Cameras jika ada
+                    const uniqueDevices = [];
+                    const map = new Map();
+                    for (const item of devices) {
+                        if(!map.has(item.id)){
+                            map.set(item.id, true);
+                            uniqueDevices.push(item);
+                        }
+                    }
+
+                    uniqueDevices.forEach(device => {
+                        const option = document.createElement('option');
+                        option.value = device.id;
+                        option.text = device.label || `Kamera ${select.length + 1}`;
+                        select.appendChild(option);
+                    });
+
+                    // Logika Pintar: Pilih kamera belakang terakhir (biasanya kamera utama pada HP multi-kamera)
+                    if(!currentCameraId) {
+                        // Cari yang ada label 'back' atau 'environment'
+                        const backCam = uniqueDevices.find(d => d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('belakang'));
+                        currentCameraId = backCam ? backCam.id : uniqueDevices[uniqueDevices.length - 1].id;
+                    }
+                    select.value = currentCameraId;
+
+                    runCamera(currentCameraId);
+                } else {
+                    showScannerError("Tidak ada kamera ditemukan.");
+                }
+            }).catch(err => {
+                showScannerError("Izin kamera ditolak. Pastikan HTTPS aktif.");
+            });
+        }
+
+        // 2. Fungsi Menjalankan Kamera dengan Config Optimal
+        function runCamera(cameraId) {
+            document.getElementById('scanner-container').classList.remove('hidden');
+            document.getElementById('scanner-error').classList.add('hidden');
+
+            const config = { 
+                fps: 15, // Optimal untuk performa & baterai
+                qrbox: { width: 250, height: 250 },
                 aspectRatio: 1.0,
-                disableFlip: false, // Auto detect flip (selfie mode)
-                showTorchButtonIfSupported: true,
-                showZoomSliderIfSupported: true,
-                defaultZoomValueIfSupported: 1.5 // Zoom dikit biar enak
+                focusMode: "continuous" // Penting untuk auto-focus
             };
 
-            // Inisialisasi Library
-            // Gunakan try-catch untuk handle error kamera tidak support/blocked
-            try {
-                // Clear elemen dulu biar bersih
-                readerElement.innerHTML = "";
+            html5QrCode.start(
+                cameraId, 
+                config,
+                onProScanSuccess, // Callback Sukses
+                (errorMessage) => { /*baikan error frame kosong untuk performa */ }
+            ).then(() => {
+                isScanning = true;
                 
-                html5QrcodeScanner = new Html5QrcodeScanner("reader", config, /* verbose= */ false);
-                
-                // Render dengan callback sukses dan error
-                html5QrcodeScanner.render(
-                    (decodedText, decodedResult) => {
-                        // Success Callback
-                        processScanResult(decodedText);
-                    }, 
-                    (errorMessage) => {
-                        // Scan Error / Waiting (Normal loop, ignore log to keep console clean)
-                    }
-                );
-            } catch (err) {
-                console.error("Gagal start scanner:", err);
-                alert("Gagal akses kamera. Pastikan izin diberikan.");
-            }
-        }
-
-        function stopScanner() {
-            if (html5QrcodeScanner) {
+                // SAFE TORCH CHECK (Pencegahan Crash)
                 try {
-                    html5QrcodeScanner.clear().then(() => {
-                        // Berhasil stop
-                        html5QrcodeScanner = null;
-                        const reader = document.getElementById('reader');
-                        if (reader) reader.innerHTML = "";
-                    }).catch((error) => {
-                        console.error("Failed to clear scanner. ", error);
-                        html5QrcodeScanner = null;
-                    });
+                    const capabilities = html5QrCode.getRunningTrackCameraCapabilities();
+                    const torchBtn = document.getElementById('btn-torch');
+                    if(capabilities && capabilities.torchFeature && capabilities.torchFeature.isSupported()) {
+                        torchBtn.classList.remove('hidden');
+                    } else {
+                        torchBtn.classList.add('hidden');
+                    }
                 } catch(e) {
-                    // Force clean variable if library fails
-                    html5QrcodeScanner = null;
+                    console.log("Torch check skipped on this device");
                 }
-            }
+
+            }).catch(err => {
+                showScannerError("Gagal memulai kamera: " + err);
+            });
         }
 
-        // Logic Pemrosesan Scan yang Lebih Pintar
-        async function processScanResult(decodedText) {
-            // 1. Debounce / Throttling: Jangan proses jika sedang memproses scan sebelumnya
-            if (isProcessingScan) return;
+        // 3. Callback Sukses (Logika Inti)
+        function onProScanSuccess(decodedText, decodedResult) {
+            if (isProcessing) return; // Debounce Prevention
+            isProcessing = true;
+
+            // Efek Visual: Freeze & Hijau
+            try { html5QrCode.pause(true); } catch(e){}
             
-            // 2. Cek Format Dasar
-            if (!decodedText.startsWith('GKPS')) {
-                // Feedback visual/audio ringan untuk salah QR (opsional, biar ga spam error)
-                return; 
-            }
+            const frame = document.getElementById('scan-frame');
+            frame.classList.add('scan-success-effect');
+            
+            // Haptic Feedback (Getar)
+            if (navigator.vibrate) navigator.vibrate(200);
 
-            // Lock processing
-            isProcessingScan = true;
-
-            // 3. Feedback Langsung (Haptic & Sound)
-            if (navigator.vibrate) navigator.vibrate(200); // Getar HP
-            playSound('success');
-
-            // 4. Validasi Data
-            try {
-                const parts = decodedText.split('|');
-                const username = parts[1];
-                
-                // Pastikan DB user ready
-                if(!db.users || !Array.isArray(db.users)) db.users = [];
-                
-                let u = db.users.find(x => x.username === username);
-                
-                // -- Logic Auto Register (Sama seperti sebelumnya) --
-                if(!u && parts[2]) {
-                    u = { 
-                        id: 'AUTO_'+Date.now(), 
-                        username, 
-                        name: parts[2], 
-                        role: parts[3]||'siswa', 
-                        kelas: parts[4]||'-', 
-                        gender:'L', password:'123', disabled:false, 
-                        avatar:'https://api.dicebear.com/7.x/notionists/svg?seed='+parts[2], 
-                        posX: 50, posY: 50, folder: '-', readMsgs: [] 
-                    };
-                    db.users.push(u);
-                }
-
-                if (!u) {
-                    showStatus('User Tidak Dikenal', 'red');
-                    throw new Error("User not found");
-                }
-
-                if(u.disabled) {
-                    showStatus('AKSES DITOLAK', 'red');
-                    throw new Error("Blocked");
-                }
-
-                // Cek Absen Hari Ini
-                const today = getTodayDate();
-                if(!db.attendance) db.attendance = [];
-                const alreadyPresent = db.attendance.find(a => a.username === u.username && a.date === today);
-
-                if (alreadyPresent) {
-                    showStatus('Sudah Masuk: ' + u.name, 'yellow');
-                } else {
-                    // Catat Absen
-                    db.attendance.push({ 
-                        username: u.username, 
-                        name: u.name, 
-                        date: today, 
-                        time: new Date().toLocaleTimeString(), 
-                        status: 'Hadir' 
-                    });
-                    saveDb();
-                    showStatus('HADIR: ' + u.name, 'green');
-                }
-
-                // Pause Scanner sebentar biar user bisa baca status (UX Pro)
-                if(html5QrcodeScanner) html5QrcodeScanner.pause();
-                
-                await new Promise(r => setTimeout(r, 2000)); // Delay 2 detik
-                
-                if(html5QrcodeScanner) html5QrcodeScanner.resume();
-
-            } catch (e) {
-                // Error handling soft
-                if(e.message !== "Blocked" && e.message !== "User not found") {
-                    console.error(e);
-                }
-                // Delay sebentar sebelum bisa scan lagi jika error
-                await new Promise(r => setTimeout(r, 1000));
-            } finally {
-                // Unlock processing
-                isProcessingScan = false;
+            // Validasi Data
+            if(!decodedText.startsWith('GKPS')) { 
+                handleScanResult(false, "QR Code Tidak Valid");
+            } else {
+                processAttendanceData(decodedText);
             }
         }
-        
-        function onScanFailure(err) { }
 
-        function showStatus(msg, color) {
-            const el = document.getElementById('scan-status');
-            el.innerText=msg; el.className=`mt-4 text-center font-bold p-3 rounded-xl shadow-lg text-sm bg-${color}-100 text-${color}-800`;
-            el.classList.remove('hidden'); setTimeout(()=>el.classList.add('hidden'), 2000);
+        function processAttendanceData(qrData) {
+            const parts = qrData.split('|');
+            const username = parts[1];
+            const name = parts[2] || 'Unknown';
+            const role = parts[3] || 'siswa';
+            const kelas = parts[4] || '-';
+
+            // Cek User di DB Local
+            if(!Array.isArray(db.users)) db.users = [];
+            let u = db.users.find(x => x.username === username);
+
+            // Auto Register jika belum ada (Fitur Powerful)
+            if(!u) {
+                u = { 
+                    id: 'AUTO_'+Date.now(), username, name, role, kelas, 
+                    gender:'L', password:'123', disabled:false, 
+                    avatar:'https://api.dicebear.com/7.x/notionists/svg?seed='+name, 
+                    posX: 50, posY: 50, folder: '-', readMsgs: [] 
+                };
+                db.users.push(u);
+            }
+
+            if(u.disabled) {
+                handleScanResult(false, "AKUN DIBLOKIR!");
+                return;
+            }
+
+            // Cek Duplikasi Absen Hari Ini
+            const today = getTodayDate();
+            if(!Array.isArray(db.attendance)) db.attendance = [];
+            const already = db.attendance.find(a => a.username === u.username && a.date === today);
+
+            if(already) {
+                handleScanResult(false, "Sudah Absen Hari Ini", "yellow");
+            } else {
+                // Simpan Absen
+                db.attendance.push({ 
+                    username: u.username, name: u.name, date: today, 
+                    time: new Date().toLocaleTimeString(), status: 'Hadir' 
+                });
+                saveDb(); // Simpan ke Firebase
+                handleScanResult(true, `HADIR: ${u.name}`);
+            }
+        }
+
+        function handleScanResult(isSuccess, msg, colorOverride = null) {
+            const statusEl = document.getElementById('scan-status');
+            const frame = document.getElementById('scan-frame');
+            
+            // Audio Feedback
+            playSound(isSuccess ? 'success' : 'error');
+
+            // Visual Status Overlay
+            const color = isSuccess ? 'green' : (colorOverride || 'red');
+            statusEl.innerText = msg;
+            statusEl.className = `mt-4 text-center font-bold p-3 rounded-xl shadow-lg text-sm bg-${color}-100 text-${color}-800 scale-100 transform transition-all`;
+            statusEl.classList.remove('hidden');
+
+            // Auto Resume logic
+            setTimeout(() => {
+                statusEl.classList.add('hidden');
+                statusEl.classList.remove('scale-100');
+                frame.classList.remove('scan-success-effect');
+                
+                // Resume Camera Safely
+                if(isScanning) {
+                    try { 
+                        html5QrCode.resume(); 
+                    } catch(e) { 
+                        console.log("Resume failed, restarting...");
+                        // Fallback jika resume gagal
+                        runCamera(currentCameraId);
+                    }
+                    isProcessing = false;
+                }
+            }, 2000); // 2 detik delay agar user bisa baca status
+        }
+
+        // 4. Utility Functions
+        function stopScanner() {
+            if(html5QrCode && isScanning) {
+                html5QrCode.stop().then(() => {
+                    isScanning = false;
+                    document.getElementById('scanner-container').classList.add('hidden');
+                }).catch(err => console.log(err));
+            }
+        }
+
+        function switchCamera() {
+            const newId = document.getElementById('camera-select').value;
+            if(newId && newId !== currentCameraId) {
+                currentCameraId = newId;
+                stopScanner();
+                // Delay sedikit untuk memberi waktu kamera stop
+                setTimeout(() => runCamera(newId), 300);
+            }
+        }
+
+        let isTorchOn = false;
+        function toggleTorch() {
+            if(!html5QrCode) return;
+            try {
+                isTorchOn = !isTorchOn;
+                html5QrCode.applyVideoConstraints({
+                    advanced: [{ torch: isTorchOn }]
+                });
+                const btn = document.getElementById('btn-torch');
+                btn.innerHTML = isTorchOn ? '🔦' : '⚡';
+                btn.style.background = isTorchOn ? 'rgba(255,255,0,0.5)' : 'rgba(255,255,255,0.2)';
+            } catch (err) {
+                alert("Fitur Flash tidak didukung di perangkat ini.");
+            }
+        }
+
+        function showScannerError(msg) {
+            document.getElementById('scanner-container').classList.add('hidden');
+            document.getElementById('scanner-error').classList.remove('hidden');
+            document.getElementById('scanner-error-msg').innerText = msg;
+        }
+
+        // Render Session Log (Tetap mempertahankan logika lama tapi mengambil data real)
+        function renderScanSessionLog() {
+            const logBody = document.getElementById('scan-session-log');
+            if(!logBody) return;
+            
+            const today = getTodayDate();
+            const logs = (db.attendance || [])
+                .filter(a => a.date === today && a.status === 'Hadir')
+                .slice().reverse(); // Terbaru diatas
+            
+            // Update Badge Count
+            const badge = document.getElementById('scan-count-badge');
+            if(badge) badge.innerText = logs.length;
+
+            if(logs.length === 0) {
+                 logBody.innerHTML = '<tr><td colspan="3" class="p-4 text-center text-gray-400 italic">Belum ada scan sesi ini</td></tr>';
+                 return;
+            }
+
+            logBody.innerHTML = logs.map(l => `
+                <tr class="border-b hover:bg-gray-50 transition">
+                    <td class="p-2 text-gray-500 text-[10px] font-mono">${l.time}</td>
+                    <td class="p-2 font-bold text-xs text-gray-700">${l.name}</td>
+                    <td class="p-2"><span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-[10px] font-bold">Hadir</span></td>
+                </tr>
+            `).join('');
         }
 
         window.onload = initApp;
