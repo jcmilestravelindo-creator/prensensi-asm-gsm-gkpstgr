@@ -35,6 +35,11 @@
         .btn-red { background: #ef4444; color: white; } .btn-red:hover { background: #dc2626; }
         .btn-yellow { background: var(--accent); color: #713f12; } .btn-yellow:hover { background: #eab308; }
 
+        /* Password Toggle Style */
+        .pass-wrapper { position: relative; width: 100%; }
+        .pass-toggle { position: absolute; right: 15px; top: 42%; transform: translateY(-50%); cursor: pointer; z-index: 10; font-size: 1.2rem; color: #94a3b8; user-select: none; }
+        .pass-toggle:hover { color: var(--primary); }
+
         /* Navigation Pills */
         .nav-pill { padding: 0.5rem 1rem; border-radius: 99px; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: 0.2s; color: #64748b; background: white; border: 1px solid transparent; white-space: nowrap; }
         .nav-pill.active { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(14, 165, 233, 0.4); }
@@ -77,7 +82,7 @@
         .modal-body-scroll { overflow-y: auto; flex: 1; padding: 1.5rem; -webkit-overflow-scrolling: touch; }
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         
-        /* --- WHATSAPP STYLE NOTIFICATION (FIXED MOBILE) --- */
+        /* --- WHATSAPP STYLE NOTIFICATION --- */
         .notif-container { position: relative; }
         .wa-dropdown { display: none; position: absolute; right: -10px; top: 140%; width: 320px; background: #efe7dd url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-blend-mode: overlay; border-radius: 12px; box-shadow: 0 10px 50px rgba(0,0,0,0.3); border: 1px solid #d1d7db; z-index: 100; max-height: 60vh; overflow: hidden; flex-direction: column; }
         .wa-dropdown.show { display: flex; animation: slideUp 0.2s ease; }
@@ -134,7 +139,10 @@
             <h1 class="text-2xl font-bold text-blue-900 mb-2">Setup Sistem</h1>
             <p class="text-gray-500 text-sm mb-6">Belum ada akun Admin. Silakan buat akun Super Admin pertama.</p>
             <input type="text" id="setup-username" class="pro-input" placeholder="Username Admin Baru">
-            <input type="password" id="setup-password" class="pro-input" placeholder="Password">
+            <div class="pass-wrapper">
+                <input type="password" id="setup-password" class="pro-input" placeholder="Password">
+                <span onclick="togglePass('setup-password', this)" class="pass-toggle">👁️</span>
+            </div>
             <button onclick="setupAdmin()" class="pro-btn btn-blue">Buat Akun Admin</button>
         </div>
     </section>
@@ -152,7 +160,10 @@
              <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Username</label>
             <input type="text" id="login-username" class="pro-input" placeholder="Masukkan Username">
             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Password</label>
-            <input type="password" id="login-password" class="pro-input" placeholder="Masukkan Password">
+            <div class="pass-wrapper">
+                <input type="password" id="login-password" class="pro-input" placeholder="Masukkan Password">
+                <span onclick="togglePass('login-password', this)" class="pass-toggle">👁️</span>
+            </div>
             
             <button onclick="handleLogin()" class="pro-btn btn-blue shadow-lg shadow-blue-200">MASUK</button>
         
@@ -215,6 +226,17 @@
                      <button onclick="openManualModal()" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg text-xs shadow animate-pulse">📍 Absen Manual (Klik Disini)</button>
                 </div>
             </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 mt-6">
+            <button onclick="openStudentView('materi')" class="bg-white border border-blue-100 p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center hover:bg-blue-50 transition">
+                <span class="text-2xl mb-1">📚</span>
+                <span class="text-xs font-bold text-blue-900">Lihat Materi</span>
+            </button>
+            <button onclick="openStudentView('jadwal')" class="bg-white border border-amber-100 p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center hover:bg-amber-50 transition">
+                <span class="text-2xl mb-1">🗓️</span>
+                <span class="text-xs font-bold text-amber-900">Lihat Jadwal</span>
+            </button>
         </div>
     </section>
 
@@ -530,6 +552,17 @@
         </div>
     </section>
 
+    <div id="student-content-modal" class="modal-overlay">
+        <div class="modal-content" style="max-height: 85vh;">
+            <div class="p-4 border-b flex justify-between items-center bg-blue-50">
+                <h3 id="student-modal-title" class="font-bold text-blue-900 text-lg">Informasi</h3>
+                <button onclick="document.getElementById('student-content-modal').style.display='none'" class="text-gray-500 font-bold px-2">✕</button>
+            </div>
+            <div class="modal-body-scroll p-4" id="student-modal-body">
+                </div>
+        </div>
+    </div>
+
     <div id="manual-modal" class="modal-overlay">
         <div class="modal-content bg-white" style="max-height: 90vh;">
             <div class="text-center mb-4">
@@ -618,7 +651,10 @@
                 <input type="text" id="modal-username" class="pro-input py-1 mb-2">
    
                 <label class="text-xs font-bold text-gray-500 uppercase">Password</label>
-                <input type="text" id="modal-password" class="pro-input py-1 mb-2">
+                <div class="pass-wrapper">
+                    <input type="text" id="modal-password" class="pro-input py-1 mb-2">
+                    <span onclick="togglePass('modal-password', this)" class="pass-toggle">👁️</span>
+                </div>
                 
                 <div class="grid grid-cols-2 gap-2">
                     <div>
@@ -729,7 +765,10 @@
                             </div>
                             <div>
                                 <label class="text-[10px] font-bold text-gray-500 uppercase">Password Baru</label>
-                                <input type="text" id="prof-password" class="pro-input py-1.5 text-sm mb-0" placeholder="Biarkan kosong">
+                                <div class="pass-wrapper">
+                                    <input type="text" id="prof-password" class="pro-input py-1.5 text-sm mb-0" placeholder="Biarkan kosong">
+                                    <span onclick="togglePass('prof-password', this)" class="pass-toggle">👁️</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -762,17 +801,19 @@
 
                 <div>
                     <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Kode Pemulihan</label>
-                    <div class="relative">
+                    <div class="relative pass-wrapper">
                         <span class="absolute left-3 top-2.5 text-gray-400">🔑</span>
                         <input type="password" id="forgot-code" class="pro-input pl-9" placeholder="Kode Rahasia">
+                        <span onclick="togglePass('forgot-code', this)" class="pass-toggle">👁️</span>
                     </div>
                 </div>
 
                 <div>
                     <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Password Baru</label>
-                    <div class="relative">
+                    <div class="relative pass-wrapper">
                         <span class="absolute left-3 top-2.5 text-gray-400">🔒</span>
                         <input type="text" id="forgot-newpass" class="pro-input pl-9" placeholder="Password Baru">
+                        <span onclick="togglePass('forgot-newpass', this)" class="pass-toggle">👁️</span>
                     </div>
                 </div>
 
@@ -853,6 +894,18 @@
         function getTodayDate() {
             const d = new Date();
             return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth()+1).toString().padStart(2, '0')}/${d.getFullYear()}`;
+        }
+
+        // Password Toggle Function
+        function togglePass(inputId, icon) {
+            const input = document.getElementById(inputId);
+            if (input.type === "password") {
+                input.type = "text";
+                icon.style.color = "#0ea5e9"; // Active color
+            } else {
+                input.type = "password";
+                icon.style.color = "#94a3b8"; // Default color
+            }
         }
 
         // APP INIT
@@ -1244,19 +1297,20 @@
             document.getElementById('dash-avatar').style.objectPosition = `${currentUser.posX||50}% ${currentUser.posY||50}%`;
             
             const role = currentUser.role;
-            // Reset Tabs visibility
             const allTabs = ['tab-users', 'tab-messages', 'tab-settings', 'tab-materi', 'tab-jadwal'];
             allTabs.forEach(t => document.getElementById(t).classList.add('hidden'));
 
-            // Access Rules
+            // Rule Akses Baru
             if (role === 'admin') {
                 allTabs.forEach(t => document.getElementById(t).classList.remove('hidden'));
             } else if (role === 'pengurus_sm') {
                 ['tab-messages', 'tab-materi', 'tab-jadwal'].forEach(t => document.getElementById(t).classList.remove('hidden'));
             } else if (role === 'wali_kelas') {
                 ['tab-messages', 'tab-materi'].forEach(t => document.getElementById(t).classList.remove('hidden'));
+            } else if (role === 'guru') {
+                // Guru bisa lihat Materi & Jadwal (Read Only handled in render function)
+                ['tab-materi', 'tab-jadwal'].forEach(t => document.getElementById(t).classList.remove('hidden'));
             }
-            // Pengurus Kelas & Guru default only see Home and Scan
         }
         
         function switchTab(tab) {
@@ -1347,6 +1401,31 @@
                 text: codeData, width: 128, height: 128,
                 colorDark : "#000000", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.H
             });
+        }
+
+        // Student View Handler (Modal)
+        function openStudentView(type) {
+            document.getElementById('student-content-modal').style.display = 'flex';
+            const body = document.getElementById('student-modal-body');
+            const title = document.getElementById('student-modal-title');
+            
+            body.innerHTML = '';
+            
+            if(type === 'materi') {
+                title.innerText = "📚 Materi Sekolah Minggu";
+                body.innerHTML = '<div id="student-materi-list" class="space-y-3"></div>';
+                renderMateriList('student-materi-list', true); // Force Read-Only
+            } else if (type === 'jadwal') {
+                title.innerText = "🗓️ Jadwal Guru";
+                body.innerHTML = `
+                <div class="overflow-x-auto">
+                    <table class="w-full admin-table text-xs">
+                        <thead><tr><th>Tanggal</th><th>Guru</th><th>Tugas</th></tr></thead>
+                        <tbody id="student-jadwal-body"></tbody>
+                    </table>
+                </div>`;
+                renderJadwalTable('student-jadwal-body', true); // Force Read-Only
+            }
         }
 
         function openIdCardModal() {
@@ -1734,18 +1813,24 @@
             saveDb(); hideMateriEditor(); renderMateriList();
         }
 
-        function renderMateriList() {
-            const list = document.getElementById('materi-list');
+        function renderMateriList(targetId = 'materi-list', forceReadOnly = false) {
+            const list = document.getElementById(targetId);
+            if (!list) return;
+            
             const data = db.materi || [];
             if(data.length === 0) { list.innerHTML = '<p class="text-center text-gray-400 text-xs">Belum ada materi.</p>'; return; }
+            
+            const isEditable = !forceReadOnly && ['admin', 'pengurus_sm', 'wali_kelas'].includes(currentUser.role);
+
             list.innerHTML = data.map(m => `
                 <div class="border p-3 rounded-xl bg-white shadow-sm">
                     <div class="flex justify-between items-start">
                         <h4 class="font-bold text-blue-800">${m.title}</h4>
+                        ${isEditable ? `
                         <div class="flex gap-1">
                             <button onclick="showMateriEditor('${m.id}')" class="text-blue-500 text-[10px] font-bold">Edit</button>
                             <button onclick="deleteMateri('${m.id}')" class="text-red-500 text-[10px] font-bold">Hapus</button>
-                        </div>
+                        </div>` : ''}
                     </div>
                     <p class="text-xs text-gray-600 mt-1 whitespace-pre-wrap">${m.content}</p>
                     <div class="text-[9px] text-gray-400 mt-2 italic">Oleh: ${m.author}</div>
@@ -1805,19 +1890,25 @@
             saveDb(); hideJadwalEditor(); renderJadwalTable();
         }
 
-        function renderJadwalTable() {
-            const tbody = document.getElementById('table-jadwal-body');
+        function renderJadwalTable(targetId = 'table-jadwal-body', forceReadOnly = false) {
+            const tbody = document.getElementById(targetId);
+            if (!tbody) return;
+
             const data = db.jadwal || [];
              if(data.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="text-center p-4 text-gray-400">Belum ada jadwal.</td></tr>'; return; }
+            
+            const isEditable = !forceReadOnly && ['admin', 'pengurus_sm'].includes(currentUser.role);
+
             tbody.innerHTML = data.map(j => `
                 <tr>
                     <td>${j.date}</td>
                     <td class="font-bold">${j.guru}</td>
                     <td>${j.tugas}</td>
+                    ${isEditable ? `
                     <td>
                         <button onclick="showJadwalEditor('${j.id}')" class="text-blue-500 mr-2">Edit</button>
                         <button onclick="deleteJadwal('${j.id}')" class="text-red-500">Hapus</button>
-                    </td>
+                    </td>` : ''}
                 </tr>
             `).join('');
         }
