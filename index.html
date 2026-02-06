@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Absensi GKPS - PRO ULTIMATE</title>
+    <title>Sistem Absensi GKPS - PRO ULTIMATE TURBO</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -20,7 +20,7 @@
             --accent: #facc15;
             --bg-soft: #f0f9ff;
             --text-main: #1e293b;
-            --wa-green: #25D366; /* Warna WA */
+            --wa-green: #25D366;
             --wa-teal: #128C7E;
         }
         body { font-family: 'Poppins', sans-serif; color: var(--text-main); background: linear-gradient(180deg, #e0f2fe 0%, #f0f9ff 100%); min-height: 100vh; padding-bottom: 2rem; }
@@ -35,7 +35,7 @@
         .btn-red { background: #ef4444; color: white; } .btn-red:hover { background: #dc2626; }
         .btn-yellow { background: var(--accent); color: #713f12; } .btn-yellow:hover { background: #eab308; }
 
-        /* Password Toggle Style */
+        /* Password Toggle */
         .pass-wrapper { position: relative; width: 100%; }
         .pass-toggle { position: absolute; right: 15px; top: 42%; transform: translateY(-50%); cursor: pointer; z-index: 10; font-size: 1.2rem; color: #94a3b8; user-select: none; }
         .pass-toggle:hover { color: var(--primary); }
@@ -44,31 +44,28 @@
         .nav-pill { padding: 0.5rem 1rem; border-radius: 99px; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: 0.2s; color: #64748b; background: white; border: 1px solid transparent; white-space: nowrap; }
         .nav-pill.active { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(14, 165, 233, 0.4); }
 
-        /* STUDENT ID CARD STYLING */
+        /* STUDENT ID CARD */
         .student-card { width: 100%; max-width: 350px; margin: 0 auto; background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%); border-radius: 16px; box-shadow: 0 10px 40px -10px rgba(0,0,0,0.2); position: relative; overflow: hidden; border: 1px solid #cbd5e1; display: flex; flex-direction: column; }
         .card-header-strip { background: #0284c7; height: 12px; width: 100%; }
         .card-body { padding: 1.2rem; flex: 1; display: flex; gap: 1rem; align-items: center; }
         .card-photo-frame { width: 80px; height: 100px; background: #e2e8f0; border-radius: 8px; overflow: hidden; border: 2px solid white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); flex-shrink: 0; cursor: pointer; position: relative; }
         .card-photo-frame img { width: 100%; height: 100%; object-fit: cover; transition: object-position 0.2s; }
-        
         .upload-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.4); display: flex; justify-content: center; align-items: center; opacity: 0; transition: opacity 0.2s; color: white; font-weight: bold; font-size: 0.7rem; flex-direction: column; }
         .group:hover .upload-overlay { opacity: 1; }
-
         .card-info h3 { font-size: 1.1rem; font-weight: 800; color: #1e293b; line-height: 1.2; margin-bottom: 4px; text-transform: uppercase; }
         .card-info p { font-size: 0.75rem; color: #64748b; margin-bottom: 2px; }
         .card-info .role-tag { display: inline-block; background: #0ea5e9; color: white; font-size: 0.6rem; font-weight: 700; padding: 2px 8px; border-radius: 99px; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
         .card-footer { background: white; padding: 1rem; text-align: center; border-top: 1px dashed #e2e8f0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        /* QR Code Container Styling */
         #qrcode, #qrcode-guru { padding: 5px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; }
         #qrcode img, #qrcode-guru img { display: block; }
         
-        /* Table Styling */
+        /* Tables */
         .admin-table th { background: #f1f5f9; color: #64748b; font-size: 0.75rem; text-transform: uppercase; padding: 0.8rem; text-align: left; user-select: none; }
         .admin-table th.sortable { cursor: pointer; transition: background 0.2s; }
         .admin-table th.sortable:hover { background: #e2e8f0; color: var(--primary); }
         .admin-table td { padding: 0.8rem; border-bottom: 1px solid #f1f5f9; font-size: 0.85rem; vertical-align: middle; }
         
-        /* Status Badges */
+        /* Badges */
         .badge { font-size: 0.7rem; padding: 2px 8px; border-radius: 99px; font-weight: 700; display: inline-block; }
         .badge-active { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
         .badge-disabled { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
@@ -76,13 +73,13 @@
         .badge-gender-l { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
         .badge-gender-p { background: #fce7f3; color: #9d174d; border: 1px solid #f9a8d4; }
 
-        /* Modal Layout Fix (SCROLLABLE) */
+        /* Modal */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 50; display: none; justify-content: center; align-items: center; padding: 1rem; backdrop-filter: blur(2px); }
         .modal-content { background: white; border-radius: 1.5rem; width: 100%; max-width: 400px; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden; animation: slideUp 0.3s ease; }
         .modal-body-scroll { overflow-y: auto; flex: 1; padding: 1.5rem; -webkit-overflow-scrolling: touch; }
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         
-        /* --- WHATSAPP STYLE NOTIFICATION --- */
+        /* Notification */
         .notif-container { position: relative; }
         .wa-dropdown { display: none; position: absolute; right: -10px; top: 140%; width: 320px; background: #efe7dd url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); background-blend-mode: overlay; border-radius: 12px; box-shadow: 0 10px 50px rgba(0,0,0,0.3); border: 1px solid #d1d7db; z-index: 100; max-height: 60vh; overflow: hidden; flex-direction: column; }
         .wa-dropdown.show { display: flex; animation: slideUp 0.2s ease; }
@@ -103,25 +100,25 @@
         .wa-icon-btn:hover { color: var(--wa-teal); transform: scale(1.05); }
         .wa-badge-count { position: absolute; top: -5px; right: -5px; background: var(--wa-green); color: white; font-size: 0.65rem; font-weight: bold; padding: 2px 5px; border-radius: 99px; border: 2px solid white; min-width: 18px; text-align: center; }
 
-        /* Connection Status */
+        /* Conn Status */
         .conn-status { position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); background: #22c55e; color: white; padding: 5px 15px; border-radius: 20px; font-size: 10px; font-weight: bold; z-index: 100; box-shadow: 0 5px 15px rgba(0,0,0,0.2); display: flex; align-items: center; gap: 5px;}
         .conn-status.offline { background: #ef4444; }
         .blink { animation: blinker 1.5s linear infinite; }
         @keyframes blinker { 50% { opacity: 0; } }
 
-        /* --- PRO SCANNER UI & CSS --- */
+        /* --- TURBO SCANNER UI --- */
         #scanner-container { position: relative; width: 100%; background: #000; border-radius: 1.5rem; overflow: hidden; aspect-ratio: 1/1; }
         #reader { width: 100%; height: 100%; object-fit: cover; }
         .scan-overlay { position: absolute; inset: 0; pointer-events: none; z-index: 10; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        .scan-frame { width: 70%; height: 70%; border: 2px solid rgba(255, 255, 255, 0.3); border-radius: 20px; position: relative; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5); transition: all 0.3s ease; }
-        .scan-frame::after, .scan-frame::before { content: ''; position: absolute; width: 20px; height: 20px; border-color: #3b82f6; border-style: solid; transition: all 0.2s; }
-        .scan-frame::before { top: -2px; left: -2px; border-width: 4px 0 0 4px; border-radius: 4px 0 0 0; }
-        .scan-frame::after { bottom: -2px; right: -2px; border-width: 0 4px 4px 0; border-radius: 0 0 4px 0; }
-        .scan-frame-right-top { position: absolute; top: -2px; right: -2px; width: 20px; height: 20px; border-top: 4px solid #3b82f6; border-right: 4px solid #3b82f6; border-radius: 0 4px 0 0; }
-        .scan-frame-left-bottom { position: absolute; bottom: -2px; left: -2px; width: 20px; height: 20px; border-bottom: 4px solid #3b82f6; border-left: 4px solid #3b82f6; border-radius: 0 0 0 4px; }
-        .scan-laser { position: absolute; width: 100%; height: 2px; background: #3b82f6; box-shadow: 0 0 10px #3b82f6, 0 0 20px #3b82f6; top: 0; animation: scanMove 2s infinite linear; opacity: 0.8; }
-        @keyframes scanMove { 0% { top: 10%; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 90%; opacity: 0; } }
-        .scan-success-effect { border-color: #22c55e !important; box-shadow: 0 0 30px #22c55e !important; transform: scale(1.05); }
+        .scan-frame { width: 70%; height: 70%; border: 2px solid rgba(255, 255, 255, 0.5); border-radius: 20px; position: relative; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5); transition: all 0.1s ease; }
+        .scan-frame::after, .scan-frame::before { content: ''; position: absolute; width: 30px; height: 30px; border-color: #3b82f6; border-style: solid; transition: all 0.2s; }
+        .scan-frame::before { top: -2px; left: -2px; border-width: 5px 0 0 5px; border-radius: 4px 0 0 0; }
+        .scan-frame::after { bottom: -2px; right: -2px; border-width: 0 5px 5px 0; border-radius: 0 0 4px 0; }
+        .scan-frame-right-top { position: absolute; top: -2px; right: -2px; width: 30px; height: 30px; border-top: 5px solid #3b82f6; border-right: 5px solid #3b82f6; border-radius: 0 4px 0 0; }
+        .scan-frame-left-bottom { position: absolute; bottom: -2px; left: -2px; width: 30px; height: 30px; border-bottom: 5px solid #3b82f6; border-left: 5px solid #3b82f6; border-radius: 0 0 0 4px; }
+        .scan-laser { position: absolute; width: 100%; height: 2px; background: #3b82f6; box-shadow: 0 0 10px #3b82f6, 0 0 20px #3b82f6; top: 0; animation: scanMove 1.5s infinite linear; opacity: 0.9; }
+        @keyframes scanMove { 0% { top: 5%; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 95%; opacity: 0; } }
+        .scan-success-effect { border-color: #22c55e !important; box-shadow: 0 0 50px #22c55e !important; transform: scale(1.02); }
         .scan-controls-bar { position: absolute; bottom: 1rem; left: 50%; transform: translateX(-50%); z-index: 20; display: flex; gap: 0.5rem; background: rgba(0,0,0,0.6); padding: 0.5rem; border-radius: 99px; backdrop-filter: blur(4px); }
         .scan-btn-control { background: rgba(255,255,255,0.2); border: none; color: white; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; cursor: pointer; }
         .scan-btn-control:active { background: rgba(255,255,255,0.4); }
@@ -1941,7 +1938,7 @@
             }
         }
 
-        // --- POWERFUL & SAFE SCANNER LOGIC (REBUILT WITH EXPERIMENTAL FEATURES) ---
+        // --- TURBO SCANNER LOGIC (NATIVE API & OPTIMIZED CONFIG) ---
         let html5QrCode = null;
         let currentCameraId = null;
         let isScanning = false;
@@ -1989,20 +1986,28 @@
             document.getElementById('scanner-container').classList.remove('hidden');
             document.getElementById('scanner-error').classList.add('hidden');
             
-            // KONFIGURASI TERCANGGIH (NATIVE BARCODE DETECTOR)
+            // --- KONFIGURASI TERCANGGIH (TURBO MODE) ---
             const config = { 
-                fps: 30, // Peningkatan FPS untuk kelancaran
+                fps: 60, // Ultra Smooth FPS
                 qrbox: (viewfinderWidth, viewfinderHeight) => {
-                    // Area scan dinamis (80% dari sisi terpendek) agar responsif di HP/Laptop
+                    // Smart Dynamic Box (70% Layar)
                     const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-                    return { width: Math.floor(minEdge * 0.8), height: Math.floor(minEdge * 0.8) };
+                    return { width: Math.floor(minEdge * 0.7), height: Math.floor(minEdge * 0.7) };
                 },
                 aspectRatio: 1.0, 
                 focusMode: "continuous",
-                experimentalFeatures: {
-                    useBarCodeDetectorIfSupported: true // Menggunakan Native API Browser (Sangat Cepat)
+                // Preferensi Resolusi Tinggi untuk Laptop/HP
+                videoConstraints: {
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 },
+                    facingMode: "environment"
                 },
-                formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ] // Hanya fokus QR Code
+                // Fitur Eksperimental: Gunakan Chip Barcode Detector Bawaan Browser (Jauh lebih cepat dari WASM)
+                experimentalFeatures: {
+                    useBarCodeDetectorIfSupported: true
+                },
+                // Kunci Format hanya QR Code agar CPU tidak memproses EAN/Barcode barang
+                formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ] 
             };
 
             html5QrCode.start(
@@ -2017,7 +2022,7 @@
                     } else {
                         torchBtn.classList.add('hidden');
                     }
-                } catch(e) { console.log("Torch check skipped on this device"); }
+                } catch(e) { console.log("Torch check skipped"); }
             }).catch(err => { showScannerError("Gagal memulai kamera: " + err); });
         }
 
@@ -2025,9 +2030,12 @@
             if (isProcessing) return;
             isProcessing = true;
             try { html5QrCode.pause(true); } catch(e){}
+            
+            // Visual Effect
             const frame = document.getElementById('scan-frame');
             frame.classList.add('scan-success-effect');
-            if (navigator.vibrate) navigator.vibrate(200);
+            if (navigator.vibrate) navigator.vibrate([100, 50, 100]); // Double Vibrate
+            
             if(!decodedText.startsWith('GKPS')) { 
                 handleScanResult(false, "QR Code Tidak Valid");
             } else {
@@ -2095,7 +2103,7 @@
                     }
                     isProcessing = false;
                 }
-            }, 2000);
+            }, 1500); // Quick resume
         }
 
         function stopScanner() {
