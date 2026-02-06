@@ -1822,6 +1822,16 @@
             
             const isEditable = !forceReadOnly && ['admin', 'pengurus_sm', 'wali_kelas'].includes(currentUser.role);
 
+            // Hide/Show Add Button if it exists (for Dashboard view)
+            const btnAdd = document.getElementById('btn-add-materi');
+            if(btnAdd) {
+                if(forceReadOnly || !isEditable) {
+                    btnAdd.classList.add('hidden');
+                } else {
+                    btnAdd.classList.remove('hidden');
+                }
+            }
+
             list.innerHTML = data.map(m => `
                 <div class="border p-3 rounded-xl bg-white shadow-sm">
                     <div class="flex justify-between items-start">
@@ -1898,6 +1908,16 @@
              if(data.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="text-center p-4 text-gray-400">Belum ada jadwal.</td></tr>'; return; }
             
             const isEditable = !forceReadOnly && ['admin', 'pengurus_sm'].includes(currentUser.role);
+
+             // Hide/Show Add Button if it exists (for Dashboard view)
+            const btnAdd = document.getElementById('btn-add-jadwal');
+            if(btnAdd) {
+                if(forceReadOnly || !isEditable) {
+                    btnAdd.classList.add('hidden');
+                } else {
+                    btnAdd.classList.remove('hidden');
+                }
+            }
 
             tbody.innerHTML = data.map(j => `
                 <tr>
