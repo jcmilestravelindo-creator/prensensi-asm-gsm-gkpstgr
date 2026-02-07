@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Absensi GKPS - PRO ULTIMATE Ultra Sharp</title>
+    <title>Sistem Absensi GKPS - PRO ULTIMATE HD</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -60,11 +60,28 @@
         .card-info .role-tag { display: inline-block; background: #0ea5e9; color: white; font-size: 0.6rem; font-weight: 700; padding: 2px 8px; border-radius: 99px; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
         .card-footer { background: white; padding: 1rem; text-align: center; border-top: 1px dashed #e2e8f0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         
-        /* QR Code Container Styling - UPDATED FOR SHARPNESS */
-        #qrcode, #qrcode-guru { padding: 8px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; }
-        /* Memastikan gambar QR tidak pecah/stretch tapi menyesuaikan container */
+        /* --- QR CODE HIGH DEFINITION STYLE --- */
+        #qrcode, #qrcode-guru { 
+            padding: 10px; 
+            background: white; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+        
+        /* Kunci Kualitas QR: 
+           1. width: 100% agar responsif di dalam kartu.
+           2. image-rendering: pixelated agar browser tidak memburamkan garis saat resize.
+        */
         #qrcode img, #qrcode-guru img, #qrcode canvas, #qrcode-guru canvas { 
-            display: block; width: 100%; height: auto; max-width: 256px; margin: 0 auto; image-rendering: pixelated; 
+            display: block; 
+            width: 100% !important; 
+            height: auto !important; 
+            max-width: 256px; /* Batas tampilan visual */
+            margin: 0 auto;
+            image-rendering: pixelated; 
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
         }
         
         /* Table & Badges */
@@ -112,7 +129,7 @@
         .blink { animation: blinker 1.5s linear infinite; }
         @keyframes blinker { 50% { opacity: 0; } }
 
-        /* --- PRO SCANNER UI & CSS (Ultra Sharp) --- */
+        /* --- PRO SCANNER UI & CSS (Ultra Sharp + Zoom) --- */
         #scanner-container { 
             position: relative; 
             width: 100%; 
@@ -132,7 +149,7 @@
             border: 2px solid rgba(255, 255, 255, 0.3);
             border-radius: 20px; 
             position: relative; 
-            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6); /* Overlay lebih gelap */
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6);
             transition: all 0.3s ease;
         }
         
@@ -159,10 +176,10 @@
         .camera-select option { background: #333; color: white; }
         input[type=range] { width: 100%; margin: 5px 0; accent-color: var(--primary); }
 
-        /* --- UPDATE CSS SCANNER: ZOOM SLIDER --- */
+        /* CSS SCANNER: ZOOM SLIDER */
         .scan-zoom-container {
             position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%);
-            width: 60%; z-index: 20; display: none; /* Hidden by default */
+            width: 60%; z-index: 20; display: none;
             align-items: center; gap: 10px;
             background: rgba(0,0,0,0.5); padding: 5px 15px; border-radius: 20px;
         }
@@ -1447,14 +1464,15 @@
             const codeData = `GKPS|${currentUser.username}|${currentUser.name}|${currentUser.role}|${currentUser.kelas||'-'}`;
             document.getElementById("qrcode").innerHTML = "";
             
-            // --- QR Code High Quality ---
+            // --- QR CODE HD GENERATION ---
+            // Resolusi tinggi + Error Correction Q agar tahan banting
             new QRCode(document.getElementById("qrcode"), {
                 text: codeData, 
-                width: 256, // Resolusi tinggi
-                height: 256, 
+                width: 400, // HD Resolution
+                height: 400, 
                 colorDark : "#000000", 
                 colorLight : "#ffffff", 
-                correctLevel : QRCode.CorrectLevel.Q // Level Q
+                correctLevel : QRCode.CorrectLevel.Q // Optimal for scanning
             });
         }
 
@@ -1497,11 +1515,11 @@
             const codeData = `GKPS|${currentUser.username}|${currentUser.name}|${currentUser.role}|${currentUser.kelas||'-'}`;
             document.getElementById("qrcode-guru").innerHTML = "";
             
-            // --- QR Code High Quality ---
+            // --- QR CODE HD GENERATION ---
             new QRCode(document.getElementById("qrcode-guru"), {
                 text: codeData, 
-                width: 256, 
-                height: 256, 
+                width: 400, // HD Resolution
+                height: 400, 
                 colorDark : "#000000", 
                 colorLight : "#ffffff", 
                 correctLevel : QRCode.CorrectLevel.Q
@@ -1557,128 +1575,84 @@
             }).join('');
         }
 
-        // --- FOLDER LOGIC ---
-        function initFolders() {
+        // --- FOLDER MANAGEMENT ---
+        function toggleFolderPanel() {
+            const panel = document.getElementById('folder-panel');
+            if (panel.classList.contains('hidden')) {
+                panel.classList.remove('hidden');
+                renderInlineFolderList();
+            } else {
+                panel.classList.add('hidden');
+            }
+        }
+        function addNewFolderInline() {
+            const nameInput = document.getElementById('new-folder-input');
+            const name = nameInput.value.trim();
+            if(!name) return alert("Nama folder tidak boleh kosong");
             if(!db.folders) db.folders = [];
-            renderFolderOptions();
+            if(db.folders.includes(name)) return alert("Folder sudah ada!");
+            db.folders.push(name);
+            nameInput.value = '';
+            saveDb();
+            renderInlineFolderList(); renderFolderOptions();
         }
-
-        function renderFolderOptions() {
-            const fSelect = document.getElementById('modal-folder');
-            const filterSelect = document.getElementById('filter-folder');
-            const folders = db.folders || [];
-            
-            let options = `<option value="-">Tanpa Folder</option>`;
-            let filterOptions = `<option value="all">📁 Tampilkan Semua Folder</option>`;
-            
-            folders.forEach(f => {
-                options += `<option value="${f}">${f}</option>`;
-                filterOptions += `<option value="${f}">${f}</option>`;
-            });
-            if(fSelect) fSelect.innerHTML = options;
-            if(filterSelect) filterSelect.innerHTML = filterOptions;
-        }
-
-        // Handle Image
-        function handleImageUpload(input, previewId) {
-            const file = input.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = new Image();
-                img.src = e.target.result;
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    const MAX_SIZE = 500;
-                    let width = img.width; let height = img.height;
-                    if (width > height) { if (width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE;
-                    } } 
-                    else { if (height > MAX_SIZE) { width *= MAX_SIZE / height;
-                    height = MAX_SIZE; } }
-                    canvas.width = width;
-                    canvas.height = height;
-                    ctx.drawImage(img, 0, 0, width, height);
-                    document.getElementById(previewId).src = canvas.toDataURL('image/jpeg', 0.7);
-                }
+        function renderInlineFolderList() {
+            const list = document.getElementById('folder-list-inline');
+            if(!db.folders || db.folders.length === 0) { list.innerHTML = '<p class="text-gray-400 text-xs italic col-span-2 text-center">Belum ada folder dibuat.</p>'; return;
             }
-            reader.readAsDataURL(file);
+            list.innerHTML = db.folders.map(f => `
+                <div class="flex justify-between items-center bg-white p-2 rounded border border-amber-100 shadow-sm">
+                    <span class="text-xs font-bold text-gray-700">📁 ${f}</span>
+                    <div class="flex gap-1">
+                        <button onclick="renameFolder('${f}')" class="text-blue-500 hover:text-blue-700 text-[10px] font-bold border border-blue-200 px-2 rounded">Edit</button>
+                        <button onclick="deleteFolderInline('${f}')" class="text-red-500 hover:text-red-700 text-[10px] font-bold border border-red-200 px-2 rounded">Hapus</button>
+                    </div>
+                </div>`).join('');
         }
-
-        function generateRandomAvatar(previewId) {
-            const styles = ['notionists', 'avataaars', 'bottts', 'adventurer', 'fun-emoji'];
-            const randomStyle = styles[Math.floor(Math.random() * styles.length)];
-            const randomSeed = Math.random().toString(36).substring(7);
-            document.getElementById(previewId).src = `https://api.dicebear.com/7.x/${randomStyle}/svg?seed=${randomSeed}`;
-        }
-        function previewPosition(imgId, x, y) {
-            const img = document.getElementById(imgId);
-            if(img) img.style.objectPosition = `${x}% ${y}%`;
-        }
-
-        // --- User Modal ---
-        function openUserModal(id=null) {
-            document.getElementById('user-modal').style.display = 'flex';
-            document.getElementById('modal-file-input').value = ""; 
-            renderFolderOptions(); 
-            
-            if(id) {
-                const u = db.users.find(x => x.id === id);
-                document.getElementById('modal-id').value = u.id; document.getElementById('modal-name').value = u.name; document.getElementById('modal-username').value = u.username; document.getElementById('modal-password').value = '';
-                document.getElementById('modal-role').value = u.role; document.getElementById('modal-gender').value = u.gender||'L';
-                document.getElementById('modal-kelas').value = u.kelas||'-'; document.getElementById('modal-status').value = u.disabled?'disabled':'active';
-                document.getElementById('modal-folder').value = u.folder || '-';
-
-                const img = document.getElementById('modal-avatar-preview');
-                img.src = u.avatar || 'https://api.dicebear.com/7.x/notionists/svg?seed='+u.name;
-                img.style.objectPosition = `${u.posX||50}% ${u.posY||50}%`;
-                document.getElementById('modal-pos-x').value = u.posX || 50;
-                document.getElementById('modal-pos-y').value = u.posY || 50;
-            } else {
-                document.getElementById('modal-id').value = '';
-                document.getElementById('modal-name').value = ''; document.getElementById('modal-username').value = ''; document.getElementById('modal-password').value = '';
-                document.getElementById('modal-role').value = 'siswa'; document.getElementById('modal-gender').value = 'L'; document.getElementById('modal-kelas').value = '-';
-                document.getElementById('modal-status').value = 'active';
-                document.getElementById('modal-folder').value = '-';
-                const img = document.getElementById('modal-avatar-preview');
-                img.src = 'https://api.dicebear.com/7.x/notionists/svg?seed=NewUser';
-                img.style.objectPosition = '50% 50%';
-                document.getElementById('modal-pos-x').value = 50;
-                document.getElementById('modal-pos-y').value = 50;
+        function renameFolder(oldName) {
+            const newName = prompt("Ubah nama folder menjadi:", oldName);
+            if(newName && newName !== oldName) {
+                if(db.folders.includes(newName)) return alert("Nama folder sudah digunakan!");
+                const idx = db.folders.indexOf(oldName);
+                if(idx !== -1) db.folders[idx] = newName;
+                let count = 0;
+                db.users.forEach(u => { if(u.folder === oldName) { u.folder = newName; count++; } });
+                saveDb(); renderInlineFolderList(); renderFolderOptions(); renderUserTable();
+                alert(`Folder diubah. ${count} user diperbarui.`);
             }
         }
-        function closeModal() { document.getElementById('user-modal').style.display = 'none';
-        }
-        
-        function saveUser() {
-            const id=document.getElementById('modal-id').value, name=document.getElementById('modal-name').value, user=document.getElementById('modal-username').value, pass=document.getElementById('modal-password').value;
-            const role=document.getElementById('modal-role').value, gender=document.getElementById('modal-gender').value, kelas=document.getElementById('modal-kelas').value, status=document.getElementById('modal-status').value;
-            const avatarPreview = document.getElementById('modal-avatar-preview').src;
-            const posX = document.getElementById('modal-pos-x').value;
-            const posY = document.getElementById('modal-pos-y').value;
-            const folder = document.getElementById('modal-folder').value;
-            if(!name || !user) return alert('Wajib isi!');
-            
-            let avatarUrl = avatarPreview;
-            if(id) {
-                const idx = db.users.findIndex(x => x.id === id);
-                db.users[idx] = {...db.users[idx], name, username:user, role, gender, kelas, disabled:status==='disabled', avatar: avatarUrl, posX: posX, posY: posY, folder: folder};
-                if(pass) db.users[idx].password = pass;
-            } else {
-                if(!Array.isArray(db.users)) db.users = [];
-                db.users.push({ id:'USR_'+Date.now(), name, username:user, password:pass||'123', role, gender, kelas, disabled:status==='disabled', avatar: avatarUrl, posX: posX, posY: posY, folder: folder, readMsgs: [] });
+        function deleteFolderInline(name) {
+            if(confirm(`Hapus folder "${name}"? User di dalamnya TIDAK akan terhapus (folder akan di-reset).`)) {
+                db.folders = db.folders.filter(f => f !== name);
+                db.users.forEach(u => { if(u.folder === name) u.folder = '-'; });
+                saveDb(); renderInlineFolderList(); renderFolderOptions(); renderUserTable();
             }
-            saveDb(); closeModal(); renderUserTable();
         }
-        
-        function toggleStatus(id) { const idx = db.users.findIndex(x => x.id === id);
-        if(idx!==-1) { db.users[idx].disabled = !db.users[idx].disabled; saveDb(); } }
-        function deleteUser(id) { if(confirm("Hapus?")) { db.users = db.users.filter(u => u.id !== id);
-            saveDb(); } }
-        function toggleSelectAll(src) { document.querySelectorAll('.user-checkbox').forEach(cb => cb.checked = src.checked); updateDeleteBtn();
+        function updateDeleteBtn() { 
+            const checkedBoxes = document.querySelectorAll('.user-checkbox:checked');
+            const count = checkedBoxes.length; 
+            const area = document.getElementById('bulk-action-area');
+            if(count > 0) {
+                area.classList.remove('hidden');
+                const selectMove = document.getElementById('bulk-move-select');
+                let opts = `<option value="">- Pindah ke -</option><option value="-">Tanpa Folder</option>`;
+                (db.folders || []).forEach(f => { opts += `<option value="${f}">${f}</option>`; });
+                selectMove.innerHTML = opts;
+            } else { area.classList.add('hidden');
+            }
         }
-        function deleteSelectedUsers() { if(confirm("Hapus terpilih?")) { const ids = Array.from(document.querySelectorAll('.user-checkbox:checked')).map(cb=>cb.value);
-            db.users = db.users.filter(u => !ids.includes(u.id)); saveDb(); } }
+        function moveSelectedUsers() {
+            const targetFolder = document.getElementById('bulk-move-select').value;
+            if(!targetFolder) return alert("Pilih folder tujuan terlebih dahulu!");
+            const ids = Array.from(document.querySelectorAll('.user-checkbox:checked')).map(cb => cb.value);
+            if(confirm(`Pindahkan ${ids.length} user terpilih ke folder "${targetFolder}"?`)) {
+                let count = 0;
+                db.users.forEach(u => { if(ids.includes(u.id)) { u.folder = targetFolder; count++; } });
+                saveDb(); renderUserTable();
+                document.querySelectorAll('.user-checkbox').forEach(cb => cb.checked = false); updateDeleteBtn();
+                alert(`${count} user berhasil dipindahkan.`);
+            }
+        }
 
         // --- CRUD MATERI ---
         function showMateriEditor(id = null) {
@@ -1838,85 +1812,6 @@
             if(confirm("Hapus jadwal ini?")) {
                 db.jadwal = db.jadwal.filter(x => x.id !== id);
                 saveDb(); renderJadwalTable();
-            }
-        }
-
-        // --- FOLDER MANAGEMENT ---
-        function toggleFolderPanel() {
-            const panel = document.getElementById('folder-panel');
-            if (panel.classList.contains('hidden')) {
-                panel.classList.remove('hidden');
-                renderInlineFolderList();
-            } else {
-                panel.classList.add('hidden');
-            }
-        }
-        function addNewFolderInline() {
-            const nameInput = document.getElementById('new-folder-input');
-            const name = nameInput.value.trim();
-            if(!name) return alert("Nama folder tidak boleh kosong");
-            if(!db.folders) db.folders = [];
-            if(db.folders.includes(name)) return alert("Folder sudah ada!");
-            db.folders.push(name);
-            nameInput.value = '';
-            saveDb();
-            renderInlineFolderList(); renderFolderOptions();
-        }
-        function renderInlineFolderList() {
-            const list = document.getElementById('folder-list-inline');
-            if(!db.folders || db.folders.length === 0) { list.innerHTML = '<p class="text-gray-400 text-xs italic col-span-2 text-center">Belum ada folder dibuat.</p>'; return;
-            }
-            list.innerHTML = db.folders.map(f => `
-                <div class="flex justify-between items-center bg-white p-2 rounded border border-amber-100 shadow-sm">
-                    <span class="text-xs font-bold text-gray-700">📁 ${f}</span>
-                    <div class="flex gap-1">
-                        <button onclick="renameFolder('${f}')" class="text-blue-500 hover:text-blue-700 text-[10px] font-bold border border-blue-200 px-2 rounded">Edit</button>
-                        <button onclick="deleteFolderInline('${f}')" class="text-red-500 hover:text-red-700 text-[10px] font-bold border border-red-200 px-2 rounded">Hapus</button>
-                    </div>
-                </div>`).join('');
-        }
-        function renameFolder(oldName) {
-            const newName = prompt("Ubah nama folder menjadi:", oldName);
-            if(newName && newName !== oldName) {
-                if(db.folders.includes(newName)) return alert("Nama folder sudah digunakan!");
-                const idx = db.folders.indexOf(oldName);
-                if(idx !== -1) db.folders[idx] = newName;
-                let count = 0;
-                db.users.forEach(u => { if(u.folder === oldName) { u.folder = newName; count++; } });
-                saveDb(); renderInlineFolderList(); renderFolderOptions(); renderUserTable();
-                alert(`Folder diubah. ${count} user diperbarui.`);
-            }
-        }
-        function deleteFolderInline(name) {
-            if(confirm(`Hapus folder "${name}"? User di dalamnya TIDAK akan terhapus (folder akan di-reset).`)) {
-                db.folders = db.folders.filter(f => f !== name);
-                db.users.forEach(u => { if(u.folder === name) u.folder = '-'; });
-                saveDb(); renderInlineFolderList(); renderFolderOptions(); renderUserTable();
-            }
-        }
-        function updateDeleteBtn() { 
-            const checkedBoxes = document.querySelectorAll('.user-checkbox:checked');
-            const count = checkedBoxes.length; 
-            const area = document.getElementById('bulk-action-area');
-            if(count > 0) {
-                area.classList.remove('hidden');
-                const selectMove = document.getElementById('bulk-move-select');
-                let opts = `<option value="">- Pindah ke -</option><option value="-">Tanpa Folder</option>`;
-                (db.folders || []).forEach(f => { opts += `<option value="${f}">${f}</option>`; });
-                selectMove.innerHTML = opts;
-            } else { area.classList.add('hidden');
-            }
-        }
-        function moveSelectedUsers() {
-            const targetFolder = document.getElementById('bulk-move-select').value;
-            if(!targetFolder) return alert("Pilih folder tujuan terlebih dahulu!");
-            const ids = Array.from(document.querySelectorAll('.user-checkbox:checked')).map(cb => cb.value);
-            if(confirm(`Pindahkan ${ids.length} user terpilih ke folder "${targetFolder}"?`)) {
-                let count = 0;
-                db.users.forEach(u => { if(ids.includes(u.id)) { u.folder = targetFolder; count++; } });
-                saveDb(); renderUserTable();
-                document.querySelectorAll('.user-checkbox').forEach(cb => cb.checked = false); updateDeleteBtn();
-                alert(`${count} user berhasil dipindahkan.`);
             }
         }
 
