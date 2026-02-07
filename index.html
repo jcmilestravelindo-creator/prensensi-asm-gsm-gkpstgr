@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Absensi GKPS - PRO ULTIMATE</title>
+    <title>Sistem Absensi GKPS - PRO ULTIMATE Enhanced Scanner</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -109,6 +109,143 @@
         .blink { animation: blinker 1.5s linear infinite; }
         @keyframes blinker { 50% { opacity: 0; } }
 
+        /* ==================== ENHANCED SCANNER INDICATORS ==================== */
+        #low-light-indicator {
+          position: absolute;
+          top: 10px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: rgba(239, 68, 68, 0.95);
+          color: white;
+          padding: 6px 16px;
+          border-radius: 20px;
+          font-size: 11px;
+          font-weight: bold;
+          z-index: 15;
+          display: none;
+          align-items: center;
+          gap: 6px;
+          animation: pulse 2s infinite;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        
+        .brightness-indicator {
+          position: absolute;
+          top: 45px;
+          left: 10px;
+          background: rgba(0, 0, 0, 0.75);
+          color: white;
+          padding: 6px 10px;
+          border-radius: 10px;
+          font-size: 10px;
+          z-index: 15;
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        
+        .brightness-bar {
+          width: 100px;
+          height: 5px;
+          background: rgba(255,255,255,0.25);
+          border-radius: 3px;
+          overflow: hidden;
+        }
+        
+        #brightness-fill {
+          height: 100%;
+          background: linear-gradient(90deg, #ef4444 0%, #facc15 50%, #22c55e 100%);
+          transition: width 0.3s ease;
+          border-radius: 3px;
+        }
+        
+        #scan-stats {
+          position: absolute;
+          bottom: 10px;
+          right: 10px;
+          background: rgba(0, 0, 0, 0.75);
+          color: white;
+          padding: 8px 12px;
+          border-radius: 10px;
+          font-size: 10px;
+          z-index: 15;
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        
+        #scan-stats div {
+          display: flex;
+          justify-content: space-between;
+          gap: 12px;
+        }
+        
+        #scan-stats span {
+          font-weight: bold;
+          color: #3b82f6;
+        }
+        
+        #flash-suggestion {
+          position: absolute;
+          bottom: 80px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: rgba(251, 191, 36, 0.98);
+          color: #713f12;
+          padding: 12px 20px;
+          border-radius: 15px;
+          font-size: 12px;
+          font-weight: bold;
+          z-index: 20;
+          display: none;
+          align-items: center;
+          gap: 8px;
+          box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+          animation: bounce 1s infinite;
+          cursor: pointer;
+        }
+        
+        @keyframes bounce {
+          0%, 100% { transform: translateX(-50%) translateY(0); }
+          50% { transform: translateX(-50%) translateY(-10px); }
+        }
+        
+        #flash-suggestion:hover {
+          background: rgba(251, 191, 36, 1);
+          transform: translateX(-50%) translateY(-5px);
+        }
+        
+        @media (max-width: 640px) {
+          #low-light-indicator {
+            font-size: 10px;
+            padding: 5px 12px;
+          }
+          
+          .brightness-indicator {
+            font-size: 9px;
+            padding: 5px 8px;
+          }
+          
+          .brightness-bar {
+            width: 80px;
+            height: 4px;
+          }
+          
+          #scan-stats {
+            font-size: 9px;
+            padding: 6px 10px;
+          }
+          
+          #flash-suggestion {
+            font-size: 11px;
+            padding: 10px 16px;
+            bottom: 60px;
+          }
+        }
+
+
         /* --- PRO SCANNER UI & CSS --- */
         #scanner-container { position: relative; width: 100%; background: #000; border-radius: 1.5rem; overflow: hidden; aspect-ratio: 1/1; }
         #reader { width: 100%; height: 100%; object-fit: cover; }
@@ -170,8 +307,32 @@
             <div class="mt-4 flex justify-between items-center text-xs">
                 <button onclick="openForgotModal()" class="text-blue-500 font-bold hover:underline">Lupa Password?</button>
                 <button id="btn-emergency-reset" onclick="emergencyReset()" class="hidden text-red-500 font-bold hover:underline border border-red-200 px-2 py-1 rounded">⚠️ Reset Aplikasi</button>
-            </div>
+            
+          <!-- Low Light Indicator -->
+          <div id="low-light-indicator">
+            ⚠️ Cahaya rendah terdeteksi
+          </div>
+          
+          <!-- Flash Suggestion -->
+          <div id="flash-suggestion" onclick="toggleTorch()">
+            💡 Nyalakan flash untuk hasil lebih baik
+          </div>
         </div>
+        
+        <!-- Brightness Indicator -->
+        <div class="brightness-indicator">
+          <span style="font-size: 9px;">Brightness</span>
+          <div class="brightness-bar">
+            <div id="brightness-fill" style="width: 50%;"></div>
+          </div>
+        </div>
+        
+        <!-- Scan Statistics -->
+        <div id="scan-stats">
+          <div><span>FPS:</span> <span id="scan-fps">0</span></div>
+          <div><span>Mode:</span> <span id="scan-mode">Auto</span></div>
+          <div><span>Attempts:</span> <span id="scan-attempts">0</span></div>
+        </div
     </section>
 
     <section id="screen-siswa" class="hidden max-w-md mx-auto pt-8">
@@ -225,8 +386,32 @@
                 <div id="manual-absen-container-siswa" class="w-full mt-2 hidden">
                      <button onclick="openManualModal()" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg text-xs shadow animate-pulse">📍 Absen Manual (Klik Disini)</button>
                 </div>
-            </div>
+            
+          <!-- Low Light Indicator -->
+          <div id="low-light-indicator">
+            ⚠️ Cahaya rendah terdeteksi
+          </div>
+          
+          <!-- Flash Suggestion -->
+          <div id="flash-suggestion" onclick="toggleTorch()">
+            💡 Nyalakan flash untuk hasil lebih baik
+          </div>
         </div>
+        
+        <!-- Brightness Indicator -->
+        <div class="brightness-indicator">
+          <span style="font-size: 9px;">Brightness</span>
+          <div class="brightness-bar">
+            <div id="brightness-fill" style="width: 50%;"></div>
+          </div>
+        </div>
+        
+        <!-- Scan Statistics -->
+        <div id="scan-stats">
+          <div><span>FPS:</span> <span id="scan-fps">0</span></div>
+          <div><span>Mode:</span> <span id="scan-mode">Auto</span></div>
+          <div><span>Attempts:</span> <span id="scan-attempts">0</span></div>
+        </div
 
         <div class="grid grid-cols-2 gap-3 mt-6">
             <button onclick="openStudentView('materi')" class="bg-white border border-blue-100 p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center hover:bg-blue-50 transition">
@@ -320,8 +505,32 @@
                         <tbody id="table-attendance"></tbody>
                     </table>
                 </div>
-            </div>
+            
+          <!-- Low Light Indicator -->
+          <div id="low-light-indicator">
+            ⚠️ Cahaya rendah terdeteksi
+          </div>
+          
+          <!-- Flash Suggestion -->
+          <div id="flash-suggestion" onclick="toggleTorch()">
+            💡 Nyalakan flash untuk hasil lebih baik
+          </div>
         </div>
+        
+        <!-- Brightness Indicator -->
+        <div class="brightness-indicator">
+          <span style="font-size: 9px;">Brightness</span>
+          <div class="brightness-bar">
+            <div id="brightness-fill" style="width: 50%;"></div>
+          </div>
+        </div>
+        
+        <!-- Scan Statistics -->
+        <div id="scan-stats">
+          <div><span>FPS:</span> <span id="scan-fps">0</span></div>
+          <div><span>Mode:</span> <span id="scan-mode">Auto</span></div>
+          <div><span>Attempts:</span> <span id="scan-attempts">0</span></div>
+        </div
 
         <div id="view-scan" class="tab-view hidden">
             <div class="max-w-md mx-auto">
@@ -366,8 +575,32 @@
                         </table>
                     </div>
                 </div>
-            </div>
+            
+          <!-- Low Light Indicator -->
+          <div id="low-light-indicator">
+            ⚠️ Cahaya rendah terdeteksi
+          </div>
+          
+          <!-- Flash Suggestion -->
+          <div id="flash-suggestion" onclick="toggleTorch()">
+            💡 Nyalakan flash untuk hasil lebih baik
+          </div>
         </div>
+        
+        <!-- Brightness Indicator -->
+        <div class="brightness-indicator">
+          <span style="font-size: 9px;">Brightness</span>
+          <div class="brightness-bar">
+            <div id="brightness-fill" style="width: 50%;"></div>
+          </div>
+        </div>
+        
+        <!-- Scan Statistics -->
+        <div id="scan-stats">
+          <div><span>FPS:</span> <span id="scan-fps">0</span></div>
+          <div><span>Mode:</span> <span id="scan-mode">Auto</span></div>
+          <div><span>Attempts:</span> <span id="scan-attempts">0</span></div>
+        </div
 
         <div id="view-users" class="tab-view hidden">
             <div class="pro-card">
@@ -429,8 +662,32 @@
                         <tbody id="table-users"></tbody>
                     </table>
                 </div>
-            </div>
+            
+          <!-- Low Light Indicator -->
+          <div id="low-light-indicator">
+            ⚠️ Cahaya rendah terdeteksi
+          </div>
+          
+          <!-- Flash Suggestion -->
+          <div id="flash-suggestion" onclick="toggleTorch()">
+            💡 Nyalakan flash untuk hasil lebih baik
+          </div>
         </div>
+        
+        <!-- Brightness Indicator -->
+        <div class="brightness-indicator">
+          <span style="font-size: 9px;">Brightness</span>
+          <div class="brightness-bar">
+            <div id="brightness-fill" style="width: 50%;"></div>
+          </div>
+        </div>
+        
+        <!-- Scan Statistics -->
+        <div id="scan-stats">
+          <div><span>FPS:</span> <span id="scan-fps">0</span></div>
+          <div><span>Mode:</span> <span id="scan-mode">Auto</span></div>
+          <div><span>Attempts:</span> <span id="scan-attempts">0</span></div>
+        </div
 
         <div id="view-messages" class="tab-view hidden">
             <div class="pro-card mb-6">
@@ -458,8 +715,32 @@
             <div class="pro-card">
                 <h3 class="font-bold text-gray-700 mb-2">Riwayat Pengumuman</h3>
                 <div id="broadcast-history" class="space-y-3"></div>
-            </div>
+            
+          <!-- Low Light Indicator -->
+          <div id="low-light-indicator">
+            ⚠️ Cahaya rendah terdeteksi
+          </div>
+          
+          <!-- Flash Suggestion -->
+          <div id="flash-suggestion" onclick="toggleTorch()">
+            💡 Nyalakan flash untuk hasil lebih baik
+          </div>
         </div>
+        
+        <!-- Brightness Indicator -->
+        <div class="brightness-indicator">
+          <span style="font-size: 9px;">Brightness</span>
+          <div class="brightness-bar">
+            <div id="brightness-fill" style="width: 50%;"></div>
+          </div>
+        </div>
+        
+        <!-- Scan Statistics -->
+        <div id="scan-stats">
+          <div><span>FPS:</span> <span id="scan-fps">0</span></div>
+          <div><span>Mode:</span> <span id="scan-mode">Auto</span></div>
+          <div><span>Attempts:</span> <span id="scan-attempts">0</span></div>
+        </div
         
         <div id="view-materi" class="tab-view hidden">
             <div class="pro-card">
@@ -475,8 +756,32 @@
                 </div>
                 <button id="btn-add-materi" onclick="showMateriEditor()" class="btn-blue px-4 py-2 rounded-lg font-bold text-xs mb-4">+ Tambah Materi Baru</button>
                 <div id="materi-list" class="space-y-3"></div>
-            </div>
+            
+          <!-- Low Light Indicator -->
+          <div id="low-light-indicator">
+            ⚠️ Cahaya rendah terdeteksi
+          </div>
+          
+          <!-- Flash Suggestion -->
+          <div id="flash-suggestion" onclick="toggleTorch()">
+            💡 Nyalakan flash untuk hasil lebih baik
+          </div>
         </div>
+        
+        <!-- Brightness Indicator -->
+        <div class="brightness-indicator">
+          <span style="font-size: 9px;">Brightness</span>
+          <div class="brightness-bar">
+            <div id="brightness-fill" style="width: 50%;"></div>
+          </div>
+        </div>
+        
+        <!-- Scan Statistics -->
+        <div id="scan-stats">
+          <div><span>FPS:</span> <span id="scan-fps">0</span></div>
+          <div><span>Mode:</span> <span id="scan-mode">Auto</span></div>
+          <div><span>Attempts:</span> <span id="scan-attempts">0</span></div>
+        </div
 
         <div id="view-jadwal" class="tab-view hidden">
             <div class="pro-card">
@@ -500,8 +805,32 @@
                         <tbody id="table-jadwal-body"></tbody>
                     </table>
                 </div>
-            </div>
+            
+          <!-- Low Light Indicator -->
+          <div id="low-light-indicator">
+            ⚠️ Cahaya rendah terdeteksi
+          </div>
+          
+          <!-- Flash Suggestion -->
+          <div id="flash-suggestion" onclick="toggleTorch()">
+            💡 Nyalakan flash untuk hasil lebih baik
+          </div>
         </div>
+        
+        <!-- Brightness Indicator -->
+        <div class="brightness-indicator">
+          <span style="font-size: 9px;">Brightness</span>
+          <div class="brightness-bar">
+            <div id="brightness-fill" style="width: 50%;"></div>
+          </div>
+        </div>
+        
+        <!-- Scan Statistics -->
+        <div id="scan-stats">
+          <div><span>FPS:</span> <span id="scan-fps">0</span></div>
+          <div><span>Mode:</span> <span id="scan-mode">Auto</span></div>
+          <div><span>Attempts:</span> <span id="scan-attempts">0</span></div>
+        </div
 
         <div id="view-settings" class="tab-view hidden">
             <div class="pro-card bg-green-50 border-green-200 mb-6">
@@ -548,8 +877,32 @@
              <div class="pro-card bg-red-50 border-red-100">
                 <h3 class="font-bold text-red-700 mb-2">Reset Sistem</h3>
                 <button onclick="emergencyReset()" class="bg-red-600 text-white px-4 py-2 rounded-lg text-xs font-bold w-full">Hapus Semua Data Online</button>
-            </div>
+            
+          <!-- Low Light Indicator -->
+          <div id="low-light-indicator">
+            ⚠️ Cahaya rendah terdeteksi
+          </div>
+          
+          <!-- Flash Suggestion -->
+          <div id="flash-suggestion" onclick="toggleTorch()">
+            💡 Nyalakan flash untuk hasil lebih baik
+          </div>
         </div>
+        
+        <!-- Brightness Indicator -->
+        <div class="brightness-indicator">
+          <span style="font-size: 9px;">Brightness</span>
+          <div class="brightness-bar">
+            <div id="brightness-fill" style="width: 50%;"></div>
+          </div>
+        </div>
+        
+        <!-- Scan Statistics -->
+        <div id="scan-stats">
+          <div><span>FPS:</span> <span id="scan-fps">0</span></div>
+          <div><span>Mode:</span> <span id="scan-mode">Auto</span></div>
+          <div><span>Attempts:</span> <span id="scan-attempts">0</span></div>
+        </div
     </section>
 
     <div id="student-content-modal" class="modal-overlay">
@@ -559,8 +912,32 @@
                 <button onclick="document.getElementById('student-content-modal').style.display='none'" class="text-gray-500 font-bold px-2">✕</button>
             </div>
             <div class="modal-body-scroll p-4" id="student-modal-body">
-                </div>
+                
+          <!-- Low Light Indicator -->
+          <div id="low-light-indicator">
+            ⚠️ Cahaya rendah terdeteksi
+          </div>
+          
+          <!-- Flash Suggestion -->
+          <div id="flash-suggestion" onclick="toggleTorch()">
+            💡 Nyalakan flash untuk hasil lebih baik
+          </div>
         </div>
+        
+        <!-- Brightness Indicator -->
+        <div class="brightness-indicator">
+          <span style="font-size: 9px;">Brightness</span>
+          <div class="brightness-bar">
+            <div id="brightness-fill" style="width: 50%;"></div>
+          </div>
+        </div>
+        
+        <!-- Scan Statistics -->
+        <div id="scan-stats">
+          <div><span>FPS:</span> <span id="scan-fps">0</span></div>
+          <div><span>Mode:</span> <span id="scan-mode">Auto</span></div>
+          <div><span>Attempts:</span> <span id="scan-attempts">0</span></div>
+        </div
     </div>
 
     <div id="manual-modal" class="modal-overlay">
@@ -607,8 +984,32 @@
                     </thead>
                     <tbody id="table-archive-body"></tbody>
                 </table>
-            </div>
+            
+          <!-- Low Light Indicator -->
+          <div id="low-light-indicator">
+            ⚠️ Cahaya rendah terdeteksi
+          </div>
+          
+          <!-- Flash Suggestion -->
+          <div id="flash-suggestion" onclick="toggleTorch()">
+            💡 Nyalakan flash untuk hasil lebih baik
+          </div>
         </div>
+        
+        <!-- Brightness Indicator -->
+        <div class="brightness-indicator">
+          <span style="font-size: 9px;">Brightness</span>
+          <div class="brightness-bar">
+            <div id="brightness-fill" style="width: 50%;"></div>
+          </div>
+        </div>
+        
+        <!-- Scan Statistics -->
+        <div id="scan-stats">
+          <div><span>FPS:</span> <span id="scan-fps">0</span></div>
+          <div><span>Mode:</span> <span id="scan-mode">Auto</span></div>
+          <div><span>Attempts:</span> <span id="scan-attempts">0</span></div>
+        </div
     </div>
 
     <div id="user-modal" class="modal-overlay">
@@ -703,8 +1104,32 @@
              <div class="flex gap-2 p-4 border-t flex-shrink-0">
                 <button onclick="saveUser()" class="pro-btn btn-blue">Simpan</button>
                 <button onclick="closeModal()" class="pro-btn bg-gray-200 text-gray-600">Batal</button>
-            </div>
+            
+          <!-- Low Light Indicator -->
+          <div id="low-light-indicator">
+            ⚠️ Cahaya rendah terdeteksi
+          </div>
+          
+          <!-- Flash Suggestion -->
+          <div id="flash-suggestion" onclick="toggleTorch()">
+            💡 Nyalakan flash untuk hasil lebih baik
+          </div>
         </div>
+        
+        <!-- Brightness Indicator -->
+        <div class="brightness-indicator">
+          <span style="font-size: 9px;">Brightness</span>
+          <div class="brightness-bar">
+            <div id="brightness-fill" style="width: 50%;"></div>
+          </div>
+        </div>
+        
+        <!-- Scan Statistics -->
+        <div id="scan-stats">
+          <div><span>FPS:</span> <span id="scan-fps">0</span></div>
+          <div><span>Mode:</span> <span id="scan-mode">Auto</span></div>
+          <div><span>Attempts:</span> <span id="scan-attempts">0</span></div>
+        </div
     </div>
 
     <div id="profile-modal" class="modal-overlay">
@@ -776,8 +1201,32 @@
                         <button onclick="saveProfile()" class="pro-btn btn-blue shadow-lg shadow-blue-200">Simpan Perubahan</button>
                     </div>
                 </div>
-            </div>
+            
+          <!-- Low Light Indicator -->
+          <div id="low-light-indicator">
+            ⚠️ Cahaya rendah terdeteksi
+          </div>
+          
+          <!-- Flash Suggestion -->
+          <div id="flash-suggestion" onclick="toggleTorch()">
+            💡 Nyalakan flash untuk hasil lebih baik
+          </div>
         </div>
+        
+        <!-- Brightness Indicator -->
+        <div class="brightness-indicator">
+          <span style="font-size: 9px;">Brightness</span>
+          <div class="brightness-bar">
+            <div id="brightness-fill" style="width: 50%;"></div>
+          </div>
+        </div>
+        
+        <!-- Scan Statistics -->
+        <div id="scan-stats">
+          <div><span>FPS:</span> <span id="scan-fps">0</span></div>
+          <div><span>Mode:</span> <span id="scan-mode">Auto</span></div>
+          <div><span>Attempts:</span> <span id="scan-attempts">0</span></div>
+        </div
     </div>
 
     <div id="forgot-modal" class="modal-overlay">
@@ -821,8 +1270,32 @@
                     <button onclick="document.getElementById('forgot-modal').style.display='none'" class="flex-1 py-3 rounded-xl font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 transition text-xs">Batal</button>
                     <button onclick="resetAdminPassword()" class="flex-1 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 shadow-lg shadow-orange-200 transition text-xs">Reset Password</button>
                 </div>
-            </div>
+            
+          <!-- Low Light Indicator -->
+          <div id="low-light-indicator">
+            ⚠️ Cahaya rendah terdeteksi
+          </div>
+          
+          <!-- Flash Suggestion -->
+          <div id="flash-suggestion" onclick="toggleTorch()">
+            💡 Nyalakan flash untuk hasil lebih baik
+          </div>
         </div>
+        
+        <!-- Brightness Indicator -->
+        <div class="brightness-indicator">
+          <span style="font-size: 9px;">Brightness</span>
+          <div class="brightness-bar">
+            <div id="brightness-fill" style="width: 50%;"></div>
+          </div>
+        </div>
+        
+        <!-- Scan Statistics -->
+        <div id="scan-stats">
+          <div><span>FPS:</span> <span id="scan-fps">0</span></div>
+          <div><span>Mode:</span> <span id="scan-mode">Auto</span></div>
+          <div><span>Attempts:</span> <span id="scan-attempts">0</span></div>
+        </div
     </div>
 
     <div id="id-card-modal" class="modal-overlay">
@@ -845,8 +1318,32 @@
                     <div id="qrcode-guru"></div>
                     <button onclick="document.getElementById('id-card-modal').style.display='none'" class="mt-4 text-xs font-bold text-gray-400">TUTUP</button>
                 </div>
-            </div>
+            
+          <!-- Low Light Indicator -->
+          <div id="low-light-indicator">
+            ⚠️ Cahaya rendah terdeteksi
+          </div>
+          
+          <!-- Flash Suggestion -->
+          <div id="flash-suggestion" onclick="toggleTorch()">
+            💡 Nyalakan flash untuk hasil lebih baik
+          </div>
         </div>
+        
+        <!-- Brightness Indicator -->
+        <div class="brightness-indicator">
+          <span style="font-size: 9px;">Brightness</span>
+          <div class="brightness-bar">
+            <div id="brightness-fill" style="width: 50%;"></div>
+          </div>
+        </div>
+        
+        <!-- Scan Statistics -->
+        <div id="scan-stats">
+          <div><span>FPS:</span> <span id="scan-fps">0</span></div>
+          <div><span>Mode:</span> <span id="scan-mode">Auto</span></div>
+          <div><span>Attempts:</span> <span id="scan-attempts">0</span></div>
+        </div
     </div>
 
     <script>
@@ -2155,6 +2652,10 @@ function stopScanner() {
       document.getElementById('scanner-container').classList.add('hidden');
     }).catch(() => {});
   }
+  if (window.brightnessMonitor) {
+    clearInterval(window.brightnessMonitor);
+    window.brightnessMonitor = null;
+  }
 }
 
 function switchCamera() {
@@ -2174,12 +2675,16 @@ function toggleTorch() {
       advanced: [{ torch: isTorchOn }]
     });
     const btn = document.getElementById('btn-torch');
-    btn.innerHTML = isTorchOn ? '🔦' : '⚡';
-    btn.style.background = isTorchOn
-      ? 'rgba(255,255,0,0.5)'
-      : 'rgba(255,255,255,0.2)';
+    if (btn) {
+      btn.innerHTML = isTorchOn ? '🔦 ON' : '🔦 OFF';
+      btn.style.background = isTorchOn ? 'rgba(255,255,0,0.8)' : '';
+    }
+    if (isTorchOn) {
+      const suggestion = document.getElementById('flash-suggestion');
+      if (suggestion) suggestion.style.display = 'none';
+    }
   } catch {
-    alert("Fitur Flash tidak didukung di perangkat ini.");
+    alert("⚠️ Fitur Flash tidak didukung di perangkat ini.");
   }
 }
 
