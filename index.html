@@ -4,8 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistem Absensi GKPS - PRO ULTIMATE Enhanced Scanner</title>
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    
+    <script type="text/javascript" src="https://unpkg.com/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -93,18 +96,16 @@
         .card-footer { background: white; padding: 1rem; text-align: center; border-top: 1px dashed #e2e8f0;
             display: flex; flex-direction: column; align-items: center; justify-content: center; }
         
-        /* QR Code Container Styling - UPDATED FOR SHARPNESS */
-        #qrcode, #qrcode-guru { padding: 8px; /* Sedikit lebih lega */
-            background: white; border: 1px solid #e2e8f0; border-radius: 8px; }
-        
-        /* Memastikan gambar QR tidak pecah/stretch tapi menyesuaikan container */
-        #qrcode img, #qrcode-guru img, #qrcode canvas, #qrcode-guru canvas { 
-            display: block; 
-            width: 100%; 
-            height: auto; 
-            max-width: 256px; /* Batas maksimal visual */
-            margin: 0 auto;
-            image-rendering: pixelated; /* Menjaga ketajaman */
+        /* QR Code Container Styling - UPDATED FOR SHARPNESS & NEW LIB */
+        #qrcode, #qrcode-guru { 
+            padding: 10px; 
+            background: white; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 12px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.02);
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
         
         /* Table Styling */
@@ -1116,6 +1117,47 @@
             }
         }
 
+        // --- NEW FUNCTION: GENERATE ARTISTIC QR CODE ---
+        // Fungsi ini menggunakan logika yang diperbarui untuk membuat QR Code yang lebih cantik
+        // dengan logo di tengah dan style titik rounded, mirip "AI Art" style.
+        function generateStyledQRCode(elementId, textData) {
+            const container = document.getElementById(elementId);
+            if(!container) return;
+            container.innerHTML = ""; // Clear old QR
+
+            const qrCode = new QRCodeStyling({
+                width: 250,
+                height: 250,
+                type: "svg", // Render sebagai SVG agar tajam
+                data: textData,
+                image: "Logo GKPS.png", // Menggunakan logo lokal sebagai centerpiece
+                dotsOptions: {
+                    color: "#0ea5e9", // Warna Primary Blue GKPS
+                    type: "rounded"   // Bentuk titik membulat (modern style)
+                },
+                backgroundOptions: {
+                    color: "#ffffff",
+                },
+                imageOptions: {
+                    crossOrigin: "anonymous",
+                    margin: 8,
+                    imageSize: 0.4 // Ukuran logo di tengah (40% dari QR)
+                },
+                cornersSquareOptions: {
+                    type: "extra-rounded", // Sudut kotak (finder pattern) membulat
+                    color: "#0284c7" // Warna sudut lebih gelap
+                },
+                cornersDotOptions: {
+                    type: "dot",
+                    color: "#0284c7"
+                },
+                qrOptions: {
+                    errorCorrectionLevel: 'H' // Tingkat koreksi tinggi agar logo tidak merusak data
+                }
+            });
+            qrCode.append(container);
+        }
+
         // APP INIT
         function initApp() {
             document.body.addEventListener('click', function() {
@@ -1606,7 +1648,7 @@
             updateDeleteBtn();
         }
 
-        // Render Siswa
+        // Render Siswa (UPDATED WITH NEW STYLED QR)
         function renderSiswaScreen() {
             document.getElementById('siswa-greet-name').innerText = currentUser.name;
             const img = document.getElementById('card-img');
@@ -1622,17 +1664,9 @@
             document.getElementById('card-role-display').innerText = currentUser.role;
 
             const codeData = `GKPS|${currentUser.username}|${currentUser.name}|${currentUser.role}|${currentUser.kelas||'-'}`;
-            document.getElementById("qrcode").innerHTML = "";
             
-            // --- MODIFICATION: High Quality QR ---
-            new QRCode(document.getElementById("qrcode"), {
-                text: codeData, 
-                width: 256, // Increased from 128
-                height: 256, // Increased from 128
-                colorDark : "#000000", 
-                colorLight : "#ffffff", 
-                correctLevel : QRCode.CorrectLevel.Q // Changed from H to Q for better scanner focus
-            });
+            // Generate Artistic QR
+            generateStyledQRCode("qrcode", codeData);
         }
 
         // Student View Handler (Modal)
@@ -1660,6 +1694,7 @@
             }
         }
 
+        // ID Card Modal (UPDATED WITH NEW STYLED QR)
         function openIdCardModal() {
             if (!currentUser) return;
             document.getElementById('id-card-modal').style.display = 'flex';
@@ -1673,17 +1708,9 @@
             document.getElementById('card-role-guru').innerText = currentUser.role.replace('_',' ').toUpperCase();
 
             const codeData = `GKPS|${currentUser.username}|${currentUser.name}|${currentUser.role}|${currentUser.kelas||'-'}`;
-            document.getElementById("qrcode-guru").innerHTML = "";
             
-            // --- MODIFICATION: High Quality QR ---
-            new QRCode(document.getElementById("qrcode-guru"), {
-                text: codeData, 
-                width: 256, // Increased from 128
-                height: 256, // Increased from 128
-                colorDark : "#000000", 
-                colorLight : "#ffffff", 
-                correctLevel : QRCode.CorrectLevel.Q // Changed from H to Q for better scanner focus
-            });
+            // Generate Artistic QR
+            generateStyledQRCode("qrcode-guru", codeData);
         }
 
         function renderHomeStats() {
@@ -2574,4 +2601,3 @@
     </script>
 </body>
 </html>
-
