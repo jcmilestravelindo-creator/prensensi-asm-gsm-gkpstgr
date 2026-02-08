@@ -96,7 +96,7 @@
         .card-footer { background: white; padding: 1rem; text-align: center; border-top: 1px dashed #e2e8f0;
             display: flex; flex-direction: column; align-items: center; justify-content: center; }
         
-        /* QR Code Container Styling - UPDATED FOR SHARPNESS & NEW LIB */
+        /* QR Code Container Styling */
         #qrcode, #qrcode-guru { 
             padding: 10px; 
             background: white; 
@@ -1084,12 +1084,14 @@
         // SOUND EFFECTS
         const sndBeep = "data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU";
         const audioSuccess = new Audio("data:audio/mp3;base64,//uQxAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq");
+        
+        // --- UPDATE SUARA KENCANG ---
         const soundOk = new Audio('https://cdn.freesound.org/previews/242/242501_4414128-lq.mp3'); 
         const soundFail = new Audio('https://cdn.freesound.org/previews/142/142608_1840739-lq.mp3');
+        
         function playSound(type) {
-            const aud = type === 'success' ?
-                soundOk : soundFail;
-            aud.volume = 0.5;
+            const aud = type === 'success' ? soundOk : soundFail;
+            aud.volume = 1.0; // SET VOLUME MENJADI 100% (KENCANG)
             aud.currentTime = 0;
             const playPromise = aud.play();
             if (playPromise !== undefined) {
@@ -1161,10 +1163,11 @@
         // APP INIT
         function initApp() {
             document.body.addEventListener('click', function() {
+                // Preload audio agar siap putar
                 soundOk.play().then(() => { soundOk.pause(); soundOk.currentTime = 0; }).catch(()=>{});
-                soundFail.play().then(() => 
-                { soundFail.pause(); soundFail.currentTime = 0; }).catch(()=>{});
+                soundFail.play().then(() => { soundFail.pause(); soundFail.currentTime = 0; }).catch(()=>{});
             }, { once: true });
+
             const savedSession = localStorage.getItem('gkps_session');
             if (savedSession) {
                 currentUser = JSON.parse(savedSession);
@@ -1407,7 +1410,7 @@
                 if(!note) return alert("Mohon isi keterangan!");
             }
             const today = getTodayDate();
-            playSound('success');
+            playSound('success'); // SUARA BERHASIL (VOLUME MAX)
             db.attendance.push({ 
                 username: currentUser.username, name: currentUser.name, date: today, 
                 time: new Date().toLocaleTimeString(), status: status, note: note
@@ -2469,7 +2472,7 @@
             (a) => a.username === u.username && a.date === today
           );
           if (already) {
-            handleScanResult(false, "Sudah Absen Hari Ini", "yellow");
+            handleScanResult(false, "Sudah Absen Hari Ini", "yellow"); // AKAN MEMUTAR SUARA WARNING KARENA isSuccess=false
           } else {
             db.attendance.push({
               username: u.username,
@@ -2486,7 +2489,7 @@
         function handleScanResult(isSuccess, msg, colorOverride = null) {
           const statusEl = document.getElementById('scan-status');
           const frame = document.getElementById('scan-frame');
-          playSound(isSuccess ? 'success' : 'error');
+          playSound(isSuccess ? 'success' : 'error'); // SUARA DIPUTAR DI SINI (VOLUME MAX)
 
           const color = isSuccess ? 'green' : (colorOverride || 'red');
           statusEl.innerText = msg;
