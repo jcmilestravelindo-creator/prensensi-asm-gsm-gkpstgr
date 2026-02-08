@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Absensi GKPS - PRO ULTIMATE Enhanced</title>
+    <title>Sistem Absensi GKPS - PRO ULTIMATE (Full Features)</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script> <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <style>
@@ -20,106 +19,78 @@
             --accent: #facc15;
             --bg-soft: #f0f9ff;
             --text-main: #1e293b;
-            --wa-green: #25D366;
-            --wa-teal: #128C7E;
         }
         body { font-family: 'Poppins', sans-serif; color: var(--text-main); background: linear-gradient(180deg, #e0f2fe 0%, #f0f9ff 100%); min-height: 100vh; padding-bottom: 2rem; }
         
-        /* UI Card & Input */
+        /* --- UI COMPONENTS --- */
         .pro-card { background: white; border-radius: 1.5rem; padding: 1.5rem; box-shadow: 0 10px 30px -5px rgba(14, 165, 233, 0.15); border: 1px solid #e2e8f0; margin-bottom: 1.5rem; }
         .pro-input { width: 100%; padding: 0.8rem 1rem; border: 2px solid #e2e8f0; border-radius: 0.8rem; background: #f8fafc; outline: none; transition: 0.2s; font-size: 0.95rem; margin-bottom: 1rem; }
         .pro-input:focus { border-color: var(--primary); background: white; }
         .pro-btn { width: 100%; padding: 0.8rem; border-radius: 0.8rem; font-weight: 700; transition: 0.2s; text-align: center; cursor: pointer; border: none; margin-top: 0.5rem; }
         .btn-blue { background: var(--primary); color: white; } .btn-blue:hover { background: var(--primary-dark); }
-        .btn-red { background: #ef4444; color: white; } .btn-red:hover { background: #dc2626; }
-        
-        .pass-wrapper { position: relative; width: 100%; }
-        .pass-toggle { position: absolute; right: 15px; top: 42%; transform: translateY(-50%); cursor: pointer; z-index: 10; font-size: 1.2rem; color: #94a3b8; user-select: none; }
+        .btn-red { background: #ef4444; color: white; }
         
         .nav-pill { padding: 0.5rem 1rem; border-radius: 99px; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: 0.2s; color: #64748b; background: white; border: 1px solid transparent; white-space: nowrap; }
         .nav-pill.active { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(14, 165, 233, 0.4); }
 
-        /* --- [PENTING] PERBAIKAN SCANNER RESPONSIVE --- */
+        /* --- FITUR FOLDER (MATERI) STYLE --- */
+        .folder-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 1rem; }
+        .folder-item { background: #fff; border: 1px solid #e2e8f0; border-radius: 1rem; padding: 1rem; text-align: center; cursor: pointer; transition: 0.2s; }
+        .folder-item:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-color: var(--primary); }
+        .folder-icon { font-size: 2.5rem; color: #fbbf24; margin-bottom: 0.5rem; }
+        .file-icon { font-size: 2rem; color: #3b82f6; }
+
+        /* --- SCANNER RESPONSIVE (FIX LAPTOP) --- */
         #scanner-container { 
-            position: relative; 
-            width: 100%; 
-            background: #000; 
-            border-radius: 1.5rem; 
-            overflow: hidden; 
-            /* Menggunakan min-height agar fleksibel di laptop (tidak gepeng) */
-            min-height: 300px; 
+            position: relative; width: 100%; background: #000; border-radius: 1.5rem; overflow: hidden; 
+            min-height: 300px; /* Agar tidak gepeng di laptop */
         }
         #reader { width: 100%; height: 100%; object-fit: cover; }
-        .scan-overlay { position: absolute; inset: 0; pointer-events: none; z-index: 10; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        
-        /* Bingkai Scanner Statis 250px (Sinkron dengan JS) */
         .scan-frame { 
-            width: 250px; 
-            height: 250px; 
-            border: 2px solid rgba(255, 255, 255, 0.3); 
-            border-radius: 20px; 
-            position: relative; 
-            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5); 
+            width: 250px; height: 250px; /* Ukuran Statis */
+            border: 2px solid rgba(255, 255, 255, 0.3); border-radius: 20px; 
+            position: relative; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5); 
         }
+        .scan-overlay { position: absolute; inset: 0; pointer-events: none; z-index: 10; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         .scan-laser { position: absolute; width: 100%; height: 2px; background: #3b82f6; box-shadow: 0 0 10px #3b82f6; top: 0; animation: scanMove 2s infinite linear; }
-        @keyframes scanMove { 0% { top: 10%; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 90%; opacity: 0; } }
+        @keyframes scanMove { 0% { top: 10%; opacity: 0; } 100% { top: 90%; opacity: 0; } }
 
-        /* --- [PENTING] PERBAIKAN QR CODE HIGH RES --- */
-        #qrcode {
-            width: 180px;  /* Tampilan fisik di layar */
-            height: 180px;
-            margin: 0 auto;
-            background: white;
-            padding: 5px;
-        }
-        /* Memaksa gambar besar (1000px) pas di kotak kecil tanpa pecah */
-        #qrcode img, #qrcode canvas {
-            width: 100% !important;
-            height: auto !important;
-            display: block;
-            image-rendering: -webkit-optimize-contrast; 
-        }
+        /* --- QR CODE HIGH RES --- */
+        #qrcode { width: 180px; height: 180px; margin: 0 auto; background: white; padding: 5px; }
+        #qrcode img { width: 100% !important; height: auto !important; display: block; image-rendering: -webkit-optimize-contrast; }
 
-        /* Styles Tambahan */
-        .admin-table th { background: #f1f5f9; color: #64748b; font-size: 0.75rem; text-transform: uppercase; padding: 0.8rem; text-align: left; }
+        /* --- STUDENT CARD STYLE --- */
+        .student-card { position: relative; overflow: hidden; border: 1px solid #e2e8f0; background: white; }
+        .card-header-bg { height: 80px; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); position: relative; }
+        .card-photo-wrapper { width: 100px; height: 120px; margin: -50px auto 10px; border: 3px solid white; border-radius: 10px; overflow: hidden; background: #f1f5f9; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .card-photo-wrapper img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* Utils */
         .badge { font-size: 0.7rem; padding: 2px 8px; border-radius: 99px; font-weight: 700; display: inline-block; }
-        .badge-active { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
-        .badge-disabled { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
-
-        .conn-status { position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); background: #22c55e; color: white; padding: 5px 15px; border-radius: 20px; font-size: 10px; font-weight: bold; z-index: 100; }
-        .conn-status.offline { background: #ef4444; }
-
-        /* Modal & WA Notification */
+        .badge-active { background: #dcfce7; color: #166534; } .badge-disabled { background: #fee2e2; color: #991b1b; }
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 50; display: none; justify-content: center; align-items: center; padding: 1rem; backdrop-filter: blur(2px); }
-        .modal-content { background: white; border-radius: 1.5rem; width: 100%; max-width: 400px; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden; }
-        
-        .wa-dropdown { display: none; position: absolute; right: -10px; top: 140%; width: 320px; background: #efe7dd; border-radius: 12px; box-shadow: 0 10px 50px rgba(0,0,0,0.3); z-index: 100; overflow: hidden; flex-direction: column; }
-        .wa-dropdown.show { display: flex; animation: slideUp 0.2s ease; }
-        .wa-header { background: var(--wa-teal); color: white; padding: 10px 15px; font-weight: bold; font-size: 0.9rem; }
+        .modal-content { background: white; border-radius: 1.5rem; width: 100%; max-width: 400px; max-height: 85vh; display: flex; flex-direction: column; overflow-y: auto; }
+        .conn-status { position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); background: #22c55e; color: white; padding: 5px 15px; border-radius: 20px; font-size: 10px; font-weight: bold; z-index: 100; }
     </style>
 </head>
 <body class="p-4">
 
-    <div id="conn-indicator" class="conn-status offline">🔴 Offline - Menghubungkan...</div>
+    <div id="conn-indicator" class="conn-status">Checking Connection...</div>
 
     <section id="screen-login" class="max-w-md mx-auto min-h-screen flex flex-col justify-center">
         <div class="text-center mb-8">
             <h1 class="text-3xl font-extrabold text-blue-900 tracking-tight">GKPS TANGERANG</h1>
-            <p class="text-gray-500 font-medium">Sistem Absensi Terpadu</p>
+            <p class="text-gray-500 font-medium">Sistem Absensi & Materi</p>
         </div>
         <div class="pro-card">
             <input type="text" id="login-username" class="pro-input" placeholder="Username">
-            <div class="pass-wrapper">
-                <input type="password" id="login-password" class="pro-input" placeholder="Password">
-                <span onclick="togglePass('login-password', this)" class="pass-toggle">👁️</span>
-            </div>
+            <input type="password" id="login-password" class="pro-input" placeholder="Password">
             <button onclick="handleLogin()" class="pro-btn btn-blue shadow-lg">MASUK</button>
-            <div class="mt-4 text-center text-xs text-blue-500 font-bold cursor-pointer">Lupa Password?</div>
         </div>
     </section>
 
     <section id="screen-dashboard" class="hidden max-w-5xl mx-auto pt-4">
-        <header class="flex justify-between items-center mb-6 relative">
+        <header class="flex justify-between items-center mb-6">
             <div class="flex items-center gap-3">
                 <img id="dash-avatar" src="" class="w-12 h-12 rounded-full border-2 border-blue-500 bg-white object-cover">
                 <div>
@@ -127,25 +98,15 @@
                     <span id="role-badge" class="bg-yellow-200 text-yellow-800 text-[10px] px-2 py-0.5 rounded uppercase">ROLE</span>
                 </div>
             </div>
-            <div class="flex gap-3 items-center">
-                <div class="relative notif-container">
-                    <button onclick="toggleNotificationPanel()" class="focus:outline-none text-2xl">💬</button>
-                    <div id="dash-wa-panel" class="wa-dropdown">
-                        <div class="wa-header">Pesan Masuk</div>
-                        <div id="dash-wa-list" class="p-2 flex flex-col gap-2 overflow-y-auto max-h-60"></div>
-                    </div>
-                </div>
-                <button onclick="logout()" class="text-red-500 text-xs font-bold border border-red-200 px-3 py-1 rounded-full">Keluar</button>
-            </div>
+            <button onclick="logout()" class="text-red-500 text-xs font-bold border border-red-200 px-3 py-1 rounded-full">Keluar</button>
         </header>
 
         <div class="flex gap-2 mb-6 overflow-x-auto pb-2">
             <button onclick="switchTab('home')" id="tab-home" class="nav-pill active">📊 Home</button>
             <button onclick="switchTab('scan')" id="tab-scan" class="nav-pill">📷 Scan</button>
-            <button onclick="switchTab('users')" id="tab-users" class="nav-pill hidden">👥 Users</button>
-            <button onclick="switchTab('materi')" id="tab-materi" class="nav-pill hidden">📚 Materi</button>
-            <button onclick="switchTab('jadwal')" id="tab-jadwal" class="nav-pill hidden">🗓️ Jadwal</button>
-            <button onclick="switchTab('settings')" id="tab-settings" class="nav-pill hidden">⚙️ Pengaturan</button>
+            <button onclick="switchTab('users')" id="tab-users" class="nav-pill">👥 Users</button>
+            <button onclick="switchTab('materi')" id="tab-materi" class="nav-pill">📂 Materi</button>
+            <button onclick="switchTab('profile')" id="tab-profile" class="nav-pill">👤 Profil</button>
         </div>
 
         <div id="view-home" class="tab-view">
@@ -156,14 +117,14 @@
                 </div>
                 <div onclick="switchTab('scan')" class="bg-white border border-gray-100 p-5 rounded-2xl shadow-lg flex flex-col items-center cursor-pointer">
                     <div class="text-2xl mb-1">📷</div>
-                    <div class="font-bold text-gray-700 text-xs">Mulai Scan</div>
+                    <div class="font-bold text-gray-700 text-xs">Absen Sekarang</div>
                 </div>
             </div>
             <div class="pro-card">
                 <h3 class="font-bold text-gray-800 mb-4 border-b pb-2">Log Kehadiran</h3>
                 <div class="overflow-x-auto max-h-[300px]">
-                    <table class="w-full admin-table">
-                        <thead><tr><th>Jam</th><th>Nama</th><th>Status</th></tr></thead>
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-gray-50 text-gray-500"><tr><th class="p-2">Waktu</th><th class="p-2">Nama</th><th class="p-2">Status</th></tr></thead>
                         <tbody id="table-attendance"></tbody>
                     </table>
                 </div>
@@ -173,16 +134,11 @@
         <div id="view-scan" class="tab-view hidden">
             <div class="max-w-2xl mx-auto">
                 <div class="bg-white rounded-3xl overflow-hidden shadow-2xl relative w-full border border-gray-200">
-                    <div id="scanner-error" class="hidden p-6 text-center text-red-500 font-bold bg-red-50">
-                        <span id="scanner-error-msg">Akses kamera ditolak.</span>
-                    </div>
                     <div id="scanner-container">
                         <div id="reader"></div> 
                         <div class="scan-overlay">
-                            <div id="scan-frame" class="scan-frame">
-                                <div class="scan-laser"></div>
-                            </div>
-                            <div class="mt-4 text-white text-[10px] font-bold bg-black/40 px-3 py-1 rounded-full">Posisikan QR dalam kotak</div>
+                            <div class="scan-frame"><div class="scan-laser"></div></div>
+                            <div class="mt-4 text-white text-[10px] font-bold bg-black/40 px-3 py-1 rounded-full">Posisikan QR di dalam kotak</div>
                         </div>
                     </div>
                 </div>
@@ -193,58 +149,88 @@
         <div id="view-users" class="tab-view hidden">
             <div class="pro-card">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="font-bold text-lg">Kelola Pengguna</h3>
-                    <button onclick="openUserModal()" class="bg-blue-600 text-white text-xs px-3 py-2 rounded-full font-bold">+ User</button>
+                    <h3 class="font-bold">Data Pengguna</h3>
+                    <button onclick="openUserModal()" class="bg-blue-600 text-white text-xs px-3 py-2 rounded-full">+ User</button>
                 </div>
                 <div class="overflow-x-auto">
-                    <table class="w-full admin-table">
-                        <thead><tr><th>User</th><th>Role</th><th>Status</th><th>Aksi</th></tr></thead>
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-gray-50"><tr><th class="p-2">User</th><th class="p-2">Role</th><th class="p-2">Aksi</th></tr></thead>
                         <tbody id="table-users"></tbody>
                     </table>
                 </div>
             </div>
         </div>
-        
-        <div id="view-materi" class="tab-view hidden"><div class="pro-card p-10 text-center text-gray-400">Fitur Materi</div></div>
-        <div id="view-jadwal" class="tab-view hidden"><div class="pro-card p-10 text-center text-gray-400">Fitur Jadwal</div></div>
 
-        <div id="view-settings" class="tab-view hidden">
-             <div class="pro-card bg-green-50 border-green-200">
-                <h3 class="font-bold text-green-900">Pengaturan Sistem</h3>
-                <button onclick="emergencyReset()" class="pro-btn btn-red mt-2">⚠️ Reset Database (Darurat)</button>
+        <div id="view-materi" class="tab-view hidden">
+            <div class="pro-card">
+                <div class="flex justify-between items-center mb-4 border-b pb-2">
+                    <div id="materi-breadcrumb" class="font-bold text-lg text-blue-900 cursor-pointer" onclick="renderFolders()">📂 Folder Utama</div>
+                    <button onclick="createFolder()" class="text-blue-500 font-bold text-xs">+ Folder Baru</button>
+                </div>
+                
+                <div id="folder-container" class="folder-grid"></div>
+                
+                <div id="file-container" class="hidden mt-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <h4 class="font-bold text-sm">Daftar File</h4>
+                        <button onclick="uploadFileFake()" class="bg-green-500 text-white text-xs px-2 py-1 rounded">+ Upload File</button>
+                    </div>
+                    <div id="file-list" class="space-y-2"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-profile" class="tab-view hidden">
+            <div class="pro-card text-center">
+                <img id="profile-img-big" src="" class="w-24 h-24 rounded-full mx-auto border-4 border-blue-100 mb-4 object-cover">
+                <h2 id="profile-name-big" class="text-xl font-bold">Nama User</h2>
+                <p id="profile-role-big" class="text-gray-500 text-sm mb-6">Role</p>
+                
+                <div class="text-left space-y-3">
+                    <div>
+                        <label class="text-xs font-bold text-gray-500">Username</label>
+                        <input type="text" id="prof-username" class="pro-input" readonly>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-500">Password Baru</label>
+                        <input type="password" id="prof-password" class="pro-input" placeholder="Isi untuk mengganti">
+                    </div>
+                    <button onclick="updateProfile()" class="pro-btn btn-blue">Simpan Perubahan</button>
+                </div>
             </div>
         </div>
     </section>
 
     <section id="screen-siswa" class="hidden max-w-md mx-auto pt-8">
         <header class="flex justify-between items-center mb-6">
-            <div class="flex items-center gap-3">
-                <img id="stu-avatar" src="" class="w-12 h-12 rounded-full border-2 border-blue-500 object-cover">
-                <h2 class="text-xl font-bold text-blue-900">Halo, <span id="siswa-greet-name">Siswa</span>!</h2>
-            </div>
+            <h2 class="text-xl font-bold text-blue-900">Kartu Pelajar</h2>
             <button onclick="logout()" class="text-red-500 text-xs font-bold border border-red-200 px-3 py-1 rounded-full">Keluar</button>
         </header>
-        <div class="student-card pro-card p-0 overflow-hidden" style="max-width:350px; margin:auto;">
-            <div class="bg-blue-700 h-3 w-full"></div>
-            <div class="p-6 flex flex-col items-center">
-                <div class="w-24 h-32 bg-gray-100 rounded-lg overflow-hidden border-2 border-white shadow-md mb-4">
-                    <img id="card-img" src="" class="w-full h-full object-cover">
+        
+        <div class="student-card pro-card p-0" style="max-width:350px; margin:auto;">
+            <div class="card-header-bg"></div>
+            <div class="p-6 pt-0 flex flex-col items-center">
+                <div class="card-photo-wrapper">
+                    <img id="card-img" src="">
                 </div>
-                <h3 id="card-name-display" class="font-bold text-lg text-gray-800 uppercase">NAMA SISWA</h3>
+                <h3 id="card-name-display" class="font-bold text-lg text-gray-800 uppercase text-center leading-tight">NAMA SISWA</h3>
                 <p id="card-id-display" class="text-xs text-gray-400 mb-4">ID: -</p>
                 
-                <div class="p-2 bg-white rounded-xl border-2 border-blue-100 shadow-sm">
+                <div class="p-2 bg-white rounded-xl border-2 border-blue-100 shadow-sm mb-2">
                     <div id="qrcode"></div>
                 </div>
-                
-                <p class="text-[9px] text-gray-400 mt-2">Scan QR untuk absen</p>
+                <p class="text-[10px] text-gray-400">Scan QR ini pada kamera Absensi</p>
+            </div>
+            <div class="bg-gray-50 p-4 border-t border-gray-100 grid grid-cols-2 gap-2 text-center">
+                <div><div class="text-[10px] text-gray-400">STATUS</div><div class="font-bold text-green-600 text-xs">AKTIF</div></div>
+                <div><div class="text-[10px] text-gray-400">TAHUN AJARAN</div><div class="font-bold text-gray-700 text-xs">2023/2024</div></div>
             </div>
         </div>
     </section>
 
     <div id="user-modal" class="modal-overlay">
         <div class="modal-content p-6">
-            <h3 class="font-bold text-lg mb-4">Edit User</h3>
+            <h3 class="font-bold text-lg mb-4">Edit/Tambah User</h3>
             <input type="hidden" id="modal-id">
             <input type="text" id="modal-name" class="pro-input" placeholder="Nama Lengkap">
             <input type="text" id="modal-username" class="pro-input" placeholder="Username">
@@ -253,13 +239,15 @@
                 <option value="guru">Guru</option>
                 <option value="admin">Admin</option>
             </select>
-            <button onclick="saveUser()" class="pro-btn btn-blue">Simpan</button>
-            <button onclick="closeModal()" class="pro-btn bg-gray-200 text-gray-600 mt-2">Batal</button>
+            <div class="flex gap-2">
+                <button onclick="saveUser()" class="pro-btn btn-blue flex-1">Simpan</button>
+                <button onclick="document.getElementById('user-modal').style.display='none'" class="pro-btn bg-gray-200 text-gray-600 flex-1">Batal</button>
+            </div>
         </div>
     </div>
 
     <script>
-        // CONFIG FIREBASE
+        // --- KONFIGURASI FIREBASE ---
         const firebaseConfig = {
             apiKey: "AIzaSyCH-_9wgq0Mw8JSqw2PtUUJy7KEPaHHZxM",
             authDomain: "absensigkps.firebaseapp.com",
@@ -271,13 +259,14 @@
         firebase.initializeApp(firebaseConfig);
         const dbRef = firebase.database().ref('gkps_data');
 
-        // STATE VARIABLES
-        let db = { users: [], attendance: [], messages: [] };
+        // STATE GLOBAL
+        let db = { users: [], attendance: [], folders: [] };
         let currentUser = null;
         let html5QrCode = null;
         let isScanning = false;
+        let currentFolderId = null; // Untuk navigasi folder
 
-        // --- MAIN APP INIT ---
+        // --- INIT APP ---
         function initApp() {
             const saved = localStorage.getItem('gkps_session');
             if (saved) {
@@ -286,43 +275,46 @@
                 else { renderDashboardScreen(); showScreen('dashboard'); }
             } else { showScreen('login'); }
 
+            // Sync Database
             dbRef.on('value', (snap) => {
                 const val = snap.val();
                 if (val) {
                     db = val;
-                    if (currentUser) {
-                        const fresh = (db.users||[]).find(u => u.username === currentUser.username);
-                        if (fresh) { currentUser = fresh; localStorage.setItem('gkps_session', JSON.stringify(currentUser)); }
-                    }
+                    if(!db.folders) db.folders = []; // Init folder jika kosong
+                    if(!db.attendance) db.attendance = [];
                     updateUI();
-                } else { createDefaultAdmin(); }
+                } else {
+                    // Default Admin jika DB kosong
+                    db.users = [{ id: 'ADM_1', name: 'Super Admin', username: 'admin', password: '123', role: 'admin' }];
+                    saveDb();
+                }
             });
-
-            firebase.database().ref(".info/connected").on("value", (snap) => {
-                const el = document.getElementById('conn-indicator');
-                if (snap.val() === true) { el.innerText = "🟢 Online"; el.className = "conn-status"; }
-                else { el.innerText = "🔴 Offline"; el.className = "conn-status offline"; }
+            
+            // Check Connection
+            firebase.database().ref(".info/connected").on("value", s => {
+                document.getElementById('conn-indicator').innerText = s.val() ? "🟢 Online" : "🔴 Offline";
             });
-        }
-
-        // --- HELPER FUNCTIONS ---
-        function createDefaultAdmin() {
-            db.users = [{ id: 'ADM_1', name: 'Super Admin', username: 'admin', password: '123', role: 'admin', disabled: false }];
-            saveDb();
         }
         function saveDb() { dbRef.set(db); }
+
+        // --- NAVIGATION ---
         function showScreen(id) {
             document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
             document.getElementById('screen-' + id).classList.remove('hidden');
         }
-        function togglePass(id, icon) {
-            const el = document.getElementById(id);
-            if (el.type === 'password') { el.type = 'text'; icon.innerText = '🕶️'; }
-            else { el.type = 'password'; icon.innerText = '👁️'; }
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-view').forEach(v => v.classList.add('hidden'));
+            document.getElementById('view-'+tab).classList.remove('hidden');
+            document.querySelectorAll('.nav-pill').forEach(n => n.classList.remove('active'));
+            document.getElementById('tab-'+tab).classList.add('active');
+            
+            if (tab === 'scan') startProScanner(); else stopScanner();
+            if (tab === 'materi') renderFolders();
+            if (tab === 'profile') loadProfileData();
         }
-        function emergencyReset() { if(confirm("Hapus SEMUA data?")) { dbRef.set(null); location.reload(); } }
+        function logout() { localStorage.clear(); location.reload(); }
 
-        // --- LOGIN & AUTH ---
+        // --- LOGIN ---
         function handleLogin() {
             const u = document.getElementById('login-username').value;
             const p = document.getElementById('login-password').value;
@@ -332,131 +324,165 @@
                 localStorage.setItem('gkps_session', JSON.stringify(currentUser));
                 if (found.role === 'siswa') { renderSiswaScreen(); showScreen('siswa'); }
                 else { renderDashboardScreen(); showScreen('dashboard'); }
-            } else { alert("Login Gagal!"); }
-        }
-        function logout() { localStorage.clear(); location.reload(); }
-
-        // --- TABS & NAVIGATION ---
-        function switchTab(tab) {
-            document.querySelectorAll('.tab-view').forEach(v => v.classList.add('hidden'));
-            document.getElementById('view-'+tab).classList.remove('hidden');
-            document.querySelectorAll('.nav-pill').forEach(n => n.classList.remove('active'));
-            document.getElementById('tab-'+tab).classList.add('active');
-            
-            if (tab === 'scan') startProScanner(); else stopScanner();
+            } else { alert("Login Gagal"); }
         }
 
-        // --- [CORE] LOGIKA SCANNER RESPONSIVE ---
+        // --- SCANNER LOGIC (FIXED) ---
         function startProScanner() {
             if (isScanning) return;
             if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
-
-            const config = {
-                fps: 30, 
-                // Ukuran FIX 250px agar sama persis dengan CSS kotak biru, baik di HP maupun Laptop
-                qrbox: { width: 250, height: 250 },
-                // Hapus aspectRatio paksa agar menyesuaikan kamera laptop yg wide
-                experimentalFeatures: { useBarCodeDetectorIfSupported: true }
-            };
-
+            const config = { fps: 30, qrbox: { width: 250, height: 250 }, experimentalFeatures: { useBarCodeDetectorIfSupported: true } };
             html5QrCode.start({ facingMode: "environment" }, config, (text) => {
-                if (text.startsWith('GKPS')) { processScan(text); }
-            }).then(() => isScanning = true).catch(err => {
-                document.getElementById('scanner-error').classList.remove('hidden');
-                document.getElementById('scanner-error-msg').innerText = "Kamera tidak dapat diakses/ditemukan.";
+                if (text.startsWith('GKPS')) {
+                    const parts = text.split('|');
+                    const today = new Date().toLocaleDateString('id-ID');
+                    if (!db.attendance.find(a => a.username === parts[1] && a.date === today)) {
+                        db.attendance.push({ username: parts[1], name: parts[2], date: today, time: new Date().toLocaleTimeString(), status: 'Hadir' });
+                        saveDb();
+                        showScanStatus("✅ " + parts[2] + " HADIR", "green");
+                    } else { showScanStatus("⚠️ SUDAH ABSEN", "yellow"); }
+                }
+            }).then(() => isScanning = true);
+        }
+        function stopScanner() { if (html5QrCode && isScanning) html5QrCode.stop().then(() => isScanning = false); }
+        function showScanStatus(msg, color) {
+            const el = document.getElementById('scan-status');
+            el.innerText = msg; el.classList.remove('hidden');
+            el.className = `mt-4 p-3 rounded-xl font-bold bg-${color}-100 text-${color}-800`;
+            setTimeout(() => el.classList.add('hidden'), 2000);
+        }
+
+        // --- SISWA SCREEN (QR HD) ---
+        function renderSiswaScreen() {
+            document.getElementById('card-name-display').innerText = currentUser.name;
+            document.getElementById('card-id-display').innerText = "ID: " + currentUser.username;
+            const imgUrl = `https://api.dicebear.com/7.x/notionists/svg?seed=${currentUser.name}`;
+            document.getElementById('card-img').src = imgUrl;
+            
+            // Generate QR High Res
+            const container = document.getElementById("qrcode");
+            container.innerHTML = "";
+            new QRCode(container, {
+                text: `GKPS|${currentUser.username}|${currentUser.name}|siswa`,
+                width: 1000, height: 1000, // HD Resolution
+                colorDark : "#000000", colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
             });
         }
-        function stopScanner() {
-            if (html5QrCode && isScanning) { html5QrCode.stop().then(() => isScanning = false); }
-        }
-        function processScan(qrData) {
-            const parts = qrData.split('|');
-            const username = parts[1];
-            const today = new Date().toLocaleDateString('id-ID');
-            
-            if (!(db.attendance||[]).find(a => a.username === username && a.date === today)) {
-                if (!db.attendance) db.attendance = [];
-                db.attendance.push({ username, name: parts[2], date: today, time: new Date().toLocaleTimeString(), status: 'Hadir' });
-                saveDb();
-                showStatus("✅ " + parts[2] + " HADIR", "green");
-            } else { showStatus("⚠️ SUDAH ABSEN HARI INI", "yellow"); }
-        }
-        function showStatus(msg, color) {
-            const el = document.getElementById('scan-status');
-            el.innerText = msg;
-            el.className = `mt-4 p-3 rounded-xl font-bold bg-${color}-100 text-${color}-800`;
-            el.classList.remove('hidden');
-            setTimeout(() => el.classList.add('hidden'), 2500);
-        }
 
-        // --- RENDER UI ---
-        function updateUI() {
-            if (currentUser && currentUser.role !== 'siswa') {
-                renderHomeStats();
-                renderUserTable();
-                renderWhatsAppNotifications();
-            }
+        // --- DASHBOARD UI ---
+        function renderDashboardScreen() {
+            document.getElementById('role-badge').innerText = currentUser.role;
+            document.getElementById('dash-avatar').src = `https://api.dicebear.com/7.x/notionists/svg?seed=${currentUser.name}`;
+            renderHomeStats(); renderUserTable();
         }
         function renderHomeStats() {
             const today = new Date().toLocaleDateString('id-ID');
             const logs = (db.attendance||[]).filter(a => a.date === today);
             document.getElementById('count-present').innerText = logs.length;
-            document.getElementById('table-attendance').innerHTML = logs.slice().reverse().map(l => `
-                <tr class="border-b text-sm"><td class="p-2">${l.time}</td><td class="p-2 font-bold">${l.name}</td><td class="p-2"><span class="badge badge-active">Hadir</span></td></tr>
+            document.getElementById('table-attendance').innerHTML = logs.map(l => `
+                <tr class="border-b"><td class="p-2">${l.time}</td><td class="p-2 font-bold">${l.name}</td><td class="p-2 text-green-600 font-bold">Hadir</td></tr>
             `).join('');
         }
         function renderUserTable() {
             document.getElementById('table-users').innerHTML = (db.users||[]).map(u => `
                 <tr class="border-b hover:bg-gray-50">
-                    <td class="p-2"><div class="font-bold text-xs">${u.name}</div><div class="text-[10px] text-gray-400">@${u.username}</div></td>
-                    <td class="p-2 uppercase text-[10px] font-bold">${u.role}</td>
-                    <td class="p-2"><span class="badge ${u.disabled?'badge-disabled':'badge-active'}">${u.disabled?'Blokir':'Aktif'}</span></td>
-                    <td class="p-2 text-right"><button onclick="openUserModal('${u.id}')" class="bg-blue-100 text-blue-600 text-[10px] px-2 py-1 rounded font-bold">Edit</button></td>
+                    <td class="p-2 font-bold">${u.name}<br><span class="text-xs text-gray-400">@${u.username}</span></td>
+                    <td class="p-2 uppercase text-xs">${u.role}</td>
+                    <td class="p-2"><button onclick="openUserModal('${u.id}')" class="text-blue-500 font-bold">Edit</button></td>
                 </tr>
             `).join('');
         }
 
-        // --- [CORE] QR GENERATOR HIGH RES ---
-        function renderSiswaScreen() {
-            document.getElementById('siswa-greet-name').innerText = currentUser.name;
-            document.getElementById('card-name-display').innerText = currentUser.name;
-            document.getElementById('card-id-display').innerText = "ID: " + currentUser.username;
-            document.getElementById('stu-avatar').src = currentUser.avatar || 'https://api.dicebear.com/7.x/notionists/svg?seed='+currentUser.name;
-            document.getElementById('card-img').src = currentUser.avatar || 'https://api.dicebear.com/7.x/notionists/svg?seed='+currentUser.name;
+        // --- FITUR MATERI (FOLDER SYSTEM) ---
+        function renderFolders() {
+            currentFolderId = null;
+            document.getElementById('materi-breadcrumb').innerText = "📂 Folder Utama";
+            document.getElementById('file-container').classList.add('hidden');
+            document.getElementById('folder-container').classList.remove('hidden');
             
-            // Generate QR High Quality
-            const codeData = `GKPS|${currentUser.username}|${currentUser.name}|siswa`;
-            const container = document.getElementById("qrcode");
-            container.innerHTML = ""; 
-            new QRCode(container, {
-                text: codeData,
-                width: 1000, // Resolusi Besar
-                height: 1000,
-                colorDark : "#000000",
-                colorLight : "#ffffff",
-                correctLevel : QRCode.CorrectLevel.H // Toleransi Error Tinggi
-            });
+            const list = document.getElementById('folder-container');
+            list.innerHTML = (db.folders||[]).map((f, idx) => `
+                <div class="folder-item" onclick="openFolder(${idx})">
+                    <div class="folder-icon">📁</div>
+                    <div class="text-xs font-bold truncate">${f.name}</div>
+                    <div class="text-[10px] text-gray-400">${(f.files||[]).length} file</div>
+                    <button onclick="deleteFolder(${idx}); event.stopPropagation()" class="text-red-500 text-[10px] mt-2">Hapus</button>
+                </div>
+            `).join('');
         }
-        function renderDashboardScreen() {
-            document.getElementById('role-badge').innerText = currentUser.role.replace('_',' ');
-            document.getElementById('dash-avatar').src = currentUser.avatar || 'https://api.dicebear.com/7.x/notionists/svg?seed='+currentUser.name;
-            if (currentUser.role === 'admin') {
-                ['tab-users', 'tab-materi', 'tab-jadwal', 'tab-settings'].forEach(t => document.getElementById(t).classList.remove('hidden'));
+        function createFolder() {
+            const name = prompt("Nama Folder Baru:");
+            if(name) {
+                if(!db.folders) db.folders = [];
+                db.folders.push({ name: name, files: [] });
+                saveDb(); renderFolders();
+            }
+        }
+        function deleteFolder(idx) {
+            if(confirm("Hapus folder ini?")) {
+                db.folders.splice(idx, 1); saveDb(); renderFolders();
+            }
+        }
+        function openFolder(idx) {
+            currentFolderId = idx;
+            const folder = db.folders[idx];
+            document.getElementById('materi-breadcrumb').innerText = "📂 " + folder.name;
+            document.getElementById('folder-container').classList.add('hidden');
+            document.getElementById('file-container').classList.remove('hidden');
+            renderFiles();
+        }
+        function renderFiles() {
+            const folder = db.folders[currentFolderId];
+            const list = document.getElementById('file-list');
+            list.innerHTML = (folder.files||[]).map((file, fIdx) => `
+                <div class="flex items-center justify-between p-2 bg-gray-50 rounded border">
+                    <div class="flex items-center gap-3">
+                        <div class="file-icon">📄</div>
+                        <div><div class="font-bold text-sm">${file.name}</div><div class="text-[10px] text-gray-400">${file.date}</div></div>
+                    </div>
+                    <button onclick="deleteFile(${fIdx})" class="text-red-500 font-bold text-xs">X</button>
+                </div>
+            `).join('');
+        }
+        function uploadFileFake() {
+            const fname = prompt("Nama File (Simulasi Upload):");
+            if(fname) {
+                if(!db.folders[currentFolderId].files) db.folders[currentFolderId].files = [];
+                db.folders[currentFolderId].files.push({ name: fname, date: new Date().toLocaleDateString('id-ID') });
+                saveDb(); renderFiles();
+            }
+        }
+        function deleteFile(fIdx) {
+            if(confirm("Hapus file?")) {
+                db.folders[currentFolderId].files.splice(fIdx, 1);
+                saveDb(); renderFiles();
             }
         }
 
-        // --- MODAL & NOTIFICATIONS ---
-        function renderWhatsAppNotifications() {
-            const list = document.getElementById('dash-wa-list');
-            const msgs = (db.messages||[]);
-            list.innerHTML = msgs.length === 0 ? '<div class="text-center p-4 text-gray-400 text-xs italic">Belum ada pesan</div>' : msgs.map(m => `
-                <div class="bg-white p-2 rounded shadow text-sm mb-1 border-l-4 border-green-500">${m.content}</div>
-            `).join('');
+        // --- FITUR PROFILE ---
+        function loadProfileData() {
+            document.getElementById('profile-img-big').src = `https://api.dicebear.com/7.x/notionists/svg?seed=${currentUser.name}`;
+            document.getElementById('profile-name-big').innerText = currentUser.name;
+            document.getElementById('profile-role-big').innerText = currentUser.role;
+            document.getElementById('prof-username').value = currentUser.username;
         }
-        function toggleNotificationPanel() { document.getElementById('dash-wa-panel').classList.toggle('show'); }
-        function openUserModal(id=null) {
+        function updateProfile() {
+            const newPass = document.getElementById('prof-password').value;
+            if(newPass) {
+                const idx = db.users.findIndex(u => u.id === currentUser.id);
+                if(idx !== -1) {
+                    db.users[idx].password = newPass;
+                    saveDb(); alert("Password berhasil diubah!");
+                    document.getElementById('prof-password').value = "";
+                }
+            } else { alert("Tidak ada perubahan."); }
+        }
+
+        // --- USER MANAGEMENT ---
+        function openUserModal(id) {
             document.getElementById('user-modal').style.display = 'flex';
-            if (id) {
+            if(id) {
                 const u = db.users.find(x => x.id === id);
                 document.getElementById('modal-id').value = u.id;
                 document.getElementById('modal-name').value = u.name;
@@ -468,23 +494,21 @@
                 document.getElementById('modal-username').value = '';
             }
         }
-        function closeModal() { document.getElementById('user-modal').style.display = 'none'; }
         function saveUser() {
             const id = document.getElementById('modal-id').value;
             const name = document.getElementById('modal-name').value;
-            const user = document.getElementById('modal-username').value;
+            const uname = document.getElementById('modal-username').value;
             const role = document.getElementById('modal-role').value;
             
-            if (id) {
+            if(id) {
                 const idx = db.users.findIndex(x => x.id === id);
-                db.users[idx] = { ...db.users[idx], name, username:user, role };
+                db.users[idx] = { ...db.users[idx], name, username: uname, role };
             } else {
-                db.users.push({ id:'USR_'+Date.now(), name, username:user, password:'123', role, disabled:false });
+                db.users.push({ id:'USR_'+Date.now(), name, username: uname, password:'123', role });
             }
-            saveDb(); closeModal(); renderUserTable();
+            saveDb(); document.getElementById('user-modal').style.display = 'none'; renderUserTable();
         }
 
-        // Jalankan Aplikasi
         window.onload = initApp;
     </script>
 </body>
