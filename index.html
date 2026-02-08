@@ -8,246 +8,362 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script> <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script> <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
         :root {
-            --primary: #0ea5e9;
-            --primary-dark: #0284c7;
-            --accent: #facc15;
-            --bg-soft: #f0f9ff;
-            --text-main: #1e293b;
+            --primary: #0ea5e9; --primary-dark: #0284c7; --accent: #facc15;
+            --bg-soft: #f0f9ff; --text-main: #1e293b;
+            --wa-teal: #128C7E; --wa-chat-bg: #e5ddd5;
         }
         body { font-family: 'Poppins', sans-serif; color: var(--text-main); background: linear-gradient(180deg, #e0f2fe 0%, #f0f9ff 100%); min-height: 100vh; padding-bottom: 2rem; }
         
-        /* --- UI COMPONENTS --- */
-        .pro-card { background: white; border-radius: 1.5rem; padding: 1.5rem; box-shadow: 0 10px 30px -5px rgba(14, 165, 233, 0.15); border: 1px solid #e2e8f0; margin-bottom: 1.5rem; }
-        .pro-input { width: 100%; padding: 0.8rem 1rem; border: 2px solid #e2e8f0; border-radius: 0.8rem; background: #f8fafc; outline: none; transition: 0.2s; font-size: 0.95rem; margin-bottom: 1rem; }
+        /* --- UI UTILS --- */
+        .pro-card { background: white; border-radius: 1.2rem; padding: 1.5rem; box-shadow: 0 4px 20px rgba(14, 165, 233, 0.1); border: 1px solid #e2e8f0; margin-bottom: 1.5rem; }
+        .pro-input { width: 100%; padding: 0.8rem; border: 2px solid #e2e8f0; border-radius: 0.6rem; background: #f8fafc; outline: none; transition: 0.2s; font-size: 0.9rem; }
         .pro-input:focus { border-color: var(--primary); background: white; }
-        .pro-btn { width: 100%; padding: 0.8rem; border-radius: 0.8rem; font-weight: 700; transition: 0.2s; text-align: center; cursor: pointer; border: none; margin-top: 0.5rem; }
-        .btn-blue { background: var(--primary); color: white; } .btn-blue:hover { background: var(--primary-dark); }
-        .btn-red { background: #ef4444; color: white; }
+        .pro-btn { width: 100%; padding: 0.8rem; border-radius: 0.6rem; font-weight: 600; transition: 0.2s; cursor: pointer; border: none; display: flex; align-items: center; justify-content: center; gap: 8px; }
         
-        .nav-pill { padding: 0.5rem 1rem; border-radius: 99px; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: 0.2s; color: #64748b; background: white; border: 1px solid transparent; white-space: nowrap; }
+        /* Button Colors */
+        .btn-blue { background: var(--primary); color: white; } .btn-blue:hover { background: var(--primary-dark); }
+        .btn-red { background: #ef4444; color: white; } .btn-red:hover { background: #dc2626; }
+        .btn-green { background: #22c55e; color: white; } .btn-green:hover { background: #16a34a; }
+        .btn-yellow { background: var(--accent); color: #713f12; }
+
+        /* Navigation Pills */
+        .nav-scroll { display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.5rem; scrollbar-width: none; }
+        .nav-pill { padding: 0.5rem 1rem; border-radius: 99px; font-weight: 600; font-size: 0.85rem; cursor: pointer; color: #64748b; background: white; border: 1px solid transparent; white-space: nowrap; transition: 0.2s; }
         .nav-pill.active { background: var(--primary); color: white; box-shadow: 0 4px 10px rgba(14, 165, 233, 0.4); }
 
-        /* --- FITUR FOLDER (MATERI) STYLE --- */
-        .folder-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 1rem; }
-        .folder-item { background: #fff; border: 1px solid #e2e8f0; border-radius: 1rem; padding: 1rem; text-align: center; cursor: pointer; transition: 0.2s; }
-        .folder-item:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); border-color: var(--primary); }
-        .folder-icon { font-size: 2.5rem; color: #fbbf24; margin-bottom: 0.5rem; }
-        .file-icon { font-size: 2rem; color: #3b82f6; }
-
-        /* --- SCANNER RESPONSIVE (FIX LAPTOP) --- */
-        #scanner-container { 
-            position: relative; width: 100%; background: #000; border-radius: 1.5rem; overflow: hidden; 
-            min-height: 300px; /* Agar tidak gepeng di laptop */
+        /* --- [PERBAIKAN 1: SCANNER RESPONSIVE LAPTOP] --- */
+        #scanner-wrapper {
+            position: relative; width: 100%; background: #000; border-radius: 1.5rem; overflow: hidden;
+            min-height: 350px; /* Memberi ruang vertikal agar tidak gepeng di laptop */
         }
         #reader { width: 100%; height: 100%; object-fit: cover; }
-        .scan-frame { 
-            width: 250px; height: 250px; /* Ukuran Statis */
-            border: 2px solid rgba(255, 255, 255, 0.3); border-radius: 20px; 
-            position: relative; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5); 
+        .scan-overlay { position: absolute; inset: 0; z-index: 10; display: flex; flex-direction: column; justify-content: center; align-items: center; pointer-events: none; }
+        .scan-frame {
+            width: 260px; height: 260px; /* Ukuran FIX Pixel */
+            border: 2px solid rgba(255, 255, 255, 0.5); border-radius: 20px;
+            position: relative; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6);
         }
-        .scan-overlay { position: absolute; inset: 0; pointer-events: none; z-index: 10; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        .scan-laser { position: absolute; width: 100%; height: 2px; background: #3b82f6; box-shadow: 0 0 10px #3b82f6; top: 0; animation: scanMove 2s infinite linear; }
-        @keyframes scanMove { 0% { top: 10%; opacity: 0; } 100% { top: 90%; opacity: 0; } }
+        .scan-laser { position: absolute; width: 100%; height: 2px; background: #0ea5e9; box-shadow: 0 0 10px #0ea5e9; top: 0; animation: scanMove 2s infinite linear; }
+        @keyframes scanMove { 0% { top: 10%; opacity: 0; } 50% { opacity: 1; } 100% { top: 90%; opacity: 0; } }
 
-        /* --- QR CODE HIGH RES --- */
-        #qrcode { width: 180px; height: 180px; margin: 0 auto; background: white; padding: 5px; }
-        #qrcode img { width: 100% !important; height: auto !important; display: block; image-rendering: -webkit-optimize-contrast; }
+        /* --- [PERBAIKAN 2: QR CODE HIGH RES] --- */
+        #qrcode-container {
+            width: 180px; height: 180px; margin: 0 auto; background: white; padding: 5px; border: 1px solid #eee;
+        }
+        #qrcode-container img, #qrcode-container canvas {
+            width: 100% !important; height: auto !important; display: block;
+            image-rendering: -webkit-optimize-contrast; /* Anti-blur */
+        }
 
-        /* --- STUDENT CARD STYLE --- */
-        .student-card { position: relative; overflow: hidden; border: 1px solid #e2e8f0; background: white; }
-        .card-header-bg { height: 80px; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); position: relative; }
-        .card-photo-wrapper { width: 100px; height: 120px; margin: -50px auto 10px; border: 3px solid white; border-radius: 10px; overflow: hidden; background: #f1f5f9; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .card-photo-wrapper img { width: 100%; height: 100%; object-fit: cover; }
+        /* --- FOLDER & MATERI SYSTEM --- */
+        .folder-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 1rem; }
+        .folder-item { background: white; border: 1px solid #e2e8f0; border-radius: 1rem; padding: 1rem; text-align: center; cursor: pointer; transition: 0.2s; position: relative; }
+        .folder-item:hover { border-color: var(--primary); transform: translateY(-3px); }
+        .folder-icon { font-size: 2.5rem; color: #fbbf24; margin-bottom: 0.2rem; }
+        .delete-corner { position: absolute; top: 5px; right: 5px; color: #ef4444; font-size: 0.8rem; cursor: pointer; padding: 2px; }
 
-        /* Utils */
-        .badge { font-size: 0.7rem; padding: 2px 8px; border-radius: 99px; font-weight: 700; display: inline-block; }
-        .badge-active { background: #dcfce7; color: #166534; } .badge-disabled { background: #fee2e2; color: #991b1b; }
+        /* --- JADWAL TABLE --- */
+        .schedule-table th { background: #f8fafc; color: #64748b; font-size: 0.75rem; text-transform: uppercase; padding: 0.8rem; text-align: left; }
+        .schedule-table td { padding: 0.8rem; border-bottom: 1px solid #f1f5f9; font-size: 0.85rem; }
+
+        /* --- WHATSAPP STYLE CHAT --- */
+        .chat-box { background: var(--wa-chat-bg); height: 300px; overflow-y: auto; padding: 1rem; border-radius: 0.8rem; display: flex; flex-direction: column; gap: 0.5rem; }
+        .chat-bubble { background: white; padding: 8px 12px; border-radius: 0 8px 8px 8px; max-width: 80%; align-self: flex-start; position: relative; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .chat-bubble.admin { background: #dcf8c6; align-self: flex-end; border-radius: 8px 0 8px 8px; }
+        .chat-meta { font-size: 0.65rem; color: #999; text-align: right; margin-top: 2px; }
+
+        /* --- MODAL & STATUS --- */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 50; display: none; justify-content: center; align-items: center; padding: 1rem; backdrop-filter: blur(2px); }
-        .modal-content { background: white; border-radius: 1.5rem; width: 100%; max-width: 400px; max-height: 85vh; display: flex; flex-direction: column; overflow-y: auto; }
-        .conn-status { position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); background: #22c55e; color: white; padding: 5px 15px; border-radius: 20px; font-size: 10px; font-weight: bold; z-index: 100; }
+        .modal-content { background: white; border-radius: 1.5rem; width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; display: flex; flex-direction: column; }
+        .conn-status { position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); background: #22c55e; color: white; padding: 6px 16px; border-radius: 20px; font-size: 11px; font-weight: bold; z-index: 100; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
     </style>
 </head>
-<body class="p-4">
+<body class="p-4 md:p-6 text-sm">
 
-    <div id="conn-indicator" class="conn-status">Checking Connection...</div>
+    <div id="conn-indicator" class="conn-status">⚪ Menghubungkan...</div>
 
     <section id="screen-login" class="max-w-md mx-auto min-h-screen flex flex-col justify-center">
         <div class="text-center mb-8">
-            <h1 class="text-3xl font-extrabold text-blue-900 tracking-tight">GKPS TANGERANG</h1>
-            <p class="text-gray-500 font-medium">Sistem Absensi & Materi</p>
+            <h1 class="text-3xl font-extrabold text-blue-900">GKPS SYSTEM</h1>
+            <p class="text-gray-500">Enhanced Pro Ultimate</p>
         </div>
-        <div class="pro-card">
-            <input type="text" id="login-username" class="pro-input" placeholder="Username">
-            <input type="password" id="login-password" class="pro-input" placeholder="Password">
-            <button onclick="handleLogin()" class="pro-btn btn-blue shadow-lg">MASUK</button>
+        <div class="pro-card space-y-4">
+            <div>
+                <label class="block text-xs font-bold text-gray-500 mb-1">Username</label>
+                <input type="text" id="login-u" class="pro-input" placeholder="Masukkan ID/User">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-gray-500 mb-1">Password</label>
+                <input type="password" id="login-p" class="pro-input" placeholder="••••••">
+            </div>
+            <button onclick="authLogin()" class="pro-btn btn-blue shadow-lg">MASUK <i class="fas fa-arrow-right"></i></button>
+            <div class="text-center mt-4">
+                <span onclick="resetSystemPrompt()" class="text-xs text-red-400 cursor-pointer hover:underline">Reset System?</span>
+            </div>
         </div>
     </section>
 
-    <section id="screen-dashboard" class="hidden max-w-5xl mx-auto pt-4">
-        <header class="flex justify-between items-center mb-6">
+    <section id="screen-dashboard" class="hidden max-w-6xl mx-auto">
+        <header class="flex justify-between items-center mb-6 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
             <div class="flex items-center gap-3">
-                <img id="dash-avatar" src="" class="w-12 h-12 rounded-full border-2 border-blue-500 bg-white object-cover">
+                <img id="dash-img" src="" class="w-10 h-10 rounded-full border bg-gray-100 object-cover">
                 <div>
-                    <h1 class="text-xl font-bold text-blue-900">Dashboard</h1>
-                    <span id="role-badge" class="bg-yellow-200 text-yellow-800 text-[10px] px-2 py-0.5 rounded uppercase">ROLE</span>
+                    <h2 class="font-bold text-lg text-blue-900 leading-tight">Dashboard</h2>
+                    <span id="dash-role" class="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-bold uppercase">ADMIN</span>
                 </div>
             </div>
-            <button onclick="logout()" class="text-red-500 text-xs font-bold border border-red-200 px-3 py-1 rounded-full">Keluar</button>
+            <div class="flex gap-2">
+                <button onclick="openModal('backup-modal')" class="w-8 h-8 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200"><i class="fas fa-cloud-download-alt"></i></button>
+                <button onclick="doLogout()" class="w-8 h-8 rounded-full bg-red-50 text-red-500 hover:bg-red-100"><i class="fas fa-power-off"></i></button>
+            </div>
         </header>
 
-        <div class="flex gap-2 mb-6 overflow-x-auto pb-2">
-            <button onclick="switchTab('home')" id="tab-home" class="nav-pill active">📊 Home</button>
-            <button onclick="switchTab('scan')" id="tab-scan" class="nav-pill">📷 Scan</button>
-            <button onclick="switchTab('users')" id="tab-users" class="nav-pill">👥 Users</button>
-            <button onclick="switchTab('materi')" id="tab-materi" class="nav-pill">📂 Materi</button>
-            <button onclick="switchTab('profile')" id="tab-profile" class="nav-pill">👤 Profil</button>
+        <div class="nav-scroll mb-6">
+            <button onclick="nav('home')" id="nav-home" class="nav-pill active"><i class="fas fa-home"></i> Home</button>
+            <button onclick="nav('scan')" id="nav-scan" class="nav-pill"><i class="fas fa-qrcode"></i> Scan</button>
+            <button onclick="nav('users')" id="nav-users" class="nav-pill"><i class="fas fa-users"></i> Users</button>
+            <button onclick="nav('materi')" id="nav-materi" class="nav-pill"><i class="fas fa-folder-open"></i> Materi</button>
+            <button onclick="nav('jadwal')" id="nav-jadwal" class="nav-pill"><i class="fas fa-calendar-alt"></i> Jadwal</button>
+            <button onclick="nav('pesan')" id="nav-pesan" class="nav-pill"><i class="fab fa-whatsapp"></i> Pesan</button>
+            <button onclick="nav('settings')" id="nav-settings" class="nav-pill"><i class="fas fa-cog"></i> Settings</button>
         </div>
 
-        <div id="view-home" class="tab-view">
-            <div class="grid grid-cols-2 gap-4 mb-6">
-                <div class="bg-blue-600 text-white p-5 rounded-2xl shadow-lg">
-                    <div class="text-3xl font-extrabold" id="count-present">0</div>
-                    <div class="text-xs opacity-90">Hadir Hari Ini</div>
+        <div id="view-home" class="view-section">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <div class="bg-blue-600 text-white p-5 rounded-2xl shadow-lg relative overflow-hidden">
+                    <div class="text-3xl font-extrabold" id="stat-hadir">0</div>
+                    <div class="text-xs opacity-80">Hadir Hari Ini</div>
+                    <i class="fas fa-user-check absolute bottom-[-10px] right-[-10px] text-6xl opacity-20"></i>
                 </div>
-                <div onclick="switchTab('scan')" class="bg-white border border-gray-100 p-5 rounded-2xl shadow-lg flex flex-col items-center cursor-pointer">
-                    <div class="text-2xl mb-1">📷</div>
-                    <div class="font-bold text-gray-700 text-xs">Absen Sekarang</div>
+                <div class="bg-white p-5 rounded-2xl shadow border border-gray-100 cursor-pointer hover:border-blue-300" onclick="nav('scan')">
+                    <div class="text-blue-500 text-2xl mb-1"><i class="fas fa-camera"></i></div>
+                    <div class="font-bold text-gray-700">Mulai Scan</div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl shadow border border-gray-100 cursor-pointer hover:border-blue-300" onclick="openModal('manual-absen-modal')">
+                    <div class="text-green-500 text-2xl mb-1"><i class="fas fa-edit"></i></div>
+                    <div class="font-bold text-gray-700">Absen Manual</div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl shadow border border-gray-100 cursor-pointer hover:border-blue-300" onclick="nav('users')">
+                    <div class="text-purple-500 text-2xl mb-1"><i class="fas fa-users-cog"></i></div>
+                    <div class="font-bold text-gray-700">Kelola Data</div>
                 </div>
             </div>
-            <div class="pro-card">
-                <h3 class="font-bold text-gray-800 mb-4 border-b pb-2">Log Kehadiran</h3>
-                <div class="overflow-x-auto max-h-[300px]">
-                    <table class="w-full text-sm text-left">
-                        <thead class="bg-gray-50 text-gray-500"><tr><th class="p-2">Waktu</th><th class="p-2">Nama</th><th class="p-2">Status</th></tr></thead>
-                        <tbody id="table-attendance"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
 
-        <div id="view-scan" class="tab-view hidden">
-            <div class="max-w-2xl mx-auto">
-                <div class="bg-white rounded-3xl overflow-hidden shadow-2xl relative w-full border border-gray-200">
-                    <div id="scanner-container">
-                        <div id="reader"></div> 
-                        <div class="scan-overlay">
-                            <div class="scan-frame"><div class="scan-laser"></div></div>
-                            <div class="mt-4 text-white text-[10px] font-bold bg-black/40 px-3 py-1 rounded-full">Posisikan QR di dalam kotak</div>
-                        </div>
-                    </div>
-                </div>
-                <div id="scan-status" class="mt-4 text-center font-bold p-3 rounded-xl hidden shadow-lg text-sm transition-all"></div>
-            </div>
-        </div>
-
-        <div id="view-users" class="tab-view hidden">
-            <div class="pro-card">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="font-bold">Data Pengguna</h3>
-                    <button onclick="openUserModal()" class="bg-blue-600 text-white text-xs px-3 py-2 rounded-full">+ User</button>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm text-left">
-                        <thead class="bg-gray-50"><tr><th class="p-2">User</th><th class="p-2">Role</th><th class="p-2">Aksi</th></tr></thead>
-                        <tbody id="table-users"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <div id="view-materi" class="tab-view hidden">
             <div class="pro-card">
                 <div class="flex justify-between items-center mb-4 border-b pb-2">
-                    <div id="materi-breadcrumb" class="font-bold text-lg text-blue-900 cursor-pointer" onclick="renderFolders()">📂 Folder Utama</div>
-                    <button onclick="createFolder()" class="text-blue-500 font-bold text-xs">+ Folder Baru</button>
+                    <h3 class="font-bold text-gray-700">Log Kehadiran Realtime</h3>
+                    <button onclick="exportExcel()" class="text-xs text-green-600 font-bold hover:underline"><i class="fas fa-file-excel"></i> Export Excel</button>
                 </div>
-                
-                <div id="folder-container" class="folder-grid"></div>
-                
-                <div id="file-container" class="hidden mt-4">
-                    <div class="flex justify-between items-center mb-2">
-                        <h4 class="font-bold text-sm">Daftar File</h4>
-                        <button onclick="uploadFileFake()" class="bg-green-500 text-white text-xs px-2 py-1 rounded">+ Upload File</button>
-                    </div>
-                    <div id="file-list" class="space-y-2"></div>
+                <div class="overflow-x-auto max-h-[400px]">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-gray-50 text-gray-500 text-xs sticky top-0">
+                            <tr><th class="p-3">Waktu</th><th class="p-3">Nama</th><th class="p-3">Role</th><th class="p-3">Status</th></tr>
+                        </thead>
+                        <tbody id="table-logs" class="text-xs"></tbody>
+                    </table>
                 </div>
             </div>
         </div>
 
-        <div id="view-profile" class="tab-view hidden">
-            <div class="pro-card text-center">
-                <img id="profile-img-big" src="" class="w-24 h-24 rounded-full mx-auto border-4 border-blue-100 mb-4 object-cover">
-                <h2 id="profile-name-big" class="text-xl font-bold">Nama User</h2>
-                <p id="profile-role-big" class="text-gray-500 text-sm mb-6">Role</p>
+        <div id="view-scan" class="view-section hidden">
+            <div class="max-w-2xl mx-auto">
+                <div id="scanner-wrapper" class="shadow-2xl">
+                    <div id="scanner-error" class="hidden p-8 text-center bg-gray-900 text-red-400 font-bold h-full flex items-center justify-center">Kamera Tidak Dapat Diakses</div>
+                    <div id="reader"></div> 
+                    <div class="scan-overlay">
+                        <div class="scan-frame"><div class="scan-laser"></div></div>
+                        <div class="mt-6 bg-black/50 text-white px-4 py-1 rounded-full text-xs font-bold backdrop-blur-sm">Arahkan QR Code ke Kotak</div>
+                    </div>
+                </div>
+                <div id="scan-result-box" class="mt-4 hidden animate-bounce">
+                    <div id="scan-result-msg" class="p-4 rounded-xl font-bold text-center text-white text-lg shadow-lg"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-users" class="view-section hidden">
+            <div class="pro-card">
+                <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
+                    <div class="flex gap-2">
+                        <button onclick="openUserModal()" class="pro-btn btn-blue text-xs w-auto px-4"><i class="fas fa-plus"></i> Baru</button>
+                        <button onclick="document.getElementById('csv-input').click()" class="pro-btn btn-green text-xs w-auto px-4"><i class="fas fa-file-csv"></i> Import CSV</button>
+                        <input type="file" id="csv-input" hidden accept=".csv" onchange="handleCSV(this)">
+                    </div>
+                    <input type="text" id="search-user" onkeyup="renderUsers()" placeholder="Cari user..." class="pro-input w-48 py-1">
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-gray-50 uppercase text-gray-400 font-bold">
+                            <tr><th class="p-3">Nama/ID</th><th class="p-3">Role</th><th class="p-3">Pass</th><th class="p-3 text-right">Aksi</th></tr>
+                        </thead>
+                        <tbody id="table-users-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-materi" class="view-section hidden">
+            <div class="pro-card">
+                <div class="flex justify-between items-center mb-4 border-b pb-2">
+                    <div class="flex items-center gap-2">
+                        <button onclick="renderFolders()" class="text-gray-400 hover:text-blue-500"><i class="fas fa-home"></i></button>
+                        <span id="breadcrumb" class="font-bold text-blue-900">/ Root</span>
+                    </div>
+                    <button onclick="createFolder()" class="text-blue-500 text-xs font-bold"><i class="fas fa-folder-plus"></i> Folder Baru</button>
+                </div>
                 
-                <div class="text-left space-y-3">
-                    <div>
-                        <label class="text-xs font-bold text-gray-500">Username</label>
-                        <input type="text" id="prof-username" class="pro-input" readonly>
+                <div id="folder-grid" class="folder-grid"></div>
+                
+                <div id="file-list" class="hidden mt-4 space-y-2">
+                    <div class="flex justify-between mb-2">
+                        <h4 class="font-bold text-gray-500 text-xs">Daftar File</h4>
+                        <button onclick="uploadFileMock()" class="text-green-600 text-xs font-bold"><i class="fas fa-upload"></i> Upload File</button>
                     </div>
-                    <div>
-                        <label class="text-xs font-bold text-gray-500">Password Baru</label>
-                        <input type="password" id="prof-password" class="pro-input" placeholder="Isi untuk mengganti">
+                    <div id="files-container" class="space-y-2"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-jadwal" class="view-section hidden">
+            <div class="pro-card">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold">Jadwal Pelajaran</h3>
+                    <button onclick="addSchedule()" class="text-blue-500 font-bold text-xs">+ Jadwal</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full schedule-table">
+                        <thead><tr><th>Hari</th><th>Jam</th><th>Mapel</th><th>Guru</th><th>Aksi</th></tr></thead>
+                        <tbody id="table-jadwal"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-pesan" class="view-section hidden">
+            <div class="pro-card">
+                <h3 class="font-bold mb-2">Broadcast Pesan (WhatsApp Style)</h3>
+                <div id="chat-box" class="chat-box mb-3"></div>
+                <div class="flex gap-2">
+                    <input type="text" id="chat-input" class="pro-input" placeholder="Tulis pengumuman...">
+                    <button onclick="sendChat()" class="pro-btn btn-blue w-auto px-4"><i class="fas fa-paper-plane"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-settings" class="view-section hidden">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="pro-card">
+                    <h3 class="font-bold border-b pb-2 mb-4">Profil Admin</h3>
+                    <div class="space-y-3">
+                        <input type="text" id="adm-name" class="pro-input" placeholder="Nama Admin">
+                        <input type="password" id="adm-pass" class="pro-input" placeholder="Ganti Password">
+                        <button onclick="saveAdminProfile()" class="pro-btn btn-blue">Simpan Profil</button>
                     </div>
-                    <button onclick="updateProfile()" class="pro-btn btn-blue">Simpan Perubahan</button>
+                </div>
+                <div class="pro-card bg-red-50 border-red-100">
+                    <h3 class="font-bold text-red-700 border-b border-red-200 pb-2 mb-4">Zona Bahaya</h3>
+                    <p class="text-xs text-red-600 mb-4">Tindakan di bawah ini tidak dapat dibatalkan.</p>
+                    <button onclick="clearAttendance()" class="pro-btn btn-yellow mb-2 text-xs">Hapus Data Absensi Saja</button>
+                    <button onclick="resetSystemPrompt()" class="pro-btn btn-red text-xs">RESET TOTAL (FACTORY RESET)</button>
                 </div>
             </div>
         </div>
     </section>
 
     <section id="screen-siswa" class="hidden max-w-md mx-auto pt-8">
-        <header class="flex justify-between items-center mb-6">
-            <h2 class="text-xl font-bold text-blue-900">Kartu Pelajar</h2>
-            <button onclick="logout()" class="text-red-500 text-xs font-bold border border-red-200 px-3 py-1 rounded-full">Keluar</button>
-        </header>
+        <div class="flex justify-between items-center mb-6 px-4">
+            <h2 class="font-bold text-xl text-blue-900">Kartu Pelajar</h2>
+            <button onclick="doLogout()" class="text-red-500 font-bold text-xs border border-red-200 px-3 py-1 rounded-full">Keluar</button>
+        </div>
         
-        <div class="student-card pro-card p-0" style="max-width:350px; margin:auto;">
-            <div class="card-header-bg"></div>
-            <div class="p-6 pt-0 flex flex-col items-center">
-                <div class="card-photo-wrapper">
-                    <img id="card-img" src="">
+        <div class="pro-card p-0 overflow-hidden relative" style="max-width: 340px; margin: auto;">
+            <div class="h-24 bg-gradient-to-r from-blue-500 to-blue-700 relative">
+                <div class="absolute top-4 left-4 text-white font-bold text-lg tracking-widest">GKPS CARD</div>
+                <div class="absolute top-4 right-4 text-white/50 text-xs">2024/2025</div>
+            </div>
+            
+            <div class="px-6 pb-6 text-center relative">
+                <div class="w-24 h-24 mx-auto -mt-12 bg-white p-1 rounded-full shadow-lg">
+                    <img id="stu-img" src="" class="w-full h-full rounded-full object-cover bg-gray-200">
                 </div>
-                <h3 id="card-name-display" class="font-bold text-lg text-gray-800 uppercase text-center leading-tight">NAMA SISWA</h3>
-                <p id="card-id-display" class="text-xs text-gray-400 mb-4">ID: -</p>
                 
-                <div class="p-2 bg-white rounded-xl border-2 border-blue-100 shadow-sm mb-2">
-                    <div id="qrcode"></div>
+                <h2 id="stu-name" class="mt-3 font-bold text-xl text-gray-800 uppercase leading-tight">NAMA SISWA</h2>
+                <p id="stu-id" class="text-gray-400 text-sm mb-6">ID: -</p>
+                
+                <div class="bg-white border-2 border-dashed border-gray-300 p-2 rounded-xl inline-block">
+                    <div id="qrcode-container"></div>
                 </div>
-                <p class="text-[10px] text-gray-400">Scan QR ini pada kamera Absensi</p>
+                <p class="text-[10px] text-gray-400 mt-2">Tunjukkan QR ini ke petugas/kamera untuk absensi.</p>
             </div>
-            <div class="bg-gray-50 p-4 border-t border-gray-100 grid grid-cols-2 gap-2 text-center">
-                <div><div class="text-[10px] text-gray-400">STATUS</div><div class="font-bold text-green-600 text-xs">AKTIF</div></div>
-                <div><div class="text-[10px] text-gray-400">TAHUN AJARAN</div><div class="font-bold text-gray-700 text-xs">2023/2024</div></div>
+            
+            <div class="bg-gray-50 p-3 border-t text-center">
+                <div class="text-[10px] font-bold text-green-600 bg-green-100 inline-block px-3 py-1 rounded-full">STATUS AKTIF</div>
             </div>
+        </div>
+
+        <div class="mt-6 grid grid-cols-2 gap-3 px-4">
+             <button onclick="alert('Fitur sedang maintenance')" class="bg-white p-4 rounded-xl shadow-sm border text-center">
+                 <i class="fas fa-book text-blue-500 text-2xl mb-2"></i>
+                 <div class="font-bold text-xs">Materi</div>
+             </button>
+             <button onclick="alert('Fitur sedang maintenance')" class="bg-white p-4 rounded-xl shadow-sm border text-center">
+                 <i class="fas fa-calendar-alt text-orange-500 text-2xl mb-2"></i>
+                 <div class="font-bold text-xs">Jadwal</div>
+             </button>
         </div>
     </section>
 
     <div id="user-modal" class="modal-overlay">
         <div class="modal-content p-6">
-            <h3 class="font-bold text-lg mb-4">Edit/Tambah User</h3>
-            <input type="hidden" id="modal-id">
-            <input type="text" id="modal-name" class="pro-input" placeholder="Nama Lengkap">
-            <input type="text" id="modal-username" class="pro-input" placeholder="Username">
-            <select id="modal-role" class="pro-input">
-                <option value="siswa">Siswa</option>
-                <option value="guru">Guru</option>
-                <option value="admin">Admin</option>
-            </select>
-            <div class="flex gap-2">
-                <button onclick="saveUser()" class="pro-btn btn-blue flex-1">Simpan</button>
-                <button onclick="document.getElementById('user-modal').style.display='none'" class="pro-btn bg-gray-200 text-gray-600 flex-1">Batal</button>
+            <h3 class="font-bold text-lg mb-4">Form User</h3>
+            <input type="hidden" id="modal-uid">
+            <div class="space-y-3">
+                <input type="text" id="modal-name" class="pro-input" placeholder="Nama Lengkap">
+                <input type="text" id="modal-user" class="pro-input" placeholder="Username / NISN">
+                <input type="text" id="modal-pass" class="pro-input" placeholder="Password (Default: 123)">
+                <select id="modal-role" class="pro-input">
+                    <option value="siswa">Siswa</option>
+                    <option value="guru">Guru</option>
+                    <option value="admin">Admin</option>
+                </select>
+                <div class="flex gap-2 pt-2">
+                    <button onclick="saveUser()" class="pro-btn btn-blue flex-1">Simpan</button>
+                    <button onclick="closeModal('user-modal')" class="pro-btn bg-gray-200 text-gray-600 flex-1">Batal</button>
+                </div>
             </div>
         </div>
     </div>
 
+    <div id="manual-absen-modal" class="modal-overlay">
+        <div class="modal-content p-6">
+            <h3 class="font-bold text-lg mb-4">Absen Manual</h3>
+            <select id="manual-user-select" class="pro-input mb-4"></select>
+            <button onclick="submitManualAbsen()" class="pro-btn btn-green">Submit Hadir</button>
+            <button onclick="closeModal('manual-absen-modal')" class="mt-2 text-gray-400 text-xs w-full text-center">Batal</button>
+        </div>
+    </div>
+
+    <div id="backup-modal" class="modal-overlay">
+        <div class="modal-content p-6 text-center">
+            <i class="fas fa-database text-4xl text-blue-500 mb-4"></i>
+            <h3 class="font-bold mb-2">Backup & Restore</h3>
+            <p class="text-xs text-gray-400 mb-6">Simpan data dalam format JSON atau upload backup.</p>
+            <button onclick="downloadBackup()" class="pro-btn btn-blue mb-2"><i class="fas fa-download"></i> Download Data</button>
+            <button onclick="document.getElementById('file-restore').click()" class="pro-btn btn-yellow"><i class="fas fa-upload"></i> Restore Data</button>
+            <input type="file" id="file-restore" hidden onchange="restoreBackup(this)">
+            <button onclick="closeModal('backup-modal')" class="mt-4 text-gray-400 text-xs">Tutup</button>
+        </div>
+    </div>
+
     <script>
-        // --- KONFIGURASI FIREBASE ---
+        // --- 1. CONFIGURATION ---
         const firebaseConfig = {
             apiKey: "AIzaSyCH-_9wgq0Mw8JSqw2PtUUJy7KEPaHHZxM",
             authDomain: "absensigkps.firebaseapp.com",
@@ -257,259 +373,473 @@
             appId: "1:327391538920:web:04261da312429076e2635d"
         };
         firebase.initializeApp(firebaseConfig);
-        const dbRef = firebase.database().ref('gkps_data');
+        const dbRef = firebase.database().ref('gkps_data_v2'); // Versi 2 DB
 
-        // STATE GLOBAL
-        let db = { users: [], attendance: [], folders: [] };
+        // Global State
+        let db = { users: [], attendance: [], folders: [], jadwal: [], messages: [] };
         let currentUser = null;
         let html5QrCode = null;
         let isScanning = false;
-        let currentFolderId = null; // Untuk navigasi folder
+        let currentFolderId = null;
 
-        // --- INIT APP ---
-        function initApp() {
-            const saved = localStorage.getItem('gkps_session');
-            if (saved) {
-                currentUser = JSON.parse(saved);
-                if (currentUser.role === 'siswa') { renderSiswaScreen(); showScreen('siswa'); }
-                else { renderDashboardScreen(); showScreen('dashboard'); }
-            } else { showScreen('login'); }
+        // --- 2. INIT & AUTH ---
+        function init() {
+            // Cek Session
+            const sess = localStorage.getItem('gkps_sess');
+            if (sess) {
+                currentUser = JSON.parse(sess);
+                if (currentUser.role === 'siswa') showScreen('siswa');
+                else showScreen('dashboard');
+            } else {
+                showScreen('login');
+            }
 
-            // Sync Database
-            dbRef.on('value', (snap) => {
+            // Sync DB
+            dbRef.on('value', snap => {
                 const val = snap.val();
                 if (val) {
                     db = val;
-                    if(!db.folders) db.folders = []; // Init folder jika kosong
-                    if(!db.attendance) db.attendance = [];
+                    // Init arrays if null
+                    ['users','attendance','folders','jadwal','messages'].forEach(k => { if(!db[k]) db[k] = []; });
                     updateUI();
                 } else {
-                    // Default Admin jika DB kosong
-                    db.users = [{ id: 'ADM_1', name: 'Super Admin', username: 'admin', password: '123', role: 'admin' }];
+                    // Seed Default Admin
+                    db.users = [{id:'ADM001', name:'Super Admin', username:'admin', password:'123', role:'admin'}];
                     saveDb();
                 }
             });
-            
-            // Check Connection
+
+            // Conn Status
             firebase.database().ref(".info/connected").on("value", s => {
-                document.getElementById('conn-indicator').innerText = s.val() ? "🟢 Online" : "🔴 Offline";
+                const el = document.getElementById('conn-indicator');
+                el.innerText = s.val() ? "🟢 Online" : "🔴 Offline";
+                el.className = s.val() ? "conn-status bg-green-500" : "conn-status bg-red-500";
             });
         }
         function saveDb() { dbRef.set(db); }
+        
+        function authLogin() {
+            const u = document.getElementById('login-u').value;
+            const p = document.getElementById('login-p').value;
+            const user = (db.users||[]).find(x => x.username === u && x.password === p);
+            
+            if (user) {
+                currentUser = user;
+                localStorage.setItem('gkps_sess', JSON.stringify(user));
+                if(user.role === 'siswa') showScreen('siswa');
+                else showScreen('dashboard');
+            } else {
+                alert('Login Gagal! Cek username/password.');
+            }
+        }
+        function doLogout() { localStorage.removeItem('gkps_sess'); location.reload(); }
 
-        // --- NAVIGATION ---
+        // --- 3. NAVIGATION & UI ---
         function showScreen(id) {
-            document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
-            document.getElementById('screen-' + id).classList.remove('hidden');
+            document.querySelectorAll('section').forEach(el => el.classList.add('hidden'));
+            document.getElementById('screen-'+id).classList.remove('hidden');
+            if(id==='siswa') renderSiswaUI();
+            if(id==='dashboard') renderDashboardUI();
         }
-        function switchTab(tab) {
-            document.querySelectorAll('.tab-view').forEach(v => v.classList.add('hidden'));
+        function nav(tab) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
             document.getElementById('view-'+tab).classList.remove('hidden');
-            document.querySelectorAll('.nav-pill').forEach(n => n.classList.remove('active'));
-            document.getElementById('tab-'+tab).classList.add('active');
+            document.querySelectorAll('.nav-pill').forEach(el => el.classList.remove('active'));
+            document.getElementById('nav-'+tab).classList.add('active');
             
-            if (tab === 'scan') startProScanner(); else stopScanner();
-            if (tab === 'materi') renderFolders();
-            if (tab === 'profile') loadProfileData();
+            if(tab === 'scan') startScanner(); else stopScanner();
+            if(tab === 'materi') renderFolders();
         }
-        function logout() { localStorage.clear(); location.reload(); }
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-        // --- LOGIN ---
-        function handleLogin() {
-            const u = document.getElementById('login-username').value;
-            const p = document.getElementById('login-password').value;
-            const found = (db.users||[]).find(x => x.username === u && x.password === p);
-            if (found) {
-                currentUser = found;
-                localStorage.setItem('gkps_session', JSON.stringify(currentUser));
-                if (found.role === 'siswa') { renderSiswaScreen(); showScreen('siswa'); }
-                else { renderDashboardScreen(); showScreen('dashboard'); }
-            } else { alert("Login Gagal"); }
-        }
-
-        // --- SCANNER LOGIC (FIXED) ---
-        function startProScanner() {
+        // --- 4. SCANNER LOGIC (FIXED) ---
+        function startScanner() {
             if (isScanning) return;
-            if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
-            const config = { fps: 30, qrbox: { width: 250, height: 250 }, experimentalFeatures: { useBarCodeDetectorIfSupported: true } };
-            html5QrCode.start({ facingMode: "environment" }, config, (text) => {
-                if (text.startsWith('GKPS')) {
-                    const parts = text.split('|');
-                    const today = new Date().toLocaleDateString('id-ID');
-                    if (!db.attendance.find(a => a.username === parts[1] && a.date === today)) {
-                        db.attendance.push({ username: parts[1], name: parts[2], date: today, time: new Date().toLocaleTimeString(), status: 'Hadir' });
-                        saveDb();
-                        showScanStatus("✅ " + parts[2] + " HADIR", "green");
-                    } else { showScanStatus("⚠️ SUDAH ABSEN", "yellow"); }
-                }
-            }).then(() => isScanning = true);
+            // Setup Scanner with Specific Config for Laptop/Mobile
+            html5QrCode = new Html5Qrcode("reader");
+            const config = { 
+                fps: 20, 
+                qrbox: { width: 250, height: 250 }, // Fixed Size Box
+                aspectRatio: 1.0, 
+                disableFlip: false 
+            };
+            
+            html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess, onScanError)
+            .then(() => { 
+                isScanning = true; 
+                document.getElementById('scanner-error').classList.add('hidden');
+            })
+            .catch(err => {
+                document.getElementById('scanner-error').classList.remove('hidden');
+                console.error(err);
+            });
         }
-        function stopScanner() { if (html5QrCode && isScanning) html5QrCode.stop().then(() => isScanning = false); }
-        function showScanStatus(msg, color) {
-            const el = document.getElementById('scan-status');
-            el.innerText = msg; el.classList.remove('hidden');
-            el.className = `mt-4 p-3 rounded-xl font-bold bg-${color}-100 text-${color}-800`;
-            setTimeout(() => el.classList.add('hidden'), 2000);
+        
+        function stopScanner() {
+            if(html5QrCode && isScanning) {
+                html5QrCode.stop().then(() => isScanning = false);
+            }
         }
 
-        // --- SISWA SCREEN (QR HD) ---
-        function renderSiswaScreen() {
-            document.getElementById('card-name-display').innerText = currentUser.name;
-            document.getElementById('card-id-display').innerText = "ID: " + currentUser.username;
-            const imgUrl = `https://api.dicebear.com/7.x/notionists/svg?seed=${currentUser.name}`;
-            document.getElementById('card-img').src = imgUrl;
+        function onScanSuccess(decodedText) {
+            if(decodedText.startsWith("GKPS")) {
+                const parts = decodedText.split('|'); // GKPS|User|Nama|Role
+                const username = parts[1];
+                const name = parts[2];
+                const today = new Date().toLocaleDateString('id-ID');
+                
+                // Cek duplikat
+                const exists = db.attendance.find(a => a.username === username && a.date === today);
+                
+                const box = document.getElementById('scan-result-box');
+                const msg = document.getElementById('scan-result-msg');
+                box.classList.remove('hidden');
+                
+                if(!exists) {
+                    db.attendance.push({
+                        username, name, role: parts[3]||'siswa',
+                        date: today, time: new Date().toLocaleTimeString(),
+                        status: 'Hadir'
+                    });
+                    saveDb();
+                    msg.innerText = "✅ BERHASIL: " + name;
+                    msg.className = "p-4 rounded-xl font-bold text-center text-white text-lg shadow-lg bg-green-500";
+                } else {
+                    msg.innerText = "⚠️ SUDAH ABSEN: " + name;
+                    msg.className = "p-4 rounded-xl font-bold text-center text-white text-lg shadow-lg bg-yellow-500";
+                }
+                
+                // Audio Beep
+                new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg').play();
+                
+                setTimeout(() => box.classList.add('hidden'), 2000);
+            }
+        }
+        function onScanError(err) { /* Ignore frame errors */ }
+
+        // --- 5. STUDENT UI (QR HIGH RES) ---
+        function renderSiswaUI() {
+            document.getElementById('stu-name').innerText = currentUser.name;
+            document.getElementById('stu-id').innerText = "ID: " + currentUser.username;
+            document.getElementById('stu-img').src = `https://api.dicebear.com/7.x/initials/svg?seed=${currentUser.name}`;
             
-            // Generate QR High Res
-            const container = document.getElementById("qrcode");
+            // GENERATE QR CODE 1000px
+            const container = document.getElementById("qrcode-container");
             container.innerHTML = "";
+            const qrData = `GKPS|${currentUser.username}|${currentUser.name}|${currentUser.role}`;
+            
             new QRCode(container, {
-                text: `GKPS|${currentUser.username}|${currentUser.name}|siswa`,
-                width: 1000, height: 1000, // HD Resolution
+                text: qrData,
+                width: 1000, height: 1000,
                 colorDark : "#000000", colorLight : "#ffffff",
                 correctLevel : QRCode.CorrectLevel.H
             });
         }
 
-        // --- DASHBOARD UI ---
-        function renderDashboardScreen() {
-            document.getElementById('role-badge').innerText = currentUser.role;
-            document.getElementById('dash-avatar').src = `https://api.dicebear.com/7.x/notionists/svg?seed=${currentUser.name}`;
-            renderHomeStats(); renderUserTable();
-        }
-        function renderHomeStats() {
+        // --- 6. ADMIN DASHBOARD LOGIC ---
+        function renderDashboardUI() {
+            document.getElementById('dash-img').src = `https://api.dicebear.com/7.x/initials/svg?seed=${currentUser.name}`;
+            document.getElementById('adm-name').value = currentUser.name;
+            
+            // Stats
             const today = new Date().toLocaleDateString('id-ID');
-            const logs = (db.attendance||[]).filter(a => a.date === today);
-            document.getElementById('count-present').innerText = logs.length;
-            document.getElementById('table-attendance').innerHTML = logs.map(l => `
-                <tr class="border-b"><td class="p-2">${l.time}</td><td class="p-2 font-bold">${l.name}</td><td class="p-2 text-green-600 font-bold">Hadir</td></tr>
-            `).join('');
-        }
-        function renderUserTable() {
-            document.getElementById('table-users').innerHTML = (db.users||[]).map(u => `
+            const todayLogs = db.attendance.filter(a => a.date === today);
+            document.getElementById('stat-hadir').innerText = todayLogs.length;
+            
+            // Table Logs
+            const tbody = document.getElementById('table-logs');
+            tbody.innerHTML = db.attendance.slice().reverse().map(l => `
                 <tr class="border-b hover:bg-gray-50">
-                    <td class="p-2 font-bold">${u.name}<br><span class="text-xs text-gray-400">@${u.username}</span></td>
-                    <td class="p-2 uppercase text-xs">${u.role}</td>
-                    <td class="p-2"><button onclick="openUserModal('${u.id}')" class="text-blue-500 font-bold">Edit</button></td>
+                    <td class="p-3 font-mono text-gray-500">${l.time}</td>
+                    <td class="p-3 font-bold">${l.name}</td>
+                    <td class="p-3 uppercase text-[10px]">${l.role}</td>
+                    <td class="p-3"><span class="bg-green-100 text-green-700 px-2 py-1 rounded-full text-[10px] font-bold">Hadir</span></td>
                 </tr>
             `).join('');
+            
+            renderUsers();
+            renderJadwal();
+            renderMessages();
         }
 
-        // --- FITUR MATERI (FOLDER SYSTEM) ---
+        // --- 7. USER CRUD & CSV ---
+        function renderUsers() {
+            const search = document.getElementById('search-user').value.toLowerCase();
+            const tbody = document.getElementById('table-users-body');
+            const filtered = db.users.filter(u => u.name.toLowerCase().includes(search) || u.username.includes(search));
+            
+            tbody.innerHTML = filtered.map((u, i) => `
+                <tr class="border-b hover:bg-gray-50">
+                    <td class="p-3">
+                        <div class="font-bold">${u.name}</div>
+                        <div class="text-[10px] text-gray-400">@${u.username}</div>
+                    </td>
+                    <td class="p-3 uppercase text-xs font-bold text-blue-600">${u.role}</td>
+                    <td class="p-3 font-mono text-xs text-gray-400">${u.password}</td>
+                    <td class="p-3 text-right">
+                        <button onclick="editUser('${u.id}')" class="text-blue-500 hover:text-blue-700 mr-2"><i class="fas fa-edit"></i></button>
+                        <button onclick="delUser('${u.id}')" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+            
+            // Fill Select for Manual Absen
+            const sel = document.getElementById('manual-user-select');
+            sel.innerHTML = db.users.map(u => `<option value="${u.username}|${u.name}|${u.role}">${u.name} (${u.role})</option>`).join('');
+        }
+
+        function openUserModal() {
+            document.getElementById('modal-uid').value = '';
+            document.getElementById('modal-name').value = '';
+            document.getElementById('modal-user').value = '';
+            document.getElementById('modal-pass').value = '';
+            openModal('user-modal');
+        }
+
+        function saveUser() {
+            const uid = document.getElementById('modal-uid').value;
+            const name = document.getElementById('modal-name').value;
+            const user = document.getElementById('modal-user').value;
+            const pass = document.getElementById('modal-pass').value || '123';
+            const role = document.getElementById('modal-role').value;
+            
+            if(!name || !user) return alert('Lengkapi data!');
+
+            if(uid) {
+                const idx = db.users.findIndex(u => u.id === uid);
+                db.users[idx] = { ...db.users[idx], name, username: user, password: pass, role };
+            } else {
+                db.users.push({ id: 'USR'+Date.now(), name, username: user, password: pass, role });
+            }
+            saveDb(); closeModal('user-modal'); renderUsers();
+        }
+
+        function editUser(id) {
+            const u = db.users.find(x => x.id === id);
+            document.getElementById('modal-uid').value = u.id;
+            document.getElementById('modal-name').value = u.name;
+            document.getElementById('modal-user').value = u.username;
+            document.getElementById('modal-pass').value = u.password;
+            document.getElementById('modal-role').value = u.role;
+            openModal('user-modal');
+        }
+
+        function delUser(id) {
+            if(confirm('Hapus User ini?')) {
+                db.users = db.users.filter(u => u.id !== id);
+                saveDb(); renderUsers();
+            }
+        }
+        
+        // Import CSV Logic
+        function handleCSV(input) {
+            const file = input.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                
+                let count = 0;
+                jsonData.forEach(row => {
+                    // Expect columns: Name, Username, Role
+                    if(row.Name && row.Username) {
+                        db.users.push({
+                            id: 'USR'+Date.now()+Math.random(),
+                            name: row.Name,
+                            username: row.Username,
+                            password: '123',
+                            role: row.Role ? row.Role.toLowerCase() : 'siswa'
+                        });
+                        count++;
+                    }
+                });
+                saveDb(); renderUsers();
+                alert(`Berhasil import ${count} user!`);
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // --- 8. MATERI (FOLDER SYSTEM) ---
         function renderFolders() {
             currentFolderId = null;
-            document.getElementById('materi-breadcrumb').innerText = "📂 Folder Utama";
-            document.getElementById('file-container').classList.add('hidden');
-            document.getElementById('folder-container').classList.remove('hidden');
+            document.getElementById('breadcrumb').innerText = "/ Root";
+            document.getElementById('folder-grid').classList.remove('hidden');
+            document.getElementById('file-list').classList.add('hidden');
             
-            const list = document.getElementById('folder-container');
-            list.innerHTML = (db.folders||[]).map((f, idx) => `
-                <div class="folder-item" onclick="openFolder(${idx})">
-                    <div class="folder-icon">📁</div>
+            const grid = document.getElementById('folder-grid');
+            grid.innerHTML = db.folders.map((f, i) => `
+                <div class="folder-item" onclick="openFolder(${i})">
+                    <div class="delete-corner" onclick="delFolder(${i}); event.stopPropagation()">x</div>
+                    <div class="folder-icon"><i class="fas fa-folder"></i></div>
                     <div class="text-xs font-bold truncate">${f.name}</div>
-                    <div class="text-[10px] text-gray-400">${(f.files||[]).length} file</div>
-                    <button onclick="deleteFolder(${idx}); event.stopPropagation()" class="text-red-500 text-[10px] mt-2">Hapus</button>
+                    <div class="text-[9px] text-gray-400">${(f.files||[]).length} items</div>
                 </div>
             `).join('');
         }
+        
         function createFolder() {
-            const name = prompt("Nama Folder Baru:");
-            if(name) {
-                if(!db.folders) db.folders = [];
-                db.folders.push({ name: name, files: [] });
+            const n = prompt("Nama Folder:");
+            if(n) {
+                db.folders.push({ name: n, files: [] });
                 saveDb(); renderFolders();
             }
         }
-        function deleteFolder(idx) {
-            if(confirm("Hapus folder ini?")) {
-                db.folders.splice(idx, 1); saveDb(); renderFolders();
+        function delFolder(i) {
+            if(confirm("Hapus folder beserta isinya?")) {
+                db.folders.splice(i, 1);
+                saveDb(); renderFolders();
             }
         }
-        function openFolder(idx) {
-            currentFolderId = idx;
-            const folder = db.folders[idx];
-            document.getElementById('materi-breadcrumb').innerText = "📂 " + folder.name;
-            document.getElementById('folder-container').classList.add('hidden');
-            document.getElementById('file-container').classList.remove('hidden');
+        function openFolder(i) {
+            currentFolderId = i;
+            document.getElementById('folder-grid').classList.add('hidden');
+            document.getElementById('file-list').classList.remove('hidden');
+            document.getElementById('breadcrumb').innerText = "/ " + db.folders[i].name;
             renderFiles();
         }
         function renderFiles() {
             const folder = db.folders[currentFolderId];
-            const list = document.getElementById('file-list');
-            list.innerHTML = (folder.files||[]).map((file, fIdx) => `
-                <div class="flex items-center justify-between p-2 bg-gray-50 rounded border">
-                    <div class="flex items-center gap-3">
-                        <div class="file-icon">📄</div>
-                        <div><div class="font-bold text-sm">${file.name}</div><div class="text-[10px] text-gray-400">${file.date}</div></div>
+            const div = document.getElementById('files-container');
+            div.innerHTML = (folder.files||[]).map((f, fi) => `
+                <div class="flex justify-between items-center bg-gray-50 p-2 rounded border">
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-file-alt text-blue-400"></i>
+                        <span class="text-sm font-bold">${f.name}</span>
                     </div>
-                    <button onclick="deleteFile(${fIdx})" class="text-red-500 font-bold text-xs">X</button>
+                    <button onclick="delFile(${fi})" class="text-red-500 text-xs">Hapus</button>
                 </div>
             `).join('');
         }
-        function uploadFileFake() {
-            const fname = prompt("Nama File (Simulasi Upload):");
-            if(fname) {
+        function uploadFileMock() {
+            const n = prompt("Simulasi Nama File:");
+            if(n) {
                 if(!db.folders[currentFolderId].files) db.folders[currentFolderId].files = [];
-                db.folders[currentFolderId].files.push({ name: fname, date: new Date().toLocaleDateString('id-ID') });
+                db.folders[currentFolderId].files.push({ name: n });
                 saveDb(); renderFiles();
             }
         }
-        function deleteFile(fIdx) {
-            if(confirm("Hapus file?")) {
-                db.folders[currentFolderId].files.splice(fIdx, 1);
-                saveDb(); renderFiles();
+        function delFile(fi) {
+            db.folders[currentFolderId].files.splice(fi, 1);
+            saveDb(); renderFiles();
+        }
+
+        // --- 9. JADWAL ---
+        function renderJadwal() {
+            const tbody = document.getElementById('table-jadwal');
+            tbody.innerHTML = db.jadwal.map((j, i) => `
+                <tr class="border-b">
+                    <td>${j.hari}</td>
+                    <td>${j.jam}</td>
+                    <td><b>${j.mapel}</b></td>
+                    <td>${j.guru}</td>
+                    <td><button onclick="delJadwal(${i})" class="text-red-500">x</button></td>
+                </tr>
+            `).join('');
+        }
+        function addSchedule() {
+            // Simple prompt implementation to save space
+            const hari = prompt("Hari (Senin-Jumat):");
+            const mapel = prompt("Mata Pelajaran:");
+            if(hari && mapel) {
+                db.jadwal.push({ hari, jam: '08:00', mapel, guru: 'Guru Mapel' });
+                saveDb(); renderJadwal();
+            }
+        }
+        function delJadwal(i) { db.jadwal.splice(i, 1); saveDb(); renderJadwal(); }
+
+        // --- 10. MESSAGES & SETTINGS ---
+        function renderMessages() {
+            const box = document.getElementById('chat-box');
+            box.innerHTML = db.messages.map(m => `
+                <div class="chat-bubble admin">
+                    <div class="text-sm">${m.text}</div>
+                    <div class="chat-meta">${m.date}</div>
+                </div>
+            `).join('');
+            box.scrollTop = box.scrollHeight;
+        }
+        function sendChat() {
+            const txt = document.getElementById('chat-input').value;
+            if(txt) {
+                db.messages.push({ text: txt, date: new Date().toLocaleString() });
+                document.getElementById('chat-input').value = "";
+                saveDb(); renderMessages();
+            }
+        }
+        
+        function submitManualAbsen() {
+            const val = document.getElementById('manual-user-select').value;
+            const [u, n, r] = val.split('|');
+            db.attendance.push({
+                username: u, name: n, role: r,
+                date: new Date().toLocaleDateString('id-ID'),
+                time: new Date().toLocaleTimeString(),
+                status: 'Hadir Manual'
+            });
+            saveDb();
+            alert('Absen manual berhasil!');
+            closeModal('manual-absen-modal');
+            renderDashboardUI();
+        }
+        
+        // Backup & Restore
+        function downloadBackup() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db));
+            const dlAnchorElem = document.createElement('a');
+            dlAnchorElem.setAttribute("href", dataStr);
+            dlAnchorElem.setAttribute("download", "backup_gkps_" + Date.now() + ".json");
+            dlAnchorElem.click();
+        }
+        function restoreBackup(input) {
+            const file = input.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    db = JSON.parse(e.target.result);
+                    saveDb(); location.reload();
+                } catch(err) { alert("File corrupt"); }
+            };
+            reader.readAsText(file);
+        }
+        
+        function resetSystemPrompt() {
+            const code = prompt("Ketik 'RESET' untuk menghapus semua data:");
+            if(code === 'RESET') {
+                dbRef.set(null);
+                localStorage.clear();
+                alert("System Reset Berhasil.");
+                location.reload();
             }
         }
 
-        // --- FITUR PROFILE ---
-        function loadProfileData() {
-            document.getElementById('profile-img-big').src = `https://api.dicebear.com/7.x/notionists/svg?seed=${currentUser.name}`;
-            document.getElementById('profile-name-big').innerText = currentUser.name;
-            document.getElementById('profile-role-big').innerText = currentUser.role;
-            document.getElementById('prof-username').value = currentUser.username;
-        }
-        function updateProfile() {
-            const newPass = document.getElementById('prof-password').value;
-            if(newPass) {
+        function saveAdminProfile() {
+            const newName = document.getElementById('adm-name').value;
+            const newPass = document.getElementById('adm-pass').value;
+            if(newName && newPass) {
                 const idx = db.users.findIndex(u => u.id === currentUser.id);
                 if(idx !== -1) {
+                    db.users[idx].name = newName;
                     db.users[idx].password = newPass;
-                    saveDb(); alert("Password berhasil diubah!");
-                    document.getElementById('prof-password').value = "";
+                    currentUser = db.users[idx];
+                    localStorage.setItem('gkps_sess', JSON.stringify(currentUser));
+                    saveDb(); alert("Profil update!");
                 }
-            } else { alert("Tidak ada perubahan."); }
-        }
-
-        // --- USER MANAGEMENT ---
-        function openUserModal(id) {
-            document.getElementById('user-modal').style.display = 'flex';
-            if(id) {
-                const u = db.users.find(x => x.id === id);
-                document.getElementById('modal-id').value = u.id;
-                document.getElementById('modal-name').value = u.name;
-                document.getElementById('modal-username').value = u.username;
-                document.getElementById('modal-role').value = u.role;
-            } else {
-                document.getElementById('modal-id').value = '';
-                document.getElementById('modal-name').value = '';
-                document.getElementById('modal-username').value = '';
             }
         }
-        function saveUser() {
-            const id = document.getElementById('modal-id').value;
-            const name = document.getElementById('modal-name').value;
-            const uname = document.getElementById('modal-username').value;
-            const role = document.getElementById('modal-role').value;
-            
-            if(id) {
-                const idx = db.users.findIndex(x => x.id === id);
-                db.users[idx] = { ...db.users[idx], name, username: uname, role };
-            } else {
-                db.users.push({ id:'USR_'+Date.now(), name, username: uname, password:'123', role });
-            }
-            saveDb(); document.getElementById('user-modal').style.display = 'none'; renderUserTable();
+
+        function exportExcel() {
+            const ws = XLSX.utils.json_to_sheet(db.attendance);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Kehadiran");
+            XLSX.writeFile(wb, "Rekap_Kehadiran.xlsx");
         }
 
-        window.onload = initApp;
+        // Start
+        window.onload = init;
     </script>
 </body>
 </html>
