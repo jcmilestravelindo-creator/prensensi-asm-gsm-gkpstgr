@@ -6,16 +6,14 @@
     <title>Sistem Absensi GKPS - PRO ULTIMATE Enhanced Scanner</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
-    
     <script type="text/javascript" src="https://unpkg.com/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
-    
     <script src="https://cdn.tailwindcss.com"></script>
-    
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+
         /* Variable & Body */
         :root {
             --primary: #0ea5e9;
@@ -51,7 +49,8 @@
             color: #713f12; } .btn-yellow:hover { background: #eab308; }
 
         /* Password Toggle Style */
-        .pass-wrapper { position: relative; width: 100%; }
+        .pass-wrapper { position: relative;
+            width: 100%; }
         .pass-toggle { position: absolute; right: 15px; top: 42%; transform: translateY(-50%);
             cursor: pointer; z-index: 10; font-size: 1.2rem; color: #94a3b8; user-select: none;
         }
@@ -98,7 +97,7 @@
         
         /* QR Code Container Styling */
         #qrcode, #qrcode-guru { 
-            padding: 10px; 
+            padding: 10px;
             background: white; 
             border: 1px solid #e2e8f0; 
             border-radius: 12px;
@@ -210,9 +209,19 @@
         }
         .scan-overlay { position: absolute; inset: 0; pointer-events: none; z-index: 10; display: flex;
             flex-direction: column; justify-content: center; align-items: center; }
-        .scan-frame { width: 70%; height: 70%;
-            border: 2px solid rgba(255, 255, 255, 0.3); border-radius: 20px; position: relative; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
-            transition: all 0.3s ease; }
+        
+        /* [PERBAIKAN 3] CSS INDIKATOR: Frame Scanner lebih fokus */
+        .scan-frame { 
+            width: 250px; /* Ukuran fix matching config JS */
+            height: 250px;
+            border: 2px solid rgba(255, 255, 255, 0.5); 
+            border-radius: 20px; 
+            position: relative; 
+            /* Box shadow tebal (overlay gelap) di luar frame agar user fokus ke tengah */
+            box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.6); 
+            transition: all 0.3s ease; 
+        }
+
         .scan-frame::after, .scan-frame::before { content: ''; position: absolute;
             width: 20px; height: 20px; border-color: #3b82f6; border-style: solid; transition: all 0.2s;
         }
@@ -252,57 +261,70 @@
     
         /* ==================== ENHANCED SCANNER INDICATORS ==================== */
         #low-light-indicator {
-            position: absolute; top: 10px;
+            position: absolute;
+            top: 10px;
             left: 50%; transform: translateX(-50%);
             background: rgba(239, 68, 68, 0.95); color: white; padding: 6px 16px;
-            border-radius: 20px; font-size: 11px; font-weight: bold;
+            border-radius: 20px; font-size: 11px;
+            font-weight: bold;
             z-index: 15;
             display: none; align-items: center; gap: 6px; animation: pulseLow 2s infinite;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
         @keyframes pulseLow {
-            0%, 100% { opacity: 1; }
+            0%, 100% { opacity: 1;
+            }
             50% { opacity: 0.7;
             }
         }
         .brightness-indicator {
-            position: absolute; top: 45px; left: 10px; background: rgba(0, 0, 0, 0.75);
+            position: absolute;
+            top: 45px; left: 10px; background: rgba(0, 0, 0, 0.75);
             color: white;
             padding: 6px 10px; border-radius: 10px; font-size: 10px;
-            z-index: 15; display: flex; flex-direction: column; gap: 4px;
+            z-index: 15;
+            display: flex; flex-direction: column; gap: 4px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
         .brightness-bar {
-            width: 100px; height: 5px; background: rgba(255,255,255,0.25);
+            width: 100px;
+            height: 5px; background: rgba(255,255,255,0.25);
             border-radius: 3px; overflow: hidden;
         }
         #brightness-fill {
-            height: 100%; background: linear-gradient(90deg, #ef4444 0%, #facc15 50%, #22c55e 100%);
+            height: 100%;
+            background: linear-gradient(90deg, #ef4444 0%, #facc15 50%, #22c55e 100%);
             transition: width 0.3s ease;
             border-radius: 3px;
         }
         .scan-stats {
-            position: absolute; bottom: 10px; right: 10px; background: rgba(0, 0, 0, 0.75);
+            position: absolute;
+            bottom: 10px; right: 10px; background: rgba(0, 0, 0, 0.75);
             color: white;
             padding: 8px 12px; border-radius: 10px; font-size: 10px; z-index: 15;
             display: flex; flex-direction: column; gap: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
-        .scan-stats div { display: flex; justify-content: space-between; gap: 12px; }
+        .scan-stats div { display: flex; justify-content: space-between; gap: 12px;
+        }
         .scan-stats span { font-weight: bold; color: #3b82f6;
         }
         #flash-suggestion {
-            position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%);
+            position: absolute;
+            bottom: 80px; left: 50%; transform: translateX(-50%);
             background: rgba(251, 191, 36, 0.98); color: #713f12;
             padding: 12px 20px;
-            border-radius: 15px; font-size: 12px; font-weight: bold; z-index: 20;
+            border-radius: 15px; font-size: 12px;
+            font-weight: bold; z-index: 20;
             display: none; align-items: center; gap: 8px;
             box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-            animation: bounceFlash 1s infinite; cursor: pointer;
+            animation: bounceFlash 1s infinite;
+            cursor: pointer;
         }
         @keyframes bounceFlash {
             0%, 100% { transform: translateX(-50%) translateY(0);
             }
-            50% { transform: translateX(-50%) translateY(-10px); }
+            50% { transform: translateX(-50%) translateY(-10px);
+            }
         }
     </style>
 </head>
@@ -329,7 +351,8 @@
         <div class="text-center mb-8">
            <div class="flex justify-center mb-4">
                 <img src="Logo GKPS.png" alt="" class="h-24 w-auto object-contain" onerror="this.style.display='none'">
-            </div>
+         
+           </div>
             <h1 
                 onclick="triggerSecretReset()" class="text-3xl font-extrabold text-blue-900 tracking-tight cursor-pointer select-none">GKPS TANGERANG</h1>
             <p class="text-gray-500 font-medium">Sistem Absensi Terpadu</p>
@@ -337,19 +360,22 @@
        
         <div class="pro-card">
              <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Username</label>
+  
             <input type="text" id="login-username" class="pro-input" placeholder="Masukkan Username">
             <label class="block text-xs font-bold text-gray-500 
                 uppercase mb-1">Password</label>
             <div class="pass-wrapper">
                 <input type="password" id="login-password" class="pro-input" placeholder="Masukkan Password">
-                <span onclick="togglePass('login-password', this)" class="pass-toggle">👁️</span>
+                <span 
+onclick="togglePass('login-password', this)" class="pass-toggle">👁️</span>
             </div>
             
             <button onclick="handleLogin()" class="pro-btn btn-blue shadow-lg shadow-blue-200">MASUK</button>
      
             <div class="mt-4 flex justify-between items-center text-xs">
                 <button onclick="openForgotModal()" class="text-blue-500 font-bold hover:underline">Lupa Password?</button>
-                <button id="btn-emergency-reset" onclick="emergencyReset()" class="hidden text-red-500 font-bold hover:underline border border-red-200 px-2 py-1 rounded">⚠️ Reset Aplikasi</button>
+              
+   <button id="btn-emergency-reset" onclick="emergencyReset()" class="hidden text-red-500 font-bold hover:underline border border-red-200 px-2 py-1 rounded">⚠️ Reset Aplikasi</button>
             </div>
         </div>
     </section>
@@ -358,31 +384,37 @@
         class="hidden max-w-md mx-auto pt-8">
         <header class="flex justify-between items-center mb-6 relative">
             <div class="flex items-center gap-3">
-                <img id="stu-avatar" src="" class="w-12 h-12 rounded-full border-2 border-blue-500 shadow-sm bg-white object-cover">
+                
+ <img id="stu-avatar" src="" class="w-12 h-12 rounded-full border-2 border-blue-500 shadow-sm bg-white object-cover">
                 <div>
                      <h2 class="text-xl font-bold text-blue-900 leading-tight">Halo, <span 
                         id="siswa-greet-name">Siswa</span>!</h2>
-                    <p class="text-xs text-gray-500">Selamat Datang</p>
+                    <p class="text-xs text-gray-500">Selamat 
+Datang</p>
                 </div>
             </div>
             
             <div class="flex gap-3 items-center">
                  <div class="relative notif-container">
                      <button onclick="toggleNotificationPanel('siswa')" class="wa-icon-btn focus:outline-none mt-1">
-                        💬 <span id="siswa-wa-badge" class="hidden wa-badge-count">0</span>
+ 
+                       💬 <span id="siswa-wa-badge" class="hidden wa-badge-count">0</span>
                     </button>
                     <div id="siswa-wa-panel" class="wa-dropdown">
                         <div class="wa-header">
+      
                             <span>Pesan Masuk</span>
                             <span class="text-[10px] bg-white/20 px-2 py-0.5 rounded">Admin</span>
                         </div>
-                        <div id="siswa-wa-list" class="wa-list"></div>
+                    
+    <div id="siswa-wa-list" class="wa-list"></div>
                     </div>
                 </div>
 
                 <div class="flex gap-2">
                    <button onclick="openProfileModal()" class="text-blue-500 text-xs font-bold border border-blue-200 px-3 py-1 rounded-full">Profil</button>
-                     <button onclick="logout()" class="text-red-500 text-xs font-bold border border-red-200 px-3 py-1 rounded-full">Keluar</button>
+            
+         <button onclick="logout()" class="text-red-500 text-xs font-bold border border-red-200 px-3 py-1 rounded-full">Keluar</button>
                 </div>
             </div>
         </header>
@@ -390,34 +422,40 @@
         <div class="student-card animate-fade-in">
              <div class="card-header-strip"></div>
             <div class="card-body">
-                <div class="card-photo-frame">
+ 
+               <div class="card-photo-frame">
                     <img id="card-img" src="" alt="Foto Siswa">
                 </div>
                 <div class="card-info">
-                     <div class="text-[10px] font-bold text-blue-500 tracking-widest uppercase mb-1">GKPS TANGERANG</div>
+                     <div class="text-[10px] font-bold text-blue-500 tracking-widest uppercase 
+mb-1">GKPS TANGERANG</div>
                     <h3 id="card-name-display">NAMA SISWA</h3>
                     <p id="card-id-display">ID: 12345678</p>
                     <p id="card-class-display">KELAS DAUD</p>
                     <span class="role-tag" id="card-role-display">SISWA</span>
-                </div>
+           
+     </div>
            </div>
             <div class="card-footer">
                 <div id="qrcode"></div>
                 <p class="text-[9px] text-gray-400 mt-2">Scan QR ini untuk absensi</p>
                  <div id="manual-absen-container-siswa" class="w-full mt-2 hidden">
-                     <button onclick="openManualModal()" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg text-xs shadow animate-pulse">📍 Absen Manual (Klik Disini)</button>
+          
+           <button onclick="openManualModal()" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg text-xs shadow animate-pulse">📍 Absen Manual (Klik Disini)</button>
                 </div>
             </div>
         </div>
 
         <div class="grid grid-cols-2 gap-3 mt-6">
-             <button onclick="openStudentView('materi')" class="bg-white border border-blue-100 p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center hover:bg-blue-50 transition">
+             <button onclick="openStudentView('materi')" class="bg-white border border-blue-100 p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center 
+hover:bg-blue-50 transition">
                 <span class="text-2xl mb-1">📚</span>
                 <span class="text-xs font-bold text-blue-900">Lihat Materi</span>
             </button>
             <button onclick="openStudentView('jadwal')" class="bg-white border border-amber-100 p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center hover:bg-amber-50 transition">
                 <span class="text-2xl mb-1">🗓️</span>
-                <span class="text-xs font-bold text-amber-900">Lihat Jadwal</span>
+      
+          <span class="text-xs font-bold text-amber-900">Lihat Jadwal</span>
             </button>
         </div>
     </section>
@@ -425,137 +463,165 @@
     <section id="screen-dashboard" class="hidden max-w-5xl mx-auto pt-4">
         <header class="flex justify-between items-center mb-6 relative">
             <div class="flex items-center gap-3">
-                 <img id="dash-avatar" src="" class="w-12 h-12 rounded-full border-2 border-blue-500 shadow-sm bg-white object-cover">
+                 <img id="dash-avatar" src="" class="w-12 h-12 rounded-full border-2 border-blue-500 
+shadow-sm bg-white object-cover">
                 <div>
                     <div class="flex items-center gap-2">
                         <h1 class="text-xl font-bold text-blue-900 leading-tight">Dashboard</h1>
-                         <span id="role-badge" class="bg-yellow-200 text-yellow-800 text-xs px-2 py-0.5 rounded">ROLE</span>
+                         <span id="role-badge" class="bg-yellow-200 text-yellow-800 text-xs px-2 
+py-0.5 rounded">ROLE</span>
                     </div>
                     <p class="text-xs text-gray-500">Halo, <span id="guru-greet-name">User</span></p>
                 </div>
             </div>
 
             <div class="flex gap-3 items-center">
-                 <img src="Logo GKPS.png" alt="" class="h-10 w-auto object-contain hidden md:block" onerror="this.style.display='none'">
+            
+     <img src="Logo GKPS.png" alt="" class="h-10 w-auto object-contain hidden md:block" onerror="this.style.display='none'">
 
                  <div class="relative notif-container">
                     <button onclick="toggleNotificationPanel('dash')" class="wa-icon-btn focus:outline-none mt-1">
                         💬 <span id="dash-wa-badge" class="hidden wa-badge-count">0</span>
-                    </button>
+               
+    </button>
                     <div id="dash-wa-panel" class="wa-dropdown">
                         <div class="wa-header">
                             <span>Pesan Masuk</span>
-                            <span class="text-[10px] bg-white/20 px-2 py-0.5 rounded">Admin</span>
+                   
+         <span class="text-[10px] bg-white/20 px-2 py-0.5 rounded">Admin</span>
                         </div>
                         <div id="dash-wa-list" class="wa-list"></div>
                     </div>
-                </div>
+                
+</div>
 
                 <div class="flex gap-2">
                     <button onclick="openIdCardModal()" class="bg-blue-100 text-blue-600 text-xs font-bold border border-blue-200 px-3 py-1 rounded-full hover:bg-blue-200 flex items-center gap-1">🆔 Kartu ID</button>
                     <button onclick="openProfileModal()" class="text-blue-500 text-xs font-bold border border-blue-200 px-3 
-                        py-1 rounded-full hover:bg-blue-50">Profil Saya</button>
+                  
+      py-1 rounded-full hover:bg-blue-50">Profil Saya</button>
                     <button onclick="logout()" class="text-red-500 text-xs font-bold border border-red-200 px-3 py-1 rounded-full hover:bg-red-50">Keluar</button>
                 </div>
             </div>
         </header>
 
         <div class="flex gap-2 mb-6 overflow-x-auto pb-2">
-            <button onclick="switchTab('home')" id="tab-home" class="nav-pill active">📊 Home</button>
+            
+ <button onclick="switchTab('home')" id="tab-home" class="nav-pill active">📊 Home</button>
             <button onclick="switchTab('scan')" id="tab-scan" class="nav-pill">📷 Scan</button>
             <button onclick="switchTab('users')" id="tab-users" class="nav-pill hidden">👥 Users</button> 
             <button onclick="switchTab('messages')" id="tab-messages" class="nav-pill hidden">📢 Pesan</button>
             <button onclick="switchTab('materi')" id="tab-materi" class="nav-pill hidden">📚 Materi</button>
             <button onclick="switchTab('jadwal')" id="tab-jadwal" class="nav-pill hidden">🗓️ Jadwal</button>
-             <button onclick="switchTab('settings')" id="tab-settings" 
+          
+   <button onclick="switchTab('settings')" id="tab-settings" 
                 class="nav-pill hidden">⚙️ Pengaturan</button>
         </div>
 
         <div id="view-home" class="tab-view">
             <div class="grid grid-cols-2 gap-4 mb-6">
                 <div class="bg-blue-600 text-white p-5 rounded-2xl shadow-lg">
-                    <div class="text-3xl font-extrabold" id="count-present">0</div>
+                    <div 
+class="text-3xl font-extrabold" id="count-present">0</div>
                     <div class="text-xs opacity-90">Hadir Hari Ini</div>
                 </div>
                 <div onclick="switchTab('scan')" class="bg-white border border-gray-100 p-5 rounded-2xl shadow-lg flex flex-col justify-center items-center cursor-pointer hover:bg-gray-50">
                      <div class="text-2xl mb-1">📷</div>
-                    <div class="font-bold text-gray-700 text-xs">Mulai Scan</div>
+      
+              <div class="font-bold text-gray-700 text-xs">Mulai Scan</div>
                  </div>
             </div>
             
             <div id="manual-absen-container-dash" class="w-full mb-4 hidden">
-                <button onclick="openManualModal()" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-xl text-sm shadow-lg flex justify-center items-center gap-2">
+                <button onclick="openManualModal()" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 
+rounded-xl text-sm shadow-lg flex justify-center items-center gap-2">
                     <span>📍</span> Klik Disini Untuk Absen Manual
                 </button>
             </div>
 
             <div class="pro-card">
                 <div class="flex justify-between items-center mb-4 border-b pb-2">
-                    <h3 class="font-bold text-gray-800">Log Kehadiran (Hari Ini)</h3>
+      
+              <h3 class="font-bold text-gray-800">Log Kehadiran (Hari Ini)</h3>
                     <div class="flex gap-2">
                         <button onclick="clearLogs()" class="text-red-600 text-xs font-bold bg-red-50 px-2 py-1 rounded border border-red-200">🗑️ Hapus</button>
-                        <button onclick="openArchiveModal()" class="text-blue-600 text-xs font-bold bg-blue-50 px-2 py-1 rounded border border-blue-200">📂 Lihat Arsip</button>
+                        
+ <button onclick="openArchiveModal()" class="text-blue-600 text-xs font-bold bg-blue-50 px-2 py-1 rounded border border-blue-200">📂 Lihat Arsip</button>
                         <button onclick="exportExcel()" class="text-green-600 text-xs font-bold bg-green-50 px-2 py-1 rounded border border-green-200">Excel</button>
                     </div>
                 </div>
-                <div class="overflow-x-auto max-h-[300px]">
+                <div class="overflow-x-auto 
+max-h-[300px]">
                     <table class="w-full admin-table">
                         <thead><tr><th>Jam</th><th>Nama</th><th>Kelas</th><th>Status</th><th>Ket</th></tr></thead>
                         <tbody id="table-attendance"></tbody>
                     </table>
-                </div>
+         
+       </div>
             </div>
         </div>
 
         <div id="view-scan" class="tab-view hidden">
             <div class="max-w-md mx-auto">
                 <div class="bg-white rounded-3xl overflow-hidden shadow-2xl relative w-full border border-gray-200">
-                    <div id="scanner-error" class="hidden p-6 text-center text-red-500 font-bold text-sm bg-red-50">
+                    <div id="scanner-error" class="hidden p-6 
+text-center text-red-500 font-bold text-sm bg-red-50">
                         <div class="text-2xl mb-2">📷🚫</div>
                         <span id="scanner-error-msg">Akses kamera ditolak.</span>
                         <button onclick="startProScanner()" class="mt-4 bg-red-100 text-red-600 px-4 py-2 rounded-full text-xs">Coba Lagi</button>
-                    </div>
+          
+          </div>
            
                     <div id="scanner-container">
                         <div id="reader"></div> 
                         <div id="scan-ui-layer" class="scan-overlay">
-                            <div id="scan-frame" class="scan-frame">
+      
+                      <div id="scan-frame" class="scan-frame">
                                 <div class="scan-frame-right-top"></div>
                                 <div class="scan-frame-left-bottom"></div>
-                                <div class="scan-laser"></div>
+          
+                      <div class="scan-laser"></div>
                             </div>
                             <div class="mt-4 text-white text-xs font-bold bg-black/30 px-3 py-1 rounded-full backdrop-blur-sm">Arahkan QR Code ke dalam kotak</div>
-                        </div>
+       
+                 </div>
                
                         <div class="scan-controls-bar">
                             <select id="camera-select" class="camera-select" onchange="switchCamera()">
-                                <option value="" disabled selected>Memuat...</option>
+            
+                    <option value="" disabled selected>Memuat...</option>
                             </select>
                             <button id="btn-torch" onclick="toggleTorch()" class="scan-btn-control hidden">⚡</button>
-                        </div>
+                 
+       </div>
                     </div>
                 </div>
 
                 <div id="scan-status" class="mt-4 text-center font-bold p-3 rounded-xl hidden shadow-lg text-sm transition-all duration-300 transform scale-95"></div>
                 
-                <div class="mt-4 bg-white p-4 rounded-xl shadow-lg border border-gray-100">
+            
+    <div class="mt-4 bg-white p-4 rounded-xl shadow-lg border border-gray-100">
                     <h4 class="font-bold text-gray-700 text-sm mb-2 pb-1 border-b flex justify-between items-center">
                         <span>Aktivitas Scan Sesi Ini</span>
                         <span id="scan-count-badge" class="bg-blue-100 text-blue-700 text-[10px] px-2 py-0.5 rounded-full">0</span>
-                    </h4>
+  
+                  </h4>
                     <div class="overflow-y-auto max-h-40">
                         <table class="w-full text-xs text-left">
                             <thead class="bg-gray-50 text-gray-500">
-                                <tr><th class="p-2">Waktu</th><th class="p-2">Nama</th><th class="p-2">Status</th></tr>
+   
+                             <tr><th class="p-2">Waktu</th><th class="p-2">Nama</th><th class="p-2">Status</th></tr>
                             </thead>
                             <tbody id="scan-session-log"></tbody>
-                        </table>
+           
+             </table>
                     </div>
                 </div>
             
           <div id="low-light-indicator">⚠️ Cahaya rendah terdeteksi</div>
           <div id="flash-suggestion" onclick="toggleTorch()">💡 Nyalakan flash untuk hasil lebih baik</div>
-        </div>
+       
+ </div>
         <div class="brightness-indicator">
           <span style="font-size: 9px;">Brightness</span>
           <div class="brightness-bar">
@@ -565,7 +631,8 @@
         <div class="scan-stats">
           <div><span>FPS:</span> <span id="scan-fps">0</span></div>
           <div><span>Mode:</span> <span id="scan-mode">Auto</span></div>
-          <div><span>Scans:</span> <span id="scan-attempts">0</span></div>
+ 
+         <div><span>Scans:</span> <span id="scan-attempts">0</span></div>
         </div>
       </div>
         </div>
@@ -573,63 +640,78 @@
         <div id="view-users" class="tab-view hidden">
             <div class="pro-card">
                 <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
-                    <h3 class="font-bold text-lg">Kelola Pengguna (LIVE)</h3>
+                    <h3 
+class="font-bold text-lg">Kelola Pengguna (LIVE)</h3>
                     <div class="flex gap-2">
                         <button onclick="toggleFolderPanel()" class="bg-amber-500 text-white text-xs px-3 py-2 rounded-full font-bold shadow hover:bg-amber-600">📂 Kelola Folder</button>
                         <button onclick="openUserModal()" class="bg-blue-600 text-white text-xs px-3 py-2 rounded-full font-bold shadow hover:bg-blue-700">+ User</button>
-                        <label class="bg-green-600 text-white text-xs px-3 py-2 rounded-full font-bold shadow hover:bg-green-700 cursor-pointer">
+    
+                    <label class="bg-green-600 text-white text-xs px-3 py-2 rounded-full font-bold shadow hover:bg-green-700 cursor-pointer">
                             Import CSV <input type="file" class="hidden" onchange="importCSV(this)" accept=".csv">
                         </label>
-                    </div>
+            
+        </div>
                 </div>
 
                 <div id="folder-panel" class="hidden bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4 animate-fade-in">
                     <h4 class="font-bold text-amber-800 text-sm mb-2 border-b border-amber-200 pb-1">📂 Manajemen Unit Organisasi</h4>
-                    <div class="flex gap-2 mb-3">
+                    <div 
+class="flex gap-2 mb-3">
                          <input type="text" id="new-folder-input" class="pro-input py-1 text-xs mb-0 bg-white" placeholder="Nama Folder Baru...">
                         <button onclick="addNewFolderInline()" class="bg-green-600 text-white px-3 py-1 rounded-lg font-bold text-xs">Tambah</button>
                     </div>
-                    <div id="folder-list-inline" class="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-40 overflow-y-auto"></div>
+           
+         <div id="folder-list-inline" class="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-40 overflow-y-auto"></div>
                 </div>
 
                 <div id="bulk-action-area" class="hidden bg-gray-100 p-2 rounded-lg mb-4 flex flex-wrap items-center gap-2 border border-gray-200">
                     <span class="text-xs font-bold text-gray-500">Aksi Terpilih:</span>
-                    <select id="bulk-move-select" class="pro-input py-1 text-xs w-32 mb-0 h-8">
+                
+    <select id="bulk-move-select" class="pro-input py-1 text-xs w-32 mb-0 h-8">
                         <option value="">- Pindah ke -</option>
                     </select>
                     <button onclick="moveSelectedUsers()" class="bg-blue-500 text-white text-xs px-3 py-1.5 rounded font-bold hover:bg-blue-600">Pindahkan</button>
-                    <div class="h-4 w-px bg-gray-300 mx-1"></div>
+            
+        <div class="h-4 w-px bg-gray-300 mx-1"></div>
                     <button onclick="deleteSelectedUsers()" class="bg-red-600 text-white text-xs px-3 py-1.5 rounded font-bold hover:bg-red-700">Hapus Permanen</button>
                 </div>
                 
                 <div class="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="relative">
+     
+               <div class="relative">
                         <input type="text" id="search-user" onkeyup="renderUserTable(this.value)" placeholder="Cari Nama atau Username..." class="pro-input pl-10" style="margin-bottom: 0;">
                         <span class="absolute left-3 top-3 text-gray-400">🔍</span>
                     </div>
-                    <div>
+ 
+                   <div>
                         <select id="filter-folder" onchange="renderUserTable(document.getElementById('search-user').value)" class="pro-input py-1 text-xs mb-0">
                             <option value="all">📁 Tampilkan Semua Folder</option>
-                        </select>
+                   
+     </select>
                     </div>
                 </div>
 
                 <div class="overflow-x-auto bg-white rounded-xl border border-gray-100">
                     <table class="w-full admin-table">
-                        <thead class="bg-gray-50">
+                
+        <thead class="bg-gray-50">
                             <tr>
                                 <th class="w-8 text-center"><input type="checkbox" onchange="toggleSelectAll(this)"></th>
-                                <th class="sortable" onclick="handleSort('name')">User Info <span id="sort-name">↕</span></th>
+                           
+     <th class="sortable" onclick="handleSort('name')">User Info <span id="sort-name">↕</span></th>
                                 <th class="sortable" onclick="handleSort('kelas')">Kelas <span id="sort-kelas">↕</span></th>
                                 <th class="sortable" onclick="handleSort('role')">Role <span id="sort-role">↕</span></th>
-                                <th class="sortable" onclick="handleSort('gender')">JK <span id="sort-gender">↕</span></th>
+                  
+              <th class="sortable" onclick="handleSort('gender')">JK <span id="sort-gender">↕</span></th>
                                 <th class="sortable" onclick="handleSort('disabled')">Status <span id="sort-disabled">↕</span></th>
                                 <th class="text-right">Aksi</th>
-                             </tr>
+             
+                </tr>
                         </thead>
                         <tbody id="table-users"></tbody>
                     </table>
-                </div>
+               
+ </div>
             </div>
         </div>
 
@@ -637,23 +719,28 @@
             <div class="pro-card mb-6">
                 <h3 class="font-bold text-lg mb-4">Buat Pengumuman Baru</h3>
                 <label class="text-xs font-bold text-gray-500 uppercase">Isi Pesan</label>
-                <textarea id="msg-content" class="pro-input h-24" placeholder="Tulis pengumuman di sini..."></textarea>
+            
+    <textarea id="msg-content" class="pro-input h-24" placeholder="Tulis pengumuman di sini..."></textarea>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="text-xs font-bold text-gray-500 uppercase">Target Penerima</label>
-                        <select id="msg-target" class="pro-input bg-white">
+                     
+   <select id="msg-target" class="pro-input bg-white">
                             <option value="all">Semua Pengguna</option>
                             <option value="siswa">Hanya Siswa</option>
                             <option value="guru">Hanya Guru</option>
-                        </select>
+    
+                    </select>
                     </div>
                     <div>
                         <label class="text-xs font-bold text-gray-500 uppercase">Jadwal Kirim</label>
-                        <input type="datetime-local" id="msg-time" class="pro-input bg-white">
+           
+             <input type="datetime-local" id="msg-time" class="pro-input bg-white">
                         <p class="text-[10px] text-gray-400 -mt-2">Biarkan kosong untuk kirim sekarang.</p>
                     </div>
                 </div>
-                <button onclick="sendBroadcast()" class="pro-btn btn-blue mt-2">Kirim Pengumuman</button>
+                
+ <button onclick="sendBroadcast()" class="pro-btn btn-blue mt-2">Kirim Pengumuman</button>
             </div>
 
             <div class="pro-card">
@@ -662,20 +749,24 @@
             </div>
         </div>
         
-        <div id="view-materi" class="tab-view hidden">
+    
+    <div id="view-materi" class="tab-view hidden">
             <div class="pro-card">
                 <h3 class="font-bold text-lg mb-4 text-blue-900">📚 Manajemen Materi Guru</h3>
                 <div id="materi-editor" class="bg-blue-50 p-4 rounded-xl mb-4 hidden border border-blue-100">
                     <input type="hidden" id="mat-id">
-                    <input type="text" id="mat-title" class="pro-input" placeholder="Judul Materi (Contoh: Cerita Daud & Goliat)">
+           
+         <input type="text" id="mat-title" class="pro-input" placeholder="Judul Materi (Contoh: Cerita Daud & Goliat)">
                     <textarea id="mat-content" class="pro-input h-32" placeholder="Isi materi atau link referensi..."></textarea>
                     <div class="flex gap-2">
                         <button onclick="saveMateri()" class="pro-btn btn-blue">Simpan Materi</button>
-                        <button onclick="hideMateriEditor()" class="pro-btn bg-gray-200 text-gray-600">Batal</button>
+   
+                     <button onclick="hideMateriEditor()" class="pro-btn bg-gray-200 text-gray-600">Batal</button>
                     </div>
                 </div>
                 <button id="btn-add-materi" onclick="showMateriEditor()" class="btn-blue px-4 py-2 rounded-lg font-bold text-xs mb-4">+ Tambah Materi Baru</button>
-                <div id="materi-list" class="space-y-3"></div>
+           
+     <div id="materi-list" class="space-y-3"></div>
             </div>
         </div>
 
@@ -683,23 +774,28 @@
             <div class="pro-card">
                 <h3 class="font-bold text-lg mb-4 text-blue-900">🗓️ Jadwal Guru Sekolah Minggu</h3>
                 <div id="jadwal-editor" class="bg-amber-50 p-4 rounded-xl mb-4 hidden border border-amber-100">
-                    <input type="hidden" id="jad-id">
+ 
+                   <input type="hidden" id="jad-id">
                     <div class="grid grid-cols-2 gap-3 mb-2">
                         <input type="date" id="jad-date" class="pro-input mb-0">
-                        <select id="jad-guru" class="pro-input mb-0 bg-white"></select>
+                        <select id="jad-guru" class="pro-input 
+mb-0 bg-white"></select>
                     </div>
                     <input type="text" id="jad-tugas" class="pro-input" placeholder="Tugas (Contoh: Pelayan Firman / Liturgis)">
                     <div class="flex gap-2">
-                        <button onclick="saveJadwal()" class="pro-btn btn-yellow">Simpan Jadwal</button>
+                        <button onclick="saveJadwal()" class="pro-btn btn-yellow">Simpan 
+Jadwal</button>
                         <button onclick="hideJadwalEditor()" class="pro-btn bg-gray-200 text-gray-600">Batal</button>
                     </div>
                 </div>
                 <button id="btn-add-jadwal" onclick="showJadwalEditor()" class="btn-yellow px-4 py-2 rounded-lg font-bold text-xs mb-4">+ Buat Jadwal Baru</button>
-                <div class="overflow-x-auto">
+        
+        <div class="overflow-x-auto">
                     <table class="w-full admin-table text-xs">
                         <thead><tr><th>Tanggal</th><th>Guru</th><th>Tugas</th><th>Aksi</th></tr></thead>
                         <tbody id="table-jadwal-body"></tbody>
-                    </table>
+                   
+ </table>
                 </div>
             </div>
         </div>
@@ -707,47 +803,57 @@
         <div id="view-settings" class="tab-view hidden">
             <div class="pro-card bg-green-50 border-green-200 mb-6">
                 <div class="flex items-center mb-4">
-                    <div class="bg-green-200 p-2 rounded-full mr-3 text-xl">📍</div>
+                 
+   <div class="bg-green-200 p-2 rounded-full mr-3 text-xl">📍</div>
                     <div>
                         <h3 class="font-bold text-green-900">Kontrol Absen Manual</h3>
                         <p class="text-xs text-green-700">Izinkan user absen tanpa scan QR.</p>
-                    </div>
+             
+       </div>
                 </div>
                 <div class="space-y-3">
                     <div class="flex items-center justify-between bg-white p-3 rounded-xl border">
                         <span class="text-xs font-bold uppercase text-gray-500">Status Fitur</span>
-                        <label class="relative inline-flex items-center cursor-pointer">
+    
+                    <label class="relative inline-flex items-center cursor-pointer">
                             <input type="checkbox" id="sett-manual-toggle" class="sr-only peer">
-                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border 
+after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
                         </label>
                     </div>
                     <button onclick="saveSettings()" class="w-full bg-green-600 text-white font-bold py-2 rounded-lg text-xs hover:bg-green-700">Simpan Pengaturan</button>
                 </div>
-            </div>
+      
+      </div>
 
             <div class="pro-card bg-blue-50 border-blue-200 mb-6">
                 <div class="flex items-center mb-4">
                     <div class="bg-blue-200 p-2 rounded-full mr-3 text-xl">🔄</div>
                     <div>
-                        <h3 class="font-bold text-blue-900">Sinkronisasi Data (Sync)</h3>
+              
+          <h3 class="font-bold text-blue-900">Sinkronisasi Data (Sync)</h3>
                         <p class="text-xs text-blue-700">Pindahkan data antar HP/Laptop.</p>
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
-                    <div class="text-center">
+  
+                  <div class="text-center">
                         <button onclick="backupData()" class="bg-white border-2 border-blue-500 text-blue-600 w-full py-2 rounded-xl text-xs font-bold shadow-sm hover:bg-blue-50">📥 Download Data</button>
                     </div>
                     <div class="text-center">
-                        <label class="bg-blue-600 text-white w-full py-2.5 rounded-xl text-xs font-bold shadow-md cursor-pointer hover:bg-blue-700 
+  
+                      <label class="bg-blue-600 text-white w-full py-2.5 rounded-xl text-xs font-bold shadow-md cursor-pointer hover:bg-blue-700 
                             block text-center">
                             📤 Upload & Gabung
-                            <input type="file" class="hidden" onchange="syncData(this)">
+       
+                     <input type="file" class="hidden" onchange="syncData(this)">
                         </label>
                     </div>
                 </div>
             </div>
 
-             <div class="pro-card bg-red-50 border-red-100">
+    
+         <div class="pro-card bg-red-50 border-red-100">
                 <h3 class="font-bold text-red-700 mb-2">Reset Sistem</h3>
                 <button onclick="emergencyReset()" class="bg-red-600 text-white px-4 py-2 rounded-lg text-xs font-bold w-full">Hapus Semua Data Online</button>
             </div>
@@ -755,13 +861,15 @@
     </section>
 
     <div id="student-content-modal" class="modal-overlay">
-        <div class="modal-content" style="max-height: 85vh;">
+        <div class="modal-content" 
+style="max-height: 85vh;">
             <div class="p-4 border-b flex justify-between items-center bg-blue-50">
                 <h3 id="student-modal-title" class="font-bold text-blue-900 text-lg">Informasi</h3>
                 <button onclick="document.getElementById('student-content-modal').style.display='none'" class="text-gray-500 font-bold px-2">✕</button>
             </div>
             <div class="modal-body-scroll p-4" id="student-modal-body">
-                </div>
+              
+  </div>
         </div>
     </div>
 
@@ -770,23 +878,27 @@
             <div class="text-center mb-4">
                 <div class="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
                     <span class="text-3xl">📍</span>
-                </div>
+        
+        </div>
                 <h3 class="text-xl font-bold text-gray-800">Absen Manual</h3>
                 <p class="text-xs text-gray-500">Pilih status kehadiran:</p>
             </div>
 
             <div class="grid grid-cols-2 gap-3 mb-4">
-                <button onclick="submitManualAbsen('Hadir')" class="bg-green-100 text-green-700 border border-green-200 py-3 rounded-xl font-bold hover:bg-green-200 transition">✅ HADIR</button>
+                <button onclick="submitManualAbsen('Hadir')" class="bg-green-100 text-green-700 border border-green-200 py-3 rounded-xl 
+font-bold hover:bg-green-200 transition">✅ HADIR</button>
                 <button onclick="toggleNoteInput('Sakit')" class="bg-yellow-100 text-yellow-700 border border-yellow-200 py-3 rounded-xl font-bold hover:bg-yellow-200 transition">🤒 SAKIT</button>
                 <button onclick="toggleNoteInput('Izin')" class="bg-blue-100 text-blue-700 border border-blue-200 py-3 rounded-xl font-bold hover:bg-blue-200 transition">📝 IZIN</button>
                 <button onclick="submitManualAbsen('Alpha')" class="bg-red-100 text-red-700 border border-red-200 py-3 rounded-xl font-bold hover:bg-red-200 transition">❌ ALPHA</button>
             </div>
 
-            <div id="manual-note-section" class="hidden bg-gray-50 p-3 rounded-lg border border-gray-200 mb-2">
+    
+        <div id="manual-note-section" class="hidden bg-gray-50 p-3 rounded-lg border border-gray-200 mb-2">
                 <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Keterangan (Wajib Diisi)</label>
                 <textarea id="manual-note" class="pro-input h-20 mb-2 
                     text-sm" placeholder="Contoh: Sakit demam sejak pagi..."></textarea>
-                <button id="btn-submit-note" class="w-full bg-gray-800 text-white font-bold py-2 rounded-lg text-xs hover:bg-gray-900">KIRIM ABSEN</button>
+              
+  <button id="btn-submit-note" class="w-full bg-gray-800 text-white font-bold py-2 rounded-lg text-xs hover:bg-gray-900">KIRIM ABSEN</button>
             </div>
             <button onclick="document.getElementById('manual-modal').style.display='none'" class="w-full mt-2 text-gray-400 text-xs hover:text-gray-600 font-bold pb-2">BATAL</button>
         </div>
@@ -795,20 +907,24 @@
     <div id="archive-modal" class="modal-overlay">
         <div class="modal-content bg-white" style="max-width: 600px;">
             <div class="flex justify-between items-center mb-4 p-4 border-b">
-                <h3 class="text-xl font-bold text-gray-800">📂 Arsip Absensi</h3>
+        
+        <h3 class="text-xl font-bold text-gray-800">📂 Arsip Absensi</h3>
                 <button onclick="document.getElementById('archive-modal').style.display='none'" class="text-gray-400 font-bold">✕</button>
             </div>
             <div class="modal-body-scroll p-4" style="max-height: 60vh;">
                 <table class="w-full admin-table text-xs">
-                    <thead class="sticky top-0 bg-white shadow-sm">
+                    <thead 
+class="sticky top-0 bg-white shadow-sm">
                         <tr>
                             <th>Tanggal</th>
                             <th>Nama</th>
-                            <th>Status</th>
+                 
+           <th>Status</th>
                             <th>Ket</th>
                         </tr>
                     </thead>
-                    <tbody id="table-archive-body"></tbody>
+                 
+   <tbody id="table-archive-body"></tbody>
                 </table>
             </div>
         </div>
@@ -818,76 +934,93 @@
         <div class="modal-content" style="max-height: 85vh;">
             <div class="p-4 flex-shrink-0 border-b">
                 <h3 id="modal-title" class="text-lg font-bold">Edit User</h3>
-                <input type="hidden" id="modal-id">
+    
+            <input type="hidden" id="modal-id">
             </div>
             
             <div class="modal-body-scroll p-4">
                 <div class="text-center mb-2">
-                    <div class="w-20 h-20 mx-auto bg-gray-100 rounded-full border border-gray-300 relative overflow-hidden group">
+                    <div class="w-20 h-20 mx-auto bg-gray-100 rounded-full border border-gray-300 relative overflow-hidden 
+group">
                         <img id="modal-avatar-preview" src="" class="w-full h-full object-cover">
                          <label class="upload-overlay cursor-pointer">
                             <span class="text-white text-xs font-bold">📷 Ubah</span>
-                             <input type="file" id="modal-file-input" hidden accept="image/*" onchange="handleImageUpload(this, 'modal-avatar-preview')">
+            
+                 <input type="file" id="modal-file-input" hidden accept="image/*" onchange="handleImageUpload(this, 'modal-avatar-preview')">
                          </label>
                      </div>
                     <p class="text-[9px] text-gray-400 mt-1 mb-2 flex justify-center gap-2">
-                         <span class="text-blue-500 cursor-pointer hover:underline" onclick="generateRandomAvatar('modal-avatar-preview')">🎲 Acak Avatar</span>
+    
+                     <span class="text-blue-500 cursor-pointer hover:underline" onclick="generateRandomAvatar('modal-avatar-preview')">🎲 Acak Avatar</span>
                      </p>
                      
                     <div class="bg-gray-50 p-2 rounded border mb-2">
-                        <p class="text-[9px] font-bold text-gray-500 uppercase mb-1">Atur Posisi Foto</p>
+      
+                  <p class="text-[9px] font-bold text-gray-500 uppercase mb-1">Atur Posisi Foto</p>
                         <div class="flex gap-2 items-center text-[10px]">
                             <span>↔️ X:</span>
-                            <input type="range" id="modal-pos-x" min="0" max="100" value="50" oninput="previewPosition('modal-avatar-preview', this.value, document.getElementById('modal-pos-y').value)">
+                  
+          <input type="range" id="modal-pos-x" min="0" max="100" value="50" oninput="previewPosition('modal-avatar-preview', this.value, document.getElementById('modal-pos-y').value)">
                         </div>
                         <div class="flex gap-2 items-center text-[10px]">
                             <span>↕️ Y:</span>
-                            <input type="range" id="modal-pos-y" min="0" max="100" value="50" oninput="previewPosition('modal-avatar-preview', document.getElementById('modal-pos-x').value, this.value)">
+ 
+                           <input type="range" id="modal-pos-y" min="0" max="100" value="50" oninput="previewPosition('modal-avatar-preview', document.getElementById('modal-pos-x').value, this.value)">
                         </div>
                     </div>
                 </div>
 
-                <label class="text-xs font-bold text-gray-500 uppercase">Nama Lengkap</label>
+     
+           <label class="text-xs font-bold text-gray-500 uppercase">Nama Lengkap</label>
                 <input type="text" id="modal-name" class="pro-input py-1 mb-2">
                 
                 <label class="text-xs font-bold text-gray-500 uppercase">Username</label>
                 <input type="text" id="modal-username" class="pro-input py-1 mb-2">
    
-                <label class="text-xs font-bold text-gray-500 uppercase">Password</label>
+   
+             <label class="text-xs font-bold text-gray-500 uppercase">Password</label>
                 <div class="pass-wrapper">
                     <input type="text" id="modal-password" class="pro-input py-1 mb-2">
                     <span onclick="togglePass('modal-password', this)" class="pass-toggle">👁️</span>
                 </div>
-                
+  
+              
                 <div class="grid grid-cols-2 gap-2">
                     <div>
                         <label class="text-xs font-bold text-gray-500 uppercase">Role</label>
-                        <select id="modal-role" class="pro-input bg-white py-1 mb-2">
+                   
+     <select id="modal-role" class="pro-input bg-white py-1 mb-2">
                             <option value="siswa">Siswa</option>
                             <option value="guru">Guru</option>
                             <option value="admin">Admin</option>
-                            <option value="pengurus_sm">Pengurus Sekolah Minggu</option>
+   
+                         <option value="pengurus_sm">Pengurus Sekolah Minggu</option>
                             <option value="pengurus_kelas">Pengurus Kelas</option>
                             <option value="wali_kelas">Wali Kelas</option>
-                        </select>
+            
+            </select>
                     </div>
                     <div>
                         <label class="text-xs font-bold text-gray-500 uppercase">JK</label>
-                        <select id="modal-gender" class="pro-input bg-white py-1 mb-2">
+                    
+    <select id="modal-gender" class="pro-input bg-white py-1 mb-2">
                             <option value="L">Laki-Laki</option>
                             <option value="P">Perempuan</option>
                         </select>
-                    </div>
+         
+           </div>
                 </div>
 
                 <label class="text-xs font-bold text-gray-500 uppercase">Kelas</label>
                 <select id="modal-kelas" class="pro-input bg-white py-1 mb-2">
                     <option value="-">- Pilih Kelas -</option>
-                    <option value="Daud">Daud</option>
+        
+            <option value="Daud">Daud</option>
                     <option value="Daniel">Daniel</option>
                     <option value="Paulus">Paulus</option>
                     <option 
-                        value="Ester">Ester</option>
+                        
+value="Ester">Ester</option>
                     <option value="Timotius">Timotius</option>
                     <option value="Abraham">Abraham</option>
                 </select>
@@ -899,14 +1032,16 @@
                 </select>
 
                 <label class="text-xs font-bold text-gray-500 uppercase">Status Akun</label>
-                <select id="modal-status" class="pro-input bg-white py-1 mb-4">
+                <select id="modal-status" class="pro-input 
+bg-white py-1 mb-4">
                     <option value="active">Aktif</option>
                     <option value="disabled">Blokir</option>
                 </select>
             </div>
 
              <div class="flex gap-2 p-4 border-t flex-shrink-0">
-                <button onclick="saveUser()" class="pro-btn btn-blue">Simpan</button>
+          
+      <button onclick="saveUser()" class="pro-btn btn-blue">Simpan</button>
                 <button onclick="closeModal()" class="pro-btn bg-gray-200 text-gray-600">Batal</button>
             </div>
         </div>
@@ -914,73 +1049,89 @@
 
     <div id="profile-modal" class="modal-overlay">
         <div class="modal-content" style="max-width: 400px;
-            padding: 0; max-height: 85vh;">
+padding: 0; max-height: 85vh;">
             <div class="bg-blue-600 p-6 text-center relative flex-shrink-0">
                 <button onclick="document.getElementById('profile-modal').style.display='none'" class="absolute top-4 right-4 text-white hover:text-gray-200 font-bold">✕</button>
                 
                 <div class="w-24 h-24 mx-auto bg-white rounded-full p-1 shadow-lg mb-3 relative overflow-hidden group">
-                    <img id="prof-img-display" src="" class="w-full h-full rounded-full object-cover">
+              
+      <img id="prof-img-display" src="" class="w-full h-full rounded-full object-cover">
                     <label class="upload-overlay cursor-pointer">
                         <span class="text-white text-xs font-bold">📷 Ganti</span>
                         <input type="file" id="prof-file-input" hidden accept="image/*" onchange="handleImageUpload(this, 'prof-img-display')">
-                    </label>
+        
+            </label>
                 </div>
                 <div class="mb-2">
                      <span class="text-[10px] bg-white/20 text-white px-2 py-1 rounded-full cursor-pointer hover:bg-white/40" onclick="generateRandomAvatar('prof-img-display')">🎲 Acak Avatar</span>
                 </div>
-                
+       
+         
                 <h3 id="prof-name-display" class="text-white font-bold text-xl tracking-wide">User</h3>
                 <span id="prof-role-display" class="bg-blue-800 text-blue-100 text-xs px-3 py-1 rounded-full uppercase font-bold tracking-wider mt-2 inline-block">ROLE</span>
             </div>
 
             <div class="p-6 modal-body-scroll">
-                <div class="grid grid-cols-2 gap-4 mb-4">
+                
+<div class="grid grid-cols-2 gap-4 mb-4">
                     <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 text-center">
                         <span class="block text-xs font-bold text-gray-400 uppercase">Jenis Kelamin</span>
                         <span id="prof-gender-display" class="font-bold text-gray-700 text-lg">-</span>
-                    </div>
+            
+        </div>
                     <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 text-center">
                         <span class="block text-xs font-bold text-gray-400 uppercase">Kelas</span>
                         <span id="prof-class-display" class="font-bold text-gray-700 text-lg">-</span>
-                    </div>
+         
+           </div>
                 </div>
 
                 <div class="bg-gray-50 p-3 rounded-xl border mb-4">
                     <p class="text-[10px] font-bold text-gray-500 uppercase mb-2">Atur Posisi Foto</p>
-                    <div class="flex gap-2 items-center text-xs mb-1">
+                    <div class="flex gap-2 items-center text-xs 
+mb-1">
                         <span class="w-6">↔️ X</span>
                         <input type="range" id="prof-pos-x" min="0" max="100" value="50" oninput="previewPosition('prof-img-display', this.value, document.getElementById('prof-pos-y').value)">
                     </div>
-                    <div class="flex gap-2 items-center text-xs">
+                    <div class="flex 
+gap-2 items-center text-xs">
                         <span class="w-6">↕️ Y</span>
                         <input type="range" id="prof-pos-y" min="0" max="100" value="50" oninput="previewPosition('prof-img-display', document.getElementById('prof-pos-x').value, this.value)">
                     </div>
                 </div>
 
-                <div class="border-t pt-4">
+    
+            <div class="border-t pt-4">
                     <h4 class="text-sm font-bold text-gray-800 mb-3">✏️ Edit Akun</h4>
                     <div class="space-y-3">
                         <div>
-                            <label class="text-[10px] font-bold text-gray-500 uppercase">Nama Lengkap</label>
+               
+             <label class="text-[10px] font-bold text-gray-500 uppercase">Nama Lengkap</label>
                             <input type="text" id="prof-name" class="pro-input py-1.5 text-sm mb-0">
                         </div>
-                        <div class="grid grid-cols-2 gap-3">
+                        
+<div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="text-[10px] font-bold text-gray-500 uppercase">Username</label>
-                                <input type="text" id="prof-username" class="pro-input py-1.5 text-sm mb-0 
+                                <input 
+type="text" id="prof-username" class="pro-input py-1.5 text-sm mb-0 
                                     bg-gray-100" readonly>
                             </div>
                             <div>
-                                <label class="text-[10px] font-bold text-gray-500 uppercase">Password Baru</label>
+ 
+                               <label class="text-[10px] font-bold text-gray-500 uppercase">Password Baru</label>
                                 <div class="pass-wrapper">
-                                    <input type="text" id="prof-password" class="pro-input py-1.5 text-sm mb-0" placeholder="Biarkan kosong">
+                               
+     <input type="text" id="prof-password" class="pro-input py-1.5 text-sm mb-0" placeholder="Biarkan kosong">
                                     <span onclick="togglePass('prof-password', this)" class="pass-toggle">👁️</span>
                                 </div>
-                            </div>
+                
+            </div>
                         </div>
                     </div>
                     <div class="flex gap-2 mt-6 pb-4">
-                        <button onclick="saveProfile()" class="pro-btn btn-blue shadow-lg shadow-blue-200">Simpan Perubahan</button>
+                    
+    <button onclick="saveProfile()" class="pro-btn btn-blue shadow-lg shadow-blue-200">Simpan Perubahan</button>
                     </div>
                 </div>
             </div>
@@ -989,47 +1140,56 @@
 
     <div id="forgot-modal" class="modal-overlay">
         <div class="modal-content bg-white rounded-2xl shadow-2xl overflow-hidden max-w-sm w-full mx-4">
-            <div class="bg-gradient-to-r from-amber-400 to-orange-500 p-6 text-center">
+        
+    <div class="bg-gradient-to-r from-amber-400 to-orange-500 p-6 text-center">
                 <div class="bg-white/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 backdrop-blur-sm">
                     <span class="text-3xl">🔐</span>
                 </div>
                 <h3 class="text-xl font-extrabold text-white tracking-wide">Reset Admin</h3>
-                <p class="text-amber-50 text-xs mt-1">Pemulihan Akses Darurat</p>
+       
+         <p class="text-amber-50 text-xs mt-1">Pemulihan Akses Darurat</p>
             </div>
 
             <div class="p-6 space-y-4">
                <div>
                     <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Username Admin</label>
-                    <div class="relative">
+                 
+   <div class="relative">
                         <span class="absolute left-3 top-2.5 text-gray-400">👤</span>
                         <input type="text" id="forgot-username" class="pro-input pl-9" placeholder="Masukkan Username">
                     </div>
                 </div>
 
-                <div>
+  
+              <div>
                     <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider 
                         mb-1">Kode Pemulihan</label>
                     <div class="relative pass-wrapper">
-                        <span class="absolute left-3 top-2.5 text-gray-400">🔑</span>
+            
+            <span class="absolute left-3 top-2.5 text-gray-400">🔑</span>
                         <input type="password" id="forgot-code" class="pro-input pl-9" placeholder="Kode Rahasia">
                         <span onclick="togglePass('forgot-code', this)" class="pass-toggle">👁️</span>
                     </div>
-                </div>
+       
+         </div>
 
                 <div>
                     <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Password Baru</label>
                     <div class="relative pass-wrapper">
-                        <span class="absolute left-3 top-2.5 text-gray-400">🔒</span>
+                        <span 
+class="absolute left-3 top-2.5 text-gray-400">🔒</span>
                         <input type="text" id="forgot-newpass" class="pro-input pl-9" placeholder="Password Baru">
                         <span onclick="togglePass('forgot-newpass', this)" class="pass-toggle">👁️</span>
                     </div>
                 </div>
 
-                <div class="pt-2 flex gap-3">
+    
+            <div class="pt-2 flex gap-3">
                     <button onclick="document.getElementById('forgot-modal').style.display='none'" class="flex-1 py-3 rounded-xl font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 transition text-xs">Batal</button>
                     <button onclick="resetAdminPassword()" class="flex-1 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 shadow-lg shadow-orange-200 transition text-xs">Reset Password</button>
                 </div>
-            </div>
+   
+         </div>
         </div>
     </div>
 
@@ -1038,20 +1198,24 @@
             <div class="student-card">
                 <div class="card-header-strip"></div>
                 <div class="card-body">
-                    <div class="card-photo-frame">
+               
+     <div class="card-photo-frame">
                         <img id="card-img-guru" src="" alt="Foto">
                     </div>
                     <div class="card-info">
-                        <div class="text-[10px] font-bold text-blue-500 tracking-widest uppercase mb-1">GKPS TANGERANG</div>
+                        <div class="text-[10px] 
+font-bold text-blue-500 tracking-widest uppercase mb-1">GKPS TANGERANG</div>
                         <h3 id="card-name-guru">NAMA</h3>
                         <p id="card-id-guru">ID: -</p>
                         <p id="card-class-guru">GURU</p>
-                        <span class="role-tag" id="card-role-guru">STAFF</span>
+                   
+     <span class="role-tag" id="card-role-guru">STAFF</span>
                     </div>
                 </div>
                 <div class="card-footer">
                     <div id="qrcode-guru"></div>
-                    <button onclick="document.getElementById('id-card-modal').style.display='none'" class="mt-4 text-xs font-bold text-gray-400">TUTUP</button>
+                   
+ <button onclick="document.getElementById('id-card-modal').style.display='none'" class="mt-4 text-xs font-bold text-gray-400">TUTUP</button>
                 </div>
             </div>
         </div>
@@ -1083,10 +1247,9 @@
         let sortConfig = { key: null, asc: true };
         // SOUND EFFECTS
         const sndBeep = "data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU";
-        const audioSuccess = new Audio("data:audio/mp3;base64,//uQxAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq");
-        
+        const audioSuccess = new Audio("data:audio/mp3;base64,//uQxAAAAANIAAAAAExBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq");
         // --- UPDATE SUARA KENCANG ---
-        const soundOk = new Audio('https://cdn.freesound.org/previews/242/242501_4414128-lq.mp3'); 
+        const soundOk = new Audio('https://cdn.freesound.org/previews/242/242501_4414128-lq.mp3');
         const soundFail = new Audio('https://cdn.freesound.org/previews/142/142608_1840739-lq.mp3');
         
         function playSound(type) {
@@ -1119,42 +1282,43 @@
             }
         }
 
-        // --- NEW FUNCTION: GENERATE ARTISTIC QR CODE ---
-        // Fungsi ini menggunakan logika yang diperbarui untuk membuat QR Code yang lebih cantik
-        // dengan logo di tengah dan style titik rounded, mirip "AI Art" style.
+        // --- [PERBAIKAN 1] GENERATE ARTISTIC QR CODE (HIGH READABILITY) ---
+        // Fungsi diperbarui agar kontras lebih tinggi dan logo tidak menutupi data
         function generateStyledQRCode(elementId, textData) {
             const container = document.getElementById(elementId);
             if(!container) return;
-            container.innerHTML = ""; // Clear old QR
+            container.innerHTML = ""; 
 
             const qrCode = new QRCodeStyling({
-                width: 250,
-                height: 250,
-                type: "svg", // Render sebagai SVG agar tajam
+                width: 300, // Ukuran diperbesar sedikit
+                height: 300,
+                type: "svg", 
                 data: textData,
-                image: "Logo GKPS.png", // Menggunakan logo lokal sebagai centerpiece
+                image: "Logo GKPS.png", 
                 dotsOptions: {
-                    color: "#0ea5e9", // Warna Primary Blue GKPS
-                    type: "rounded"   // Bentuk titik membulat (modern style)
+                    // Warna titik diganti menjadi Biru Tua agar kontras dengan putih
+                    color: "#0284c7", 
+                    type: "rounded"
                 },
                 backgroundOptions: {
                     color: "#ffffff",
                 },
                 imageOptions: {
                     crossOrigin: "anonymous",
-                    margin: 8,
-                    imageSize: 0.4 // Ukuran logo di tengah (40% dari QR)
+                    margin: 5,
+                    // Ukuran logo diperkecil ke 0.35 (35%) agar Error Correction Level H bisa bekerja optimal
+                    imageSize: 0.35 
                 },
                 cornersSquareOptions: {
-                    type: "extra-rounded", // Sudut kotak (finder pattern) membulat
-                    color: "#0284c7" // Warna sudut lebih gelap
+                    type: "extra-rounded",
+                    color: "#0284c7" // Warna sudut disamakan
                 },
                 cornersDotOptions: {
                     type: "dot",
                     color: "#0284c7"
                 },
                 qrOptions: {
-                    errorCorrectionLevel: 'H' // Tingkat koreksi tinggi agar logo tidak merusak data
+                    errorCorrectionLevel: 'H' // High Error Correction (Max 30% Damage)
                 }
             });
             qrCode.append(container);
@@ -1165,9 +1329,9 @@
             document.body.addEventListener('click', function() {
                 // Preload audio agar siap putar
                 soundOk.play().then(() => { soundOk.pause(); soundOk.currentTime = 0; }).catch(()=>{});
+                
                 soundFail.play().then(() => { soundFail.pause(); soundFail.currentTime = 0; }).catch(()=>{});
             }, { once: true });
-
             const savedSession = localStorage.getItem('gkps_session');
             if (savedSession) {
                 currentUser = JSON.parse(savedSession);
@@ -1202,12 +1366,13 @@
                 if (val) {
                     if (val.users && typeof val.users === 'object' && !Array.isArray(val.users)) val.users = Object.values(val.users);
                     if (val.attendance && typeof val.attendance === 'object' && !Array.isArray(val.attendance)) 
+                    
                         val.attendance = Object.values(val.attendance);
                     if (val.messages && typeof val.messages === 'object' && !Array.isArray(val.messages)) val.messages = Object.values(val.messages);
                     if (val.folders && typeof val.folders === 'object' && !Array.isArray(val.folders)) val.folders = Object.values(val.folders);
+            
                     if (val.materi && typeof val.materi === 'object' && !Array.isArray(val.materi)) val.materi = Object.values(val.materi);
                     if (val.jadwal && typeof val.jadwal === 'object' && !Array.isArray(val.jadwal)) val.jadwal = Object.values(val.jadwal);
-
                     db = val;
                     if(!db.messages) db.messages = [];
                     if(!db.users) db.users = [];
@@ -1445,6 +1610,7 @@
                 <div class="border p-2 rounded bg-gray-50 mb-2">
                     <div class="flex justify-between text-xs font-bold text-blue-800">
                         <span>To: ${m.target.toUpperCase()}</span>
+             
                         <button onclick="deleteMsg('${m.id}')" class="text-red-500">Hapus</button>
                     </div>
                     <p class="text-sm mt-1">${m.content}</p>
@@ -1488,19 +1654,23 @@
                         const bubbleClass = isRead ? 'wa-bubble' : 'wa-bubble unread';
 
                         return `
-                        <div class="flex flex-col w-full">
+          
+                      <div class="flex flex-col w-full">
    
                             <div class="${bubbleClass}">
                                 <div class="wa-sender">Admin</div>
-                                <div class="wa-text">${m.content}</div>
+                  
+                              <div class="wa-text">${m.content}</div>
         
                                 <div class="wa-meta">
                                     <span class="wa-time">${timeStr}</span>
-                                    <span class="wa-status">${statusIcon}</span>
+       
+                                     <span class="wa-status">${statusIcon}</span>
  
                                 </div>
                             </div>
-                        </div>`;
+         
+                       </div>`;
                     }).join('');
                 }
             }
@@ -1616,6 +1786,7 @@
                     let valA = (a[sortConfig.key]||'').toString().toLowerCase();
                     let valB = (b[sortConfig.key]||'').toString().toLowerCase();
                     if(valA < valB) return sortConfig.asc ? -1 : 1;
+       
                     if(valA > valB) return sortConfig.asc ? 1 : -1;
                     return 0;
                 });
@@ -1631,21 +1802,25 @@
                        <img src="${u.avatar || 'https://api.dicebear.com/7.x/notionists/svg?seed='+u.name}" class="w-8 h-8 rounded-full mr-2 border" style="object-position: ${u.posX||50}% ${u.posY||50}%">
                         <div>
                             <div class="font-bold text-xs">${u.name}</div>
+            
                             <div 
                                 class="text-[9px] text-amber-600 font-bold">${u.folder && u.folder !== '-' ? '📁 ' + u.folder : ''}</div>
                             <div class="text-[10px] text-gray-400">@${u.username}</div>
+        
                         </div>
                     </td>
              
                     <td><span class="text-[10px] bg-gray-100 px-2 py-1 rounded">${u.kelas||'-'}</span></td>
-                    <td><span class="text-[10px] border px-2 py-0.5 rounded uppercase">${u.role.replace('_',' ')}</span></td>
+                    <td><span class="text-[10px] border px-2 py-0.5 rounded 
+uppercase">${u.role.replace('_',' ')}</span></td>
                     <td><span class="badge ${u.gender==='P'?'badge-gender-p':'badge-gender-l'}">${u.gender||'L'}</span></td>
                     <td><span class="badge ${u.disabled?'badge-disabled':'badge-active'}">${u.disabled?'Blocked':'Active'}</span></td>
                  
                     <td class="text-right flex gap-1 justify-end items-center h-full pt-3">
-                        <button onclick="openUserModal('${u.id}')" class="bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded font-bold">Edit</button>
+           
+                     <button onclick="openUserModal('${u.id}')" class="bg-blue-100 text-blue-600 text-xs px-2 py-1 rounded font-bold">Edit</button>
                         ${u.role!=='admin' ?
-                        `<button onclick="toggleStatus('${u.id}')" class="bg-orange-100 text-orange-600 text-xs px-2 py-1 rounded">Sts</button><button onclick="deleteUser('${u.id}')" class="bg-red-100 text-red-600 text-xs px-2 py-1 rounded">Del</button>` : ''}
+`<button onclick="toggleStatus('${u.id}')" class="bg-orange-100 text-orange-600 text-xs px-2 py-1 rounded">Sts</button><button onclick="deleteUser('${u.id}')" class="bg-red-100 text-red-600 text-xs px-2 py-1 rounded">Del</button>` : ''}
                     </td>
                 </tr>`).join('');
             updateDeleteBtn();
@@ -1667,7 +1842,6 @@
             document.getElementById('card-role-display').innerText = currentUser.role;
 
             const codeData = `GKPS|${currentUser.username}|${currentUser.name}|${currentUser.role}|${currentUser.kelas||'-'}`;
-            
             // Generate Artistic QR
             generateStyledQRCode("qrcode", codeData);
         }
@@ -1711,7 +1885,6 @@
             document.getElementById('card-role-guru').innerText = currentUser.role.replace('_',' ').toUpperCase();
 
             const codeData = `GKPS|${currentUser.username}|${currentUser.name}|${currentUser.role}|${currentUser.kelas||'-'}`;
-            
             // Generate Artistic QR
             generateStyledQRCode("qrcode-guru", codeData);
         }
@@ -1735,13 +1908,14 @@
 
                 return `<tr>
                     <td class="text-gray-500 font-mono text-xs">${l.time}</td>
+            
                     <td class="font-bold 
                         text-sm">${l.name}</td>
                     <td><span class="badge badge-class">${u?u.kelas:'-'}</span></td>
                     <td><span class="text-xs ${colorClass} px-2 py-1 rounded">${statusLabel}</span></td>
-                    <td class="text-[10px] text-gray-500 italic">${l.note || '-'}</td>
+                   
+                 <td class="text-[10px] text-gray-500 italic">${l.note || '-'}</td>
                 </tr>`;
-            
             }).join('');
         }
         
@@ -1763,6 +1937,7 @@
                  return `<tr>
                     <td>${l.date}<br><span class="text-gray-400">${l.time}</span></td>
                     <td class="font-bold">${l.name}</td>
+                
                     <td class="${colorClass} font-bold">${l.status || 'Hadir'}</td>
         
                     <td class="italic text-gray-500">${l.note || '-'}</td>
@@ -1952,7 +2127,7 @@
 
         function exportExcel() {
              let csv = "Nama,Username,Kelas,Waktu,Tanggal\n";
-            const att = Array.isArray(db.attendance) ? db.attendance : [];
+             const att = Array.isArray(db.attendance) ? db.attendance : [];
              att.forEach(r => { const u = db.users.find(usr => usr.username === r.username); csv += `${r.name},${r.username},${u?u.kelas:'-'},${r.time},${r.date}\n` });
             const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'})); a.download = `Absensi_${new Date().toLocaleDateString()}.csv`; a.click();
         }
@@ -2017,6 +2192,7 @@
                         <button onclick="renameFolder('${f}')" class="text-blue-500 hover:text-blue-700 text-[10px] font-bold border border-blue-200 px-2 rounded">Edit</button>
                         <button onclick="deleteFolderInline('${f}')" class="text-red-500 hover:text-red-700 text-[10px] font-bold border border-red-200 px-2 rounded">Hapus</button>
                     </div>
+              
                 </div>`).join('');
         }
         function renameFolder(oldName) {
@@ -2128,11 +2304,13 @@
                         ${isEditable ? `
                         <div class="flex gap-1">
                             <button onclick="showMateriEditor('${m.id}')" class="text-blue-500 text-[10px] font-bold">Edit</button>
-                  
+                
+  
                             <button onclick="deleteMateri('${m.id}')" class="text-red-500 text-[10px] font-bold">Hapus</button>
                         </div>` : ''}
                     </div>
-                    <p class="text-xs text-gray-600 mt-1 whitespace-pre-wrap">${m.content}</p>
+                    
+                <p class="text-xs text-gray-600 mt-1 whitespace-pre-wrap">${m.content}</p>
                 
                     <div class="text-[9px] text-gray-400 mt-2 italic">Oleh: ${m.author}</div>
                 </div>
@@ -2218,7 +2396,8 @@
                     ${isEditable ? `
                     <td>
                         <button onclick="showJadwalEditor('${j.id}')" class="text-blue-500 mr-2">Edit</button>
-                        <button onclick="deleteJadwal('${j.id}')" 
+           
+                            <button onclick="deleteJadwal('${j.id}')" 
                             class="text-red-500">Hapus</button>
                     </td>` : ''}
                 </tr>
@@ -2237,7 +2416,8 @@
           configs: [
             { name: 'High', fps: 45, qrbox: 0.85 },
             { name: 'Low', fps: 30, qrbox: 0.90 },
-            { name: 'Max', fps: 20, qrbox: 0.95 }
+            { name: 'Max', fps: 20, 
+                qrbox: 0.95 }
           ],
       
           currentIdx: 0,
@@ -2255,7 +2435,8 @@
             try {
               const canvas = document.createElement('canvas');
               const ctx = canvas.getContext('2d');
-              canvas.width = video.videoWidth;
+              canvas.width 
+                = video.videoWidth;
               canvas.height = video.videoHeight;
               ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
               const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
@@ -2266,7 +2447,8 @@
                 count++;
               }
               ENHANCED_SCANNER.avgBright = sum / count;
-              const fillEl = document.getElementById('brightness-fill');
+            
+                const fillEl = document.getElementById('brightness-fill');
            
                 if (fillEl) {
                 const pct = Math.min(100, (ENHANCED_SCANNER.avgBright / 150) * 100);
@@ -2320,65 +2502,27 @@
         let isProcessing = false;
         let isTorchOn = false;
 
-        function startProScanner() {
-          if (isScanning) return;
-          const readerEl = document.getElementById('reader');
-          if (!readerEl) return;
-
-          if (html5QrCode === null) {
-            html5QrCode = new Html5Qrcode("reader");
-          }
-
-          Html5Qrcode.getCameras()
-            .then((devices) => {
-              if (devices && devices.length) {
-                const select = document.getElementById('camera-select');
-                select.innerHTML = "";
-                devices.forEach((device, i) => {
-                  const option = document.createElement('option');
-                  option.value = device.id;
-                  option.text = device.label || `Kamera ${i + 1}`;
-                
-                  select.appendChild(option);
-                });
-
-                if (!currentCameraId) {
-                  const backCam = devices.find((d) =>
-                    d.label.toLowerCase().includes('back') ||
-                    d.label.toLowerCase().includes('belakang')
-                  );
-                  currentCameraId = backCam ? backCam.id : devices[0].id;
-                }
-
-               
-                select.value = currentCameraId;
-                runCamera(currentCameraId);
-              } else {
-                showScannerError("Tidak ada kamera ditemukan.");
-              }
-            })
-            .catch((err) => {
-              showScannerError("Izin kamera ditolak atau tidak tersedia.");
-            });
-        }
-
+        // --- [PERBAIKAN 2] KONFIGURASI SCANNER DIPERBAIKI ---
         function runCamera(cameraId) {
           document.getElementById('scanner-container').classList.remove('hidden');
           document.getElementById('scanner-error').classList.add('hidden');
 
           const config = {
-            fps: 45, // sensitivitas tinggi (lebih cepat)
-            qrbox: (vw, vh) => {
-              const size = Math.min(vw, vh) * 0.85;
-                return { width: size, height: size };
-            },
+            fps: 30, // Diturunkan agar prosesor lebih fokus (stabil)
+            qrbox: { width: 250, height: 250 }, // Fixed integer, lebih presisi untuk QR Art
             aspectRatio: 1.0,
+            disableFlip: false,
             focusMode: "continuous",
             experimentalFeatures: {
-              useBarCodeDetectorIfSupported: true
+              useBarCodeDetectorIfSupported: true // Menggunakan Native Barcode Detector (Sangat Cepat)
             },
-            formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE]
+            supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
+            videoConstraints: {
+                focusMode: "continuous",
+                advanced: [{ zoom: 1.5 }] // Zoom sedikit agar user tidak perlu terlalu dekat
+            }
           };
+
           html5QrCode
             .start(cameraId, config, onProScanSuccess, () => {})
             .then(() => {
@@ -2386,12 +2530,12 @@
               ENHANCED_SCANNER.attempts = 0;
               ENHANCED_SCANNER.flashShown = false;
               monitorBrightness();
+       
               const torchBtn = document.getElementById('btn-torch');
               try {
                 const caps = html5QrCode.getRunningTrackCameraCapabilities();
                 if (caps && caps.torchFeature && caps.torchFeature.isSupported()) {
                   torchBtn.classList.remove('hidden');
-            
                 } else {
                   torchBtn.classList.add('hidden');
                 }
@@ -2399,14 +2543,59 @@
                 torchBtn.classList.add('hidden');
               }
 
-              // Tambahan efek UI modern
+              // Efek UI
               const frame = document.getElementById('scan-frame');
               frame.style.transition = "all 0.3s ease";
               frame.style.boxShadow = "0 0 20px rgba(59,130,246,0.4)";
             })
             .catch((err) => {
-            
               showScannerError("Gagal memulai kamera: " + err);
+            });
+        }
+        
+        function startProScanner() {
+          if (isScanning) return;
+          const readerEl = document.getElementById('reader');
+          if (!readerEl) return;
+
+          if (html5QrCode === null) {
+            html5QrCode = new Html5Qrcode("reader");
+            }
+
+          Html5Qrcode.getCameras()
+            .then((devices) => {
+              if (devices && devices.length) {
+                const select = document.getElementById('camera-select');
+                select.innerHTML = "";
+                devices.forEach((device, i) => {
+  
+                const option = document.createElement('option');
+                  option.value = device.id;
+                  option.text = device.label || `Kamera ${i + 1}`;
+                
+                  select.appendChild(option);
+  
+              });
+
+                if (!currentCameraId) {
+                  const backCam = devices.find((d) =>
+                    d.label.toLowerCase().includes('back') ||
+                    d.label.toLowerCase().includes('belakang')
+     
+             );
+                  currentCameraId = backCam ? backCam.id : devices[0].id;
+                }
+
+               
+                select.value = currentCameraId;
+              
+                runCamera(currentCameraId);
+              } else {
+                showScannerError("Tidak ada kamera ditemukan.");
+            }
+            })
+            .catch((err) => {
+              showScannerError("Izin kamera ditolak atau tidak tersedia.");
             });
         }
 
@@ -2417,19 +2606,19 @@
 
           try {
             html5QrCode.pause(true);
-          } catch {}
+            } catch {}
 
           const frame = document.getElementById('scan-frame');
           frame.classList.add('scan-success-effect');
           frame.style.borderColor = "#22c55e";
-          frame.style.boxShadow = "0 0 30px #22c55e";
+            frame.style.boxShadow = "0 0 30px #22c55e";
 
           if (navigator.vibrate) navigator.vibrate(150);
           if (!decodedText.startsWith('GKPS')) {
             handleScanResult(false, "QR Code Tidak Valid");
-          } else {
+            } else {
             processAttendanceData(decodedText);
-          }
+            }
         }
 
         function processAttendanceData(qrData) {
@@ -2441,14 +2630,14 @@
 
           if (!Array.isArray(db.users)) db.users = [];
           let u = db.users.find((x) => x.username === username);
-
-          if (!u) {
+            if (!u) {
             u = {
               id: 'AUTO_' + Date.now(),
               username,
               name,
               role,
               kelas,
+           
               gender: 'L',
               password: '123',
               disabled: false,
@@ -2456,6 +2645,7 @@
               posX: 50,
               posY: 50,
               folder: '-',
+    
               readMsgs: []
             };
             db.users.push(u);
@@ -2468,17 +2658,19 @@
 
           const today = getTodayDate();
           if (!Array.isArray(db.attendance)) db.attendance = [];
-          const already = db.attendance.find(
+            const already = db.attendance.find(
             (a) => a.username === u.username && a.date === today
           );
-          if (already) {
-            handleScanResult(false, "Sudah Absen Hari Ini", "yellow"); // AKAN MEMUTAR SUARA WARNING KARENA isSuccess=false
+            if (already) {
+            handleScanResult(false, "Sudah Absen Hari Ini", "yellow");
+            // AKAN MEMUTAR SUARA WARNING KARENA isSuccess=false
           } else {
             db.attendance.push({
               username: u.username,
               name: u.name,
               date: today,
               time: new Date().toLocaleTimeString(),
+         
               status: 'Hadir'
             });
             saveDb();
@@ -2491,7 +2683,8 @@
           const frame = document.getElementById('scan-frame');
           playSound(isSuccess ? 'success' : 'error'); // SUARA DIPUTAR DI SINI (VOLUME MAX)
 
-          const color = isSuccess ? 'green' : (colorOverride || 'red');
+          const color = isSuccess ?
+            'green' : (colorOverride || 'red');
           statusEl.innerText = msg;
           statusEl.className = `mt-4 text-center font-bold p-3 rounded-xl shadow-lg text-sm bg-${color}-100 text-${color}-800 scale-100 transform transition-all`;
           statusEl.classList.remove('hidden');
@@ -2500,11 +2693,14 @@
           const style = document.createElement('style');
           style.innerHTML = `
             @keyframes pulseStatus {
-              0% { transform: scale(0.95); opacity: 0.8;
+              0% { transform: scale(0.95);
+                opacity: 0.8;
               }
-              50% { transform: scale(1.05); opacity: 1;
+              50% { transform: scale(1.05);
+                opacity: 1;
               }
-              100% { transform: scale(1); opacity: 0.9; }
+              100% { transform: scale(1);
+                opacity: 0.9; }
             }
           `;
           document.head.appendChild(style);
@@ -2515,6 +2711,7 @@
             frame.style.boxShadow = "0 0 20px rgba(59,130,246,0.4)";
             if (isScanning) {
               try {
+             
                 html5QrCode.resume();
               } catch {
                 runCamera(currentCameraId);
@@ -2530,7 +2727,7 @@
               isScanning = false;
               document.getElementById('scanner-container').classList.add('hidden');
             }).catch(() => {});
-          }
+            }
           if (ENHANCED_SCANNER.monitor) {
             clearInterval(ENHANCED_SCANNER.monitor);
             ENHANCED_SCANNER.monitor = null;
@@ -2562,7 +2759,7 @@
             }
           } catch {
             alert("Fitur Flash tidak didukung di perangkat ini.");
-          }
+        }
         }
 
         function showScannerError(msg) {
@@ -2594,6 +2791,7 @@
               <tr class="border-b hover:bg-gray-50 transition">
                 <td class="p-2 text-gray-500 text-[10px] font-mono">${l.time}</td>
                 <td class="p-2 font-bold text-xs text-gray-700">${l.name}</td>
+  
                 <td class="p-2"><span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-[10px] font-bold">Hadir</span></td>
               </tr>`
             )
