@@ -6,11 +6,8 @@
     <title>Sistem Absensi GKPS - PRO ULTIMATE Enhanced Scanner</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
-    
     <script type="text/javascript" src="https://unpkg.com/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
-    
     <script src="https://cdn.tailwindcss.com"></script>
-    
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
@@ -721,6 +718,21 @@
                             <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
                         </label>
                     </div>
+
+                    <div class="mt-2 bg-white p-3 rounded-xl border">
+                        <p class="text-[10px] font-bold text-gray-500 uppercase mb-2">Jadwal Otomatis (Opsional)</p>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="text-[10px] font-bold text-gray-500 block mb-1">Jam Mulai</label>
+                                <input type="time" id="sett-manual-start" class="pro-input py-1 text-xs mb-0 bg-gray-50">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-bold text-gray-500 block mb-1">Jam Selesai</label>
+                                <input type="time" id="sett-manual-end" class="pro-input py-1 text-xs mb-0 bg-gray-50">
+                            </div>
+                        </div>
+                        <p class="text-[9px] text-gray-400 mt-2 italic">*Kosongkan jam jika ingin aktif 24 jam (selama Status Fitur ON).</p>
+                    </div>
                     <button onclick="saveSettings()" class="w-full bg-green-600 text-white font-bold py-2 rounded-lg text-xs hover:bg-green-700">Simpan Pengaturan</button>
                 </div>
             </div>
@@ -1352,13 +1364,24 @@
         function loadSettingsToUI() {
             if(!db.settings) return;
             document.getElementById('sett-manual-toggle').checked = db.settings.manualOpen || false;
+            
+            // --- TAMBAHAN BARU ---
+            document.getElementById('sett-manual-start').value = db.settings.manualStart || '';
+            document.getElementById('sett-manual-end').value = db.settings.manualEnd || '';
         }
 
         function saveSettings() {
             if(!db.settings) db.settings = {};
             db.settings.manualOpen = document.getElementById('sett-manual-toggle').checked;
+            
+            // --- TAMBAHAN BARU ---
+            db.settings.manualStart = document.getElementById('sett-manual-start').value;
+            db.settings.manualEnd = document.getElementById('sett-manual-end').value;
+            
             saveDb();
             alert("Pengaturan Disimpan!");
+            // Refresh tampilan tombol manual sesuai jadwal baru
+            checkManualAttendanceVisibility();
         }
 
         function checkManualAttendanceVisibility() {
@@ -1366,15 +1389,44 @@
             const btnSiswa = document.getElementById('manual-absen-container-siswa');
             const btnDash = document.getElementById('manual-absen-container-dash');
             
+            // Default hidden
             if(btnSiswa) btnSiswa.classList.add('hidden');
             if(btnDash) btnDash.classList.add('hidden');
 
-            const manualEnabled = db.settings ? db.settings.manualOpen : true;
-            if(!manualEnabled) return; 
+            const settings = db.settings || {};
+            // 1. Cek Master Switch (Harus ON dulu)
+            if(!settings.manualOpen) return; 
 
+            // 2. Cek Jadwal Waktu (Jika diatur)
+            if (settings.manualStart && settings.manualEnd) {
+                const now = new Date();
+                const currentMins = now.getHours() * 60 + now.getMinutes();
+                
+                const [sH, sM] = settings.manualStart.split(':').map(Number);
+                const startMins = sH * 60 + sM;
+                
+                const [eH, eM] = settings.manualEnd.split(':').map(Number);
+                const endMins = eH * 60 + eM;
+
+                let isOpen = false;
+                if (startMins <= endMins) {
+                    // Jadwal hari yang sama (misal 07:00 - 12:00)
+                    isOpen = currentMins >= startMins && currentMins <= endMins;
+                } else {
+                    // Jadwal lintas hari (misal 22:00 - 05:00)
+                    isOpen = currentMins >= startMins || currentMins <= endMins;
+                }
+
+                // Jika sekarang di luar jadwal, sembunyikan tombol
+                if (!isOpen) return; 
+            }
+
+            // 3. Cek apakah user sudah absen hari ini
             const today = getTodayDate();
             const already = db.attendance.find(a => a.username === currentUser.username && a.date === today);
             if(already) return;
+
+            // Jika lolos semua cek, tampilkan tombol
             if(currentUser.role === 'siswa' && btnSiswa) btnSiswa.classList.remove('hidden');
             if(currentUser.role !== 'siswa' && btnDash) btnDash.classList.remove('hidden');
         }
