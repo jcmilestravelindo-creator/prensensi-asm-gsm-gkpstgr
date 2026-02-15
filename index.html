@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Absensi GKPS - PRO ULTIMATE Enhanced Scanner</title>
+    <title>Sistem Absensi GKPS - PRO ULTIMATE FIXED</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
     <script type="text/javascript" src="https://unpkg.com/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
@@ -1284,9 +1284,11 @@
 
         function saveDb() {
             if(dbRef) {
-                dbRef.set(db).catch(err => alert("Gagal Simpan ke Cloud: " + err.message));
+                // FIXED: Return Promise agar bisa di-await
+                return dbRef.set(db).catch(err => alert("Gagal Simpan ke Cloud: " + err.message));
             } else {
                 alert("Error: Firebase Config Belum Diisi!");
+                return Promise.reject("No DB Ref");
             }
         }
 
@@ -2643,13 +2645,97 @@
           logBody.innerHTML = logs
             .map(
               (l) => `
-              <tr class="border-b hover:bg-gray-50 transition">
-                <td class="p-2 text-gray-500 text-[10px] font-mono">${l.time}</td>
-                <td class="p-2 font-bold text-xs text-gray-700">${l.name}</td>
-                <td class="p-2"><span class="bg-green-100 text-green-700 px-2 py-0.5 rounded text-[10px] font-bold">Hadir</span></td>
+              <tr class=\"border-b hover:bg-gray-50 transition\">\
+                <td class=\"p-2 text-gray-500 text-[10px] font-mono\">${l.time}</td>\
+                <td class=\"p-2 font-bold text-xs text-gray-700\">${l.name}</td>\
+                <td class=\"p-2\"><span class=\"bg-green-100 text-green-700 px-2 py-0.5 rounded text-[10px] font-bold\">Hadir</span></td>
               </tr>`
             )
             .join('');
+        }
+
+        // FUNGSI BACKUP (DOWNLOAD DATA)
+        function backupData() {
+            if(!db) return alert("Database belum siap.");
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db, null, 2));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            // FIXED: Tambahkan timestamp agar nama file unik dan tidak kena cache
+            downloadAnchorNode.setAttribute("download", "GKPS_BACKUP_" + Date.now() + ".json");
+            document.body.appendChild(downloadAnchorNode); 
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+
+        // FUNGSI RESTORE (UPLOAD & GABUNG) - FIXED VERSION
+        async function syncData(input) {
+            const file = input.files[0];
+            if(!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = async function(e) { // Tambahkan ASYNC di sini
+                try {
+                    const backup = JSON.parse(e.target.result);
+                    if(!backup) throw new Error("File kosong/rusak");
+
+                    // 1. Merge Users
+                    let newUsers = 0;
+                    if(Array.isArray(backup.users)) {
+                        if(!Array.isArray(db.users)) db.users = [];
+                        backup.users.forEach(bu => {
+                            const exist = db.users.find(u => u.id === bu.id || u.username === bu.username);
+                            if(!exist) {
+                                db.users.push(bu);
+                                newUsers++;
+                            }
+                        });
+                    }
+
+                    // 2. Merge Attendance
+                    let newAtt = 0;
+                    if(Array.isArray(backup.attendance)) {
+                        if(!Array.isArray(db.attendance)) db.attendance = [];
+                        backup.attendance.forEach(ba => {
+                            const exist = db.attendance.find(a => a.username === ba.username && a.date === ba.date && a.time === ba.time);
+                            if(!exist) {
+                                db.attendance.push(ba);
+                                newAtt++;
+                            }
+                        });
+                    }
+
+                    // 3. Merge Others
+                    if(Array.isArray(backup.folders)) {
+                        if(!Array.isArray(db.folders)) db.folders = [];
+                        backup.folders.forEach(f => { if(!db.folders.includes(f)) db.folders.push(f); });
+                    }
+                    
+                    ['materi', 'jadwal', 'messages'].forEach(key => {
+                        if(Array.isArray(backup[key])) {
+                            if(!Array.isArray(db[key])) db[key] = [];
+                            backup[key].forEach(item => {
+                                if(!db[key].find(x => x.id === item.id)) db[key].push(item);
+                            });
+                        }
+                    });
+
+                    // 4. Merge Settings
+                    if(backup.settings) {
+                        db.settings = { ...db.settings, ...backup.settings };
+                    }
+
+                    // FIXED: AWAIT saveDb agar data benar-benar tersimpan SEBELUM reload
+                    await saveDb(); 
+                    
+                    alert(`RESTORE BERHASIL!\nData digabungkan:\n+ ${newUsers} Users\n+ ${newAtt} Log Absen`);
+                    location.reload();
+
+                } catch(err) {
+                    alert("Gagal Restore: " + err.message);
+                }
+            };
+            reader.readAsText(file);
+            input.value = ''; // Reset input agar bisa pilih file yang sama lagi
         }
 
         window.onload = initApp;
