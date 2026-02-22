@@ -20,7 +20,6 @@
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
-        
         /* Variable & Body */
         :root {
             --primary: #0ea5e9;
@@ -1354,7 +1353,7 @@
         // Menangkap event install bawaan Chrome/Android/PC
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
-            deferredPrompt = e; // Simpan event untuk dipicu nanti
+            deferredPrompt = e; 
             // Munculkan tombol install otomatis yang disembunyikan sebelumnya
             document.querySelectorAll('.btn-install-native').forEach(btn => btn.classList.remove('hidden'));
         });
@@ -3092,6 +3091,7 @@
                         db.settings = { ...db.settings, ...backup.settings };
                     }
                     
+                    // FIXED: AWAIT saveDb agar data benar-benar tersimpan SEBELUM reload
                     await saveDb();
                     alert(`RESTORE BERHASIL!\nData digabungkan:\n+ ${newUsers} Users\n+ ${newAtt} Log Absen`);
                     location.reload();
@@ -3100,7 +3100,7 @@
                 }
             };
             reader.readAsText(file); 
-            input.value = '';
+            input.value = ''; // Reset input agar bisa pilih file yang sama lagi
         }
 
         window.onload = initApp;
