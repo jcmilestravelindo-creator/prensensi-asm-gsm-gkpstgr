@@ -2438,6 +2438,11 @@
 
         // --- CRUD JADWAL ---
         function showJadwalEditor(id = null) {
+            // KEAMANAN: Cek role, cegah akses jika bukan admin atau pengurus
+            if (!['admin', 'pengurus_sm'].includes(currentUser.role)) {
+                return alert("Akses Ditolak: Hanya Admin dan Pengurus SM yang dapat mengelola jadwal.");
+            }
+
             document.getElementById('jadwal-editor').classList.remove('hidden');
             document.getElementById('btn-add-jadwal').classList.add('hidden');
             
@@ -2464,6 +2469,9 @@
         }
 
         function saveJadwal() {
+            // KEAMANAN BACKEND
+            if (!['admin', 'pengurus_sm'].includes(currentUser.role)) return;
+
             const id = document.getElementById('jad-id').value;
             const date = document.getElementById('jad-date').value;
             const guru = document.getElementById('jad-guru').value;
@@ -2485,11 +2493,11 @@
             if (!tbody) return;
 
             const data = db.jadwal || [];
-             if(data.length === 0) { tbody.innerHTML = '<tr><td colspan="4" class="text-center p-4 text-gray-400">Belum ada jadwal.</td></tr>';
-            return; }
             
+            // LOGIKA AKSES: Hanya admin dan pengurus_sm yang isEditable = true
             const isEditable = !forceReadOnly && ['admin', 'pengurus_sm'].includes(currentUser.role);
-            // Hide/Show Add Button if it exists (for Dashboard view)
+            
+            // Sembunyikan atau Tampilkan tombol "+ Buat Jadwal Baru" di Dashboard
             const btnAdd = document.getElementById('btn-add-jadwal');
             if(btnAdd) {
                 if(forceReadOnly || !isEditable) {
@@ -2499,25 +2507,40 @@
                 }
             }
 
+            // Modifikasi Thead dinamis: Menghapus teks Header 'Aksi' jika Guru/User hanya melihat
+            const table = tbody.closest('table');
+            if (table) {
+                const theadTr = table.querySelector('thead tr');
+                if (theadTr) {
+                    theadTr.innerHTML = `<th>Tanggal</th><th>Guru</th><th>Tugas</th>${isEditable ? '<th>Aksi</th>' : ''}`;
+                }
+            }
+
+            if(data.length === 0) { 
+                tbody.innerHTML = `<tr><td colspan="${isEditable ? 4 : 3}" class="text-center p-4 text-gray-400">Belum ada jadwal.</td></tr>`;
+                return; 
+            }
+
+            // Render isi Tabel (Sembunyikan kolom td Aksi jika bukan admin/pengurus)
             tbody.innerHTML = data.map(j => `
-                <tr>
-                    <td>${j.date}</td>
-                    <td class="font-bold">${j.guru}</td>
-               
-                    <td>${j.tugas}</td>
+                <tr class="border-b hover:bg-gray-50">
+                    <td class="py-2">${j.date}</td>
+                    <td class="font-bold py-2">${j.guru}</td>
+                    <td class="py-2">${j.tugas}</td>
                     ${isEditable ? `
-                    <td>
-                        <button onclick="showJadwalEditor('${j.id}')" class="text-blue-500 mr-2">Edit</button>
-           
-                        <button onclick="deleteJadwal('${j.id}')" 
-                            class="text-red-500">Hapus</button>
+                    <td class="py-2 flex gap-1">
+                        <button onclick="showJadwalEditor('${j.id}')" class="text-blue-600 bg-blue-50 border border-blue-200 text-[10px] font-bold px-2 py-1 rounded hover:bg-blue-100">Edit</button>
+                        <button onclick="deleteJadwal('${j.id}')" class="text-red-600 bg-red-50 border border-red-200 text-[10px] font-bold px-2 py-1 rounded hover:bg-red-100">Hapus</button>
                     </td>` : ''}
                 </tr>
             `).join('');
         }
 
         function deleteJadwal(id) {
-            if(confirm("Hapus jadwal ini?")) {
+            // KEAMANAN BACKEND
+            if (!['admin', 'pengurus_sm'].includes(currentUser.role)) return;
+
+            if(confirm("Hapus jadwal ini secara permanen?")) {
                 db.jadwal = db.jadwal.filter(x => x.id !== id);
                 saveDb(); renderJadwalTable();
             }
