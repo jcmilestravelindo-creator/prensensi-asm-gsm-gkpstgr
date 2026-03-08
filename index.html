@@ -647,6 +647,10 @@
                 <span class="text-2xl mb-1">🗓️</span>
                  <span class="text-xs font-bold text-amber-900">Lihat Jadwal</span>
             </button>
+            <button onclick="openStudentView('performance')" class="col-span-2 bg-white border border-green-100 p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center hover:bg-green-50 transition">
+                <span class="text-2xl mb-1">📈</span>
+                 <span class="text-xs font-bold text-green-900">MY Performance</span>
+            </button>
         </div>
     </section>
 
@@ -812,7 +816,7 @@
                             </tbody>
                     </table>
                 </div>
-                <p class="text-[9px] text-gray-400 mt-3 italic">*Klik pada status kehadiran untuk mengubah data (Khusus Admin & Wali Kelas).</p>
+                <p id="perf-help-text" class="text-[9px] text-gray-400 mt-3 italic">*Klik pada status kehadiran untuk mengubah data (Khusus Admin & Wali Kelas).</p>
             </div>
         </div>
 
@@ -2025,7 +2029,7 @@
             generateStyledQRCode("qrcode", codeData);
         }
 
-        // Student View Handler (Modal)
+        // --- STUDENT MODAL HANDLER ---
         function openStudentView(type) {
             document.getElementById('student-content-modal').style.display = 'flex';
             const body = document.getElementById('student-modal-body');
@@ -2040,7 +2044,45 @@
                 title.innerText = "🗓️ Jadwal Guru";
                 body.innerHTML = `<div class="overflow-x-auto"><table class="w-full admin-table text-xs"><thead><tr><th>Tanggal</th><th>Guru</th><th>Tugas</th></tr></thead><tbody id="student-jadwal-body"></tbody></table></div>`;
                 renderJadwalTable('student-jadwal-body', true); // Force Read-Only
+            } else if (type === 'performance') {
+                title.innerText = "📈 MY Performance";
+                body.innerHTML = `<div class="overflow-x-auto"><table class="w-full admin-table text-xs"><thead id="student-perf-head"></thead><tbody id="student-perf-body"></tbody></table></div>`;
+                renderStudentPerformance();
             }
+        }
+
+        // --- RENDER STUDENT PERFORMANCE (KHUSUS SISWA) ---
+        function renderStudentPerformance() {
+            const tbody = document.getElementById('student-perf-body');
+            const thead = document.getElementById('student-perf-head');
+            
+            const allAtt = Array.isArray(db.attendance) ? db.attendance : [];
+            const uniqueDates = [...new Set(allAtt.map(a => a.date))].sort((a, b) => {
+                const [d1, m1, y1] = a.split('/');
+                const [d2, m2, y2] = b.split('/');
+                return new Date(y2, m2 - 1, d2) - new Date(y1, m1 - 1, d1);
+            }).slice(0, 4); 
+
+            let headHtml = `<tr><th>Nama</th>`;
+            uniqueDates.forEach(d => { headHtml += `<th class="text-center">${d}</th>`; });
+            headHtml += `</tr>`;
+            thead.innerHTML = headHtml;
+
+            let row = `<tr class="border-b hover:bg-gray-50"><td class="font-bold">${currentUser.name}</td>`;
+            uniqueDates.forEach(date => {
+                const record = allAtt.find(a => a.username === currentUser.username && a.date === date);
+                let statusTxt = record ? record.status : '-';
+                let color = 'text-gray-400';
+                
+                if(statusTxt === 'Hadir') color = 'text-green-700 bg-green-100';
+                if(statusTxt === 'Sakit') color = 'text-yellow-700 bg-yellow-100';
+                if(statusTxt === 'Izin') color = 'text-blue-700 bg-blue-100';
+                if(statusTxt === 'Alpha') color = 'text-red-700 bg-red-100';
+
+                row += `<td class="text-center"><span class="${color} px-2 py-0.5 rounded text-[10px] font-bold block min-w-[40px]">${statusTxt}</span></td>`;
+            });
+            row += `</tr>`;
+            tbody.innerHTML = row;
         }
 
         function openIdCardModal() {
@@ -3131,11 +3173,26 @@
             input.value = ''; // Reset input agar bisa pilih file yang sama lagi
         }
 
-        // --- MY PERFORMANCE LOGIC ---
+        // --- RENDER DASHBOARD PERFORMANCE (KHUSUS GURU/ADMIN) ---
         function renderPerformanceTable() {
-            const roleFilter = document.getElementById('perf-role-filter').value;
+            const roleFilterEl = document.getElementById('perf-role-filter');
+            const roleFilter = roleFilterEl ? roleFilterEl.value : 'siswa';
             const tbody = document.getElementById('perf-table-body');
             const thead = document.getElementById('perf-table-head');
+            const helpText = document.getElementById('perf-help-text');
+
+            // Cek Hak Akses Edit & Lihat Semua
+            const canSeeAll = ['admin', 'wali_kelas'].includes(currentUser.role);
+            const canEdit = canSeeAll;
+
+            // Sembunyikan dropdown filter & teks petunjuk jika bukan Admin/Wali Kelas
+            if (!canSeeAll) {
+                if(roleFilterEl) roleFilterEl.classList.add('hidden');
+                if(helpText) helpText.classList.add('hidden');
+            } else {
+                if(roleFilterEl) roleFilterEl.classList.remove('hidden');
+                if(helpText) helpText.classList.remove('hidden');
+            }
 
             // Ambil maksimal 4 tanggal absen terakhir (4 minggu terakhir)
             const allAtt = Array.isArray(db.attendance) ? db.attendance : [];
@@ -3143,21 +3200,24 @@
                 const [d1, m1, y1] = a.split('/');
                 const [d2, m2, y2] = b.split('/');
                 return new Date(y2, m2 - 1, d2) - new Date(y1, m1 - 1, d1);
-            }).slice(0, 4); // Ambil 4 kolom tanggal terakhir
+            }).slice(0, 4); 
 
             let headHtml = `<tr><th>Nama</th><th>Kelas</th>`;
             uniqueDates.forEach(d => { headHtml += `<th class="text-center">${d}</th>`; });
             headHtml += `</tr>`;
             thead.innerHTML = headHtml;
 
-            // Filter user berdasarkan role
-            const targetUsers = (db.users || []).filter(u => 
-                u.role === roleFilter || 
-                (roleFilter === 'guru' && ['guru', 'wali_kelas', 'pengurus_sm'].includes(u.role))
-            );
-
-            // Cek Hak Akses Edit
-            const canEdit = ['admin', 'wali_kelas'].includes(currentUser.role);
+            // Filter user berdasarkan role dan hak akses
+            let targetUsers = [];
+            if (canSeeAll) {
+                targetUsers = (db.users || []).filter(u => 
+                    u.role === roleFilter || 
+                    (roleFilter === 'guru' && ['guru', 'wali_kelas', 'pengurus_sm'].includes(u.role))
+                );
+            } else {
+                // Guru biasa / Pengurus SM hanya melihat dirinya sendiri
+                targetUsers = [currentUser];
+            }
 
             if (targetUsers.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="${uniqueDates.length + 2}" class="text-center p-4 text-gray-400">Tidak ada data pengguna</td></tr>`;
@@ -3184,7 +3244,8 @@
                             <span class="${color} px-2 py-0.5 rounded text-[10px] font-bold block w-full">${statusTxt}</span>
                         </td>`;
                     } else {
-                        row += `<td class="text-center"><span class="${color} px-2 py-0.5 rounded text-[10px] font-bold">${statusTxt}</span></td>`;
+                        // Tidak bisa diklik jika bukan Admin/Wali Kelas
+                        row += `<td class="text-center"><span class="${color} px-2 py-0.5 rounded text-[10px] font-bold block w-full cursor-default">${statusTxt}</span></td>`;
                     }
                 });
                 row += `</tr>`;
@@ -3193,18 +3254,22 @@
         }
 
         function editPerformance(username, name, date, currentStatus) {
+            // Pengamanan Ekstra (Server-side validation fallback)
+            if (!['admin', 'wali_kelas'].includes(currentUser.role)) {
+                return alert("Akses Ditolak! Hanya Admin dan Wali Kelas yang dapat mengubah data.");
+            }
+
             const newStatus = prompt(
                 `Edit absen untuk: ${name}\nTanggal: ${date}\n\nKetik status baru (Hadir, Sakit, Izin, Alpha)\nAtau kosongkan lalu OK untuk Hapus data:`, 
                 currentStatus !== '-' ? currentStatus : 'Hadir'
             );
 
-            if (newStatus === null) return; // Dibatalkan
+            if (newStatus === null) return; 
 
             const validStatuses = ['Hadir', 'Sakit', 'Izin', 'Alpha'];
             const attIndex = db.attendance.findIndex(a => a.username === username && a.date === date);
 
             if (newStatus.trim() === '') {
-                // Hapus Rekord jika dikosongkan
                 if (attIndex !== -1) {
                     db.attendance.splice(attIndex, 1);
                     saveDb();
@@ -3218,7 +3283,7 @@
                         username: username,
                         name: name,
                         date: date,
-                        time: "00:00:00", // Default edit manual
+                        time: "00:00:00", 
                         status: newStatus,
                         note: 'Diedit Manual oleh ' + currentUser.name
                     });
