@@ -1432,6 +1432,7 @@
         let db = { users: [], attendance: [], messages: [], settings: {}, folders: [], materi: [], jadwal: [], isSetup: false };
         let currentUser = null;
         let sortConfig = { key: null, asc: true };
+        let perfSortConfig = { key: 'name', asc: true }; 
         
         // SOUND EFFECTS
         const soundOk = new Audio('https://cdn.freesound.org/previews/242/242501_4414128-lq.mp3');
@@ -3205,6 +3206,16 @@
         }
 
         // --- RENDER DASHBOARD PERFORMANCE (KHUSUS GURU/ADMIN) ---
+        function handlePerfSort(key) {
+            if (perfSortConfig.key === key) {
+                perfSortConfig.asc = !perfSortConfig.asc;
+            } else {
+                perfSortConfig.key = key;
+                perfSortConfig.asc = true;
+            }
+            renderPerformanceTable();
+        }
+
         function renderPerformanceTable() {
             const roleFilterEl = document.getElementById('perf-role-filter');
             const roleFilter = roleFilterEl ? roleFilterEl.value : 'siswa';
@@ -3251,8 +3262,13 @@
                 return new Date(y1, m1 - 1, d1) - new Date(y2, m2 - 1, d2); 
             }); 
 
-            let headHtml = `<tr><th class="bg-gray-100">Nama</th><th class="bg-gray-100">Kelas</th>`;
-            uniqueDates.forEach(d => { headHtml += `<th class="text-center bg-gray-100">${d.substring(0,5)}</th>`; });
+            let headHtml = `<tr>
+                <th class="bg-gray-100 sortable" onclick="handlePerfSort('name')">Nama <span>${perfSortConfig.key === 'name' ? (perfSortConfig.asc ? '↑' : '↓') : '↕'}</span></th>
+                <th class="bg-gray-100 sortable" onclick="handlePerfSort('kelas')">Kelas <span>${perfSortConfig.key === 'kelas' ? (perfSortConfig.asc ? '↑' : '↓') : '↕'}</span></th>`;
+            uniqueDates.forEach(d => { 
+                let sortIcon = perfSortConfig.key === d ? (perfSortConfig.asc ? '↑' : '↓') : '↕';
+                headHtml += `<th class="text-center bg-gray-100 sortable" onclick="handlePerfSort('${d}')">${d.substring(0,5)} <span class="text-[10px] ml-1">${sortIcon}</span></th>`; 
+            });
             headHtml += `</tr>`;
             thead.innerHTML = headHtml;
 
@@ -3279,6 +3295,27 @@
                     (u.username || '').toLowerCase().includes(searchQuery)
                 );
             }
+            
+            // Terapkan Sorting Tabel Performance
+            targetUsers.sort((a, b) => {
+                let valA = '', valB = '';
+                if (perfSortConfig.key === 'name') {
+                    valA = (a.name || '').toLowerCase();
+                    valB = (b.name || '').toLowerCase();
+                } else if (perfSortConfig.key === 'kelas') {
+                    valA = (a.kelas || '').toLowerCase();
+                    valB = (b.kelas || '').toLowerCase();
+                } else {
+                    const recA = allAtt.find(att => att.username === a.username && att.date === perfSortConfig.key);
+                    const recB = allAtt.find(att => att.username === b.username && att.date === perfSortConfig.key);
+                    valA = recA ? recA.status.toLowerCase() : '-';
+                    valB = recB ? recB.status.toLowerCase() : '-';
+                }
+
+                if (valA < valB) return perfSortConfig.asc ? -1 : 1;
+                if (valA > valB) return perfSortConfig.asc ? 1 : -1;
+                return 0;
+            });
 
             if (targetUsers.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="${uniqueDates.length + 2}" class="text-center p-4 text-gray-400 italic">Tidak ada data pengguna</td></tr>`;
