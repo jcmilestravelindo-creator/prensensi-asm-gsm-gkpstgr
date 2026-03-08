@@ -801,12 +801,16 @@
 
         <div id="view-performance" class="tab-view hidden">
             <div class="pro-card">
-                <div class="flex justify-between items-center mb-4">
+                <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
                     <h3 class="font-bold text-lg text-blue-900">📈 MY Performance - SM RESORT TANGERANG</h3>
-                    <select id="perf-role-filter" onchange="renderPerformanceTable()" class="pro-input py-1 text-xs mb-0 w-auto bg-white">
-                        <option value="siswa">Siswa Sekolah Minggu</option>
-                        <option value="guru">Guru Sekolah Minggu</option>
-                    </select>
+                    <div class="flex flex-wrap gap-2 items-center">
+                        <input type="month" id="perf-month-filter" onchange="renderPerformanceTable()" class="pro-input py-1 text-xs mb-0 w-auto bg-white">
+                        <select id="perf-role-filter" onchange="renderPerformanceTable()" class="pro-input py-1 text-xs mb-0 w-auto bg-white">
+                            <option value="siswa">Siswa Sekolah Minggu</option>
+                            <option value="guru">Guru Sekolah Minggu</option>
+                        </select>
+                        <button id="btn-add-perf-date" onclick="addPerformanceDate()" class="bg-blue-600 text-white px-3 py-1 rounded-lg text-xs font-bold shadow hover:bg-blue-700 hidden">+ Tgl Baru</button>
+                    </div>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full admin-table text-xs">
@@ -2046,7 +2050,21 @@
                 renderJadwalTable('student-jadwal-body', true); // Force Read-Only
             } else if (type === 'performance') {
                 title.innerText = "📈 MY Performance";
-                body.innerHTML = `<div class="overflow-x-auto"><table class="w-full admin-table text-xs"><thead id="student-perf-head"></thead><tbody id="student-perf-body"></tbody></table></div>`;
+                
+                const today = new Date();
+                const defMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+                
+                body.innerHTML = `
+                    <div class="mb-4 bg-gray-50 p-3 rounded-xl border">
+                        <label class="text-[10px] font-bold text-gray-500 uppercase block mb-1">Lihat Bulan Sebelumnya</label>
+                        <input type="month" id="student-perf-month" value="${defMonth}" onchange="renderStudentPerformance()" class="pro-input py-1 text-xs mb-0 bg-white">
+                    </div>
+                    <div class="overflow-x-auto bg-white rounded border">
+                        <table class="w-full admin-table text-xs">
+                            <thead id="student-perf-head"></thead>
+                            <tbody id="student-perf-body"></tbody>
+                        </table>
+                    </div>`;
                 renderStudentPerformance();
             }
         }
@@ -2055,20 +2073,30 @@
         function renderStudentPerformance() {
             const tbody = document.getElementById('student-perf-body');
             const thead = document.getElementById('student-perf-head');
+            const monthInput = document.getElementById('student-perf-month');
+            
+            if(!monthInput || !tbody || !thead) return;
+            const [selY, selM] = monthInput.value.split('-');
+            const targetSuffix = `/${selM}/${selY}`;
             
             const allAtt = Array.isArray(db.attendance) ? db.attendance : [];
-            const uniqueDates = [...new Set(allAtt.map(a => a.date))].sort((a, b) => {
+            const uniqueDates = [...new Set(allAtt.filter(a => a.date.endsWith(targetSuffix)).map(a => a.date))].sort((a, b) => {
                 const [d1, m1, y1] = a.split('/');
                 const [d2, m2, y2] = b.split('/');
-                return new Date(y2, m2 - 1, d2) - new Date(y1, m1 - 1, d1);
-            }).slice(0, 4); 
+                return new Date(y1, m1 - 1, d1) - new Date(y2, m2 - 1, d2); 
+            });
 
-            let headHtml = `<tr><th>Nama</th>`;
-            uniqueDates.forEach(d => { headHtml += `<th class="text-center">${d}</th>`; });
+            let headHtml = `<tr><th class="bg-gray-100">Nama</th>`;
+            uniqueDates.forEach(d => { headHtml += `<th class="text-center bg-gray-100">${d.substring(0,5)}</th>`; });
             headHtml += `</tr>`;
             thead.innerHTML = headHtml;
 
-            let row = `<tr class="border-b hover:bg-gray-50"><td class="font-bold">${currentUser.name}</td>`;
+            if (uniqueDates.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="2" class="text-center p-4 text-gray-400 italic">Tidak ada data kehadiran di bulan ini</td></tr>`;
+                return;
+            }
+
+            let row = `<tr class="border-b hover:bg-gray-50"><td class="font-bold py-3">${currentUser.name}</td>`;
             uniqueDates.forEach(date => {
                 const record = allAtt.find(a => a.username === currentUser.username && a.date === date);
                 let statusTxt = record ? record.status : '-';
@@ -2079,7 +2107,7 @@
                 if(statusTxt === 'Izin') color = 'text-blue-700 bg-blue-100';
                 if(statusTxt === 'Alpha') color = 'text-red-700 bg-red-100';
 
-                row += `<td class="text-center"><span class="${color} px-2 py-0.5 rounded text-[10px] font-bold block min-w-[40px]">${statusTxt}</span></td>`;
+                row += `<td class="text-center py-3"><span class="${color} px-2 py-1 rounded text-[10px] font-bold inline-block min-w-[40px]">${statusTxt}</span></td>`;
             });
             row += `</tr>`;
             tbody.innerHTML = row;
@@ -3161,7 +3189,6 @@
                         db.settings = { ...db.settings, ...backup.settings };
                     }
                     
-                    // FIXED: AWAIT saveDb agar data benar-benar tersimpan SEBELUM reload
                     await saveDb();
                     alert(`RESTORE BERHASIL!\nData digabungkan:\n+ ${newUsers} Users\n+ ${newAtt} Log Absen`);
                     location.reload();
@@ -3170,16 +3197,28 @@
                 }
             };
             reader.readAsText(file); 
-            input.value = ''; // Reset input agar bisa pilih file yang sama lagi
+            input.value = ''; 
         }
 
         // --- RENDER DASHBOARD PERFORMANCE (KHUSUS GURU/ADMIN) ---
         function renderPerformanceTable() {
             const roleFilterEl = document.getElementById('perf-role-filter');
             const roleFilter = roleFilterEl ? roleFilterEl.value : 'siswa';
+            const monthFilterEl = document.getElementById('perf-month-filter');
+            
+            if (monthFilterEl && !monthFilterEl.value) {
+                const today = new Date();
+                monthFilterEl.value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+            }
+            
+            const selectedMonth = monthFilterEl ? monthFilterEl.value : '';
+            const [selY, selM] = selectedMonth.split('-');
+            const targetSuffix = `/${selM}/${selY}`;
+
             const tbody = document.getElementById('perf-table-body');
             const thead = document.getElementById('perf-table-head');
             const helpText = document.getElementById('perf-help-text');
+            const btnAddDate = document.getElementById('btn-add-perf-date');
 
             // Cek Hak Akses Edit & Lihat Semua
             const canSeeAll = ['admin', 'wali_kelas'].includes(currentUser.role);
@@ -3189,21 +3228,22 @@
             if (!canSeeAll) {
                 if(roleFilterEl) roleFilterEl.classList.add('hidden');
                 if(helpText) helpText.classList.add('hidden');
+                if(btnAddDate) btnAddDate.classList.add('hidden');
             } else {
                 if(roleFilterEl) roleFilterEl.classList.remove('hidden');
                 if(helpText) helpText.classList.remove('hidden');
+                if(btnAddDate) btnAddDate.classList.remove('hidden');
             }
 
-            // Ambil maksimal 4 tanggal absen terakhir (4 minggu terakhir)
             const allAtt = Array.isArray(db.attendance) ? db.attendance : [];
-            const uniqueDates = [...new Set(allAtt.map(a => a.date))].sort((a, b) => {
+            const uniqueDates = [...new Set(allAtt.filter(a => a.date.endsWith(targetSuffix)).map(a => a.date))].sort((a, b) => {
                 const [d1, m1, y1] = a.split('/');
                 const [d2, m2, y2] = b.split('/');
-                return new Date(y2, m2 - 1, d2) - new Date(y1, m1 - 1, d1);
-            }).slice(0, 4); 
+                return new Date(y1, m1 - 1, d1) - new Date(y2, m2 - 1, d2); 
+            }); 
 
-            let headHtml = `<tr><th>Nama</th><th>Kelas</th>`;
-            uniqueDates.forEach(d => { headHtml += `<th class="text-center">${d}</th>`; });
+            let headHtml = `<tr><th class="bg-gray-100">Nama</th><th class="bg-gray-100">Kelas</th>`;
+            uniqueDates.forEach(d => { headHtml += `<th class="text-center bg-gray-100">${d.substring(0,5)}</th>`; });
             headHtml += `</tr>`;
             thead.innerHTML = headHtml;
 
@@ -3215,12 +3255,16 @@
                     (roleFilter === 'guru' && ['guru', 'wali_kelas', 'pengurus_sm'].includes(u.role))
                 );
             } else {
-                // Guru biasa / Pengurus SM hanya melihat dirinya sendiri
                 targetUsers = [currentUser];
             }
 
             if (targetUsers.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="${uniqueDates.length + 2}" class="text-center p-4 text-gray-400">Tidak ada data pengguna</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="${uniqueDates.length + 2}" class="text-center p-4 text-gray-400 italic">Tidak ada data pengguna</td></tr>`;
+                return;
+            }
+
+            if (uniqueDates.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="2" class="text-center p-4 text-gray-400 italic">Belum ada data kehadiran di bulan ini. Silakan 'Tambah Tgl Baru' untuk memulai.</td></tr>`;
                 return;
             }
 
@@ -3253,14 +3297,51 @@
             }).join('');
         }
 
+        function addPerformanceDate() {
+            const monthInput = document.getElementById('perf-month-filter');
+            if(!monthInput || !monthInput.value) return alert("Pilih bulan terlebih dahulu!");
+            
+            const [selY, selM] = monthInput.value.split('-');
+            const dateStr = prompt(`Masukkan TANGGAL untuk bulan ${selM}-${selY} (Format: DD/MM/YYYY)\nContoh: 05/${selM}/${selY}`);
+            
+            if(!dateStr) return;
+            
+            const regex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+            if(!regex.test(dateStr)) {
+                return alert("Format salah! Harus menggunakan format DD/MM/YYYY (Contoh: 02/05/2026)");
+            }
+            
+            if(!dateStr.endsWith(`/${selM}/${selY}`)) {
+                return alert(`Tahun dan Bulan tidak cocok dengan filter saat ini (${selM}/${selY})!`);
+            }
+            
+            const exists = (db.attendance||[]).some(a => a.date === dateStr);
+            if(exists) {
+                return alert("Tanggal tersebut sudah memiliki kolom kehadiran.");
+            }
+
+            if(!db.attendance) db.attendance = [];
+            // Menambahkan data placeholder untuk memunculkan kolom
+            db.attendance.push({
+                username: "SYS_PLACEHOLDER",
+                name: "Sistem",
+                date: dateStr,
+                time: "00:00:00",
+                status: '-',
+                note: 'Init'
+            });
+            saveDb();
+            renderPerformanceTable();
+        }
+
         function editPerformance(username, name, date, currentStatus) {
-            // Pengamanan Ekstra (Server-side validation fallback)
+            // Pengamanan Ekstra 
             if (!['admin', 'wali_kelas'].includes(currentUser.role)) {
                 return alert("Akses Ditolak! Hanya Admin dan Wali Kelas yang dapat mengubah data.");
             }
 
             const newStatus = prompt(
-                `Edit absen untuk: ${name}\nTanggal: ${date}\n\nKetik status baru (Hadir, Sakit, Izin, Alpha)\nAtau kosongkan lalu OK untuk Hapus data:`, 
+                `Edit absen untuk: ${name}\nTanggal: ${date}\n\nKetik status baru (Hadir, Sakit, Izin, Alpha)\nAtau kosongkan lalu OK untuk menghapus data:`, 
                 currentStatus !== '-' ? currentStatus : 'Hadir'
             );
 
