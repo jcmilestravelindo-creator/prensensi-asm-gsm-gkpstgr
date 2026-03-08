@@ -3256,22 +3256,27 @@
             headHtml += `</tr>`;
             thead.innerHTML = headHtml;
 
-            // Filter user berdasarkan role dan hak akses
+            // Filter user berdasarkan role dan hak akses (SUDAH DIPERBAIKI)
             let targetUsers = [];
             if (canSeeAll) {
-                targetUsers = (db.users || []).filter(u => 
-                    u.role === roleFilter || 
-                    (roleFilter === 'guru' && ['guru', 'wali_kelas', 'pengurus_sm'].includes(u.role))
-                );
+                targetUsers = (db.users || []).filter(u => {
+                    if (roleFilter === 'siswa') {
+                        // Masukkan juga pengurus_kelas ke tampilan Siswa
+                        return ['siswa', 'pengurus_kelas'].includes(u.role);
+                    } else {
+                        // Masukkan juga admin ke tampilan Guru
+                        return ['guru', 'wali_kelas', 'pengurus_sm', 'admin'].includes(u.role);
+                    }
+                });
             } else {
                 targetUsers = [currentUser];
             }
 
-            // Terapkan Filter Pencarian
+            // Terapkan Filter Pencarian (SUDAH DIPERBAIKI PENGAMAN DATANYA)
             if (searchQuery) {
                 targetUsers = targetUsers.filter(u => 
-                    u.name.toLowerCase().includes(searchQuery) || 
-                    u.username.toLowerCase().includes(searchQuery)
+                    (u.name || '').toLowerCase().includes(searchQuery) || 
+                    (u.username || '').toLowerCase().includes(searchQuery)
                 );
             }
 
