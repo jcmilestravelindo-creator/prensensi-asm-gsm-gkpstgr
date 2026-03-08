@@ -693,6 +693,7 @@
             <button onclick="switchTab('messages')" id="tab-messages" class="nav-pill hidden">📢 Pesan</button>
             <button onclick="switchTab('materi')" id="tab-materi" class="nav-pill hidden">📚 Materi</button>
             <button onclick="switchTab('jadwal')" id="tab-jadwal" class="nav-pill hidden">🗓️ Jadwal</button>
+            <button onclick="switchTab('performance')" id="tab-performance" class="nav-pill hidden">📈 Performance</button>
             <button onclick="switchTab('settings')" id="tab-settings" class="nav-pill hidden">⚙️ Pengaturan</button>
         </div>
 
@@ -793,6 +794,27 @@
           <div><span>Scans:</span> <span id="scan-attempts">0</span></div>
         </div>
       </div>
+
+        <div id="view-performance" class="tab-view hidden">
+            <div class="pro-card">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-lg text-blue-900">📈 MY Performance - SM RESORT TANGERANG</h3>
+                    <select id="perf-role-filter" onchange="renderPerformanceTable()" class="pro-input py-1 text-xs mb-0 w-auto bg-white">
+                        <option value="siswa">Siswa Sekolah Minggu</option>
+                        <option value="guru">Guru Sekolah Minggu</option>
+                    </select>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full admin-table text-xs">
+                        <thead id="perf-table-head">
+                            </thead>
+                        <tbody id="perf-table-body">
+                            </tbody>
+                    </table>
+                </div>
+                <p class="text-[9px] text-gray-400 mt-3 italic">*Klik pada status kehadiran untuk mengubah data (Khusus Admin & Wali Kelas).</p>
+            </div>
+        </div>
 
         <div id="view-users" class="tab-view hidden">
              <div class="pro-card">
@@ -1525,6 +1547,11 @@
                             renderHomeStats();
                             renderBroadcastHistory();
                             loadSettingsToUI();
+                            
+                            // Check if on performance tab to auto update
+                            if(document.getElementById('tab-performance').classList.contains('active')) {
+                                renderPerformanceTable();
+                            }
                         } else {
                             renderSiswaScreen();
                         }
@@ -1890,15 +1917,15 @@
             document.getElementById('dash-avatar').style.objectPosition = `${currentUser.posX||50}% ${currentUser.posY||50}%`;
             
             const role = currentUser.role;
-            const allTabs = ['tab-users', 'tab-messages', 'tab-settings', 'tab-materi', 'tab-jadwal'];
+            const allTabs = ['tab-users', 'tab-messages', 'tab-settings', 'tab-materi', 'tab-jadwal', 'tab-performance'];
             allTabs.forEach(t => document.getElementById(t).classList.add('hidden'));
             
             if (role === 'admin') {
                 allTabs.forEach(t => document.getElementById(t).classList.remove('hidden'));
             } else if (role === 'pengurus_sm' || role === 'wali_kelas') {
-                ['tab-messages', 'tab-materi', 'tab-jadwal'].forEach(t => document.getElementById(t).classList.remove('hidden'));
+                ['tab-messages', 'tab-materi', 'tab-jadwal', 'tab-performance'].forEach(t => document.getElementById(t).classList.remove('hidden'));
             } else if (role === 'guru') {
-                ['tab-materi', 'tab-jadwal'].forEach(t => document.getElementById(t).classList.remove('hidden'));
+                ['tab-materi', 'tab-jadwal', 'tab-performance'].forEach(t => document.getElementById(t).classList.remove('hidden'));
             }
         }
         
@@ -1915,6 +1942,7 @@
             if(tab === 'messages') renderBroadcastHistory();
             if(tab === 'materi') renderMateriList();
             if(tab === 'jadwal') renderJadwalTable();
+            if(tab === 'performance') renderPerformanceTable();
         }
 
         // User Table Logic
@@ -3101,6 +3129,105 @@
             };
             reader.readAsText(file); 
             input.value = ''; // Reset input agar bisa pilih file yang sama lagi
+        }
+
+        // --- MY PERFORMANCE LOGIC ---
+        function renderPerformanceTable() {
+            const roleFilter = document.getElementById('perf-role-filter').value;
+            const tbody = document.getElementById('perf-table-body');
+            const thead = document.getElementById('perf-table-head');
+
+            // Ambil maksimal 4 tanggal absen terakhir (4 minggu terakhir)
+            const allAtt = Array.isArray(db.attendance) ? db.attendance : [];
+            const uniqueDates = [...new Set(allAtt.map(a => a.date))].sort((a, b) => {
+                const [d1, m1, y1] = a.split('/');
+                const [d2, m2, y2] = b.split('/');
+                return new Date(y2, m2 - 1, d2) - new Date(y1, m1 - 1, d1);
+            }).slice(0, 4); // Ambil 4 kolom tanggal terakhir
+
+            let headHtml = `<tr><th>Nama</th><th>Kelas</th>`;
+            uniqueDates.forEach(d => { headHtml += `<th class="text-center">${d}</th>`; });
+            headHtml += `</tr>`;
+            thead.innerHTML = headHtml;
+
+            // Filter user berdasarkan role
+            const targetUsers = (db.users || []).filter(u => 
+                u.role === roleFilter || 
+                (roleFilter === 'guru' && ['guru', 'wali_kelas', 'pengurus_sm'].includes(u.role))
+            );
+
+            // Cek Hak Akses Edit
+            const canEdit = ['admin', 'wali_kelas'].includes(currentUser.role);
+
+            if (targetUsers.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="${uniqueDates.length + 2}" class="text-center p-4 text-gray-400">Tidak ada data pengguna</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = targetUsers.map(u => {
+                let row = `<tr class="border-b hover:bg-gray-50">
+                    <td class="font-bold">${u.name}</td>
+                    <td><span class="badge badge-class">${u.kelas || '-'}</span></td>`;
+
+                uniqueDates.forEach(date => {
+                    const record = allAtt.find(a => a.username === u.username && a.date === date);
+                    let statusTxt = record ? record.status : '-';
+                    let color = 'text-gray-400';
+                    
+                    if(statusTxt === 'Hadir') color = 'text-green-700 bg-green-100';
+                    if(statusTxt === 'Sakit') color = 'text-yellow-700 bg-yellow-100';
+                    if(statusTxt === 'Izin') color = 'text-blue-700 bg-blue-100';
+                    if(statusTxt === 'Alpha') color = 'text-red-700 bg-red-100';
+
+                    if (canEdit) {
+                        row += `<td class="text-center cursor-pointer hover:bg-gray-200 transition" onclick="editPerformance('${u.username}', '${u.name}', '${date}', '${statusTxt}')">
+                            <span class="${color} px-2 py-0.5 rounded text-[10px] font-bold block w-full">${statusTxt}</span>
+                        </td>`;
+                    } else {
+                        row += `<td class="text-center"><span class="${color} px-2 py-0.5 rounded text-[10px] font-bold">${statusTxt}</span></td>`;
+                    }
+                });
+                row += `</tr>`;
+                return row;
+            }).join('');
+        }
+
+        function editPerformance(username, name, date, currentStatus) {
+            const newStatus = prompt(
+                `Edit absen untuk: ${name}\nTanggal: ${date}\n\nKetik status baru (Hadir, Sakit, Izin, Alpha)\nAtau kosongkan lalu OK untuk Hapus data:`, 
+                currentStatus !== '-' ? currentStatus : 'Hadir'
+            );
+
+            if (newStatus === null) return; // Dibatalkan
+
+            const validStatuses = ['Hadir', 'Sakit', 'Izin', 'Alpha'];
+            const attIndex = db.attendance.findIndex(a => a.username === username && a.date === date);
+
+            if (newStatus.trim() === '') {
+                // Hapus Rekord jika dikosongkan
+                if (attIndex !== -1) {
+                    db.attendance.splice(attIndex, 1);
+                    saveDb();
+                    renderPerformanceTable();
+                }
+            } else if (validStatuses.includes(newStatus)) {
+                if (attIndex !== -1) {
+                    db.attendance[attIndex].status = newStatus;
+                } else {
+                    db.attendance.push({
+                        username: username,
+                        name: name,
+                        date: date,
+                        time: "00:00:00", // Default edit manual
+                        status: newStatus,
+                        note: 'Diedit Manual oleh ' + currentUser.name
+                    });
+                }
+                saveDb();
+                renderPerformanceTable();
+            } else {
+                alert('Status tidak valid! Pastikan penulisan sesuai: Hadir, Sakit, Izin, atau Alpha.');
+            }
         }
 
         window.onload = initApp;
