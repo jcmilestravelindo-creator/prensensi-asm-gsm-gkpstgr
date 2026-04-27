@@ -825,6 +825,7 @@
                     </table>
                 </div>
                 <p id="perf-help-text" class="text-[9px] text-gray-400 mt-3 italic">*Klik pada status kehadiran untuk mengubah data (Khusus Admin & Wali Kelas).</p>
+                <div id="pk-kelas-banner" class="hidden mt-3 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 text-xs"></div>
             </div>
         </div>
 
@@ -1940,6 +1941,8 @@
                 ['tab-messages', 'tab-materi', 'tab-jadwal', 'tab-performance'].forEach(t => document.getElementById(t).classList.remove('hidden'));
             } else if (role === 'guru') {
                 ['tab-materi', 'tab-jadwal', 'tab-performance'].forEach(t => document.getElementById(t).classList.remove('hidden'));
+            } else if (role === 'pengurus_kelas') {
+                ['tab-performance'].forEach(t => document.getElementById(t).classList.remove('hidden'));
             }
         }
         
@@ -3230,6 +3233,16 @@
         }
 
         function renderPerformanceTable() {
+            // Tampilkan banner info kelas untuk pengurus_kelas
+            const pkBanner = document.getElementById('pk-kelas-banner');
+            if (pkBanner) {
+                if (currentUser.role === 'pengurus_kelas') {
+                    pkBanner.classList.remove('hidden');
+                    pkBanner.innerHTML = '<span class="text-blue-700 font-bold">📋 Mengelola Absen Kelas: <span class="bg-blue-600 text-white px-2 py-0.5 rounded">' + (currentUser.kelas || '-') + '</span> &mdash; Klik status untuk mengubah absen siswa.</span>';
+                } else {
+                    pkBanner.classList.add('hidden');
+                }
+            }
             const roleFilterEl = document.getElementById('perf-role-filter');
             const roleFilter = roleFilterEl ? roleFilterEl.value : 'siswa';
             const monthFilterEl = document.getElementById('perf-month-filter');
@@ -3252,20 +3265,29 @@
             const searchContainer = document.getElementById('perf-search-container');
 
             // Cek Hak Akses Edit & Lihat Semua
-            const canSeeAll = ['admin', 'wali_kelas'].includes(currentUser.role);
-            const canEdit = canSeeAll;
+            const isPengurusKelas = currentUser.role === 'pengurus_kelas';
+            const canSeeAll = ['admin', 'wali_kelas'].includes(currentUser.role) || isPengurusKelas;
+            const canEdit = ['admin', 'wali_kelas'].includes(currentUser.role) || isPengurusKelas;
 
-            // Sembunyikan dropdown filter, pencarian & teks petunjuk jika bukan Admin/Wali Kelas
+            // Sembunyikan dropdown filter, pencarian & teks petunjuk jika bukan Admin/Wali Kelas/Pengurus Kelas
             if (!canSeeAll) {
                 if(roleFilterEl) roleFilterEl.classList.add('hidden');
                 if(helpText) helpText.classList.add('hidden');
                 if(btnAddDate) btnAddDate.classList.add('hidden');
                 if(searchContainer) searchContainer.classList.add('hidden');
             } else {
-                if(roleFilterEl) roleFilterEl.classList.remove('hidden');
-                if(helpText) helpText.classList.remove('hidden');
-                if(btnAddDate) btnAddDate.classList.remove('hidden');
-                if(searchContainer) searchContainer.classList.remove('hidden');
+                // Pengurus Kelas: sembunyikan filter role & tombol tambah tanggal, tapi tampilkan pencarian
+                if (isPengurusKelas) {
+                    if(roleFilterEl) roleFilterEl.classList.add('hidden');
+                    if(helpText) helpText.classList.add('hidden');
+                    if(btnAddDate) btnAddDate.classList.add('hidden');
+                    if(searchContainer) searchContainer.classList.remove('hidden');
+                } else {
+                    if(roleFilterEl) roleFilterEl.classList.remove('hidden');
+                    if(helpText) helpText.classList.remove('hidden');
+                    if(btnAddDate) btnAddDate.classList.remove('hidden');
+                    if(searchContainer) searchContainer.classList.remove('hidden');
+                }
             }
 
             const allAtt = Array.isArray(db.attendance) ? db.attendance : [];
@@ -3287,7 +3309,14 @@
 
             // Filter user berdasarkan role dan hak akses (SUDAH DIPERBAIKI)
             let targetUsers = [];
-            if (canSeeAll) {
+            if (isPengurusKelas) {
+                // Pengurus kelas hanya bisa melihat siswa yang sekelas dengannya
+                targetUsers = (db.users || []).filter(u =>
+                    ['siswa', 'pengurus_kelas'].includes(u.role) &&
+                    u.kelas === currentUser.kelas &&
+                    u.username !== currentUser.username
+                );
+            } else if (canSeeAll) {
                 targetUsers = (db.users || []).filter(u => {
                     if (roleFilter === 'siswa') {
                         // Masukkan juga pengurus_kelas ke tampilan Siswa
@@ -3408,8 +3437,20 @@
 
         function editPerformance(username, name, date, currentStatus) {
             // Pengamanan Ekstra 
-            if (!['admin', 'wali_kelas'].includes(currentUser.role)) {
-                return alert("Akses Ditolak! Hanya Admin dan Wali Kelas yang dapat mengubah data.");
+            const isPK = currentUser.role === 'pengurus_kelas';
+            if (!['admin', 'wali_kelas'].includes(currentUser.role) && !isPK) {
+                return alert("Akses Ditolak! Hanya Admin, Wali Kelas, dan Pengurus Kelas yang dapat mengubah data.");
+            }
+            // Pengurus Kelas hanya boleh edit siswa se-kelasnya
+            if (isPK) {
+                const targetUser = (db.users || []).find(u => u.username === username);
+                if (!targetUser || targetUser.kelas !== currentUser.kelas) {
+                    return alert("Akses Ditolak! Kamu hanya dapat mengubah absen siswa di kelasmu.");
+                }
+                // Pengurus Kelas tidak boleh backdate: hanya boleh absen hari ini
+                if (date !== getTodayDate()) {
+                    return alert("Akses Ditolak! Pengurus Kelas hanya dapat mengisi absen untuk hari ini (" + getTodayDate() + ").");
+                }
             }
 
             const newStatus = prompt(
