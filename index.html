@@ -557,7 +557,7 @@
             <h1 onclick="triggerSecretReset()" class="text-3xl font-extrabold text-blue-900 tracking-tight cursor-pointer select-none">GKPS TANGERANG</h1>
             <p class="text-gray-500 font-medium">Sistem Absensi Terpadu</p>
         </div>
-       
+        
         <div class="pro-card">
              <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Username</label>
             <input type="text" id="login-username" class="pro-input" placeholder="Masukkan Username">
@@ -569,7 +569,7 @@
             </div>
             
             <button onclick="handleLogin()" class="pro-btn btn-blue shadow-lg shadow-blue-200">MASUK</button>
-     
+      
             <div class="mt-4 flex justify-between items-center text-xs">
                 <button onclick="openForgotModal()" class="text-blue-500 font-bold hover:underline">Lupa Password?</button>
                 <button id="btn-emergency-reset" onclick="emergencyReset()" class="hidden text-red-500 font-bold hover:underline border border-red-200 px-2 py-1 rounded">⚠️ Reset Aplikasi</button>
@@ -745,7 +745,7 @@
                          <span id="scanner-error-msg">Akses kamera ditolak.</span>
                         <button onclick="startProScanner()" class="mt-4 bg-red-100 text-red-600 px-4 py-2 rounded-full text-xs">Coba Lagi</button>
                     </div>
-           
+            
                     <div id="scanner-container">
                          <div id="reader"></div> 
                         <div id="scan-ui-layer" class="scan-overlay">
@@ -756,7 +756,7 @@
                              </div>
                             <div class="mt-4 text-white text-xs font-bold bg-black/30 px-3 py-1 rounded-full backdrop-blur-sm">Arahkan QR Code ke dalam kotak</div>
                          </div>
-               
+                
                          <div class="scan-controls-bar">
                             <select id="camera-select" class="camera-select" onchange="switchCamera()">
                                 <option value="" disabled selected>Memuat...</option>
@@ -3470,14 +3470,21 @@
                     renderPerformanceTable();
                 }
             } else if (validStatuses.includes(newStatus)) {
+                // Mendapatkan waktu realtime saat pengeditan dilakukan
+                const now = new Date();
+                const currentTime = now.getHours().toString().padStart(2, '0') + ":" + 
+                                    now.getMinutes().toString().padStart(2, '0') + ":" + 
+                                    now.getSeconds().toString().padStart(2, '0');
+
                 if (attIndex !== -1) {
                     db.attendance[attIndex].status = newStatus;
+                    db.attendance[attIndex].time = currentTime; // Perbarui jam saat diedit
                 } else {
                     db.attendance.push({
                         username: username,
                         name: name,
                         date: date,
-                        time: "00:00:00", 
+                        time: currentTime, // Waktu diset menggunakan jam realtime
                         status: newStatus,
                         note: 'Diedit Manual oleh ' + currentUser.name
                     });
