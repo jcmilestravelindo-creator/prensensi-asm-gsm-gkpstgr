@@ -19,21 +19,30 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
-        /* Variable & Body */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        /* Variable & Body — Instagram + Telegram fusion theme */
         :root {
-            --primary: #0ea5e9;
-            --primary-dark: #0284c7;
-            --accent: #facc15;
-            --bg-soft: #f0f9ff;
-            --text-main: #1e293b;
-            --wa-green: #25D366;
-            --wa-teal: #128C7E;
+            /* Telegram blue as primary */
+            --primary: #229ED9;
+            --primary-dark: #1c8bbf;
+            /* Instagram gradient stops */
+            --ig-purple: #8134AF;
+            --ig-pink: #DD2A7B;
+            --ig-orange: #F58529;
+            --ig-yellow: #FEDA77;
+            --ig-grad: linear-gradient(45deg, #F58529 0%, #DD2A7B 50%, #8134AF 100%);
+            --tg-grad: linear-gradient(135deg, #2AABEE 0%, #229ED9 100%);
+            --accent: #DD2A7B;
+            --bg-soft: #ffffff;
+            --text-main: #0f1419;
+            /* keep var names for telegram-style chat */
+            --wa-green: #2AABEE;
+            --wa-teal: #229ED9;
         }
         body { 
-            font-family: 'Poppins', sans-serif; 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
             color: var(--text-main);
-            background: linear-gradient(180deg, #e0f2fe 0%, #f0f9ff 100%); 
+            background: #fafafa; 
             min-height: 100vh; 
             padding-bottom: 2rem;
         }
@@ -41,18 +50,18 @@
         /* UI Components */
         .pro-card { 
             background: white;
-            border-radius: 1.5rem; 
+            border-radius: 1rem; 
             padding: 1.5rem; 
-            box-shadow: 0 10px 30px -5px rgba(14, 165, 233, 0.15); 
-            border: 1px solid #e2e8f0; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 8px 24px -12px rgba(34, 158, 217, 0.18); 
+            border: 1px solid #efefef; 
             margin-bottom: 1.5rem;
         }
         .pro-input { 
             width: 100%; 
             padding: 0.8rem 1rem; 
-            border: 2px solid #e2e8f0;
-            border-radius: 0.8rem; 
-            background: #f8fafc; 
+            border: 1.5px solid #efefef;
+            border-radius: 0.7rem; 
+            background: #fafafa; 
             outline: none; 
             transition: 0.2s; 
             font-size: 0.95rem; 
@@ -61,26 +70,28 @@
         .pro-input:focus { 
             border-color: var(--primary); 
             background: white;
+            box-shadow: 0 0 0 3px rgba(34,158,217,0.12);
         }
         .pro-btn { 
             width: 100%; 
             padding: 0.8rem; 
-            border-radius: 0.8rem; 
-            font-weight: 700; 
+            border-radius: 0.7rem; 
+            font-weight: 600; 
             transition: 0.2s;
             text-align: center; 
             cursor: pointer; 
             border: none; 
             margin-top: 0.5rem; 
+            letter-spacing: 0.2px;
         }
-        .btn-blue { background: var(--primary); color: white; } 
-        .btn-blue:hover { background: var(--primary-dark); }
-        .btn-green { background: #22c55e; color: white; } 
-        .btn-green:hover { background: #16a34a; }
-        .btn-red { background: #ef4444; color: white; } 
-        .btn-red:hover { background: #dc2626; }
-        .btn-yellow { background: var(--accent); color: #713f12; } 
-        .btn-yellow:hover { background: #eab308; }
+        .btn-blue { background: var(--tg-grad); color: white; box-shadow: 0 4px 14px rgba(34,158,217,0.35); } 
+        .btn-blue:hover { filter: brightness(1.05); }
+        .btn-green { background: #2AABEE; color: white; } 
+        .btn-green:hover { background: #1c8bbf; }
+        .btn-red { background: #ed4956; color: white; } 
+        .btn-red:hover { background: #d32f3a; }
+        .btn-yellow { background: var(--ig-grad); color: white; } 
+        .btn-yellow:hover { filter: brightness(1.05); }
 
         /* Password Toggle Style */
         .pass-wrapper { position: relative; width: 100%; }
@@ -105,15 +116,16 @@
             font-size: 0.85rem; 
             cursor: pointer; 
             transition: 0.2s; 
-            color: #64748b; 
+            color: #8e8e8e; 
             background: white; 
-            border: 1px solid transparent; 
+            border: 1px solid #efefef; 
             white-space: nowrap;
         }
         .nav-pill.active { 
-            background: var(--primary); 
+            background: var(--tg-grad); 
             color: white;
-            box-shadow: 0 4px 10px rgba(14, 165, 233, 0.4); 
+            border-color: transparent;
+            box-shadow: 0 4px 12px rgba(34, 158, 217, 0.4); 
         }
 
         /* STUDENT ID CARD STYLING */
@@ -130,7 +142,7 @@
             display: flex; 
             flex-direction: column;
         }
-        .card-header-strip { background: #0284c7; height: 12px; width: 100%; }
+        .card-header-strip { background: var(--tg-grad); height: 12px; width: 100%; }
         .card-body { padding: 1.2rem; flex: 1; display: flex; gap: 1rem; align-items: center; }
         .card-photo-frame { 
             width: 80px; 
@@ -182,7 +194,7 @@
         }
         .card-info .role-tag { 
             display: inline-block; 
-            background: #0ea5e9; 
+            background: var(--ig-grad); 
             color: white;
             font-size: 0.6rem; 
             font-weight: 700; 
@@ -244,7 +256,7 @@
         }
         .badge-active { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
         .badge-disabled { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
-        .badge-class { background: #e0f2fe; color: #075985; border: 1px solid #bae6fd; font-size: 0.65rem; margin-top: 2px; }
+        .badge-class { background: #e7f5fc; color: #1c8bbf; border: 1px solid #bce4f5; font-size: 0.65rem; margin-top: 2px; }
         .badge-gender-l { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
         .badge-gender-p { background: #fce7f3; color: #9d174d; border: 1px solid #f9a8d4; }
 
@@ -262,7 +274,7 @@
         }
         .modal-content { 
             background: white; 
-            border-radius: 1.5rem; 
+            border-radius: 1.2rem; 
             width: 100%; 
             max-width: 400px; 
             max-height: 85vh;
@@ -282,7 +294,7 @@
             to { transform: translateY(0); opacity: 1; } 
         }
         
-        /* --- WHATSAPP STYLE NOTIFICATION --- */
+        /* --- TELEGRAM STYLE NOTIFICATION --- */
         .notif-container { position: relative; }
         .wa-dropdown { 
             display: none; 
@@ -290,11 +302,10 @@
             right: -10px; 
             top: 140%; 
             width: 320px;
-            background: #efe7dd url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); 
-            background-blend-mode: overlay; 
-            border-radius: 12px; 
+            background: #cfdae6; 
+            border-radius: 14px; 
             box-shadow: 0 10px 50px rgba(0,0,0,0.3); 
-            border: 1px solid #d1d7db; 
+            border: 1px solid #c2d0dd; 
             z-index: 100; 
             max-height: 60vh;
             overflow: hidden; 
@@ -305,15 +316,15 @@
             .wa-dropdown { position: fixed; top: 80px; right: 16px; left: 16px; width: auto; max-width: none; } 
         }
         .wa-header { 
-            background: var(--wa-teal);
+            background: var(--tg-grad);
             color: white; 
-            padding: 10px 15px; 
-            font-weight: bold; 
+            padding: 12px 15px; 
+            font-weight: 600; 
             font-size: 0.9rem; 
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
-            border-bottom: 1px solid rgba(0,0,0,0.1);
+            border-bottom: 1px solid rgba(0,0,0,0.05);
         }
         .wa-list { 
             flex: 1; 
@@ -343,21 +354,21 @@
             border-top: 10px solid white; 
             border-left: 10px solid transparent;
         }
-        .wa-bubble.unread { border-left: 3px solid var(--wa-green); background: #fff; }
-        .wa-sender { font-size: 0.75rem; color: #e11d48; font-weight: bold; margin-bottom: 2px; }
-        .wa-text { font-size: 0.85rem; color: #111b21; line-height: 1.3; }
+        .wa-bubble.unread { border-left: 3px solid var(--primary); background: #fff; }
+        .wa-sender { font-size: 0.75rem; color: var(--primary-dark); font-weight: 700; margin-bottom: 2px; }
+        .wa-text { font-size: 0.85rem; color: #0f1419; line-height: 1.3; }
         .wa-meta { display: flex; justify-content: flex-end; align-items: center; gap: 4px; margin-top: 2px; }
-        .wa-time { font-size: 0.65rem; color: #667781; }
+        .wa-time { font-size: 0.65rem; color: #8e8e8e; }
         .wa-status { font-size: 0.7rem; }
-        .wa-read { color: #53bdeb; } 
-        .wa-unread-dot { width: 8px; height: 8px; background: var(--wa-green); border-radius: 50%; display: inline-block; }
+        .wa-read { color: #34b7f1; } 
+        .wa-unread-dot { width: 8px; height: 8px; background: var(--primary); border-radius: 50%; display: inline-block; }
         .wa-icon-btn { position: relative; font-size: 1.6rem; color: #54656f; cursor: pointer; transition: 0.2s; }
-        .wa-icon-btn:hover { color: var(--wa-teal); transform: scale(1.05); }
+        .wa-icon-btn:hover { color: var(--primary); transform: scale(1.05); }
         .wa-badge-count { 
             position: absolute; 
             top: -5px; 
             right: -5px; 
-            background: var(--wa-green); 
+            background: #ed4956; 
             color: white;
             font-size: 0.65rem; 
             font-weight: bold; 
@@ -374,19 +385,19 @@
             bottom: 10px; 
             left: 50%; 
             transform: translateX(-50%); 
-            background: #22c55e; 
+            background: var(--tg-grad); 
             color: white; 
             padding: 5px 15px; 
             border-radius: 20px; 
             font-size: 10px; 
             font-weight: bold;
             z-index: 100; 
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2); 
+            box-shadow: 0 5px 15px rgba(34,158,217,0.3); 
             display: flex; 
             align-items: center;
             gap: 5px;
         }
-        .conn-status.offline { background: #ef4444; }
+        .conn-status.offline { background: #ed4956; }
         .blink { animation: blinker 1.5s linear infinite; }
         @keyframes blinker { 50% { opacity: 0; } }
 
@@ -468,6 +479,14 @@
         }
         .camera-select option { background: #333; color: white; }
         input[type=range] { width: 100%; margin: 5px 0; accent-color: var(--primary); }
+
+        /* Instagram story-ring avatar */
+        .ig-ring {
+            border: none !important;
+            padding: 2px;
+            background: var(--ig-grad);
+            box-shadow: 0 2px 8px rgba(221,42,123,0.25);
+        }
     
         /* ==================== ENHANCED SCANNER INDICATORS ==================== */
         #low-light-indicator {
@@ -538,7 +557,7 @@
 
     <section id="screen-setup" class="hidden max-w-md mx-auto min-h-screen flex flex-col justify-center">
         <div class="pro-card text-center">
-            <h1 class="text-2xl font-bold text-blue-900 mb-2">Setup Sistem</h1>
+            <h1 class="text-2xl font-bold text-gray-900 mb-2">Setup Sistem</h1>
             <p class="text-gray-500 text-sm mb-6">Belum ada akun Admin. Silakan buat akun Super Admin pertama.</p>
             <input type="text" id="setup-username" class="pro-input" placeholder="Username Admin Baru">
             <div class="pass-wrapper">
@@ -554,7 +573,7 @@
            <div class="flex justify-center mb-4">
                 <img src="Logo GKPS.png" alt="" class="h-24 w-auto object-contain" onerror="this.style.display='none'">
            </div>
-            <h1 onclick="triggerSecretReset()" class="text-3xl font-extrabold text-blue-900 tracking-tight cursor-pointer select-none">GKPS TANGERANG</h1>
+            <h1 onclick="triggerSecretReset()" class="text-3xl font-extrabold tracking-tight cursor-pointer select-none" style="background:var(--ig-grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;">GKPS TANGERANG</h1>
             <p class="text-gray-500 font-medium">Sistem Absensi Terpadu</p>
         </div>
         
@@ -587,9 +606,9 @@
     <section id="screen-siswa" class="hidden max-w-md mx-auto pt-8">
         <header class="flex justify-between items-center mb-6 relative">
              <div class="flex items-center gap-3">
-                <img id="stu-avatar" src="" class="w-12 h-12 rounded-full border-2 border-blue-500 shadow-sm bg-white object-cover">
+                <img id="stu-avatar" src="" class="ig-ring w-12 h-12 rounded-full shadow-sm bg-white object-cover">
                 <div>
-                     <h2 class="text-xl font-bold text-blue-900 leading-tight">Halo, <span id="siswa-greet-name">Siswa</span>!</h2>
+                     <h2 class="text-xl font-bold text-gray-900 leading-tight">Halo, <span id="siswa-greet-name">Siswa</span>!</h2>
                     <p class="text-xs text-gray-500">Selamat Datang</p>
                  </div>
             </div>
@@ -641,7 +660,7 @@
         <div class="grid grid-cols-2 gap-3 mt-6">
              <button onclick="openStudentView('materi')" class="bg-white border border-blue-100 p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center hover:bg-blue-50 transition">
                  <span class="text-2xl mb-1">📚</span>
-                <span class="text-xs font-bold text-blue-900">Lihat Materi</span>
+                <span class="text-xs font-bold text-gray-900">Lihat Materi</span>
             </button>
             <button onclick="openStudentView('jadwal')" class="bg-white border border-amber-100 p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center hover:bg-amber-50 transition">
                 <span class="text-2xl mb-1">🗓️</span>
@@ -657,10 +676,10 @@
     <section id="screen-dashboard" class="hidden max-w-5xl mx-auto pt-4">
         <header class="flex justify-between items-center mb-6 relative">
             <div class="flex items-center gap-3">
-                 <img id="dash-avatar" src="" class="w-12 h-12 rounded-full border-2 border-blue-500 shadow-sm bg-white object-cover">
+                 <img id="dash-avatar" src="" class="ig-ring w-12 h-12 rounded-full shadow-sm bg-white object-cover">
                  <div>
                     <div class="flex items-center gap-2">
-                        <h1 class="text-xl font-bold text-blue-900 leading-tight">Dashboard</h1>
+                        <h1 class="text-xl font-bold text-gray-900 leading-tight">Dashboard</h1>
                          <span id="role-badge" class="bg-yellow-200 text-yellow-800 text-xs px-2 py-0.5 rounded">ROLE</span>
                      </div>
                     <p class="text-xs text-gray-500">Halo, <span id="guru-greet-name">User</span></p>
@@ -802,7 +821,7 @@
         <div id="view-performance" class="tab-view hidden">
             <div class="pro-card">
                 <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
-                    <h3 class="font-bold text-lg text-blue-900">📈 MY Performance - SM RESORT TANGERANG</h3>
+                    <h3 class="font-bold text-lg text-gray-900">📈 MY Performance - SM RESORT TANGERANG</h3>
                     <div class="flex flex-wrap gap-2 items-center w-full md:w-auto justify-end">
                         <div id="perf-search-container" class="relative w-full md:w-auto">
                             <input type="text" id="perf-search-filter" onkeyup="renderPerformanceTable()" placeholder="Cari Nama..." class="pro-input py-1 pl-8 text-xs mb-0 w-full md:w-40 bg-white">
@@ -925,7 +944,7 @@
         <div id="view-materi" class="tab-view hidden">
             <div class="pro-card">
                 <div class="flex justify-between items-center mb-4">
-                     <h3 class="font-bold text-lg text-blue-900">📚 Manajemen Materi Guru</h3>
+                     <h3 class="font-bold text-lg text-gray-900">📚 Manajemen Materi Guru</h3>
                     <button id="btn-view-arsip-materi" onclick="toggleArsipMateri()" class="hidden bg-gray-100 text-gray-600 text-[10px] px-3 py-1 rounded-full font-bold border border-gray-200 transition hover:bg-gray-200">📂 Lihat Arsip</button>
                 </div>
                 
@@ -948,7 +967,7 @@
 
         <div id="view-jadwal" class="tab-view hidden">
             <div class="pro-card">
-                <h3 class="font-bold text-lg mb-4 text-blue-900">🗓️ Jadwal Guru Sekolah Minggu</h3>
+                <h3 class="font-bold text-lg mb-4 text-gray-900">🗓️ Jadwal Guru Sekolah Minggu</h3>
                  <div id="jadwal-editor" class="bg-amber-50 p-4 rounded-xl mb-4 hidden border border-amber-100">
                     <input type="hidden" id="jad-id">
                     <div class="grid grid-cols-2 gap-3 mb-2">
@@ -1024,7 +1043,7 @@
                  <div class="flex items-center mb-4">
                     <div class="bg-blue-200 p-2 rounded-full mr-3 text-xl">🔄</div>
                     <div>
-                        <h3 class="font-bold text-blue-900">Sinkronisasi Data (Sync)</h3>
+                        <h3 class="font-bold text-gray-900">Sinkronisasi Data (Sync)</h3>
                          <p class="text-xs text-blue-700">Pindahkan data antar HP/Laptop.</p>
                     </div>
                 </div>
@@ -1051,7 +1070,7 @@
     <div id="install-modal" class="modal-overlay">
         <div class="modal-content bg-white" style="max-height: 90vh;">
             <div class="p-4 border-b flex justify-between items-center bg-blue-50">
-                <h3 class="font-bold text-blue-900 text-lg">📲 Cara Install Aplikasi</h3>
+                <h3 class="font-bold text-gray-900 text-lg">📲 Cara Install Aplikasi</h3>
                  <button onclick="document.getElementById('install-modal').style.display='none'" class="text-gray-500 font-bold px-2 text-xl hover:text-red-500">✕</button>
             </div>
             <div class="modal-body-scroll p-4 space-y-4 text-sm text-gray-700">
@@ -1091,7 +1110,7 @@
     <div id="student-content-modal" class="modal-overlay">
         <div class="modal-content" style="max-height: 85vh;">
              <div class="p-4 border-b flex justify-between items-center bg-blue-50">
-                <h3 id="student-modal-title" class="font-bold text-blue-900 text-lg">Informasi</h3>
+                <h3 id="student-modal-title" class="font-bold text-gray-900 text-lg">Informasi</h3>
                 <button onclick="document.getElementById('student-content-modal').style.display='none'" class="text-gray-500 font-bold px-2">✕</button>
             </div>
             <div class="modal-body-scroll p-4" id="student-modal-body"></div>
@@ -1474,20 +1493,45 @@
             if(!container) return;
             container.innerHTML = ""; 
 
-            const qrCode = new QRCodeStyling({
-                width: 250,
-                height: 250,
-                type: "svg", 
-                data: textData,
-                image: "Logo GKPS.png", 
-                dotsOptions: { color: "#0ea5e9", type: "rounded" },
-                backgroundOptions: { color: "#ffffff" },
-                imageOptions: { crossOrigin: "anonymous", margin: 8, imageSize: 0.4 },
-                cornersSquareOptions: { type: "extra-rounded", color: "#0284c7" },
-                cornersDotOptions: { type: "dot", color: "#0284c7" },
-                qrOptions: { errorCorrectionLevel: 'H' }
-            });
-            qrCode.append(container);
+            // Fallback: jika library qr-code-styling gagal dimuat (CDN diblokir / offline),
+            // gunakan generator QR cadangan agar QR tetap muncul.
+            if (typeof QRCodeStyling === "undefined") {
+                const img = document.createElement("img");
+                img.width = 250;
+                img.height = 250;
+                img.alt = "QR Code";
+                img.style.borderRadius = "8px";
+                img.src = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&ecc=H&data=" + encodeURIComponent(textData);
+                img.onerror = function() {
+                    container.innerHTML = '<div style="padding:20px;text-align:center;color:#8e8e8e;font-size:12px;">QR tidak dapat dimuat.<br>Periksa koneksi internet.</div>';
+                };
+                container.appendChild(img);
+                return;
+            }
+
+            try {
+                const qrCode = new QRCodeStyling({
+                    width: 250,
+                    height: 250,
+                    type: "svg", 
+                    data: textData,
+                    image: "Logo GKPS.png", 
+                    dotsOptions: { color: "#229ED9", type: "rounded" },
+                    backgroundOptions: { color: "#ffffff" },
+                    imageOptions: { crossOrigin: "anonymous", margin: 8, imageSize: 0.4 },
+                    cornersSquareOptions: { type: "extra-rounded", color: "#1c8bbf" },
+                    cornersDotOptions: { type: "dot", color: "#DD2A7B" },
+                    qrOptions: { errorCorrectionLevel: 'H' }
+                });
+                qrCode.append(container);
+            } catch (e) {
+                // Fallback kedua bila konstruksi gagal saat runtime
+                const img = document.createElement("img");
+                img.width = 250; img.height = 250; img.alt = "QR Code";
+                img.style.borderRadius = "8px";
+                img.src = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&ecc=H&data=" + encodeURIComponent(textData);
+                container.appendChild(img);
+            }
         }
 
         // APP INIT
@@ -3297,12 +3341,22 @@
                 return new Date(y1, m1 - 1, d1) - new Date(y2, m2 - 1, d2); 
             }); 
 
+            // Hanya Admin & Wali Kelas yang boleh mengubah/menghapus kolom tanggal
+            const canManageDates = ['admin', 'wali_kelas'].includes(currentUser.role);
+
             let headHtml = `<tr>
                 <th class="bg-gray-100 sortable" onclick="handlePerfSort('name')">Nama <span>${perfSortConfig.key === 'name' ? (perfSortConfig.asc ? '↑' : '↓') : '↕'}</span></th>
                 <th class="bg-gray-100 sortable" onclick="handlePerfSort('kelas')">Kelas <span>${perfSortConfig.key === 'kelas' ? (perfSortConfig.asc ? '↑' : '↓') : '↕'}</span></th>`;
             uniqueDates.forEach(d => { 
                 let sortIcon = perfSortConfig.key === d ? (perfSortConfig.asc ? '↑' : '↓') : '↕';
-                headHtml += `<th class="text-center bg-gray-100 sortable" onclick="handlePerfSort('${d}')">${d.substring(0,5)} <span class="text-[10px] ml-1">${sortIcon}</span></th>`; 
+                let dateActions = '';
+                if (canManageDates) {
+                    dateActions = `<div class="flex justify-center gap-1 mt-1">
+                        <span onclick="event.stopPropagation(); editPerformanceDate('${d}')" title="Edit tanggal" style="cursor:pointer;font-size:11px;opacity:0.7;">✏️</span>
+                        <span onclick="event.stopPropagation(); deletePerformanceDate('${d}')" title="Hapus tanggal" style="cursor:pointer;font-size:11px;opacity:0.7;">🗑️</span>
+                    </div>`;
+                }
+                headHtml += `<th class="text-center bg-gray-100 sortable" onclick="handlePerfSort('${d}')">${d.substring(0,5)} <span class="text-[10px] ml-1">${sortIcon}</span>${dateActions}</th>`; 
             });
             headHtml += `</tr>`;
             thead.innerHTML = headHtml;
@@ -3431,6 +3485,82 @@
                 status: '-',
                 note: 'Init'
             });
+            saveDb();
+            renderPerformanceTable();
+        }
+
+        function editPerformanceDate(oldDate) {
+            if (!['admin', 'wali_kelas'].includes(currentUser.role)) {
+                return alert("Akses Ditolak! Hanya Admin & Wali Kelas yang dapat mengubah tanggal.");
+            }
+
+            const monthInput = document.getElementById('perf-month-filter');
+            const [selY, selM] = (monthInput && monthInput.value ? monthInput.value : '').split('-');
+
+            const newDate = prompt(
+                `Ubah tanggal kolom:\n${oldDate}\n\nMasukkan tanggal baru (Format: DD/MM/YYYY)`,
+                oldDate
+            );
+
+            if (newDate === null) return;
+            const trimmed = newDate.trim();
+            if (trimmed === '' || trimmed === oldDate) return;
+
+            const regex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+            if (!regex.test(trimmed)) {
+                return alert("Format salah! Harus menggunakan format DD/MM/YYYY (Contoh: 02/05/2026)");
+            }
+
+            // Pastikan masih dalam bulan & tahun filter yang sedang ditampilkan
+            if (selM && selY && !trimmed.endsWith(`/${selM}/${selY}`)) {
+                return alert(`Tanggal baru harus tetap di bulan ${selM}/${selY} sesuai filter yang aktif.`);
+            }
+
+            // Cegah tabrakan dengan kolom tanggal lain yang sudah ada
+            const clash = (db.attendance || []).some(a => a.date === trimmed);
+            if (clash) {
+                return alert("Tanggal tujuan sudah memiliki kolom kehadiran. Pilih tanggal lain.");
+            }
+
+            // Ubah semua catatan kehadiran pada tanggal lama menjadi tanggal baru
+            let changed = 0;
+            (db.attendance || []).forEach(a => {
+                if (a.date === oldDate) { a.date = trimmed; changed++; }
+            });
+
+            if (changed === 0) {
+                return alert("Tidak ada data pada tanggal tersebut.");
+            }
+
+            saveDb();
+            // Reset sorting bila yang aktif adalah tanggal yang baru saja diubah
+            if (perfSortConfig.key === oldDate) perfSortConfig.key = trimmed;
+            renderPerformanceTable();
+        }
+
+        function deletePerformanceDate(date) {
+            if (!['admin', 'wali_kelas'].includes(currentUser.role)) {
+                return alert("Akses Ditolak! Hanya Admin & Wali Kelas yang dapat menghapus tanggal.");
+            }
+
+            const records = (db.attendance || []).filter(a => a.date === date);
+            const realData = records.filter(a => a.username !== 'SYS_PLACEHOLDER').length;
+
+            const konfirmasi = confirm(
+                `Hapus kolom tanggal ${date}?\n\n` +
+                `${realData} data kehadiran siswa pada tanggal ini akan ikut TERHAPUS PERMANEN.\n\n` +
+                `Tindakan ini tidak dapat dibatalkan. Lanjutkan?`
+            );
+            if (!konfirmasi) return;
+
+            db.attendance = (db.attendance || []).filter(a => a.date !== date);
+
+            // Bersihkan sorting bila mengarah ke tanggal yang dihapus
+            if (perfSortConfig.key === date) {
+                perfSortConfig.key = 'name';
+                perfSortConfig.asc = true;
+            }
+
             saveDb();
             renderPerformanceTable();
         }
