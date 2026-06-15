@@ -546,7 +546,7 @@
         .chat-group-name { font-weight: 600; font-size: 0.9rem; color: #0f1419; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .chat-group-sub { font-size: 0.72rem; color: #8e8e8e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        .chat-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+        .chat-main { flex: 1; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
         .chat-main-head {
             padding: 12px 16px;
             border-bottom: 1px solid #efefef;
@@ -554,6 +554,7 @@
             align-items: center;
             gap: 10px;
             background: #fff;
+            flex-shrink: 0;
         }
         .chat-main-head .title { font-weight: 700; font-size: 0.95rem; color: #0f1419; }
         .chat-main-head .sub { font-size: 0.72rem; color: #8e8e8e; }
@@ -566,6 +567,7 @@
             overflow-x: auto;
             background: #fafafa;
             border-bottom: 1px solid #efefef;
+            flex-shrink: 0;
         }
         .topic-pill {
             white-space: nowrap;
@@ -588,7 +590,8 @@
         .topic-pill.add-topic { color: var(--primary); border-style: dashed; }
 
         .chat-thread {
-            flex: 1;
+            flex: 1 1 auto;
+            min-height: 0;
             overflow-y: auto;
             padding: 16px;
             background: #cfdae6;
@@ -625,6 +628,7 @@
             padding: 10px 12px;
             background: #fff;
             border-top: 1px solid #efefef;
+            flex-shrink: 0;
         }
         .chat-input-bar input {
             flex: 1;
@@ -691,6 +695,10 @@
         /* DM candidate list */
         .dm-candidate { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; cursor: pointer; transition: background 0.15s; }
         .dm-candidate:hover { background: #f0f0f0; }
+
+        /* Panel chat aktif: kolom flex yang membatasi tinggi agar input selalu terlihat */
+        .chat-active-pane { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+        .chat-active-pane.hidden { display: none; }
     
         /* ==================== ENHANCED SCANNER INDICATORS ==================== */
         #low-light-indicator {
@@ -1172,7 +1180,7 @@
                 <section id="chat-main" class="chat-main">
                     <div class="chat-empty" id="chat-placeholder">Pilih grup untuk mulai mengobrol 💬</div>
 
-                    <div id="chat-active" class="hidden" style="display:flex;flex-direction:column;height:100%;">
+                    <div id="chat-active" class="chat-active-pane hidden">
                         <div class="chat-main-head">
                             <button onclick="closeActiveChat()" class="chat-back-btn text-lg mr-1" style="background:none;border:none;cursor:pointer;">←</button>
                             <div class="chat-group-avatar" id="chat-head-avatar" style="width:38px;height:38px;font-size:1rem;">G</div>
@@ -1490,7 +1498,7 @@
                     <section id="siswa-chat-main" class="chat-main">
                         <div class="chat-empty" id="siswa-chat-placeholder">Pilih grup untuk mulai mengobrol 💬</div>
 
-                        <div id="siswa-chat-active" class="hidden" style="display:flex;flex-direction:column;height:100%;">
+                        <div id="siswa-chat-active" class="chat-active-pane hidden">
                             <div class="chat-main-head">
                                 <button onclick="closeActiveChat()" class="chat-back-btn text-lg mr-1" style="background:none;border:none;cursor:pointer;">←</button>
                                 <div class="chat-group-avatar" id="siswa-chat-head-avatar" style="width:38px;height:38px;font-size:1rem;">G</div>
@@ -2382,30 +2390,35 @@
         }
 
         // ===== UNREAD: lastRead per percakapan disimpan di user =====
+        // Firebase melarang karakter . # $ / [ ] pada KEY. convKey (mis. dmId)
+        // bisa memuat username ber-titik, jadi kunci di-encode agar aman.
+        function safeKey(k) {
+            return String(k).replace(/[.#$/\[\]]/g, '_');
+        }
         function getLastRead(convKey) {
             const lr = currentUser.chatLastRead || {};
-            return lr[convKey] || 0;
+            return lr[safeKey(convKey)] || 0;
         }
         function markConvRead(convKey) {
             if (!convKey) return;
             const isDm = String(convKey).startsWith('DM_');
+            const key = safeKey(convKey);
             // Cari waktu pesan terbaru dari ORANG LAIN pada percakapan ini
             let latestOther = 0;
             (db.chatMessages || []).forEach(m => {
-                const key = isDm ? m.dmId : m.groupId;
-                if (key === convKey && m.sender !== currentUser.username && m.time > latestOther) {
+                const mk = isDm ? m.dmId : m.groupId;
+                if (mk === convKey && m.sender !== currentUser.username && m.time > latestOther) {
                     latestOther = m.time;
                 }
             });
             if (!currentUser.chatLastRead) currentUser.chatLastRead = {};
-            const prev = currentUser.chatLastRead[convKey] || 0;
+            const prev = currentUser.chatLastRead[key] || 0;
             // Hanya simpan bila ADA pesan baru yang belum ditandai terbaca.
             // Ini mencegah loop simpan↔listener yang membuat aplikasi freeze.
             if (latestOther <= prev) {
-                // tidak ada perubahan; cukup pastikan sesi lokal konsisten tanpa menulis ke DB
                 return;
             }
-            currentUser.chatLastRead[convKey] = latestOther;
+            currentUser.chatLastRead[key] = latestOther;
             const idx = (db.users || []).findIndex(u => u.username === currentUser.username);
             if (idx !== -1) {
                 db.users[idx].chatLastRead = currentUser.chatLastRead;
@@ -2466,8 +2479,7 @@
             // DM
             if (chatListFilter === 'all' || chatListFilter === 'dm') {
                 myDmThreads().forEach(t => {
-                    const partnerName = (t.usernames && t.usernames[dmPartnerUsername(t.dmId)]) ||
-                                        (getUser(dmPartnerUsername(t.dmId))||{}).name || dmPartnerUsername(t.dmId);
+                    const partnerName = dmDisplayName(t, dmPartnerUsername(t.dmId));
                     const last = allMsgs.filter(m => m.dmId === t.dmId && !m.deleted).sort((a,b)=>b.time-a.time)[0];
                     convs.push({
                         type: 'dm', id: t.dmId,
@@ -2619,16 +2631,30 @@
                 t = {
                     dmId: dmId,
                     users: [currentUser.username, partnerName],
-                    usernames: {
-                        [currentUser.username]: currentUser.name,
-                        [partnerName]: partner ? partner.name : partnerName
-                    },
+                    // Simpan sebagai array {username,name} agar username yang mengandung
+                    // titik (.) tidak menjadi KEY objek (dilarang oleh Firebase).
+                    names: [
+                        { username: currentUser.username, name: currentUser.name },
+                        { username: partnerName, name: partner ? partner.name : partnerName }
+                    ],
                     createdAt: Date.now()
                 };
                 db.dmThreads.push(t);
                 saveDb();
             }
             return t;
+        }
+
+        // Ambil nama tampilan dari sebuah DM thread untuk username tertentu
+        function dmDisplayName(thread, username) {
+            if (thread && Array.isArray(thread.names)) {
+                const hit = thread.names.find(n => n.username === username);
+                if (hit && hit.name) return hit.name;
+            }
+            // fallback untuk data lama yang masih memakai format objek usernames
+            if (thread && thread.usernames && thread.usernames[username]) return thread.usernames[username];
+            const u = getUser(username);
+            return u ? u.name : username;
         }
 
         function closeActiveChat() {
