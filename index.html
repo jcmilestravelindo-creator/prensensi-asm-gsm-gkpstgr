@@ -272,6 +272,9 @@
             padding: 1rem; 
             backdrop-filter: blur(2px);
         }
+        /* Sub-modal chat (menu baru, pilih kontak, buat grup/topik) harus di atas
+           modal chat siswa & panel chat dashboard agar bisa diklik */
+        .modal-overlay.modal-top { z-index: 80; }
         .modal-content { 
             background: white; 
             border-radius: 1.2rem; 
@@ -1360,7 +1363,7 @@
         </div>
     </div>
 
-    <div id="newgroup-modal" class="modal-overlay">
+    <div id="newgroup-modal" class="modal-overlay modal-top">
         <div class="modal-content bg-white">
             <div class="p-4 border-b flex justify-between items-center" style="background:var(--tg-grad);">
                 <h3 class="font-bold text-white text-lg">💬 Buat Grup Baru</h3>
@@ -1408,7 +1411,7 @@
         </div>
     </div>
 
-    <div id="newchat-menu-modal" class="modal-overlay">
+    <div id="newchat-menu-modal" class="modal-overlay modal-top">
         <div class="modal-content bg-white" style="max-width:340px;">
             <div class="p-4 border-b flex justify-between items-center" style="background:var(--tg-grad);">
                 <h3 class="font-bold text-white text-lg">Mulai Baru</h3>
@@ -1433,7 +1436,7 @@
         </div>
     </div>
 
-    <div id="newdm-modal" class="modal-overlay">
+    <div id="newdm-modal" class="modal-overlay modal-top">
         <div class="modal-content bg-white" style="max-height:80vh;">
             <div class="p-4 border-b flex justify-between items-center" style="background:var(--tg-grad);">
                 <h3 class="font-bold text-white text-lg">👤 Pesan Pribadi Baru</h3>
@@ -1446,7 +1449,7 @@
         </div>
     </div>
 
-    <div id="newtopic-modal" class="modal-overlay">
+    <div id="newtopic-modal" class="modal-overlay modal-top">
         <div class="modal-content bg-white">
             <div class="p-4 border-b flex justify-between items-center" style="background:var(--ig-grad);">
                 <h3 class="font-bold text-white text-lg"># Tambah Topik</h3>
@@ -2972,14 +2975,17 @@
                 box.innerHTML = '<div class="chat-empty">Tidak ada pengguna yang cocok.</div>';
                 return;
             }
-            box.innerHTML = candidates.map(u => `
-                <div class="dm-candidate" onclick="startDmWith('${escapeHtml(u.username)}')">
+            box.innerHTML = candidates.map(u => {
+                const uname = String(u.username).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+                return `
+                <div class="dm-candidate" onclick="startDmWith('${uname}')">
                     <div class="chat-group-avatar dm" style="width:38px;height:38px;font-size:1rem;">${(u.name||'?').trim().charAt(0).toUpperCase()}</div>
                     <div class="chat-group-meta">
                         <div class="chat-group-name">${escapeHtml(u.name)}</div>
                         <div class="chat-group-sub">${roleLabel(u.role)}${u.kelas?' • '+escapeHtml(u.kelas):''}</div>
                     </div>
-                </div>`).join('');
+                </div>`;
+            }).join('');
         }
         function startDmWith(username) {
             const partner = getUser(username);
