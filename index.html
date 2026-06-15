@@ -3364,11 +3364,10 @@
             // Filter user berdasarkan role dan hak akses (SUDAH DIPERBAIKI)
             let targetUsers = [];
             if (isPengurusKelas) {
-                // Pengurus kelas hanya bisa melihat siswa yang sekelas dengannya
+                // Pengurus kelas dapat melihat seluruh siswa sekelasnya, termasuk dirinya sendiri
                 targetUsers = (db.users || []).filter(u =>
                     ['siswa', 'pengurus_kelas'].includes(u.role) &&
-                    u.kelas === currentUser.kelas &&
-                    u.username !== currentUser.username
+                    u.kelas === currentUser.kelas
                 );
             } else if (canSeeAll) {
                 targetUsers = (db.users || []).filter(u => {
