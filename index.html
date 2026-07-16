@@ -1298,6 +1298,43 @@
                             </div>
                         </div>
                         <p class="text-[9px] text-gray-400 mt-2 italic">*Kosongkan jam jika ingin aktif 24 jam (selama Status Fitur ON).</p>
+                    </div>
+
+                    <div class="mt-2 bg-white p-3 rounded-xl border">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[10px] font-bold text-gray-500 uppercase">📍 Wajib Lokasi (GPS)</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="sett-gps-toggle" class="sr-only peer">
+                                <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                            </label>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3 mb-2">
+                            <div>
+                                <label class="text-[10px] font-bold text-gray-500 block mb-1">Latitude Sekolah</label>
+                                <input type="number" step="any" id="sett-gps-lat" class="pro-input py-1 text-xs mb-0 bg-gray-50" placeholder="-6.17">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-bold text-gray-500 block mb-1">Longitude Sekolah</label>
+                                <input type="number" step="any" id="sett-gps-lng" class="pro-input py-1 text-xs mb-0 bg-gray-50" placeholder="106.82">
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="text-[10px] font-bold text-gray-500 block mb-1">Radius Maksimal (meter)</label>
+                            <input type="number" id="sett-gps-radius" class="pro-input py-1 text-xs mb-0 bg-gray-50" placeholder="150">
+                        </div>
+                        <button onclick="useCurrentLocationAsSchool()" class="w-full bg-blue-100 text-blue-700 border border-blue-200 font-bold py-2 rounded-lg text-[10px] hover:bg-blue-200 transition">📍 Gunakan Lokasi Saya Sekarang Sebagai Titik Sekolah</button>
+                        <p class="text-[9px] text-gray-400 mt-2 italic">*Jika ON, user hanya bisa absen dalam radius ini.</p>
+                    </div>
+
+                    <div class="mt-2 bg-white p-3 rounded-xl border">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] font-bold text-gray-500 uppercase">📸 Wajib Foto/Selfie</span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="sett-photo-toggle" class="sr-only peer">
+                                <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                            </label>
+                        </div>
+                        <p class="text-[9px] text-gray-400 mt-2 italic">*Jika ON, user wajib ambil foto saat memilih status HADIR.</p>
                      </div>
                     <button onclick="saveSettings()" class="w-full bg-green-600 text-white font-bold py-2 rounded-lg text-xs hover:bg-green-700">Simpan Pengaturan</button>
                 </div>
@@ -1544,7 +1581,7 @@
                 <p class="text-xs text-gray-500">Pilih status kehadiran:</p>
             </div>
             <div class="grid grid-cols-2 gap-3 mb-4">
-                <button onclick="submitManualAbsen('Hadir')" class="bg-green-100 text-green-700 border border-green-200 py-3 rounded-xl font-bold hover:bg-green-200 transition">✅ HADIR</button>
+                <button onclick="startHadirVerify()" class="bg-green-100 text-green-700 border border-green-200 py-3 rounded-xl font-bold hover:bg-green-200 transition">✅ HADIR</button>
                 <button onclick="toggleNoteInput('Sakit')" class="bg-yellow-100 text-yellow-700 border border-yellow-200 py-3 rounded-xl font-bold hover:bg-yellow-200 transition">🤒 SAKIT</button>
                 <button onclick="toggleNoteInput('Izin')" class="bg-blue-100 text-blue-700 border border-blue-200 py-3 rounded-xl font-bold hover:bg-blue-200 transition">📝 IZIN</button>
                 <button onclick="submitManualAbsen('Alpha')" class="bg-red-100 text-red-700 border border-red-200 py-3 rounded-xl font-bold hover:bg-red-200 transition">❌ ALPHA</button>
@@ -1554,7 +1591,24 @@
                 <textarea id="manual-note" class="pro-input h-20 mb-2 text-sm" placeholder="Contoh: Sakit demam sejak pagi..."></textarea>
                 <button id="btn-submit-note" class="w-full bg-gray-800 text-white font-bold py-2 rounded-lg text-xs hover:bg-gray-900">KIRIM ABSEN</button>
             </div>
-            <button onclick="document.getElementById('manual-modal').style.display='none'" class="w-full mt-2 text-gray-400 text-xs hover:text-gray-600 font-bold pb-2">BATAL</button>
+
+            <div id="manual-verify-section" class="hidden bg-gray-50 p-3 rounded-lg border border-gray-200 mb-2">
+                <div id="verify-gps-box" class="hidden mb-3">
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">📍 Verifikasi Lokasi</label>
+                    <p id="verify-gps-status" class="text-xs text-gray-600 bg-white p-2 rounded border">Menunggu lokasi...</p>
+                </div>
+                <div id="verify-photo-box" class="hidden mb-3">
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">📸 Ambil Foto/Selfie</label>
+                    <video id="verify-video" class="w-full rounded-lg border bg-black mb-2" autoplay playsinline style="max-height:220px;object-fit:cover;"></video>
+                    <img id="verify-photo-preview" class="hidden w-full rounded-lg border mb-2" style="max-height:220px;object-fit:cover;" />
+                    <div class="grid grid-cols-2 gap-2">
+                        <button id="btn-capture" onclick="capturePhoto()" class="bg-blue-100 text-blue-700 border border-blue-200 py-2 rounded-lg font-bold text-xs">📸 Jepret</button>
+                        <button id="btn-retake" onclick="retakePhoto()" class="hidden bg-gray-100 text-gray-700 border border-gray-200 py-2 rounded-lg font-bold text-xs">🔄 Ulang</button>
+                    </div>
+                </div>
+                <button id="btn-submit-verify" class="w-full bg-green-600 text-white font-bold py-2 rounded-lg text-xs hover:bg-green-700 mt-1">✅ KIRIM ABSEN HADIR</button>
+            </div>
+            <button onclick="stopCamera();document.getElementById('manual-modal').style.display='none'" class="w-full mt-2 text-gray-400 text-xs hover:text-gray-600 font-bold pb-2">BATAL</button>
         </div>
     </div>
 
@@ -2188,6 +2242,21 @@
             document.getElementById('sett-manual-toggle').checked = db.settings.manualOpen || false;
             document.getElementById('sett-manual-start').value = db.settings.manualStart || '';
             document.getElementById('sett-manual-end').value = db.settings.manualEnd || '';
+            document.getElementById('sett-gps-toggle').checked = db.settings.gpsRequired || false;
+            document.getElementById('sett-gps-lat').value = db.settings.schoolLat || '';
+            document.getElementById('sett-gps-lng').value = db.settings.schoolLng || '';
+            document.getElementById('sett-gps-radius').value = db.settings.gpsRadius || '';
+            document.getElementById('sett-photo-toggle').checked = db.settings.photoRequired || false;
+        }
+
+        function useCurrentLocationAsSchool() {
+            if(!navigator.geolocation) return alert("Perangkat tidak mendukung GPS.");
+            alert("Mengambil lokasi... pastikan izin lokasi diaktifkan.");
+            navigator.geolocation.getCurrentPosition(pos => {
+                document.getElementById('sett-gps-lat').value = pos.coords.latitude.toFixed(6);
+                document.getElementById('sett-gps-lng').value = pos.coords.longitude.toFixed(6);
+                alert("Lokasi berhasil diambil! Jangan lupa klik Simpan Pengaturan.");
+            }, err => alert("Gagal ambil lokasi: " + err.message), { enableHighAccuracy: true, timeout: 10000 });
         }
 
         function saveSettings() {
@@ -2195,6 +2264,11 @@
             db.settings.manualOpen = document.getElementById('sett-manual-toggle').checked;
             db.settings.manualStart = document.getElementById('sett-manual-start').value;
             db.settings.manualEnd = document.getElementById('sett-manual-end').value;
+            db.settings.gpsRequired = document.getElementById('sett-gps-toggle').checked;
+            db.settings.schoolLat = parseFloat(document.getElementById('sett-gps-lat').value) || null;
+            db.settings.schoolLng = parseFloat(document.getElementById('sett-gps-lng').value) || null;
+            db.settings.gpsRadius = parseInt(document.getElementById('sett-gps-radius').value) || null;
+            db.settings.photoRequired = document.getElementById('sett-photo-toggle').checked;
             saveDb(); 
             alert("Pengaturan Disimpan!"); 
             checkManualAttendanceVisibility();
@@ -2241,6 +2315,147 @@
             }
             document.getElementById('manual-modal').style.display = 'flex';
             document.getElementById('manual-note-section').classList.add('hidden');
+            document.getElementById('manual-verify-section').classList.add('hidden');
+            stopCamera();
+        }
+
+        // --- GPS & FOTO VERIFIKASI ---
+        let _camStream = null;
+        let _capturedPhoto = null;
+        let _verifiedGps = null;
+        let _perfAbsenActive = false;
+
+        function haversine(lat1, lon1, lat2, lon2) {
+            const R = 6371000;
+            const toRad = d => d * Math.PI / 180;
+            const dLat = toRad(lat2 - lat1);
+            const dLon = toRad(lon2 - lon1);
+            const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        }
+
+        function stopCamera() {
+            if(_camStream) { _camStream.getTracks().forEach(t => t.stop()); _camStream = null; }
+        }
+
+        async function startCamera() {
+            try {
+                _camStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+                const v = document.getElementById('verify-video');
+                v.srcObject = _camStream;
+                v.classList.remove('hidden');
+                document.getElementById('verify-photo-preview').classList.add('hidden');
+                document.getElementById('btn-capture').classList.remove('hidden');
+                document.getElementById('btn-retake').classList.add('hidden');
+            } catch(e) {
+                alert("Gagal akses kamera: " + e.message + "\nPastikan izin kamera diaktifkan.");
+            }
+        }
+
+        function capturePhoto() {
+            const v = document.getElementById('verify-video');
+            const canvas = document.createElement('canvas');
+            canvas.width = 480;
+            canvas.height = 480 * (v.videoHeight / v.videoWidth || 1);
+            canvas.getContext('2d').drawImage(v, 0, 0, canvas.width, canvas.height);
+            _capturedPhoto = canvas.toDataURL('image/jpeg', 0.6);
+            const img = document.getElementById('verify-photo-preview');
+            img.src = _capturedPhoto;
+            img.classList.remove('hidden');
+            v.classList.add('hidden');
+            document.getElementById('btn-capture').classList.add('hidden');
+            document.getElementById('btn-retake').classList.remove('hidden');
+            stopCamera();
+        }
+
+        function retakePhoto() {
+            _capturedPhoto = null;
+            startCamera();
+        }
+
+        function startHadirVerify() {
+            const s = db.settings || {};
+            _capturedPhoto = null;
+            _verifiedGps = null;
+
+            if (!s.gpsRequired && !s.photoRequired) {
+                return submitManualAbsen('Hadir');
+            }
+
+            document.getElementById('manual-note-section').classList.add('hidden');
+            const sec = document.getElementById('manual-verify-section');
+            sec.classList.remove('hidden');
+            const gpsBox = document.getElementById('verify-gps-box');
+            const photoBox = document.getElementById('verify-photo-box');
+
+            gpsBox.classList.toggle('hidden', !s.gpsRequired);
+            photoBox.classList.toggle('hidden', !s.photoRequired);
+
+            if (s.gpsRequired) verifyGps();
+            if (s.photoRequired) startCamera();
+
+            document.getElementById('btn-submit-verify').onclick = () => finalizeHadir();
+        }
+
+        function verifyGps() {
+            const s = db.settings || {};
+            const el = document.getElementById('verify-gps-status');
+            el.className = "text-xs text-gray-600 bg-white p-2 rounded border";
+            el.innerText = "Mengambil lokasi Anda...";
+            if(!navigator.geolocation) { el.innerText = "GPS tidak didukung perangkat."; return; }
+            navigator.geolocation.getCurrentPosition(pos => {
+                const lat = pos.coords.latitude, lng = pos.coords.longitude;
+                _verifiedGps = { lat, lng, distance: null };
+                if (s.schoolLat != null && s.schoolLng != null && s.gpsRadius) {
+                    const dist = Math.round(haversine(lat, lng, s.schoolLat, s.schoolLng));
+                    _verifiedGps.distance = dist;
+                    if (dist <= s.gpsRadius) {
+                        el.className = "text-xs text-green-700 bg-green-50 p-2 rounded border border-green-200";
+                        el.innerText = `✅ Dalam radius (${dist} m dari sekolah).`;
+                    } else {
+                        el.className = "text-xs text-red-700 bg-red-50 p-2 rounded border border-red-200";
+                        el.innerText = `❌ Di luar radius! Anda ${dist} m dari sekolah (maks ${s.gpsRadius} m).`;
+                        _verifiedGps.outside = true;
+                    }
+                } else {
+                    el.className = "text-xs text-green-700 bg-green-50 p-2 rounded border border-green-200";
+                    el.innerText = `✅ Lokasi terekam (${lat.toFixed(5)}, ${lng.toFixed(5)}).`;
+                }
+            }, err => {
+                el.className = "text-xs text-red-700 bg-red-50 p-2 rounded border border-red-200";
+                el.innerText = "❌ Gagal ambil lokasi: " + err.message;
+            }, { enableHighAccuracy: true, timeout: 15000 });
+        }
+
+        function finalizeHadir() {
+            const s = db.settings || {};
+            if (s.gpsRequired) {
+                if (!_verifiedGps) return alert("Lokasi belum terdeteksi. Mohon tunggu / aktifkan GPS.");
+                if (_verifiedGps.outside) return alert("Anda di luar radius sekolah, tidak bisa absen HADIR.");
+            }
+            if (s.photoRequired && !_capturedPhoto) return alert("Mohon ambil foto/selfie terlebih dahulu.");
+            submitManualAbsen('Hadir');
+        }
+
+        function viewAbsenPhoto(username, date) {
+            const rec = (db.attendance || []).find(a => a.username === username && a.date === date && a.photo);
+            if(!rec) return alert("Foto tidak ditemukan.");
+            let ov = document.getElementById('photo-overlay');
+            if(!ov) {
+                ov = document.createElement('div');
+                ov.id = 'photo-overlay';
+                ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;display:flex;align-items:center;justify-content:center;flex-direction:column;padding:20px;';
+                ov.onclick = () => ov.style.display = 'none';
+                document.body.appendChild(ov);
+            }
+            let loc = '';
+            if(rec.lat) loc = `<a href="https://maps.google.com/?q=${rec.lat},${rec.lng}" target="_blank" style="color:#2AABEE;text-decoration:underline;">Lihat di Peta${rec.distance!=null?` (${rec.distance}m)`:''}</a>`;
+            ov.innerHTML = `<img src="${rec.photo}" style="max-width:90%;max-height:70vh;border-radius:12px;border:2px solid #fff;">
+                <div style="color:#fff;text-align:center;margin-top:12px;font-size:13px;">
+                    <b>${rec.name}</b><br>${rec.date} • ${rec.time}<br>${loc}
+                </div>
+                <p style="color:#aaa;font-size:11px;margin-top:8px;">Ketuk di mana saja untuk menutup</p>`;
+            ov.style.display = 'flex';
         }
 
         function toggleNoteInput(status) {
@@ -2264,19 +2479,31 @@
             }
             const today = getTodayDate();
             playSound('success'); 
-            db.attendance.push({ 
+            const rec = { 
                 username: currentUser.username, 
                 name: currentUser.name, 
                 date: today, 
                 time: new Date().toLocaleTimeString(), 
                 status: status, 
                 note: note
-            });
+            };
+            if (status === 'Hadir') {
+                if (_verifiedGps) { rec.lat = _verifiedGps.lat; rec.lng = _verifiedGps.lng; rec.distance = _verifiedGps.distance; }
+                if (_capturedPhoto) rec.photo = _capturedPhoto;
+            }
+            db.attendance.push(rec);
             saveDb();
+            stopCamera();
+            _capturedPhoto = null; _verifiedGps = null;
             document.getElementById('manual-modal').style.display = 'none';
             alert("Absen Berhasil: " + status);
             checkManualAttendanceVisibility(); 
             if(currentUser.role !== 'siswa') renderHomeStats();
+            if(_perfAbsenActive) {
+                _perfAbsenActive = false;
+                const psb = document.getElementById('student-perf-body');
+                if(psb) renderStudentPerformance();
+            }
         }
 
         // --- MESSAGE BROADCAST ---
@@ -3316,7 +3543,10 @@
             const targetSuffix = `/${selM}/${selY}`;
             
             const allAtt = Array.isArray(db.attendance) ? db.attendance : [];
-            const uniqueDates = [...new Set(allAtt.filter(a => a.date.endsWith(targetSuffix)).map(a => a.date))].sort((a, b) => {
+            const dateSet = new Set(allAtt.filter(a => a.date.endsWith(targetSuffix)).map(a => a.date));
+            const todayStr = getTodayDate();
+            if(todayStr.endsWith(targetSuffix)) dateSet.add(todayStr);
+            const uniqueDates = [...dateSet].sort((a, b) => {
                 const [d1, m1, y1] = a.split('/');
                 const [d2, m2, y2] = b.split('/');
                 return new Date(y1, m1 - 1, d1) - new Date(y2, m2 - 1, d2); 
@@ -3343,10 +3573,26 @@
                 if(statusTxt === 'Izin') color = 'text-blue-700 bg-blue-100';
                 if(statusTxt === 'Alpha') color = 'text-red-700 bg-red-100';
 
-                row += `<td class="text-center py-3"><span class="${color} px-2 py-1 rounded text-[10px] font-bold inline-block min-w-[40px]">${statusTxt}</span></td>`;
+                if(!record && date === todayStr) {
+                    row += `<td class="text-center py-3"><button onclick="absenFromPerfDate('${date}')" class="bg-gradient-to-r from-[#229ED9] to-[#2AABEE] text-white px-2 py-1 rounded text-[10px] font-bold inline-block min-w-[40px] animate-pulse shadow">+ Absen</button></td>`;
+                } else {
+                    row += `<td class="text-center py-3"><span class="${color} px-2 py-1 rounded text-[10px] font-bold inline-block min-w-[40px]">${statusTxt}</span></td>`;
+                }
             });
             row += `</tr>`;
             tbody.innerHTML = row;
+        }
+
+        // --- ABSEN LANGSUNG DARI TABEL PERFORMANCE (SISWA/GSM/USER) ---
+        function absenFromPerfDate(date) {
+            const today = getTodayDate();
+            if(date !== today) return alert("Hanya bisa absen untuk tanggal hari ini.");
+            if(db.attendance.find(a => a.username === currentUser.username && a.date === today)) {
+                renderStudentPerformance();
+                return alert("Anda sudah absen hari ini!");
+            }
+            _perfAbsenActive = true;
+            openManualModal();
         }
 
         function openIdCardModal() {
@@ -3387,7 +3633,7 @@
                         <td class="font-bold text-sm">${l.name}</td>
                         <td><span class="badge badge-class">${u?u.kelas:'-'}</span></td>
                         <td><span class="text-xs ${colorClass} px-2 py-1 rounded">${statusLabel}</span></td>
-                        <td class="text-[10px] text-gray-500 italic">${l.note || '-'}</td>
+                        <td class="text-[10px] text-gray-500 italic">${l.note || '-'}${l.distance != null ? ` <span class="not-italic">📍${l.distance}m</span>` : (l.lat ? ' <span class="not-italic">📍</span>' : '')}${l.photo ? ` <button onclick="viewAbsenPhoto('${l.username}','${l.date}')" class="not-italic text-blue-600 font-bold">📸</button>` : ''}</td>
                     </tr>`;
                 }).join('');
             }
