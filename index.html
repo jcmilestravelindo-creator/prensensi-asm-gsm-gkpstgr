@@ -2171,7 +2171,25 @@
             });
         }
 
+        // ===== DIAGNOSTIK & PENGAMAN LOOP =====
+        // Jika saveDb terpanggil berkali-kali dalam waktu sangat singkat, itu tanda
+        // loop simpan↔listener. Circuit breaker ini menghentikannya agar tidak freeze,
+        // lalu mencetak jejak supaya akar masalah terlihat di console.
+        let _saveTimestamps = [];
+        let _saveBlocked = false;
         function saveDb() {
+            const now = Date.now();
+            _saveTimestamps = _saveTimestamps.filter(t => now - t < 2000);
+            _saveTimestamps.push(now);
+            if (_saveTimestamps.length > 25) {
+                if (!_saveBlocked) {
+                    _saveBlocked = true;
+                    console.error('🛑 LOOP TERDETEKSI: saveDb dipanggil >25x dalam 2 detik. Rantai simpan dihentikan sementara.');
+                    console.trace('Jejak pemanggilan saveDb:');
+                    setTimeout(() => { _saveBlocked = false; _saveTimestamps = []; }, 3000);
+                }
+                return Promise.resolve(); // putus rantai
+            }
             if(dbRef) {
                 return dbRef.set(db).catch(err => alert("Gagal Simpan ke Cloud: " + err.message));
             } else {
@@ -2797,6 +2815,7 @@
                     if (!item || !listEl.contains(item)) return;
                     const type = item.getAttribute('data-conv-type');
                     const id = item.getAttribute('data-conv-id');
+                    console.log('🖱️ KLIK item chat:', type, id);
                     try {
                         if (type === 'group') openChatGroup(id);
                         else if (type === 'dm') openDm(id);
@@ -2849,14 +2868,18 @@
         }
 
         function openChatGroup(groupId) {
+            console.log('▶️ openChatGroup START:', groupId);
             const g = getGroup(groupId);
-            if (!g) return;
+            if (!g) { console.warn('grup tidak ditemukan:', groupId); return; }
+            console.log('  step1: grup ditemukan', g.name, 'membersType:', g.membersType);
             // Tentukan surface aktif: jika modal siswa terbuka, gunakan host 'siswa'
             const stuModal = document.getElementById('siswa-chat-modal');
             chatHost = (stuModal && stuModal.style.display === 'flex') ? 'siswa' : 'dash';
             if (currentUser.role !== 'admin' && !isGroupMember(g)) {
+                console.log('  ditolak: bukan anggota');
                 return alert("Kamu bukan anggota grup ini.");
             }
+            console.log('  step2: lolos cek anggota');
             activeChatMode = 'group';
             activeDmId = null;
             activeChatGroupId = groupId;
@@ -2868,28 +2891,32 @@
             cElCls('topics', false, 'hidden');
             cElCls('sidebar', true, 'hide-mobile');
             cElCls('main', false, 'hide-mobile');
+            console.log('  step3: kelas UI diset');
 
-            renderChatHeader();
-            renderTopics();
-            renderChatThread();
-            renderChatGroups();
-            // Tandai terbaca SETELAH render agar, jika saveDb memicu listener,
-            // tampilan sudah tergambar (bukan penyebab freeze).
-            markConvRead(groupId);
+            renderChatHeader();       console.log('  step4: header dirender');
+            renderTopics();           console.log('  step5: topik dirender');
+            renderChatThread();       console.log('  step6: thread dirender');
+            renderChatGroups();       console.log('  step7: daftar dirender');
+            markConvRead(groupId);    console.log('  step8: markConvRead selesai');
+            console.log('✅ openChatGroup SELESAI');
         }
 
         function openDm(dmId) {
+            console.log('▶️ openDm START:', dmId);
             const stuModal = document.getElementById('siswa-chat-modal');
             chatHost = (stuModal && stuModal.style.display === 'flex') ? 'siswa' : 'dash';
 
             const partnerName = dmPartnerUsername(dmId);
+            console.log('  step1: partner =', partnerName);
             const partner = getUser(partnerName);
             if (partner && !canDM(currentUser, partner)) {
+                console.log('  ditolak: tidak boleh DM');
                 return alert("Kamu tidak dapat mengirim pesan pribadi ke pengguna ini.");
             }
 
             // Pastikan thread tercatat agar muncul di daftar
             ensureDmThread(dmId);
+            console.log('  step2: ensureDmThread selesai');
 
             activeChatMode = 'dm';
             activeDmId = dmId;
@@ -2901,11 +2928,13 @@
             cElCls('topics', true, 'hidden'); // DM tidak punya topik
             cElCls('sidebar', true, 'hide-mobile');
             cElCls('main', false, 'hide-mobile');
+            console.log('  step3: kelas UI diset');
 
-            renderChatHeader();
-            renderChatThread();
-            renderChatGroups();
-            markConvRead(dmId);
+            renderChatHeader();     console.log('  step4: header dirender');
+            renderChatThread();     console.log('  step5: thread dirender');
+            renderChatGroups();     console.log('  step6: daftar dirender');
+            markConvRead(dmId);     console.log('  step7: markConvRead selesai');
+            console.log('✅ openDm SELESAI');
         }
 
         function ensureDmThread(dmId) {
