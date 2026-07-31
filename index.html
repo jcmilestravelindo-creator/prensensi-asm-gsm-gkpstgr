@@ -2053,7 +2053,13 @@
                     if (val.chatGroups && typeof val.chatGroups === 'object' && !Array.isArray(val.chatGroups)) val.chatGroups = Object.values(val.chatGroups);
                     if (val.chatMessages && typeof val.chatMessages === 'object' && !Array.isArray(val.chatMessages)) val.chatMessages = Object.values(val.chatMessages);
                     if (val.dmThreads && typeof val.dmThreads === 'object' && !Array.isArray(val.dmThreads)) val.dmThreads = Object.values(val.dmThreads);
-                    
+
+                    // Firebase menyimpan array bersarang sebagai objek berindeks {0:..,1:..}.
+                    // Normalkan kembali agar Array.isArray()/.length/.includes() tetap bekerja.
+                    // Tanpa ini: topik kustom hilang & anggota grup "members" terkunci
+                    // ("Kamu bukan anggota grup ini") setiap kali data disinkronkan.
+                    normalizeChatArrays(val);
+
                     db = val;
                     if(!db.messages) db.messages = [];
                     if(!db.users) db.users = [];
@@ -2140,6 +2146,29 @@
             db.folders = []; 
             db.settings = { manualOpen: true }; 
             saveDb();
+        }
+
+        // Pastikan array bersarang di dalam data chat benar-benar Array (bukan objek
+        // berindeks hasil serialisasi Firebase). Dipanggil setiap kali data dimuat.
+        function toArr(x) {
+            if (Array.isArray(x)) return x;
+            if (x && typeof x === 'object') return Object.values(x);
+            return [];
+        }
+        function normalizeChatArrays(val) {
+            if (!val) return;
+            (val.chatGroups = toArr(val.chatGroups)).forEach(g => {
+                if (!g || typeof g !== 'object') return;
+                if (g.topics !== undefined) g.topics = toArr(g.topics);
+                if (g.members !== undefined) g.members = toArr(g.members);
+                if (g.roles !== undefined) g.roles = toArr(g.roles);
+            });
+            val.chatMessages = toArr(val.chatMessages);
+            (val.dmThreads = toArr(val.dmThreads)).forEach(t => {
+                if (!t || typeof t !== 'object') return;
+                if (t.users !== undefined) t.users = toArr(t.users);
+                if (t.names !== undefined) t.names = toArr(t.names);
+            });
         }
 
         function saveDb() {
@@ -2604,10 +2633,11 @@
         function isGroupMember(g) {
             if (!g) return false;
             if (g.membersType === 'all') return true;
-            if (g.membersType === 'role') return (g.roles || []).includes(currentUser.role);
+            if (g.membersType === 'role') return toArr(g.roles).includes(currentUser.role);
             if (g.membersType === 'kelas') return currentUser.kelas && g.kelas === currentUser.kelas;
-            // daftar username eksplisit (untuk grup buatan user biasa)
-            return Array.isArray(g.members) && g.members.includes(currentUser.username);
+            // daftar username eksplisit (untuk grup buatan user biasa).
+            // toArr() menjaga agar tetap aman jika Firebase mengembalikan objek berindeks.
+            return toArr(g.members).includes(currentUser.username);
         }
 
         function visibleGroups() {
@@ -2803,7 +2833,7 @@
             activeChatMode = 'group';
             activeDmId = null;
             activeChatGroupId = groupId;
-            const topics = g.topics && g.topics.length ? g.topics : [{ id: 'general', name: 'Umum', icon: '💬' }];
+            const topics = (toArr(g.topics).length ? toArr(g.topics) : [{ id: 'general', name: 'Umum', icon: '💬' }]);
             activeTopicId = topics[0].id;
 
             cEl('placeholder').classList.add('hidden');
@@ -2929,7 +2959,7 @@
             const g = getGroup(activeChatGroupId);
             const wrap = cEl('topics');
             if (!g || !wrap) return;
-            const topics = g.topics && g.topics.length ? g.topics : [{ id: 'general', name: 'Umum', icon: '💬' }];
+            const topics = (toArr(g.topics).length ? toArr(g.topics) : [{ id: 'general', name: 'Umum', icon: '💬' }]);
 
             let html = topics.map(t => {
                 const active = t.id === activeTopicId ? 'active' : '';
