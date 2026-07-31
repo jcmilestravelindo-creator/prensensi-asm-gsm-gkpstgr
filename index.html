@@ -2765,16 +2765,18 @@
                 return;
             }
 
-            listEl.innerHTML = filterBar + convs.map(c => {
+            listEl.innerHTML = filterBar + convs.map((c, i) => {
                 const lastTxt = c.last
                     ? (c.type==='group' ? `${escapeHtml(c.last.senderName)}: ` : '') + escapeHtml(c.last.content || '')
                     : 'Belum ada pesan';
                 const badge = c.unread > 0 ? `<span class="chat-unread-badge">${c.unread>99?'99+':c.unread}</span>` : '';
-                const timeTxt = c.last ? `<span class="chat-list-time">${formatChatTime(c.last.time)}</span>` : '';
+                const timeTxt = (c.last && c.last.time) ? `<span class="chat-list-time">${formatChatTime(c.last.time)}</span>` : '';
                 const avatarCls = c.type === 'dm' ? 'chat-group-avatar dm' : 'chat-group-avatar';
-                const onclick = c.type === 'group' ? `openChatGroup('${c.id}')` : `openDm('${c.id}')`;
-                return `<div class="chat-group-item ${c.active?'active':''}" onclick="${onclick}">
-                    <div class="${avatarCls}">${c.icon}</div>
+                // Pakai data-attribute + event delegation (BUKAN inline onclick dengan id
+                // yang di-interpolasi). id DM memuat username; bila mengandung tanda kutip
+                // atau karakter khusus, onclick inline jadi rusak dan klik "tidak bereaksi".
+                return `<div class="chat-group-item ${c.active?'active':''}" data-conv-type="${c.type}" data-conv-id="${escapeHtml(c.id)}">
+                    <div class="${avatarCls}">${escapeHtml(c.icon)}</div>
                     <div class="chat-group-meta">
                         <div class="chat-group-name-row">
                             <span class="chat-group-name">${escapeHtml(c.name)}</span>
@@ -2787,6 +2789,24 @@
                     </div>
                 </div>`;
             }).join('');
+
+            // Pasang event delegation sekali per kontainer daftar.
+            if (!listEl._convHandlerBound) {
+                listEl.addEventListener('click', function(ev) {
+                    const item = ev.target.closest('.chat-group-item');
+                    if (!item || !listEl.contains(item)) return;
+                    const type = item.getAttribute('data-conv-type');
+                    const id = item.getAttribute('data-conv-id');
+                    try {
+                        if (type === 'group') openChatGroup(id);
+                        else if (type === 'dm') openDm(id);
+                    } catch (e) {
+                        console.error('Gagal membuka percakapan:', e);
+                        alert('Gagal membuka percakapan: ' + (e && e.message ? e.message : e));
+                    }
+                });
+                listEl._convHandlerBound = true;
+            }
 
             updateChatBadges();
         }
@@ -2821,6 +2841,13 @@
             return (db.chatGroups || []).find(g => g.id === id);
         }
 
+        // Helper aman: set/hapus class walau elemen belum ada (mencegah crash → freeze).
+        function cElCls(suffix, add, cls) {
+            const el = cEl(suffix);
+            if (!el) return;
+            if (add) el.classList.add(cls); else el.classList.remove(cls);
+        }
+
         function openChatGroup(groupId) {
             const g = getGroup(groupId);
             if (!g) return;
@@ -2836,17 +2863,19 @@
             const topics = (toArr(g.topics).length ? toArr(g.topics) : [{ id: 'general', name: 'Umum', icon: '💬' }]);
             activeTopicId = topics[0].id;
 
-            cEl('placeholder').classList.add('hidden');
-            cEl('active').classList.remove('hidden');
-            cEl('topics').classList.remove('hidden');
-            cEl('sidebar').classList.add('hide-mobile');
-            cEl('main').classList.remove('hide-mobile');
+            cElCls('placeholder', true, 'hidden');
+            cElCls('active', false, 'hidden');
+            cElCls('topics', false, 'hidden');
+            cElCls('sidebar', true, 'hide-mobile');
+            cElCls('main', false, 'hide-mobile');
 
-            markConvRead(groupId);
             renderChatHeader();
             renderTopics();
             renderChatThread();
             renderChatGroups();
+            // Tandai terbaca SETELAH render agar, jika saveDb memicu listener,
+            // tampilan sudah tergambar (bukan penyebab freeze).
+            markConvRead(groupId);
         }
 
         function openDm(dmId) {
@@ -2867,16 +2896,16 @@
             activeChatGroupId = null;
             activeTopicId = null;
 
-            cEl('placeholder').classList.add('hidden');
-            cEl('active').classList.remove('hidden');
-            cEl('topics').classList.add('hidden'); // DM tidak punya topik
-            cEl('sidebar').classList.add('hide-mobile');
-            cEl('main').classList.remove('hide-mobile');
+            cElCls('placeholder', true, 'hidden');
+            cElCls('active', false, 'hidden');
+            cElCls('topics', true, 'hidden'); // DM tidak punya topik
+            cElCls('sidebar', true, 'hide-mobile');
+            cElCls('main', false, 'hide-mobile');
 
-            markConvRead(dmId);
             renderChatHeader();
             renderChatThread();
             renderChatGroups();
+            markConvRead(dmId);
         }
 
         function ensureDmThread(dmId) {
@@ -2920,34 +2949,36 @@
         }
 
         function renderChatHeader() {
+            const setTxt = (suffix, txt) => { const el = cEl(suffix); if (el) el.innerText = txt; };
             if (activeChatMode === 'dm') {
                 const partnerName = dmPartnerUsername(activeDmId);
                 const partner = getUser(partnerName);
                 const display = partner ? partner.name : partnerName;
-                cEl('head-avatar').innerText = (display||'?').trim().charAt(0).toUpperCase();
-                cEl('head-name').innerText = display;
+                setTxt('head-avatar', (display||'?').trim().charAt(0).toUpperCase());
+                setTxt('head-name', display);
                 let sub = 'Pesan pribadi';
                 if (partner) sub = roleLabel(partner.role) + (partner.kelas ? ' • ' + partner.kelas : '');
-                cEl('head-sub').innerText = sub;
-                cEl('add-topic-head').classList.add('hidden');
-                cEl('delete-group').classList.add('hidden');
+                setTxt('head-sub', sub);
+                cElCls('add-topic-head', true, 'hidden');
+                cElCls('delete-group', true, 'hidden');
                 return;
             }
             const g = getGroup(activeChatGroupId);
             if (!g) return;
             const initial = (g.name || 'G').trim().charAt(0).toUpperCase();
-            cEl('head-avatar').innerText = g.icon || initial;
-            cEl('head-name').innerText = g.name;
+            setTxt('head-avatar', g.icon || initial);
+            setTxt('head-name', g.name);
 
             let memberLabel = '';
             if (g.membersType === 'all') memberLabel = 'Semua pengguna';
-            else if (g.membersType === 'role') memberLabel = (g.roles || []).join(', ');
+            else if (g.membersType === 'role') memberLabel = toArr(g.roles).join(', ');
             else if (g.membersType === 'kelas') memberLabel = 'Kelas ' + (g.kelas || '-');
-            else memberLabel = (g.members || []).length + ' anggota';
-            cEl('head-sub').innerText = memberLabel;
+            else memberLabel = toArr(g.members).length + ' anggota';
+            setTxt('head-sub', memberLabel);
 
-            cEl('add-topic-head').classList.toggle('hidden', !canManageThisGroup(g));
-            cEl('delete-group').classList.toggle('hidden', !canManageThisGroup(g));
+            const canManage = canManageThisGroup(g);
+            cElCls('add-topic-head', !canManage, 'hidden');
+            cElCls('delete-group', !canManage, 'hidden');
         }
 
         function roleLabel(role) {
