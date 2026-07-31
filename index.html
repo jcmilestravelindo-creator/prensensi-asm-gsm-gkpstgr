@@ -2171,10 +2171,8 @@
             });
         }
 
-        // ===== DIAGNOSTIK & PENGAMAN LOOP =====
-        // Jika saveDb terpanggil berkali-kali dalam waktu sangat singkat, itu tanda
-        // loop simpan↔listener. Circuit breaker ini menghentikannya agar tidak freeze,
-        // lalu mencetak jejak supaya akar masalah terlihat di console.
+        // Pengaman: bila saveDb terpanggil >25x dalam 2 detik (tanda loop simpan↔listener),
+        // rantai diputus agar aplikasi tidak freeze.
         let _saveTimestamps = [];
         let _saveBlocked = false;
         function saveDb() {
@@ -2184,11 +2182,10 @@
             if (_saveTimestamps.length > 25) {
                 if (!_saveBlocked) {
                     _saveBlocked = true;
-                    console.error('🛑 LOOP TERDETEKSI: saveDb dipanggil >25x dalam 2 detik. Rantai simpan dihentikan sementara.');
-                    console.trace('Jejak pemanggilan saveDb:');
+                    console.error('🛑 Loop penyimpanan terdeteksi — dihentikan sementara untuk mencegah freeze.');
                     setTimeout(() => { _saveBlocked = false; _saveTimestamps = []; }, 3000);
                 }
-                return Promise.resolve(); // putus rantai
+                return Promise.resolve();
             }
             if(dbRef) {
                 return dbRef.set(db).catch(err => alert("Gagal Simpan ke Cloud: " + err.message));
@@ -2815,7 +2812,6 @@
                     if (!item || !listEl.contains(item)) return;
                     const type = item.getAttribute('data-conv-type');
                     const id = item.getAttribute('data-conv-id');
-                    console.log('🖱️ KLIK item chat:', type, id);
                     try {
                         if (type === 'group') openChatGroup(id);
                         else if (type === 'dm') openDm(id);
@@ -2867,74 +2863,84 @@
             if (add) el.classList.add(cls); else el.classList.remove(cls);
         }
 
+        // Tampilkan panel chat aktif secara PAKSA via inline style, sehingga tidak
+        // bisa dikalahkan oleh konflik kelas CSS (mis. .chat-empty margin:auto atau
+        // Tailwind .hidden). Ini memastikan panel benar-benar terlihat setelah klik.
+        function showActiveChat() {
+            const placeholder = cEl('placeholder');
+            const active = cEl('active');
+            const main = cEl('main');
+            const sidebar = cEl('sidebar');
+            if (placeholder) { placeholder.style.display = 'none'; placeholder.classList.add('hidden'); }
+            if (active) { active.style.display = 'flex'; active.classList.remove('hidden'); }
+            // Pada mobile: sembunyikan sidebar, tampilkan panel utama.
+            if (main) { main.style.display = 'flex'; main.classList.remove('hide-mobile'); }
+            if (sidebar && window.matchMedia('(max-width: 640px)').matches) {
+                sidebar.classList.add('hide-mobile');
+            }
+        }
+        // Kembali ke daftar (khusus mobile) — pastikan sidebar tampil lagi.
+        function showChatList() {
+            const main = cEl('main');
+            const sidebar = cEl('sidebar');
+            if (sidebar) sidebar.classList.remove('hide-mobile');
+            if (main && window.matchMedia('(max-width: 640px)').matches) {
+                main.classList.add('hide-mobile');
+            }
+        }
+
         function openChatGroup(groupId) {
-            console.log('▶️ openChatGroup START:', groupId);
             const g = getGroup(groupId);
-            if (!g) { console.warn('grup tidak ditemukan:', groupId); return; }
-            console.log('  step1: grup ditemukan', g.name, 'membersType:', g.membersType);
+            if (!g) return;
             // Tentukan surface aktif: jika modal siswa terbuka, gunakan host 'siswa'
             const stuModal = document.getElementById('siswa-chat-modal');
             chatHost = (stuModal && stuModal.style.display === 'flex') ? 'siswa' : 'dash';
             if (currentUser.role !== 'admin' && !isGroupMember(g)) {
-                console.log('  ditolak: bukan anggota');
                 return alert("Kamu bukan anggota grup ini.");
             }
-            console.log('  step2: lolos cek anggota');
             activeChatMode = 'group';
             activeDmId = null;
             activeChatGroupId = groupId;
             const topics = (toArr(g.topics).length ? toArr(g.topics) : [{ id: 'general', name: 'Umum', icon: '💬' }]);
             activeTopicId = topics[0].id;
 
-            cElCls('placeholder', true, 'hidden');
-            cElCls('active', false, 'hidden');
-            cElCls('topics', false, 'hidden');
-            cElCls('sidebar', true, 'hide-mobile');
-            cElCls('main', false, 'hide-mobile');
-            console.log('  step3: kelas UI diset');
+            showActiveChat();
+            const topicsEl = cEl('topics');
+            if (topicsEl) { topicsEl.classList.remove('hidden'); topicsEl.style.display = 'flex'; }
 
-            renderChatHeader();       console.log('  step4: header dirender');
-            renderTopics();           console.log('  step5: topik dirender');
-            renderChatThread();       console.log('  step6: thread dirender');
-            renderChatGroups();       console.log('  step7: daftar dirender');
-            markConvRead(groupId);    console.log('  step8: markConvRead selesai');
-            console.log('✅ openChatGroup SELESAI');
+            renderChatHeader();
+            renderTopics();
+            renderChatThread();
+            renderChatGroups();
+            markConvRead(groupId);
         }
 
         function openDm(dmId) {
-            console.log('▶️ openDm START:', dmId);
             const stuModal = document.getElementById('siswa-chat-modal');
             chatHost = (stuModal && stuModal.style.display === 'flex') ? 'siswa' : 'dash';
 
             const partnerName = dmPartnerUsername(dmId);
-            console.log('  step1: partner =', partnerName);
             const partner = getUser(partnerName);
             if (partner && !canDM(currentUser, partner)) {
-                console.log('  ditolak: tidak boleh DM');
                 return alert("Kamu tidak dapat mengirim pesan pribadi ke pengguna ini.");
             }
 
             // Pastikan thread tercatat agar muncul di daftar
             ensureDmThread(dmId);
-            console.log('  step2: ensureDmThread selesai');
 
             activeChatMode = 'dm';
             activeDmId = dmId;
             activeChatGroupId = null;
             activeTopicId = null;
 
-            cElCls('placeholder', true, 'hidden');
-            cElCls('active', false, 'hidden');
-            cElCls('topics', true, 'hidden'); // DM tidak punya topik
-            cElCls('sidebar', true, 'hide-mobile');
-            cElCls('main', false, 'hide-mobile');
-            console.log('  step3: kelas UI diset');
+            showActiveChat();
+            const topicsEl = cEl('topics'); // DM tidak punya topik
+            if (topicsEl) { topicsEl.classList.add('hidden'); topicsEl.style.display = 'none'; }
 
-            renderChatHeader();     console.log('  step4: header dirender');
-            renderChatThread();     console.log('  step5: thread dirender');
-            renderChatGroups();     console.log('  step6: daftar dirender');
-            markConvRead(dmId);     console.log('  step7: markConvRead selesai');
-            console.log('✅ openDm SELESAI');
+            renderChatHeader();
+            renderChatThread();
+            renderChatGroups();
+            markConvRead(dmId);
         }
 
         function ensureDmThread(dmId) {
@@ -2973,8 +2979,7 @@
         }
 
         function closeActiveChat() {
-            cEl('sidebar').classList.remove('hide-mobile');
-            cEl('main').classList.add('hide-mobile');
+            showChatList();
         }
 
         function renderChatHeader() {
@@ -3350,10 +3355,16 @@
             activeTopicId = null;
             document.getElementById('siswa-chat-modal').style.display = 'flex';
             // reset tampilan ke daftar percakapan
-            document.getElementById('siswa-chat-active').classList.add('hidden');
-            document.getElementById('siswa-chat-placeholder').classList.remove('hidden');
-            document.getElementById('siswa-chat-sidebar').classList.remove('hide-mobile');
-            document.getElementById('siswa-chat-main').classList.add('hide-mobile');
+            const a = document.getElementById('siswa-chat-active'); if (a) { a.classList.add('hidden'); a.style.display = 'none'; }
+            const p = document.getElementById('siswa-chat-placeholder'); if (p) { p.classList.remove('hidden'); p.style.display = ''; }
+            const s = document.getElementById('siswa-chat-sidebar'); if (s) { s.classList.remove('hide-mobile'); s.style.display = ''; }
+            const m = document.getElementById('siswa-chat-main');
+            if (m) {
+                // Di mobile daftar dulu; di layar lebar tampilkan kedua kolom.
+                if (window.matchMedia('(max-width: 640px)').matches) m.classList.add('hide-mobile');
+                else m.classList.remove('hide-mobile');
+                m.style.display = 'flex';
+            }
             renderChatGroups();
         }
 
@@ -3495,9 +3506,10 @@
                 chatHost = 'dash';
                 activeChatMode = 'group';
                 activeChatGroupId = null; activeDmId = null; activeTopicId = null;
-                cEl('active').classList.add('hidden');
-                cEl('placeholder').classList.remove('hidden');
-                cEl('sidebar').classList.remove('hide-mobile');
+                const active = cEl('active'); if (active) { active.classList.add('hidden'); active.style.display = 'none'; }
+                const placeholder = cEl('placeholder'); if (placeholder) { placeholder.classList.remove('hidden'); placeholder.style.display = ''; }
+                const sidebar = cEl('sidebar'); if (sidebar) sidebar.classList.remove('hide-mobile');
+                const main = cEl('main'); if (main) { main.classList.remove('hide-mobile'); main.style.display = 'flex'; }
                 renderChatGroups();
             }
             if(tab === 'materi') renderMateriList();
