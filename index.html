@@ -761,6 +761,98 @@
             0%, 100% { transform: translateX(-50%) translateY(0); }
             50% { transform: translateX(-50%) translateY(-10px); }
         }
+
+        /* ==========================================
+           LAPORAN INDIVIDU (RAPOR) — SISWA & GURU
+           ========================================== */
+        .rpt-chip { font-size: 0.7rem; font-weight: 700; padding: 0.35rem 0.75rem; border-radius: 999px; border: 1px solid #e2e8f0; background: #fff; color: #475569; white-space: nowrap; cursor: pointer; }
+        .rpt-chip:hover { border-color: var(--primary); color: var(--primary-dark); }
+        .rpt-chip.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+        .rpt-chip:focus-visible, .rpt-row:focus-visible, .rpt-btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+        .rpt-stat { padding: 0.9rem 1rem; border-radius: 0.9rem; background: #f8fafc; border: 1px solid #eef2f7; }
+        .rpt-stat b { display: block; font-size: 1.5rem; font-weight: 800; line-height: 1.1; color: #0f172a; font-variant-numeric: tabular-nums; }
+        .rpt-stat span { font-size: 0.7rem; color: #64748b; }
+        .rpt-row { display: grid; grid-template-columns: 40px minmax(0,1fr) auto; gap: 0.75rem; align-items: center; padding: 0.7rem 0.6rem; border-bottom: 1px solid #f1f5f9; cursor: pointer; border-radius: 0.6rem; }
+        .rpt-row:hover { background: #f8fafc; }
+        .rpt-row img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; background: #f1f5f9; }
+        .rpt-bar { display: flex; height: 8px; border-radius: 99px; overflow: hidden; background: #f1f5f9; margin-top: 6px; }
+        .rpt-bar i { display: block; height: 100%; }
+        .rpt-pct { font-size: 1.05rem; font-weight: 800; text-align: right; font-variant-numeric: tabular-nums; line-height: 1.1; }
+        .rpt-pred { display: inline-block; font-size: 0.62rem; font-weight: 700; padding: 2px 8px; border-radius: 99px; margin-top: 3px; white-space: nowrap; }
+        .rpt-svg { width: 100%; height: auto; display: block; overflow: visible; }
+        .rpt-axis { font-size: 11px; fill: #94a3b8; font-family: inherit; }
+        .rpt-legend { display: flex; flex-wrap: wrap; gap: 0.4rem 0.9rem; font-size: 0.7rem; color: #475569; margin-top: 0.5rem; }
+        .rpt-legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
+        .rpt-legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+        .rpt-legend i.line { height: 3px; width: 14px; border-radius: 2px; }
+        .rpt-empty { padding: 1.5rem 0.5rem; text-align: center; color: #94a3b8; font-size: 0.78rem; font-style: italic; }
+
+        /* Modal rapor */
+        .rpt-overlay { position: fixed; inset: 0; z-index: 60; background: rgba(15,23,42,0.55); overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 1rem 0.6rem 2rem; backdrop-filter: blur(2px); }
+        .rpt-toolbar { position: sticky; top: 0; z-index: 2; max-width: 860px; margin: 0 auto 0.6rem; background: #fff; border-radius: 1rem; padding: 0.6rem; display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; box-shadow: 0 8px 24px -12px rgba(0,0,0,0.35); }
+        .rpt-btn { font-size: 0.72rem; font-weight: 700; padding: 0.45rem 0.85rem; border-radius: 0.6rem; border: 1px solid #e2e8f0; background: #fff; color: #334155; cursor: pointer; white-space: nowrap; }
+        .rpt-btn.primary { background: var(--tg-grad); color: #fff; border-color: transparent; }
+        .rpt-sheet { max-width: 860px; margin: 0 auto; background: #fff; border-radius: 1.1rem; overflow: hidden; box-shadow: 0 20px 50px -20px rgba(0,0,0,0.45); }
+        .rpt-head { position: relative; padding: 1.4rem 1.4rem 1.2rem; border-bottom: 3px double #dbe4ee; background: linear-gradient(180deg, #f2f9fd 0%, #ffffff 100%); }
+        .rpt-org { font-size: 0.72rem; color: var(--primary-dark); font-weight: 700; letter-spacing: 0.02em; }
+        .rpt-title { font-family: Georgia, 'Times New Roman', serif; font-size: 1.55rem; font-weight: 700; color: #0f172a; line-height: 1.15; margin-top: 2px; }
+        .rpt-period { font-size: 0.78rem; color: #64748b; margin-top: 2px; }
+        .rpt-ident { display: flex; gap: 1rem; align-items: center; margin-top: 1.1rem; }
+        .rpt-ident img { width: 64px; height: 64px; border-radius: 14px; object-fit: cover; border: 2px solid #fff; box-shadow: 0 4px 14px rgba(0,0,0,0.12); background: #f1f5f9; flex-shrink: 0; }
+        .rpt-ident h4 { font-size: 1.15rem; font-weight: 800; color: #0f172a; line-height: 1.2; }
+        .rpt-ident p { font-size: 0.75rem; color: #64748b; }
+        /* Stempel predikat: elemen utama rapor */
+        .rpt-seal { position: absolute; right: 1.2rem; top: 1.2rem; width: 112px; height: 112px; border-radius: 50%; border: 3px solid currentColor; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; transform: rotate(-8deg); background: #fff; box-shadow: inset 0 0 0 4px #fff, inset 0 0 0 5px currentColor; }
+        .rpt-seal b { font-size: 1.85rem; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+        .rpt-seal span { font-size: 0.62rem; font-weight: 800; line-height: 1.15; margin-top: 3px; padding: 0 8px; }
+        .rpt-body { padding: 1.2rem 1.4rem 1.4rem; }
+        .rpt-sec { margin-top: 1.4rem; }
+        .rpt-sec > h5 { font-size: 0.85rem; font-weight: 800; color: #0f172a; margin-bottom: 0.6rem; display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.2rem 0.5rem; }
+        .rpt-sec > h5 small { font-weight: 500; color: #94a3b8; font-size: 0.7rem; }
+        .rpt-grid2 { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+        .rpt-box { border: 1px solid #eef2f7; border-radius: 0.9rem; padding: 0.9rem; }
+        .rpt-kpis { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 0.6rem; }
+        .rpt-kpi { border-radius: 0.8rem; padding: 0.7rem 0.8rem; border: 1px solid #eef2f7; }
+        .rpt-kpi b { display: block; font-size: 1.3rem; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; }
+        .rpt-kpi span { font-size: 0.68rem; color: #64748b; }
+        .rpt-narr { font-size: 0.85rem; line-height: 1.65; color: #334155; background: #f8fafc; border-left: 3px solid var(--primary); padding: 0.8rem 1rem; border-radius: 0 0.6rem 0.6rem 0; }
+        .rpt-month-row { display: grid; grid-template-columns: 64px minmax(0,1fr); gap: 0.5rem; align-items: center; padding: 3px 0; }
+        .rpt-month-row > span { font-size: 0.7rem; color: #64748b; font-weight: 600; }
+        .rpt-dots { display: flex; flex-wrap: wrap; gap: 4px; }
+        .rpt-dot { width: 18px; height: 18px; border-radius: 5px; display: inline-flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 700; color: rgba(255,255,255,0.95); }
+        .rpt-list-item { display: flex; justify-content: space-between; gap: 0.6rem; font-size: 0.75rem; padding: 0.45rem 0; border-bottom: 1px dashed #e2e8f0; }
+        .rpt-list-item:last-child { border-bottom: none; }
+        .rpt-sign { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 2rem; font-size: 0.75rem; color: #475569; text-align: center; }
+        .rpt-sign div { padding-top: 3.2rem; border-bottom: 1px solid #94a3b8; }
+        .rpt-foot { font-size: 0.65rem; color: #94a3b8; margin-top: 1.2rem; text-align: center; }
+        @media (min-width: 720px) {
+            .rpt-grid2 { grid-template-columns: 1fr 1fr; }
+            .rpt-kpis { grid-template-columns: repeat(4, minmax(0,1fr)); }
+        }
+        @media (max-width: 719px) {
+            #rpt-modal-period { order: 2; flex-basis: 100%; padding-bottom: 2px; }
+        }
+        @media (max-width: 520px) {
+            .rpt-head { padding-right: 1.4rem; }
+            .rpt-seal { position: static; transform: rotate(-6deg); margin: 1rem auto 0; width: 104px; height: 104px; }
+            .rpt-title { font-size: 1.3rem; }
+            .rpt-body { padding: 1rem; }
+        }
+        @media (prefers-reduced-motion: reduce) { .rpt-seal { transform: none; } }
+
+        /* Cetak / simpan PDF: hanya lembar rapor yang dicetak */
+        @media print {
+            body.rpt-printing { background: #fff !important; padding: 0 !important; }
+            body.rpt-printing > *:not(#report-modal) { display: none !important; }
+            body.rpt-printing #report-modal { position: static !important; display: block !important; background: none !important; padding: 0 !important; overflow: visible !important; backdrop-filter: none !important; }
+            body.rpt-printing .no-print { display: none !important; }
+            body.rpt-printing .rpt-sheet { box-shadow: none !important; border-radius: 0 !important; max-width: none !important; }
+            body.rpt-printing .rpt-box, body.rpt-printing .rpt-sec { break-inside: avoid; }
+            body.rpt-printing * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            body.rpt-printing .rpt-grid2 { grid-template-columns: 1fr 1fr !important; }
+            body.rpt-printing .rpt-kpis { grid-template-columns: repeat(4, minmax(0,1fr)) !important; }
+            body.rpt-printing .rpt-seal { position: absolute !important; margin: 0 !important; }
+        }
     </style>
 </head>
 <body class="p-4" onclick="closeNotificationPanel(event)">
@@ -887,6 +979,10 @@
                 <span class="text-2xl mb-1">📈</span>
                  <span class="text-xs font-bold text-green-900">MY Performance</span>
             </button>
+            <button onclick="openMyReport()" class="col-span-2 bg-white border border-purple-100 p-4 rounded-2xl shadow-sm flex items-center justify-center gap-3 hover:bg-purple-50 transition">
+                <span class="text-2xl">📑</span>
+                <span class="text-left"><span class="block text-xs font-bold text-purple-900">Rapor Saya</span><span class="block text-[10px] text-gray-500">Laporan kehadiran lengkap dengan grafik</span></span>
+            </button>
         </div>
     </section>
 
@@ -935,6 +1031,7 @@
             <button onclick="switchTab('materi')" id="tab-materi" class="nav-pill hidden">📚 Materi</button>
             <button onclick="switchTab('jadwal')" id="tab-jadwal" class="nav-pill hidden">🗓️ Jadwal</button>
             <button onclick="switchTab('performance')" id="tab-performance" class="nav-pill hidden">📈 Performance</button>
+            <button onclick="switchTab('laporan')" id="tab-laporan" class="nav-pill hidden">📑 Laporan</button>
             <button onclick="switchTab('settings')" id="tab-settings" class="nav-pill hidden">⚙️ Pengaturan</button>
         </div>
 
@@ -1063,6 +1160,62 @@
                 </div>
                 <p id="perf-help-text" class="text-[9px] text-gray-400 mt-3 italic">*Klik pada status kehadiran untuk mengubah data (Khusus Admin & Wali Kelas).</p>
                 <div id="pk-kelas-banner" class="hidden mt-3 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 text-xs"></div>
+            </div>
+        </div>
+
+        <div id="view-laporan" class="tab-view hidden">
+            <div class="pro-card">
+                <div class="flex flex-wrap justify-between items-start gap-3 mb-4">
+                    <div>
+                        <h3 class="font-bold text-lg text-gray-900">📑 Laporan Individu</h3>
+                        <p class="text-xs text-gray-500">Rapor kehadiran tiap siswa dan guru. Ketuk nama untuk membuka laporan lengkap.</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="openReport(currentUser.username)" class="rpt-btn">👤 Laporan Saya</button>
+                        <button onclick="exportReportCSV()" class="rpt-btn">⬇️ Rekap CSV</button>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap gap-2 items-center mb-3">
+                    <select id="rpt-type" onchange="reportState.type=this.value; reportState.kelas=''; renderLaporan()" class="pro-input py-1 text-xs mb-0 w-auto bg-white">
+                        <option value="siswa">Siswa Sekolah Minggu</option>
+                        <option value="guru">Guru Sekolah Minggu</option>
+                    </select>
+                    <select id="rpt-kelas" onchange="reportState.kelas=this.value; renderLaporan()" class="pro-input py-1 text-xs mb-0 w-auto bg-white"></select>
+                    <select id="rpt-sort" onchange="reportState.sort=this.value; renderLaporan()" class="pro-input py-1 text-xs mb-0 w-auto bg-white">
+                        <option value="name">Urut: Nama</option>
+                        <option value="high">Urut: Kehadiran tertinggi</option>
+                        <option value="low">Urut: Kehadiran terendah</option>
+                    </select>
+                    <div class="relative flex-1 min-w-[140px]">
+                        <input type="text" id="rpt-search" oninput="reportState.search=this.value.toLowerCase(); renderLaporan()" placeholder="Cari nama..." class="pro-input py-1 pl-8 text-xs mb-0 w-full bg-white">
+                        <span class="absolute left-2 top-1.5 text-gray-400 text-xs">🔍</span>
+                    </div>
+                </div>
+                <div id="rpt-period-bar" class="flex gap-2 overflow-x-auto pb-1 items-center"></div>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6" id="rpt-summary"></div>
+
+            <div class="grid md:grid-cols-2 gap-4">
+                <div class="pro-card" style="margin-bottom:0">
+                    <h4 class="font-bold text-sm text-gray-900">Tren kehadiran rata-rata</h4>
+                    <p class="text-[11px] text-gray-500 mb-2">Persentase hadir per bulan untuk daftar yang sedang ditampilkan</p>
+                    <div id="rpt-trend"></div>
+                </div>
+                <div class="pro-card" style="margin-bottom:0">
+                    <h4 class="font-bold text-sm text-gray-900">Sebaran predikat</h4>
+                    <p class="text-[11px] text-gray-500 mb-2">Jumlah orang menurut tingkat kehadiran</p>
+                    <div id="rpt-dist"></div>
+                </div>
+            </div>
+
+            <div class="pro-card mt-6">
+                <div class="flex justify-between items-center mb-2">
+                    <h4 class="font-bold text-sm text-gray-900">Daftar laporan</h4>
+                    <span id="rpt-count" class="text-[11px] text-gray-500"></span>
+                </div>
+                <div id="rpt-list"></div>
             </div>
         </div>
 
@@ -1559,6 +1712,18 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- ===== MODAL LAPORAN INDIVIDU (RAPOR) ===== -->
+    <div id="report-modal" class="rpt-overlay" style="display:none" role="dialog" aria-modal="true" aria-label="Laporan individu">
+        <div class="rpt-toolbar no-print">
+            <div id="rpt-modal-period" class="flex gap-2 overflow-x-auto items-center flex-1 min-w-0"></div>
+            <div class="flex gap-2 ml-auto">
+                <button onclick="printReport()" class="rpt-btn primary">🖨️ Cetak / PDF</button>
+                <button onclick="closeReport()" class="rpt-btn" aria-label="Tutup laporan">✕ Tutup</button>
+            </div>
+        </div>
+        <div class="rpt-sheet" id="report-sheet"></div>
     </div>
 
     <div id="student-content-modal" class="modal-overlay">
@@ -2121,6 +2286,8 @@
                         renderScanSessionLog(); 
                         renderMateriList();
                         renderJadwalTable();
+                        // Live-update laporan (tab Laporan & modal rapor yang sedang terbuka)
+                        if (typeof rptRefreshAll === 'function') rptRefreshAll();
                         
                         const lastScreen = localStorage.getItem('gkps_last_screen');
                         if (lastScreen === 'dashboard' && currentUser.role !== 'siswa') renderDashboardScreen();
@@ -3476,17 +3643,17 @@
             document.getElementById('dash-avatar').style.objectPosition = `${currentUser.posX||50}% ${currentUser.posY||50}%`;
             
             const role = currentUser.role;
-            const allTabs = ['tab-users', 'tab-messages', 'tab-chatgroup', 'tab-settings', 'tab-materi', 'tab-jadwal', 'tab-performance'];
+            const allTabs = ['tab-users', 'tab-messages', 'tab-chatgroup', 'tab-settings', 'tab-materi', 'tab-jadwal', 'tab-performance', 'tab-laporan'];
             allTabs.forEach(t => document.getElementById(t).classList.add('hidden'));
             
             if (role === 'admin') {
                 allTabs.forEach(t => document.getElementById(t).classList.remove('hidden'));
             } else if (role === 'pengurus_sm' || role === 'wali_kelas') {
-                ['tab-messages', 'tab-chatgroup', 'tab-materi', 'tab-jadwal', 'tab-performance'].forEach(t => document.getElementById(t).classList.remove('hidden'));
+                ['tab-messages', 'tab-chatgroup', 'tab-materi', 'tab-jadwal', 'tab-performance', 'tab-laporan'].forEach(t => document.getElementById(t).classList.remove('hidden'));
             } else if (role === 'guru') {
-                ['tab-chatgroup', 'tab-materi', 'tab-jadwal', 'tab-performance'].forEach(t => document.getElementById(t).classList.remove('hidden'));
+                ['tab-chatgroup', 'tab-materi', 'tab-jadwal', 'tab-performance', 'tab-laporan'].forEach(t => document.getElementById(t).classList.remove('hidden'));
             } else if (role === 'pengurus_kelas') {
-                ['tab-chatgroup', 'tab-performance'].forEach(t => document.getElementById(t).classList.remove('hidden'));
+                ['tab-chatgroup', 'tab-performance', 'tab-laporan'].forEach(t => document.getElementById(t).classList.remove('hidden'));
             }
             if (typeof updateChatBadges === 'function') updateChatBadges();
         }
@@ -3515,6 +3682,7 @@
             if(tab === 'materi') renderMateriList();
             if(tab === 'jadwal') renderJadwalTable();
             if(tab === 'performance') renderPerformanceTable();
+            if(tab === 'laporan') renderLaporan();
         }
 
         // User Table Logic
@@ -5154,6 +5322,663 @@
             } else {
                 alert('Status tidak valid! Pastikan penulisan sesuai: Hadir, Sakit, Izin, Alpha.');
             }
+        }
+
+
+        // ==========================================
+        // LAPORAN INDIVIDU (RAPOR) SISWA & GURU + GRAFIK
+        // Semua grafik digambar dengan SVG murni (tanpa library tambahan),
+        // jadi tetap jalan offline/PWA dan ikut tercetak saat "Simpan PDF".
+        // ==========================================
+        const RPT_STATUS = [
+            { key: 'Hadir',  label: 'Hadir',      color: '#16a34a' },
+            { key: 'Sakit',  label: 'Sakit',      color: '#eab308' },
+            { key: 'Izin',   label: 'Izin',       color: '#2563eb' },
+            { key: 'Alpha',  label: 'Alpha',      color: '#dc2626' },
+            { key: 'Kosong', label: 'Tanpa data', color: '#cbd5e1' }
+        ];
+        const RPT_COLOR = RPT_STATUS.reduce((o, s) => (o[s.key] = s.color, o), {});
+        const RPT_MON = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+        const RPT_MON_FULL = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+        const RPT_STUDENT_ROLES = ['siswa', 'pengurus_kelas'];
+        const RPT_STAFF_ROLES = ['guru', 'wali_kelas', 'pengurus_sm', 'admin'];
+        let reportState = { type: 'siswa', preset: 'month', from: '', to: '', kelas: '', search: '', sort: 'name' };
+        let reportOpenUser = null;
+
+        // ---------- Utilitas tanggal ----------
+        function rptMonthOffset(offset) {
+            const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() + offset);
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        }
+        function rptTodayKey() {
+            const d = new Date();
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
+        // 'DD/MM/YYYY' -> 'YYYY-MM-DD' (format absensi aplikasi)
+        function rptDateKey(s) {
+            if (typeof s !== 'string') return null;
+            const m = s.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+            return m ? `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}` : null;
+        }
+        // 'YYYY-MM-DD' (input type=date jadwal/materi) -> divalidasi
+        function rptIsoKey(s) {
+            return (typeof s === 'string' && /^\d{4}-\d{2}-\d{2}/.test(s)) ? s.slice(0, 10) : null;
+        }
+        function rptMonthsBetween(from, to) {
+            const out = [];
+            if (!from || !to || from > to) return out;
+            let [y, m] = from.split('-').map(Number);
+            const [ty, tm] = to.split('-').map(Number);
+            let guard = 0;
+            while ((y < ty || (y === ty && m <= tm)) && guard++ < 240) {
+                out.push(`${y}-${String(m).padStart(2, '0')}`);
+                if (++m > 12) { m = 1; y++; }
+            }
+            return out;
+        }
+        function rptMonthLabel(mk, full) {
+            const [y, m] = mk.split('-');
+            return full ? `${RPT_MON_FULL[Number(m) - 1]} ${y}` : `${RPT_MON[Number(m) - 1]} '${y.slice(2)}`;
+        }
+        function rptFmtDate(key) {
+            const [y, m, d] = key.split('-');
+            return `${Number(d)} ${RPT_MON[Number(m) - 1]} ${y}`;
+        }
+        function rptRangeLabel() {
+            const { from, to } = reportState;
+            if (!from || !to) return '-';
+            return from === to ? rptMonthLabel(from, true) : `${rptMonthLabel(from, true)} – ${rptMonthLabel(to, true)}`;
+        }
+        // Jam absen bisa berformat "09.15.30" (id-ID) atau "9:15:30 AM" (en-US)
+        function rptParseTime(t) {
+            if (typeof t !== 'string') return null;
+            const m = t.match(/(\d{1,2})[.:](\d{2})(?:[.:](\d{2}))?\s*([AaPp]\.?[Mm]\.?)?/);
+            if (!m) return null;
+            let h = Number(m[1]); const mi = Number(m[2]);
+            if (m[4]) { const pm = /p/i.test(m[4]); if (pm && h < 12) h += 12; if (!pm && h === 12) h = 0; }
+            if (h > 23 || mi > 59) return null;
+            return h * 60 + mi;
+        }
+        function rptFmtMinutes(min) {
+            if (min == null) return '-';
+            return `${String(Math.floor(min / 60)).padStart(2, '0')}.${String(Math.round(min % 60)).padStart(2, '0')}`;
+        }
+
+        // ---------- Periode ----------
+        function rptEarliestMonth() {
+            let min = null;
+            (Array.isArray(db.attendance) ? db.attendance : []).forEach(a => {
+                const k = a && rptDateKey(a.date);
+                if (k && (!min || k < min)) min = k;
+            });
+            return min ? min.slice(0, 7) : rptMonthOffset(0);
+        }
+        function setReportPreset(p) {
+            const now = rptMonthOffset(0);
+            reportState.preset = p;
+            reportState.to = now;
+            if (p === 'month') reportState.from = now;
+            else if (p === '3m') reportState.from = rptMonthOffset(-2);
+            else if (p === '6m') reportState.from = rptMonthOffset(-5);
+            else if (p === 'year') reportState.from = `${new Date().getFullYear()}-01`;
+            else if (p === 'all') reportState.from = rptEarliestMonth();
+            if (reportState.from > reportState.to) reportState.from = reportState.to;
+            rptRefreshAll();
+        }
+        function setReportRange(which, val) {
+            if (!val) return;
+            reportState.preset = 'custom';
+            reportState[which] = val;
+            if (reportState.from > reportState.to) {
+                if (which === 'from') reportState.to = val; else reportState.from = val;
+            }
+            rptRefreshAll();
+        }
+        function rptEnsureRange() {
+            if (!reportState.from || !reportState.to) {
+                reportState.preset = 'month';
+                reportState.from = reportState.to = rptMonthOffset(0);
+            }
+        }
+        function rptPeriodBarHtml() {
+            const chips = [['month', 'Bulan ini'], ['3m', '3 bulan'], ['6m', '6 bulan'], ['year', 'Tahun ini'], ['all', 'Semua']];
+            return chips.map(([k, l]) => `<button type="button" class="rpt-chip ${reportState.preset === k ? 'active' : ''}" onclick="setReportPreset('${k}')">${l}</button>`).join('') +
+                `<span class="text-[11px] text-gray-500 whitespace-nowrap ml-1">Dari</span>
+                 <input type="month" value="${reportState.from}" onchange="setReportRange('from', this.value)" class="pro-input py-1 text-xs mb-0 bg-white" style="width:auto;min-width:130px">
+                 <span class="text-[11px] text-gray-500">s/d</span>
+                 <input type="month" value="${reportState.to}" onchange="setReportRange('to', this.value)" class="pro-input py-1 text-xs mb-0 bg-white" style="width:auto;min-width:130px">`;
+        }
+        function rptRefreshAll() {
+            const view = document.getElementById('view-laporan');
+            if (view && !view.classList.contains('hidden')) renderLaporan();
+            if (reportOpenUser) renderReportSheet();
+        }
+
+        // ---------- Pengolahan data ----------
+        // Satu kali lintas data absensi: indeks per user & daftar tanggal pertemuan.
+        function rptBuildIndex() {
+            const byUser = {};
+            const sessions = new Set();
+            (Array.isArray(db.attendance) ? db.attendance : []).forEach(a => {
+                if (!a) return;
+                const k = rptDateKey(a.date);
+                if (!k) return;
+                sessions.add(k); // tanggal kolom (termasuk placeholder "+ Tgl Baru") = satu pertemuan
+                if (!a.username || a.username === 'SYS_PLACEHOLDER') return;
+                const status = a.status || 'Hadir'; // hasil scan lama tanpa status = Hadir
+                if (status === '-') return;
+                const u = byUser[a.username] || (byUser[a.username] = {});
+                if (!u[k]) u[k] = Object.assign({}, a, { status });
+            });
+            return { byUser, sessions: [...sessions].sort() };
+        }
+        function rptSessionsInRange(idx) {
+            const today = rptTodayKey();
+            return idx.sessions.filter(k => {
+                const m = k.slice(0, 7);
+                return m >= reportState.from && m <= reportState.to && k <= today;
+            });
+        }
+        function rptStats(username, idx, sessions) {
+            const recs = idx.byUser[username] || {};
+            const c = { Hadir: 0, Sakit: 0, Izin: 0, Alpha: 0, Kosong: 0 };
+            const timeline = [];
+            sessions.forEach(k => {
+                const r = recs[k];
+                let s = r ? r.status : 'Kosong';
+                if (!(s in c)) s = 'Kosong';
+                c[s]++;
+                timeline.push({ key: k, status: s, rec: r || null });
+            });
+            const total = sessions.length;
+            return { c, total, pct: total ? Math.round(c.Hadir / total * 100) : null, timeline };
+        }
+        function rptMonthly(timeline, months) {
+            const map = {};
+            months.forEach(m => map[m] = { Hadir: 0, Sakit: 0, Izin: 0, Alpha: 0, Kosong: 0, total: 0 });
+            timeline.forEach(t => { const m = map[t.key.slice(0, 7)]; if (m) { m[t.status]++; m.total++; } });
+            return months.map(m => ({ month: m, ...map[m], pct: map[m].total ? Math.round(map[m].Hadir / map[m].total * 100) : null }));
+        }
+        function rptPredikat(p) {
+            if (p === null || p === undefined) return { label: 'Belum ada data', color: '#94a3b8', bg: '#f1f5f9' };
+            if (p >= 90) return { label: 'Sangat Baik', color: '#15803d', bg: '#dcfce7' };
+            if (p >= 75) return { label: 'Baik', color: '#1d4ed8', bg: '#dbeafe' };
+            if (p >= 60) return { label: 'Cukup', color: '#b45309', bg: '#fef3c7' };
+            return { label: 'Perlu Perhatian', color: '#b91c1c', bg: '#fee2e2' };
+        }
+        function rptIsStudent(u) { return !!u && RPT_STUDENT_ROLES.includes(u.role); }
+        function rptPeers(u) {
+            const users = (db.users || []).filter(x => x && x.username);
+            if (rptIsStudent(u)) {
+                const hasKelas = u.kelas && u.kelas !== '-';
+                return users.filter(x => rptIsStudent(x) && (!hasKelas || x.kelas === u.kelas));
+            }
+            return users.filter(x => RPT_STAFF_ROLES.includes(x.role));
+        }
+
+        // ---------- Hak akses ----------
+        function rptVisibleUsers(type) {
+            if (!currentUser) return [];
+            const role = currentUser.role;
+            const isStu = type === 'siswa';
+            const pool = (db.users || []).filter(u => u && u.username && (isStu ? RPT_STUDENT_ROLES : RPT_STAFF_ROLES).includes(u.role));
+            if (['admin', 'wali_kelas', 'pengurus_sm'].includes(role)) return pool;
+            if (role === 'guru') return isStu ? pool : pool.filter(u => u.username === currentUser.username);
+            if (role === 'pengurus_kelas') return isStu ? pool.filter(u => u.kelas === currentUser.kelas) : [];
+            return pool.filter(u => u.username === currentUser.username);
+        }
+        function rptCanView(u) {
+            if (!u || !currentUser) return false;
+            if (u.username === currentUser.username) return true;
+            return rptVisibleUsers(rptIsStudent(u) ? 'siswa' : 'guru').some(x => x.username === u.username);
+        }
+        function rptCanNote(u) {
+            if (!currentUser || !u) return false;
+            const role = currentUser.role;
+            if (['admin', 'wali_kelas', 'pengurus_sm'].includes(role)) return true;
+            return role === 'guru' && rptIsStudent(u);
+        }
+
+        // ---------- Grafik SVG ----------
+        function rptEmpty(msg) { return `<div class="rpt-empty">${escapeHtml(msg)}</div>`; }
+        function rptLegend(items) {
+            return `<div class="rpt-legend">${items.map(i => `<span><i class="${i.line ? 'line' : ''}" style="background:${i.color}"></i>${escapeHtml(i.label)}</span>`).join('')}</div>`;
+        }
+        // Grafik garis 0–100% (nilai null = bulan tanpa pertemuan, garis diputus)
+        function rptLineChart(labels, series) {
+            const n = labels.length;
+            if (!n || !series.some(s => s.values.some(v => v !== null && v !== undefined))) return rptEmpty('Belum ada pertemuan pada periode ini');
+            const W = 400, H = 200, pl = 30, pr = 12, pt = 12, pb = 26, iw = W - pl - pr, ih = H - pt - pb;
+            const x = i => n === 1 ? pl + iw / 2 : pl + i * iw / (n - 1);
+            const y = v => pt + ih - (v / 100) * ih;
+            let g = '';
+            [0, 25, 50, 75, 100].forEach(v => {
+                g += `<line x1="${pl}" x2="${W - pr}" y1="${y(v)}" y2="${y(v)}" stroke="#eef2f7" stroke-width="1"/>`;
+                g += `<text x="${pl - 6}" y="${y(v) + 3}" text-anchor="end" class="rpt-axis">${v}%</text>`;
+            });
+            const step = Math.ceil(n / 7);
+            labels.forEach((l, i) => {
+                if (i % step === 0 || i === n - 1) g += `<text x="${x(i)}" y="${H - 8}" text-anchor="middle" class="rpt-axis">${escapeHtml(l)}</text>`;
+            });
+            series.forEach(s => {
+                let d = '', pen = false;
+                s.values.forEach((v, i) => {
+                    if (v === null || v === undefined) { pen = false; return; }
+                    d += `${pen ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(1)} `; pen = true;
+                });
+                if (d) g += `<path d="${d}" fill="none" stroke="${s.color}" stroke-width="${s.dashed ? 1.8 : 2.6}" ${s.dashed ? 'stroke-dasharray="5 4"' : ''} stroke-linecap="round" stroke-linejoin="round"/>`;
+                s.values.forEach((v, i) => {
+                    if (v === null || v === undefined) return;
+                    g += `<circle cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}" r="${s.dashed ? 2.4 : 3.6}" fill="${s.dashed ? s.color : '#fff'}" stroke="${s.color}" stroke-width="2"><title>${escapeHtml(s.name)} · ${escapeHtml(labels[i])}: ${v}%</title></circle>`;
+                });
+            });
+            return `<svg viewBox="0 0 ${W} ${H}" class="rpt-svg" role="img" aria-label="Grafik tren kehadiran">${g}</svg>` +
+                rptLegend(series.map(s => ({ label: s.name, color: s.color, line: true })));
+        }
+        // Batang bertumpuk per bulan: Hadir/Sakit/Izin/Alpha/Tanpa data
+        function rptStackedBars(monthly) {
+            const n = monthly.length;
+            const max = Math.max(0, ...monthly.map(m => m.total));
+            if (!n || !max) return rptEmpty('Belum ada pertemuan pada periode ini');
+            const W = 400, H = 200, pl = 26, pr = 8, pt = 12, pb = 26, iw = W - pl - pr, ih = H - pt - pb;
+            const slot = iw / n, bw = Math.min(34, slot * 0.62);
+            const y = v => pt + ih - (v / max) * ih;
+            let g = '';
+            const tick = Math.max(1, Math.ceil(max / 4));
+            for (let v = 0; v <= max; v += tick) {
+                g += `<line x1="${pl}" x2="${W - pr}" y1="${y(v)}" y2="${y(v)}" stroke="#eef2f7"/><text x="${pl - 6}" y="${y(v) + 3}" text-anchor="end" class="rpt-axis">${v}</text>`;
+            }
+            const step = Math.ceil(n / 7);
+            monthly.forEach((m, i) => {
+                const cx = pl + slot * i + slot / 2;
+                let acc = 0;
+                RPT_STATUS.forEach(s => {
+                    const v = m[s.key]; if (!v) return;
+                    const y1 = y(acc + v), h = y(acc) - y1;
+                    g += `<rect x="${(cx - bw / 2).toFixed(1)}" y="${y1.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(h - 1, 0.5).toFixed(1)}" rx="3" fill="${s.color}"><title>${rptMonthLabel(m.month, true)} · ${s.label}: ${v}</title></rect>`;
+                    acc += v;
+                });
+                if (i % step === 0 || i === n - 1) g += `<text x="${cx}" y="${H - 8}" text-anchor="middle" class="rpt-axis">${rptMonthLabel(m.month)}</text>`;
+            });
+            return `<svg viewBox="0 0 ${W} ${H}" class="rpt-svg" role="img" aria-label="Grafik status kehadiran per bulan">${g}</svg>` + rptLegend(RPT_STATUS);
+        }
+        // Donat komposisi status
+        function rptDonut(c, total) {
+            if (!total) return rptEmpty('Belum ada pertemuan pada periode ini');
+            const R = 54, SW = 20, C = 2 * Math.PI * R;
+            let off = 0, arcs = '';
+            RPT_STATUS.forEach(s => {
+                const v = c[s.key]; if (!v) return;
+                const len = v / total * C;
+                arcs += `<circle cx="80" cy="80" r="${R}" fill="none" stroke="${s.color}" stroke-width="${SW}" stroke-dasharray="${len.toFixed(2)} ${(C - len).toFixed(2)}" stroke-dashoffset="${(-off).toFixed(2)}" transform="rotate(-90 80 80)"><title>${s.label}: ${v} (${Math.round(v / total * 100)}%)</title></circle>`;
+                off += len;
+            });
+            const legend = RPT_STATUS.map(s => `<div class="flex items-center justify-between gap-3 text-xs py-1">
+                    <span class="flex items-center gap-2"><i style="width:10px;height:10px;border-radius:3px;background:${s.color};display:inline-block"></i>${s.label}</span>
+                    <b class="tabular-nums">${c[s.key]} <span class="text-gray-400 font-normal">· ${Math.round(c[s.key] / total * 100)}%</span></b></div>`).join('');
+            return `<div class="flex items-center gap-4 flex-wrap justify-center">
+                <svg viewBox="0 0 160 160" style="width:150px;height:150px;flex-shrink:0" role="img" aria-label="Komposisi status kehadiran">
+                    <circle cx="80" cy="80" r="${R}" fill="none" stroke="#f1f5f9" stroke-width="${SW}"/>${arcs}
+                    <text x="80" y="78" text-anchor="middle" style="font-size:24px;font-weight:800;fill:#0f172a">${total}</text>
+                    <text x="80" y="96" text-anchor="middle" style="font-size:10px;fill:#64748b">pertemuan</text>
+                </svg>
+                <div class="flex-1 min-w-[150px]">${legend}</div></div>`;
+        }
+        // Batang horizontal sederhana (sebaran predikat / tugas guru)
+        function rptHBars(items) {
+            const max = Math.max(1, ...items.map(i => i.value));
+            return items.map(i => `<div class="flex items-center gap-2 text-xs py-1.5">
+                    <span class="w-28 shrink-0 text-gray-600">${escapeHtml(i.label)}</span>
+                    <div class="flex-1 bg-gray-100 rounded-full h-3 overflow-hidden"><div style="width:${(i.value / max * 100).toFixed(1)}%;background:${i.color};height:100%;border-radius:99px"></div></div>
+                    <b class="w-8 text-right tabular-nums">${i.value}</b></div>`).join('');
+        }
+        // Peta titik setiap pertemuan, satu baris per bulan
+        function rptTimeline(timeline) {
+            if (!timeline.length) return rptEmpty('Belum ada pertemuan pada periode ini');
+            const byMonth = {};
+            timeline.forEach(t => (byMonth[t.key.slice(0, 7)] = byMonth[t.key.slice(0, 7)] || []).push(t));
+            const letters = { Hadir: 'H', Sakit: 'S', Izin: 'I', Alpha: 'A', Kosong: '' };
+            return Object.keys(byMonth).sort().map(m => `<div class="rpt-month-row"><span>${rptMonthLabel(m)}</span><div class="rpt-dots">${
+                byMonth[m].map(t => `<span class="rpt-dot" style="background:${RPT_COLOR[t.status]}" title="${rptFmtDate(t.key)} · ${t.status === 'Kosong' ? 'Tanpa data' : t.status}${t.rec && t.rec.note && t.rec.note !== '-' ? ' · ' + escapeHtml(t.rec.note) : ''}">${letters[t.status]}</span>`).join('')
+            }</div></div>`).join('') + rptLegend(RPT_STATUS);
+        }
+
+        // ---------- Tab Laporan (ringkasan + daftar) ----------
+        function renderLaporan() {
+            if (!currentUser) return;
+            rptEnsureRange();
+            const role = currentUser.role;
+            const typeEl = document.getElementById('rpt-type');
+            const canSeeGuru = ['admin', 'wali_kelas', 'pengurus_sm', 'guru'].includes(role);
+            if (!canSeeGuru) reportState.type = 'siswa';
+            if (typeEl) { typeEl.value = reportState.type; typeEl.style.display = canSeeGuru ? '' : 'none'; }
+            const sortEl = document.getElementById('rpt-sort'); if (sortEl) sortEl.value = reportState.sort;
+            const bar = document.getElementById('rpt-period-bar'); if (bar) bar.innerHTML = rptPeriodBarHtml();
+
+            let pool = rptVisibleUsers(reportState.type);
+            const kelasEl = document.getElementById('rpt-kelas');
+            const kelasList = [...new Set(pool.map(u => u.kelas).filter(k => k && k !== '-'))].sort();
+            if (kelasEl) {
+                if (reportState.kelas && !kelasList.includes(reportState.kelas)) reportState.kelas = '';
+                kelasEl.innerHTML = `<option value="">Semua kelas</option>` + kelasList.map(k => `<option value="${escapeHtml(k)}">Kelas ${escapeHtml(k)}</option>`).join('');
+                kelasEl.value = reportState.kelas;
+                kelasEl.style.display = (reportState.type === 'siswa' && kelasList.length > 1) ? '' : 'none';
+            }
+            if (reportState.kelas) pool = pool.filter(u => u.kelas === reportState.kelas);
+            if (reportState.search) pool = pool.filter(u => (u.name || '').toLowerCase().includes(reportState.search) || (u.username || '').toLowerCase().includes(reportState.search));
+
+            const idx = rptBuildIndex();
+            const sessions = rptSessionsInRange(idx);
+            const months = rptMonthsBetween(reportState.from, reportState.to);
+            const rows = pool.map(u => ({ u, st: rptStats(u.username, idx, sessions) }));
+
+            if (reportState.sort === 'name') rows.sort((a, b) => (a.u.name || '').localeCompare(b.u.name || ''));
+            else {
+                const dir = reportState.sort === 'high' ? -1 : 1;
+                rows.sort((a, b) => ((a.st.pct ?? -1) - (b.st.pct ?? -1)) * dir || (a.u.name || '').localeCompare(b.u.name || ''));
+            }
+
+            // Ringkasan
+            const withData = rows.filter(r => r.st.pct !== null);
+            const avg = withData.length ? Math.round(withData.reduce((s, r) => s + r.st.pct, 0) / withData.length) : null;
+            const attention = withData.filter(r => r.st.pct < 60).length;
+            const sum = document.getElementById('rpt-summary');
+            if (sum) sum.innerHTML = `
+                <div class="rpt-stat bg-white"><b>${rows.length}</b><span>${reportState.type === 'siswa' ? 'Siswa' : 'Guru'} ditampilkan</span></div>
+                <div class="rpt-stat bg-white"><b>${sessions.length}</b><span>Pertemuan dalam periode</span></div>
+                <div class="rpt-stat bg-white"><b style="color:${rptPredikat(avg).color}">${avg === null ? '-' : avg + '%'}</b><span>Rata-rata kehadiran</span></div>
+                <div class="rpt-stat bg-white"><b style="color:${attention ? '#b91c1c' : '#0f172a'}">${attention}</b><span>Perlu perhatian (&lt;60%)</span></div>`;
+
+            // Tren rata-rata per bulan
+            const trendVals = months.map(m => {
+                const vals = rows.map(r => rptMonthly(r.st.timeline.filter(t => t.key.startsWith(m)), [m])[0].pct).filter(v => v !== null);
+                return vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : null;
+            });
+            const trend = document.getElementById('rpt-trend');
+            if (trend) trend.innerHTML = rptLineChart(months.map(m => rptMonthLabel(m)), [{ name: 'Rata-rata hadir', color: '#229ED9', values: trendVals }]);
+
+            // Sebaran predikat
+            const dist = { 'Sangat Baik': 0, 'Baik': 0, 'Cukup': 0, 'Perlu Perhatian': 0, 'Belum ada data': 0 };
+            rows.forEach(r => dist[rptPredikat(r.st.pct).label]++);
+            const distEl = document.getElementById('rpt-dist');
+            if (distEl) distEl.innerHTML = rows.length ? rptHBars(Object.keys(dist).map(k => ({ label: k, value: dist[k], color: rptPredikat(k === 'Sangat Baik' ? 95 : k === 'Baik' ? 80 : k === 'Cukup' ? 65 : k === 'Perlu Perhatian' ? 10 : null).color }))) : rptEmpty('Tidak ada data');
+
+            // Daftar
+            const countEl = document.getElementById('rpt-count'); if (countEl) countEl.innerText = `${rows.length} orang · ${rptRangeLabel()}`;
+            const list = document.getElementById('rpt-list');
+            if (!list) return;
+            if (!rows.length) { list.innerHTML = rptEmpty('Tidak ada pengguna yang cocok dengan filter ini.'); return; }
+            list.innerHTML = rows.map(({ u, st }) => {
+                const p = rptPredikat(st.pct);
+                const segs = st.total ? RPT_STATUS.map(s => st.c[s.key] ? `<i style="width:${(st.c[s.key] / st.total * 100).toFixed(2)}%;background:${s.color}"></i>` : '').join('') : '';
+                return `<div class="rpt-row" tabindex="0" role="button" data-rpt-user="${escapeHtml(u.username)}">
+                    <img src="${escapeHtml(u.avatar || '')}" alt="" style="object-position:${u.posX || 50}% ${u.posY || 50}%" onerror="this.style.visibility='hidden'">
+                    <div class="min-w-0">
+                        <div class="font-bold text-sm text-gray-900 truncate">${escapeHtml(u.name)}</div>
+                        <div class="text-[11px] text-gray-500 truncate">${rptIsStudent(u) ? 'Kelas ' + escapeHtml(u.kelas || '-') : escapeHtml(roleLabelSafe(u.role))} · H ${st.c.Hadir} · S ${st.c.Sakit} · I ${st.c.Izin} · A ${st.c.Alpha}</div>
+                        <div class="rpt-bar">${segs}</div>
+                    </div>
+                    <div class="text-right">
+                        <div class="rpt-pct" style="color:${p.color}">${st.pct === null ? '-' : st.pct + '%'}</div>
+                        <span class="rpt-pred" style="color:${p.color};background:${p.bg}">${p.label}</span>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+        function roleLabelSafe(role) {
+            try { if (typeof roleLabel === 'function') return roleLabel(role); } catch (e) {}
+            return String(role || '').replace('_', ' ');
+        }
+        // Event delegation (aman untuk username bertitik / karakter khusus)
+        document.addEventListener('click', e => {
+            const row = e.target.closest && e.target.closest('[data-rpt-user]');
+            if (row) openReport(row.getAttribute('data-rpt-user'));
+        });
+        document.addEventListener('keydown', e => {
+            if ((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('[data-rpt-user]')) {
+                e.preventDefault(); openReport(e.target.getAttribute('data-rpt-user'));
+            }
+            if (e.key === 'Escape' && reportOpenUser) closeReport();
+        });
+
+        // ---------- Modal laporan individu ----------
+        function openReport(username) {
+            const u = (db.users || []).find(x => x.username === username);
+            if (!u) return alert('Data pengguna tidak ditemukan.');
+            if (!rptCanView(u)) return alert('Akses ditolak. Kamu tidak dapat melihat laporan pengguna ini.');
+            rptEnsureRange();
+            reportOpenUser = username;
+            const modal = document.getElementById('report-modal');
+            modal.style.display = 'block';
+            modal.scrollTop = 0;
+            document.body.style.overflow = 'hidden';
+            renderReportSheet();
+        }
+        function closeReport() {
+            reportOpenUser = null;
+            document.getElementById('report-modal').style.display = 'none';
+            document.body.style.overflow = '';
+        }
+        function openMyReport() { if (currentUser) openReport(currentUser.username); }
+
+        function renderReportSheet() {
+            const sheet = document.getElementById('report-sheet');
+            const periodBar = document.getElementById('rpt-modal-period');
+            if (!sheet || !reportOpenUser) return;
+            // Jangan timpa catatan yang sedang diketik saat data Firebase masuk
+            const active = document.activeElement;
+            if (active && active.id === 'rpt-note-input') return;
+            if (periodBar) periodBar.innerHTML = rptPeriodBarHtml();
+
+            const u = (db.users || []).find(x => x.username === reportOpenUser);
+            if (!u) { sheet.innerHTML = rptEmpty('Data pengguna tidak ditemukan.'); return; }
+            const isStu = rptIsStudent(u);
+            const idx = rptBuildIndex();
+            const sessions = rptSessionsInRange(idx);
+            const months = rptMonthsBetween(reportState.from, reportState.to);
+            const st = rptStats(u.username, idx, sessions);
+            const monthly = rptMonthly(st.timeline, months);
+            const pred = rptPredikat(st.pct);
+
+            // Perbandingan dengan rekan sekelas / sesama guru
+            const peers = rptPeers(u);
+            const peerStats = peers.map(p => ({ u: p, st: rptStats(p.username, idx, sessions) }));
+            const peerMonthly = months.map(m => {
+                const vals = peerStats.map(ps => rptMonthly(ps.st.timeline.filter(t => t.key.startsWith(m)), [m])[0].pct).filter(v => v !== null);
+                return vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : null;
+            });
+            const ranked = peerStats.filter(ps => ps.st.pct !== null);
+            const rank = st.pct === null ? null : 1 + ranked.filter(ps => ps.st.pct > st.pct).length;
+            const peerName = isStu ? ((u.kelas && u.kelas !== '-') ? `Kelas ${u.kelas}` : 'semua siswa') : 'sesama guru';
+            const peerAvg = ranked.length ? Math.round(ranked.reduce((s, ps) => s + ps.st.pct, 0) / ranked.length) : null;
+
+            // Rentetan hadir & jam datang
+            let best = 0, run = 0;
+            st.timeline.forEach(t => { if (t.status === 'Hadir') { run++; best = Math.max(best, run); } else run = 0; });
+            let current = 0;
+            for (let i = st.timeline.length - 1; i >= 0 && st.timeline[i].status === 'Hadir'; i--) current++;
+            const arrivals = st.timeline.filter(t => t.status === 'Hadir' && t.rec && !(String(t.rec.note || '').startsWith('Diedit Manual')))
+                .map(t => rptParseTime(t.rec.time)).filter(v => v !== null && v > 0);
+            const avgArrival = arrivals.length ? arrivals.reduce((a, b) => a + b, 0) / arrivals.length : null;
+
+            // Narasi otomatis
+            const first = String(u.name || '').split(' ')[0] || u.name;
+            const filled = monthly.filter(m => m.pct !== null);
+            let narr = st.total
+                ? `${escapeHtml(first)} hadir di <b>${st.c.Hadir} dari ${st.total}</b> pertemuan (${st.pct}%) selama ${rptRangeLabel()}, dengan predikat <b>${pred.label}</b>.`
+                : `Belum ada pertemuan yang tercatat pada ${rptRangeLabel()}.`;
+            if (filled.length >= 2) {
+                const diff = filled[filled.length - 1].pct - filled[0].pct;
+                if (Math.abs(diff) >= 5) narr += ` Kehadiran ${diff > 0 ? 'naik' : 'turun'} ${Math.abs(diff)} poin dari ${rptMonthLabel(filled[0].month, true)} ke ${rptMonthLabel(filled[filled.length - 1].month, true)}.`;
+                else narr += ` Kehadiran relatif stabil dari bulan ke bulan.`;
+            }
+            if (peerAvg !== null && st.pct !== null && ranked.length > 1) {
+                const d = st.pct - peerAvg;
+                narr += d >= 3 ? ` Angka ini ${d} poin di atas rata-rata ${peerName} (${peerAvg}%).` : d <= -3 ? ` Angka ini ${-d} poin di bawah rata-rata ${peerName} (${peerAvg}%).` : ` Setara dengan rata-rata ${peerName} (${peerAvg}%).`;
+            }
+            if (best >= 3) narr += ` Rentetan hadir terpanjang: ${best} pertemuan berturut-turut.`;
+            if (st.c.Alpha >= 2) narr += ` Tercatat ${st.c.Alpha} kali Alpha, sebaiknya ditindaklanjuti.`;
+            if (st.c.Kosong > 0) narr += ` Ada ${st.c.Kosong} pertemuan yang belum memiliki catatan absen.`;
+
+            // Bagian khusus guru: jadwal tugas & materi
+            let guruHtml = '';
+            if (!isStu) {
+                const today = rptTodayKey();
+                const nm = (u.name || '').trim().toLowerCase();
+                const allJad = (db.jadwal || []).filter(j => j && (j.guru || '').trim().toLowerCase() === nm && rptIsoKey(j.date))
+                    .sort((a, b) => rptIsoKey(a.date) < rptIsoKey(b.date) ? -1 : 1);
+                const inRange = j => { const m = rptIsoKey(j.date).slice(0, 7); return m >= reportState.from && m <= reportState.to; };
+                const jadPast = allJad.filter(j => inRange(j) && rptIsoKey(j.date) <= today);
+                const jadNext = allJad.filter(j => rptIsoKey(j.date) > today).slice(0, 5);
+                const recs = idx.byUser[u.username] || {};
+                const dutyHadir = jadPast.filter(j => recs[rptIsoKey(j.date)] && recs[rptIsoKey(j.date)].status === 'Hadir').length;
+                const mats = (db.materi || []).filter(m => m && (m.author || '').trim().toLowerCase() === nm && rptIsoKey(m.date) && (() => { const mk = rptIsoKey(m.date).slice(0, 7); return mk >= reportState.from && mk <= reportState.to; })());
+                const perMonth = months.map(m => ({
+                    label: rptMonthLabel(m),
+                    value: jadPast.filter(j => rptIsoKey(j.date).startsWith(m)).length,
+                    color: '#8134AF'
+                }));
+                const jadItem = (j, past) => {
+                    const r = recs[rptIsoKey(j.date)];
+                    const s = past ? (r ? r.status : 'Kosong') : null;
+                    return `<div class="rpt-list-item"><span><b>${rptFmtDate(rptIsoKey(j.date))}</b> · ${escapeHtml(j.tugas || '-')}</span>${past ? `<span class="rpt-pred" style="background:${RPT_COLOR[s] || '#cbd5e1'};color:#fff">${s === 'Kosong' ? 'Tanpa data' : s}</span>` : '<span class="text-gray-400">Mendatang</span>'}</div>`;
+                };
+                guruHtml = `
+                <div class="rpt-sec"><h5>Pelayanan &amp; tugas mengajar <small>dari menu Jadwal dan Materi</small></h5>
+                    <div class="rpt-kpis">
+                        <div class="rpt-kpi" style="background:#faf5ff"><b style="color:#7e22ce">${jadPast.length}</b><span>Tugas terlaksana</span></div>
+                        <div class="rpt-kpi" style="background:#f0fdf4"><b style="color:#15803d">${jadPast.length ? Math.round(dutyHadir / jadPast.length * 100) + '%' : '-'}</b><span>Hadir saat bertugas (${dutyHadir}/${jadPast.length})</span></div>
+                        <div class="rpt-kpi" style="background:#eff6ff"><b style="color:#1d4ed8">${mats.length}</b><span>Materi ditulis</span></div>
+                        <div class="rpt-kpi" style="background:#fff7ed"><b style="color:#c2410c">${allJad.filter(j => rptIsoKey(j.date) > today).length}</b><span>Tugas mendatang</span></div>
+                    </div>
+                    <div class="rpt-grid2 mt-3">
+                        <div class="rpt-box"><div class="text-xs font-bold text-gray-700 mb-1">Jumlah tugas per bulan</div>${perMonth.some(p => p.value) ? rptHBars(perMonth) : rptEmpty('Belum ada tugas pada periode ini')}</div>
+                        <div class="rpt-box"><div class="text-xs font-bold text-gray-700 mb-1">Riwayat &amp; tugas berikutnya</div>
+                            ${jadPast.length || jadNext.length ? jadPast.slice(-6).reverse().map(j => jadItem(j, true)).join('') + jadNext.map(j => jadItem(j, false)).join('') : rptEmpty('Belum ada jadwal atas nama guru ini')}
+                        </div>
+                    </div>
+                </div>`;
+            }
+
+            // Catatan pembina
+            const notes = (db.reportNotes && typeof db.reportNotes === 'object') ? db.reportNotes : {};
+            const note = notes[safeKey(u.username)] || null;
+            const canNote = rptCanNote(u);
+            const noteHtml = canNote
+                ? `<textarea id="rpt-note-input" rows="3" class="pro-input text-sm mb-2 no-print" placeholder="Tulis catatan perkembangan, doa, atau tindak lanjut untuk ${escapeHtml(first)}...">${escapeHtml(note ? note.text : '')}</textarea>
+                   <div class="flex justify-between items-center no-print"><span class="text-[11px] text-gray-400">${note ? `Terakhir diubah ${escapeHtml(note.by || '-')}, ${new Date(note.at).toLocaleDateString('id-ID')}` : 'Catatan tersimpan di cloud dan ikut tercetak.'}</span>
+                   <button onclick="saveReportNote()" class="rpt-btn primary">Simpan catatan</button></div>
+                   <div class="hidden print:block text-sm" style="white-space:pre-wrap">${escapeHtml(note ? note.text : '')}</div>`
+                : (note && note.text ? `<div class="text-sm text-gray-700" style="white-space:pre-wrap">${escapeHtml(note.text)}</div><div class="text-[11px] text-gray-400 mt-1">${escapeHtml(note.by || '')}</div>` : rptEmpty('Belum ada catatan dari pembina.'));
+
+            const lastSessions = st.timeline.slice(-8).reverse();
+            sheet.innerHTML = `
+                <div class="rpt-head" style="color:${pred.color}">
+                    <div style="color:initial">
+                        <div class="rpt-org">GKPS Resort Tangerang · Sekolah Minggu</div>
+                        <div class="rpt-title">Laporan Individu ${isStu ? 'Siswa' : 'Guru'}</div>
+                        <div class="rpt-period">Periode ${rptRangeLabel()}</div>
+                        <div class="rpt-ident">
+                            <img src="${escapeHtml(u.avatar || '')}" alt="" style="object-position:${u.posX || 50}% ${u.posY || 50}%" onerror="this.style.visibility='hidden'">
+                            <div class="min-w-0">
+                                <h4>${escapeHtml(u.name)}</h4>
+                                <p>${isStu ? 'Kelas ' + escapeHtml(u.kelas || '-') : escapeHtml(roleLabelSafe(u.role))} · ID ${escapeHtml(u.username)}${u.gender ? ' · ' + (u.gender === 'P' ? 'Perempuan' : 'Laki-laki') : ''}</p>
+                                ${rank ? `<p class="mt-1"><b style="color:#0f172a">Peringkat ${rank}</b> dari ${ranked.length} di ${escapeHtml(peerName)}</p>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rpt-seal" aria-label="Predikat ${pred.label}">
+                        <b>${st.pct === null ? '–' : st.pct + '%'}</b>
+                        <span>${pred.label}</span>
+                    </div>
+                </div>
+                <div class="rpt-body">
+                    <div class="rpt-kpis">
+                        <div class="rpt-kpi" style="background:#f0fdf4"><b style="color:#15803d">${st.c.Hadir}</b><span>Hadir</span></div>
+                        <div class="rpt-kpi" style="background:#fefce8"><b style="color:#a16207">${st.c.Sakit}</b><span>Sakit</span></div>
+                        <div class="rpt-kpi" style="background:#eff6ff"><b style="color:#1d4ed8">${st.c.Izin}</b><span>Izin</span></div>
+                        <div class="rpt-kpi" style="background:#fef2f2"><b style="color:#b91c1c">${st.c.Alpha}</b><span>Alpha</span></div>
+                        <div class="rpt-kpi"><b>${st.c.Kosong}</b><span>Tanpa data absen</span></div>
+                        <div class="rpt-kpi"><b>${best}</b><span>Rentetan hadir terpanjang</span></div>
+                        <div class="rpt-kpi"><b>${current}</b><span>Rentetan hadir saat ini</span></div>
+                        <div class="rpt-kpi"><b>${rptFmtMinutes(avgArrival)}</b><span>Rata-rata jam datang</span></div>
+                    </div>
+
+                    <div class="rpt-sec"><h5>Ringkasan</h5><div class="rpt-narr">${narr}</div></div>
+
+                    <div class="rpt-sec"><h5>Grafik kehadiran</h5>
+                        <div class="rpt-grid2">
+                            <div class="rpt-box"><div class="text-xs font-bold text-gray-700 mb-2">Komposisi status</div>${rptDonut(st.c, st.total)}</div>
+                            <div class="rpt-box"><div class="text-xs font-bold text-gray-700 mb-1">Tren persentase hadir vs ${escapeHtml(peerName)}</div>
+                                ${rptLineChart(months.map(m => rptMonthLabel(m)), [
+                                    { name: first || 'Pribadi', color: '#229ED9', values: monthly.map(m => m.pct) },
+                                    { name: 'Rata-rata ' + peerName, color: '#DD2A7B', values: peerMonthly, dashed: true }
+                                ])}</div>
+                        </div>
+                        <div class="rpt-grid2 mt-3">
+                            <div class="rpt-box"><div class="text-xs font-bold text-gray-700 mb-1">Status per bulan</div>${rptStackedBars(monthly)}</div>
+                            <div class="rpt-box"><div class="text-xs font-bold text-gray-700 mb-2">Catatan setiap pertemuan <span class="font-normal text-gray-400 no-print">· ketuk kotak untuk detail</span></div>${rptTimeline(st.timeline)}</div>
+                        </div>
+                    </div>
+
+                    ${lastSessions.length ? `<div class="rpt-sec"><h5>Pertemuan terakhir</h5><div class="rpt-box">${lastSessions.map(t => `
+                        <div class="rpt-list-item"><span><b>${rptFmtDate(t.key)}</b>${t.rec && t.rec.time && t.status === 'Hadir' ? ` · ${escapeHtml(t.rec.time)}` : ''}${t.rec && t.rec.note && t.rec.note !== '-' && t.rec.note !== 'Init' ? ` · <i class="text-gray-500">${escapeHtml(t.rec.note)}</i>` : ''}</span>
+                        <span class="rpt-pred" style="background:${RPT_COLOR[t.status]};color:#fff">${t.status === 'Kosong' ? 'Tanpa data' : t.status}</span></div>`).join('')}</div></div>` : ''}
+
+                    ${guruHtml}
+
+                    <div class="rpt-sec"><h5>Catatan pembina</h5><div class="rpt-box">${noteHtml}</div></div>
+
+                    <div class="rpt-sign">
+                        <div></div><div></div>
+                        <span>${isStu ? 'Guru / Wali Kelas' : 'Pengurus Sekolah Minggu'}</span><span>${isStu ? 'Orang tua / Wali' : 'Majelis Resort'}</span>
+                    </div>
+                    <div class="rpt-foot">Dibuat otomatis oleh aplikasi GKPS Tangerang pada ${new Date().toLocaleString('id-ID')}. Persentase = jumlah Hadir ÷ jumlah pertemuan di periode ini.</div>
+                </div>`;
+        }
+
+        function saveReportNote() {
+            const u = (db.users || []).find(x => x.username === reportOpenUser);
+            if (!u || !rptCanNote(u)) return alert('Akses ditolak.');
+            const el = document.getElementById('rpt-note-input');
+            const text = el ? el.value.trim() : '';
+            if (!db.reportNotes || typeof db.reportNotes !== 'object' || Array.isArray(db.reportNotes)) db.reportNotes = {};
+            const key = safeKey(u.username);
+            if (text) db.reportNotes[key] = { text, by: currentUser.name, at: Date.now() };
+            else delete db.reportNotes[key];
+            if (el) el.blur();
+            saveDb();
+            renderReportSheet();
+            playSound && playSound('success');
+        }
+
+        function printReport() {
+            document.body.classList.add('rpt-printing');
+            const done = () => { document.body.classList.remove('rpt-printing'); window.removeEventListener('afterprint', done); };
+            window.addEventListener('afterprint', done);
+            setTimeout(() => { window.print(); setTimeout(done, 1500); }, 60);
+        }
+
+        function exportReportCSV() {
+            rptEnsureRange();
+            let pool = rptVisibleUsers(reportState.type);
+            if (reportState.kelas) pool = pool.filter(u => u.kelas === reportState.kelas);
+            if (reportState.search) pool = pool.filter(u => (u.name || '').toLowerCase().includes(reportState.search));
+            if (!pool.length) return alert('Tidak ada data untuk diekspor.');
+            const idx = rptBuildIndex();
+            const sessions = rptSessionsInRange(idx);
+            const q = v => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
+            const lines = [['Nama', 'Username', 'Kelas/Peran', 'Pertemuan', 'Hadir', 'Sakit', 'Izin', 'Alpha', 'Tanpa data', 'Persentase', 'Predikat'].map(q).join(',')];
+            pool.sort((a, b) => (a.name || '').localeCompare(b.name || '')).forEach(u => {
+                const st = rptStats(u.username, idx, sessions);
+                lines.push([u.name, u.username, rptIsStudent(u) ? (u.kelas || '-') : roleLabelSafe(u.role), st.total, st.c.Hadir, st.c.Sakit, st.c.Izin, st.c.Alpha, st.c.Kosong, st.pct === null ? '' : st.pct + '%', rptPredikat(st.pct).label].map(q).join(','));
+            });
+            const blob = new Blob(['\ufeff' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `Rekap_Laporan_${reportState.type}_${reportState.from}_${reportState.to}.csv`;
+            document.body.appendChild(a); a.click(); a.remove();
+            setTimeout(() => URL.revokeObjectURL(a.href), 2000);
         }
 
         window.onload = initApp;
